@@ -1,0 +1,4 @@
+#!/bin/ksh
+
+echo "Testing from `hostname`" | mailx -s "Calling: `hostname`" carl.schelin@intrado.com
+

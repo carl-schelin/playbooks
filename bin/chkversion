@@ -1,0 +1,141 @@
+#!/bin/ksh
+
+# Carl Schelin
+# 8/20/2011 - get version information from various tools on the system.
+# - openview - has to get it running as root.
+# - netbackup - just copying it from the netbackup directory
+# - openview - added outputting it's not installed
+# - netbackup - added outputting it's not installed
+# - openview - use the right command to check versions
+# 20140403 - Only run the commands/copy files/etc if the version file doesn't exist. Keeps from continually running the command
+# 20140416 - check sudo version
+# 20140729 - Return to running commands each night.
+# 20140902 - Added version check for openview if opcagt doesn't exist.
+# 20140918 - Added alternate version check for openview if opcagt doesn't exist in /opt/OV/bin.
+# 20150113 - Get Oracle smon values (asm_smon/ora_smon) to get ASM and instance names.
+# 20150718 - Get Postgres version
+# 20150718 - Get Informix version
+# 20150816 - Change mysql check as ./mysqld was found on several servers
+# 20151006 - Check for data palette and Panorama (opnet) installation
+
+ADMIN=/opt/intrado
+
+if [[ -f /opt/OV/bin/opcagt ]]
+then
+  rm $ADMIN/etc/ovc.version
+  /opt/OV/bin/opcagt -version > $ADMIN/etc/ovc.version
+else
+  if [[ -f /opt/OV/bin/OpC/opcagt ]]
+  then
+    rm $ADMIN/etc/ovc.version
+    /opt/OV/bin/OpC/opcagt -version > $ADMIN/etc/ovc.version
+  else
+    if [[ -f /opt/OV/bin/ovc ]]
+    then
+      rm $ADMIN/etc/ovc.version
+      /opt/OV/bin/ovc -version > $ADMIN/etc/ovc.version
+    fi
+  fi
+fi
+
+if [[ -f /usr/openv/netbackup/bin/version ]]
+then
+  rm $ADMIN/etc/netbackup.version
+  cp /usr/openv/netbackup/bin/version $ADMIN/etc/netbackup.version
+fi
+
+OUTPUT=`ps -e | grep httpd`
+if [[ ! -z $OUTPUT ]]
+then
+  rm $ADMIN/etc/httpd.version
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=`ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $8}'`
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=`ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $9}'`
+  fi
+  $OUTPUT -version | head -1 > $ADMIN/etc/httpd.version
+fi
+
+OUTPUT=`ps -e | grep mysqld`
+if [[ ! -z $OUTPUT ]]
+then
+  rm $ADMIN/etc/mysqld.version
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=`ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $8}'`
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=`ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $9}'`
+  fi
+# mysql is installed but run as './mysqld' vs an absolute path. at least this tells you it's been found
+  if [[ -f $OUTPUT ]]
+  then
+    $OUTPUT --version | head -1 > $ADMIN/etc/mysqld.version
+  else
+    OUTPUT=`find /opt -name mysqld -print | sort | tail -1`  
+    if [[ -f $OUTPUT ]]
+    then
+      $OUTPUT --version | head -1 > $ADMIN/etc/mysqld.version
+    else
+      echo "$OUTPUT running but can't get version" > $ADMIN/etc/mysqld.version
+    fi
+  fi
+fi
+
+if [[ -f /usr/local/bin/sudo ]]
+then
+  rm $ADMIN/etc/sudo.version
+  /usr/local/bin/sudo -V | head -1 > $ADMIN/etc/sudo.version
+fi
+
+OUTPUT=`ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_`
+if [[ ! -z $OUTPUT ]]
+then
+  if [[ -f $ADMIN/etc/oracle.version ]]
+  then
+    rm $ADMIN/etc/oracle.version
+  fi
+
+  for i in $OUTPUT
+  do
+    echo $i >> $ADMIN/etc/oracle.version
+  done
+fi
+
+OUTPUT=`ps -ef | grep pgsql | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  rm $ADMIN/etc/postgres.version
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=`ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $8}'`
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=`ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $9}'`
+  fi
+  DIR=`dirname $OUTPUT`
+  $DIR/psql --version | head -1 > $ADMIN/etc/postgres.version
+fi
+
+OUTPUT=`ps -ef | grep oninit | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  rm $ADMIN/etc/informix.version
+  if [[ -f /usr/informix/bin/onstat ]]
+  then
+    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > $ADMIN/etc/informix.version
+  fi
+fi
+
+if [[ -f /opt/datapalette/bin/datapal ]]
+then
+  echo "Installed" > $ADMIN/etc/datapal.version
+fi
+
+if [[ -d /opt/Panorama ]]
+then
+  echo "Installed" > $ADMIN/etc/opnet.version
+fi
+

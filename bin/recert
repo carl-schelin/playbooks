@@ -1,0 +1,101 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Run the commands to recertify an OpenView managed system.
+# commands from the monitoring wiki:
+# https://incowk01/monitor/index.php/Regenerating_cert_requests_for_OMU_Agents
+# pass 'no' to the script to indicate the default route/primary interface is the management 
+# interface, otherwise pass the IP of the interface and 2nd_nic will be run.
+# 2014-12-03 TCS Added a target server variable so it can be modified if necessary
+
+SECONDARY_NIC=$1
+OPENVIEW=ovo-cl1.lgmt.trdo
+OPENVIEW=lnmtcodcom1vip.scc911.com
+
+if [[ "$SECONDARY_NIC" = "" ]]
+then
+  echo "Usage:"
+  echo ""
+  echo "recert [ no | {IP} ]"
+  echo ""
+  echo "no - The primary interface is the management interface and will be used for OpenView traffic"
+  echo "{IP} - The IP address of the management interface. The script will reconfigure the agent to use this interface"
+  echo ""
+  exit 0
+fi
+
+LOG=/opt/intrado/var
+
+echo "Starting..."
+echo "==================" >> $LOG/recert.log
+echo "Starting the recertification process" >> $LOG/recert.log
+date >> $LOG/recert.log
+echo "" >> $LOG/recert.log
+
+# disable openview monitoring
+echo "Disable restart"
+/opt/intrado/bin/chkov stop >> $LOG/recert.log
+
+# kill the agent
+echo "Killing agent"
+/opt/OV/bin/ovc -kill >> $LOG/recert.log
+
+# get the list of certificates
+echo "Get cert listing"
+/opt/OV/bin/ovcert -list >> $LOG/recert.log
+
+# remove the certificates
+for i in `grep "^|" $LOG/recert.log | egrep -v "(Keystore|Certificates|Trusted)" | awk '{print $2}'`
+do
+  echo "Remove cert $i"
+  echo "yes" | /opt/OV/bin/ovcert -remove $i >> $LOG/recert.log
+done
+
+# make sure CERT_INSTALLED=FALSE
+echo "Verifying CERT_INSTALLED == FALSE"
+INSTALL=`/opt/OV/bin/ovconfget | grep -i cert_installed`
+if [[ ! $INSTALL = "CERT_INSTALLED=FALSE" ]]
+then
+  /opt/OV/bin/ovconfchg -ns sec.cm.certificates -set CERT_INSTALLED FALSE
+fi
+
+# clear the core id
+echo "Clearing coreid"
+/opt/OV/bin/ovconfchg -ns sec.core -clear CORE_ID >> $LOG/recert.log
+
+# create a new core id
+echo "Create new core id"
+/opt/OV/bin/ovcoreid -create >> $LOG/recert.log
+
+# activate the agent
+echo "Activating the agent"
+/opt/OV/bin/OpC/install/opcactivate -srv $OPENVIEW >> $LOG/recert.log
+
+# Taking a pause for the cause
+echo "Waiting for agent activation"
+sleep 10
+
+# regenerate a certificate with the main openview server
+echo "Request a new certificate"
+/opt/OV/bin/ovcert -certreq >> $LOG/recert.log
+
+# run the commands to register a second nic as the management interface
+if [[ ! $SECONDARY_NIC = "no" ]]
+then
+  echo "Set up configuration for 2nd_nic"
+  /opt/OV/bin/ovconfchg -ns eaagt -set OPC_IP_ADDRESS $SECONDARY_NIC -set OPC_PRIMARY_MGR $OPENVIEW >> $LOG/recert.log
+  /opt/OV/bin/ovconfchg -ns bbc.cb -set SERVER_BIND_ADDR $SECONDARY_NIC >> $LOG/recert.log
+  /opt/OV/bin/ovconfchg -ns bbc.http -set SERVER_BIND_ADDR $SECONDARY_NIC >> $LOG/recert.log
+  /opt/OV/bin/ovconfchg -ns bbc.http -set CLIENT_BIND_ADDR $SECONDARY_NIC >> $LOG/recert.log
+  /opt/OV/bin/ovconfchg -ns coda.comm -set SERVER_BIND_ADDR localhost >> $LOG/recert.log
+fi
+
+# restart the openview monitor
+echo "Starting Openview Agent"
+/opt/intrado/bin/chkov start >> $LOG/recert.log
+
+# and note that it's complete
+echo "Openview Recertification completed" >> $LOG/recert.log
+echo "" >> $LOG/recert.log
+echo "Completed..."
+

@@ -1,0 +1,44 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Install the python-simplejson rpm to support Ansible
+
+ADMIN=/opt/intrado
+
+if [[ -f /etc/redhat-release ]]
+then
+
+  ARCH=`arch`
+  if [[ $ARCH = 'i686' ]]
+  then
+    PACKAGE='python-simplejson-2.0.9-8.el5.i386.rpm'
+  else
+    PACKAGE='python-simplejson-2.0.9-8.el5.x86_64.rpm'
+  fi
+
+  if [[ -f $ADMIN/etc/$PACKAGE ]]
+  then
+
+# potentially install only if the simplejson rpm is missing
+    OUTPUT=`rpm -qa | grep simplejson`
+
+    if [[ -z $OUTPUT ]]
+    then
+
+# only install for Red Hat 5 systems
+      grep -q " 5" /etc/redhat-release > /dev/null
+
+      if [[ $? = 0 ]]
+      then
+
+# and install the missing rpm
+        rpm -ivh $ADMIN/etc/$PACKAGE
+
+      fi
+
+    fi
+
+  fi
+
+fi
+

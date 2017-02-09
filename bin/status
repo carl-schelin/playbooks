@@ -1,0 +1,69 @@
+#!/bin/ksh
+
+# Carl Schelin
+# copy monitoring configuration files for nagios into the nagios directory and restart nagios
+# 1/9/17 TCS - updated to not restart nagios if an error occurs with the scripts
+
+TMPDIR=/var/tmp
+NAGIOS=/usr/local/nagios
+NAGOBJ=$NAGIOS/etc/objects
+WHOCARES=unixadmins@intrado.com
+RESTART=no
+# Day of Week 1=Monday, 7=Sunday
+DOWEEK=`date +"%u"`
+
+if [[ ! -z $1 ]]
+then
+  RESTART=yes
+fi
+
+for i in loms sqa lab prod switch
+do
+  if [[ -f $TMPDIR/monitor.$i.cfg ]]
+  then
+    if [[ ! -f $NAGOBJ/monitor.$i.cfg ]]
+    then
+      touch $NAGOBJ/monitor.$i.cfg
+    fi
+
+    diff $TMPDIR/monitor.$i.cfg $NAGOBJ/monitor.$i.cfg > $TMPDIR/monitor.$i.diff
+
+    if [[ -s $TMPDIR/monitor.$i.diff ]]
+    then
+      cp $TMPDIR/monitor.$i.cfg $NAGOBJ/monitor.$i.cfg
+      RESTART=yes
+    fi
+  fi
+done
+
+
+if [[ $RESTART = 'yes' ]]
+then
+
+  /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg > /opt/intrado/etc/nagios.output
+
+  if [[ $? = 0 ]]
+  then
+    service nagios stop
+    sleep 5
+    service nagios start
+  else
+    cat /opt/intrado/etc/nagios.output | mailx -s "Nagios configuration error" $WHOCARES
+  fi  
+else
+# restart every Monday just to be sure.
+  if [[ $DOWEEK = 1 ]]
+  then
+    /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg > /opt/intrado/etc/nagios.output
+
+    if [[ $? = 0 ]]
+    then
+      service nagios stop
+      sleep 5
+      service nagios start
+    else 
+      cat /opt/intrado/etc/nagios.output | mailx -s "Nagios configuration error" $WHOCARES
+    fi
+  fi
+fi
+

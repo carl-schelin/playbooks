@@ -1,0 +1,568 @@
+#!/bin/ksh
+
+INTRADO=/opt/intrado
+OS=`uname`
+HOSTNAME=`hostname|cut -f1 -d.`
+PLATFORM=`uname -p`
+
+if [[ ! -f /usr/bin/ksh ]]
+then
+  ln -s /bin/ksh /usr/bin/ksh
+fi
+
+if [[ -f $INTRADO/bin/chksys ]]
+then
+  echo "Running chksys to generate system data import file"
+  $INTRADO/bin/chksys > /dev/null 2>&1
+fi
+
+if [[ $OS = "Linux" ]]
+then
+
+  if [[ $PLATFORM = "x86_64" ]]
+  then
+    FREETYPE=linux-64/freetype-2.2.1-21.el5_3.x86_64.rpm
+    LIBPNG=linux-64/libpng-1.2.10-7.1.el5_3.2.x86_64.rpm
+    SYSSTAT=linux-64/sysstat-7.0.2-3.el5.x86_64.rpm
+    LIBART=linux-64/libart_lgpl-2.3.17-4.x86_64.rpm
+    RRDTOOL=linux-64/rrdtool-1.2.27-3.el5.x86_64.rpm
+  else
+    FREETYPE=linux-32/freetype-2.1.9-1.i386.rpm
+    LIBART=linux-32/libart_lgpl-2.3.16-3.i386.rpm
+    LIBPNG=linux-32/libpng-1.2.7-1.el4.2.i386.rpm
+    RRDTOOL=linux-32/rrdtool-1.2.27-3.el4.i386.rpm
+    SYSSTAT=linux-32/sysstat-5.0.5-11.rhel3.i386.rpm
+  fi
+
+  echo "Checking for rrdtool binaries and dependencies"
+  for i in freetype libart libpng sysstat rrdtool
+  do
+    OUTPUT=`rpm -qa | grep $i`
+    if [[ -z $OUTPUT ]]
+    then
+      echo "Installing missing rpm: $i"
+      if [[ $i = 'freetype' ]] 
+      then
+        rpm --install $FREETYPE
+      fi
+      if [[ $i = 'libart' ]] 
+      then
+        rpm --install $LIBART
+      fi
+      if [[ $i = 'libpng' ]] 
+      then
+        rpm --install $LIBPNG
+      fi
+      if [[ $i = 'sysstat' ]] 
+      then
+        rpm --install $SYSSTAT
+      fi
+      if [[ $i = 'rrdtool' ]] 
+      then
+        rpm --install $RRDTOOL
+      fi
+    fi
+  done
+
+  echo "Cleaning up rrdtool rpm and package install"
+  if [[ -d linux-32 ]]
+  then
+    rm -rf linux-32
+  fi
+  if [[ -d linux-64 ]]
+  then
+    rm -rf linux-64
+  fi
+  if [[ -d sol10-x86 ]]
+  then
+    rm -rf sol10-x86
+  fi
+  if [[ -d sol10-sparc ]]
+  then
+    rm -rf sol10-sparc
+  fi
+
+  if [[ ! -f $INTRADO/cfghtml/$HOSTNAME.html ]]
+  then
+    echo "Installing and running cfg2html"
+    tar fvx cfg2html/cfghtml.linux.tar
+    mv cfghtml $INTRADO
+    cd $INTRADO/cfghtml
+    ./cfg2html
+    cd $INTRADO/install
+  fi
+
+  echo "Cleaning up cfg2html install"
+  if [[ -d cfg2html ]]
+  then
+    rm -rf cfg2html
+  fi
+
+  echo "Checking for an rrdtool installation"
+  if [[ ! -d $INTRADO/rrdtool ]]
+  then
+    echo "Installing rrdtool"
+    tar fvx rrd/rrdtool.linux.tar
+    mv rrdtool $INTRADO
+
+# build interface variable
+    SPACE=''
+    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $3}'`
+    do
+      INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
+      INTME="${INTME}${SPACE}${i}"
+      SPACE=' '
+    done
+
+    SPACE=''
+    for i in `ls /dev/sd? | sed -e "s/\/dev\///g"`
+    do
+      DRIVES="${DRIVES}${SPACE}${i}:${i}"
+      DRIVEME="${DRIVEME}${SPACE}`echo $i | sed -e "s/sd//g"`"
+      SPACE=' '
+    done
+
+    SPACE=''
+    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $5}'`
+    do
+      if [[ $i = '/' ]]
+      then
+        i='root'
+      fi
+      i=`echo $i | sed -e "s/\///g"`
+      DISKS="${DISKS}${SPACE}${i}"
+      SPACE=' '
+    done
+
+    echo ""
+    echo "The following three variables were extracted from the system. They will be inserted into the config file."
+    echo "Validate the entries before continuing."
+    echo ""
+    echo ""
+    echo "#"
+    echo "# Interface configuration. Interface:Label to be used on the graph"
+    echo "INTERFACES=\"$INTERFACES\""
+    echo ""
+    echo "#"
+    echo "# Drive configuration. Drive:Label to be used on the graph"
+    echo "DRIVES=\"$DRIVES\""
+    echo ""
+    echo "#"
+    echo "# Disk Space configuration; file system name list as displayed in the graph label"
+    echo "DISKS=\"$DISKS\""
+    echo ""
+
+    echo -n "Is the above configuration correct? [y]? "
+    read INPUT
+
+    if [[ -z $INPUT || $INPUT = 'y' ]]
+    then
+      echo "#" >> config
+      echo "# Interface configuration. Interface:Label to be used on the graph" >> config
+      echo "INTERFACES=\"$INTERFACES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Drive configuration. Drive:Label to be used on the graph" >> config
+      echo "DRIVES=\"$DRIVES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
+      echo "DISKS=\"$DISKS\"" >> config
+      echo "" >> config
+      cp config $INTRADO/rrdtool/
+      echo "rrdtool config file updated and installed"
+    else
+      echo "#" >> config
+      echo "# Interface configuration. Interface:Label to be used on the graph" >> config
+      echo "INTERFACES=\"$INTERFACES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Drive configuration. Drive:Label to be used on the graph" >> config
+      echo "DRIVES=\"$DRIVES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
+      echo "DISKS=\"$DISKS\"" >> config
+      echo "" >> config
+      echo "rrdtool config file updated but not installed ($INTRADO/install/config)"
+      echo "Once you make changes, copy the config file to $INTRADO/rrdtool."
+    fi
+
+
+    COUNT=0
+    SPACE=''
+    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $3}'`
+    do
+      CPUS="${CPUS}${SPACE}${COUNT}"
+      SPACE=' '
+      COUNT=$(( $COUNT + 1 ))
+    done
+
+    echo ""
+    echo "This is the configuration update for the script build normally done in the rrdtool/install directory"
+    echo "The 'install' script is run which builds the data directories and the four scripts necessary for "
+    echo "monitoring the system."
+    echo ""
+    echo ""
+    echo "# Set up the number of cpu's here."
+    echo "CPUS=\"$CPUS\""
+    echo "# Set up the file systems here."
+    echo "DISKS=\"$DISKS\""
+    echo "# Set up the physical devices here"
+    echo "DRIVES=\"$DRIVEME\""
+    echo "# Set up the physical devices here"
+    echo "DEVICES=\"$INTME lo\""
+    echo ""
+
+    echo -n "Is the above configuration correct? [y]? "
+    read INPUT
+
+    if [[ -z $INPUT || $INPUT = 'y' ]]
+    then
+      echo "# Set up the number of cpu's here." >> install.me
+      echo "CPUS=\"$CPUS\"" >> install.me
+      echo "# Set up the file systems here." >> install.me
+      echo "DISKS=\"$DISKS\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DRIVES=\"$DRIVEME\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DEVICES=\"$INTME lo\"" >> install.me
+      cat install.2 >> install.me
+      cp install.me $INTRADO/rrdtool/install/install
+      cd $INTRADO/rrdtool/install
+      ./install
+      cp makerrd ..
+      cp updaterrd ..
+      cp makegraphs ..
+      cp makethumbs ..
+      cd $INTRADO/rrdtool
+      ./makerrd
+      echo "rrdtool configured, installed, and ready to run."
+    else
+      echo "# Set up the number of cpu's here." >> install.me
+      echo "CPUS=\"$CPUS\"" >> install.me
+      echo "# Set up the file systems here." >> install.me
+      echo "DISKS=\"$DISKS\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DRIVES=\"$DRIVEME\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DEVICES=\"$INTME lo\"" >> install.me
+      cat install.2 >> install.me
+      echo "rrdtool install.me file created. Validate and install."
+    fi
+
+  fi
+
+  echo ""
+  echo "The installation is complete assuming you don't need to make further changes to the configuration files."
+  echo "The rrdtool/install/install script can be reconfigured and run again. You'll need to manually copy "
+  echo "the config files down into the rrdtool directory if necessary"
+  echo ""
+  echo "The following lines need to be added to root's cron:"
+  echo ""
+
+  echo "# Master intrado script which runs scripts that run daily or less often"
+  echo "0 1 * * * /opt/intrado/bin/intrado > /dev/null 2>&1"
+  echo ""
+  echo "# Ensure OpenView continues to run"
+  echo "*/5 * * * * /opt/intrado/bin/chkov > /dev/null 2>&1"
+  echo ""
+  echo "# Processes the sendmail queue every 15 minutes"
+  echo "*/15 * * * * /usr/sbin/sendmail -q"
+  echo ""
+
+  echo "And if rrdtool is properly configured and ready to run, you'll need to add the following lines as well."
+  echo ""
+
+  echo "# monitor rrdtool"
+  echo "*/5 * * * * /opt/intrado/rrdtool/watchrrd > /dev/null 2>&1"
+  echo ""
+  echo "# generate rrdtool graphs"
+  echo "*/15 * * * * /opt/intrado/rrdtool/makegraphs > /dev/null 2>&1"
+  echo ""
+
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+
+  if [[ $PLATFORM = "i386" ]]
+  then
+    SUN=sol10-x86
+    FREETYPE=freetype-2.3.9-sol10-x86-local
+    LIBART=libart_lgpl-2.3.19-sol10-x86-local
+    LIBGCC=libgcc-3.4.6-sol10-x86-local
+    LIBICONV=''
+    LIBPNG=libpng-1.2.41-sol10-x86-local
+    RRDTOOL=rrdtool-1.2.19-sol10-x86-local
+    ZLIB=zlib-1.2.3-sol10-x86-local
+  else
+    SUN=sol10-sparc
+    FREETYPE=freetype-2.3.9-sol10-sparc-local
+    LIBART=libart_lgpl-2.3.19-sol10-sparc-local
+    LIBGCC=libgcc-3.4.6-sol10-sparc-local
+    LIBICONV=libiconv-1.11-sol10-sparc-local
+    LIBPNG=libpng-1.2.40-sol10-sparc-local
+    RRDTOOL=rrdtool-1.2.19-sol10-sparc-local
+    ZLIB=zlib-1.2.3-sol10-sparc-local
+  fi
+
+  echo "Checking for rrdtool binaries and dependencies"
+  cd $INTRADO/install/$SUN
+  for i in SMCftype SMClibart SMClibgcc SMCliconv SMClibpng SMCrrdt SMCzlib
+  do
+    OUTPUT=`pkginfo | grep $i`
+    if [[ -z $OUTPUT ]]
+    then
+      echo "Installing missing package: $i"
+      if [[ $i = 'SMCftype' ]] 
+      then
+        pkgadd -d ./$FREETYPE
+      fi
+      if [[ $i = 'SMClibart' ]] 
+      then
+        pkgadd -d ./$LIBART
+      fi
+      if [[ $i = 'SMClibgcc' ]] 
+      then
+        pkgadd -d ./$LIBGCC
+      fi
+      if [[ $i = 'SMCliconv' ]] 
+      then
+        if [[ ! -z $LIBICONV ]]
+        then
+          pkgadd -d ./$LIBICONV
+        fi
+      fi
+      if [[ $i = 'SMClibpng' ]] 
+      then
+        pkgadd -d ./$LIBPNG
+      fi
+      if [[ $i = 'SMCrrdt' ]] 
+      then
+        pkgadd -d ./$RRDTOOL
+        ln -s /usr/local/rrdtool-1.2.19/bin/rrdtool /usr/local/bin/rrdtool
+      fi
+      if [[ $i = 'SMCzlib' ]] 
+      then
+        pkgadd -d ./$ZLIB
+      fi
+    fi
+  done
+  cd $INTRADO/install
+
+  echo "Cleaning up rrdtool rpm and package install"
+  if [[ -d linux-32 ]]
+  then
+    rm -rf linux-32
+  fi
+  if [[ -d linux-64 ]]
+  then
+    rm -rf linux-64
+  fi
+  if [[ -d sol10-x86 ]]
+  then
+    rm -rf sol10-x86
+  fi
+  if [[ -d sol10-sparc ]]
+  then
+    rm -rf sol10-sparc
+  fi
+
+  if [[ ! -f $INTRADO/cfghtml/$HOSTNAME.html ]]
+  then
+    echo "Installing and running cfg2html"
+    tar fvx cfg2html/cfghtml.sun.tar
+    mv cfghtml $INTRADO
+    cd $INTRADO/cfghtml
+    ./cfg2html
+    cd $INTRADO/install
+  fi
+
+  echo "Cleaning up cfg2html install"
+  if [[ -d cfg2html ]]
+  then
+    rm -rf cfg2html
+  fi
+
+  echo "Checking for an rrdtool installation"
+  if [[ ! -d $INTRADO/rrdtool ]]
+  then
+    echo "Installing rrdtool"
+    tar fvx rrd/rrdtool.solaris.tar
+    mv rrdtool $INTRADO
+
+# build interface variable
+    SPACE=''
+    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $3}'`
+    do
+      INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
+      INTME="${INTME}${SPACE}${i}"
+      SPACE=' '
+    done
+
+    SPACE=''
+    for i in `ls /dev/sd? | sed -e "s/\/dev\///g"`
+    do
+      DRIVES="${DRIVES}${SPACE}${i}:${i}"
+      DRIVEME="${DRIVEME}${SPACE}`echo $i | sed -e "s/sd//g"`"
+      SPACE=' '
+    done
+
+    SPACE=''
+    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $5}'`
+    do
+      if [[ $i = '/' ]]
+      then
+        i='root'
+      fi
+      i=`echo $i | sed -e "s/\///g"`
+      DISKS="${DISKS}${SPACE}${i}"
+      SPACE=' '
+    done
+
+    echo ""
+    echo "The following three variables were extracted from the system. They will be inserted into the config file."
+    echo "Validate the entries before continuing."
+    echo ""
+    echo ""
+    echo "#"
+    echo "# Interface configuration. Interface:Label to be used on the graph"
+    echo "INTERFACES=\"$INTERFACES\""
+    echo ""
+    echo "#"
+    echo "# Drive configuration. Drive:Label to be used on the graph"
+    echo "DRIVES=\"$DRIVES\""
+    echo ""
+    echo "#"
+    echo "# Disk Space configuration; file system name list as displayed in the graph label"
+    echo "DISKS=\"$DISKS\""
+    echo ""
+
+    echo -n "Is the above configuration correct? [y]? "
+    read INPUT
+
+    if [[ -z $INPUT || $INPUT = 'y' ]]
+    then
+      echo "#" >> config
+      echo "# Interface configuration. Interface:Label to be used on the graph" >> config
+      echo "INTERFACES=\"$INTERFACES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Drive configuration. Drive:Label to be used on the graph" >> config
+      echo "DRIVES=\"$DRIVES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
+      echo "DISKS=\"$DISKS\"" >> config
+      echo "" >> config
+      cp config $INTRADO/rrdtool/
+      echo "rrdtool config file updated and installed"
+    else
+      echo "#" >> config
+      echo "# Interface configuration. Interface:Label to be used on the graph" >> config
+      echo "INTERFACES=\"$INTERFACES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Drive configuration. Drive:Label to be used on the graph" >> config
+      echo "DRIVES=\"$DRIVES\"" >> config
+      echo "" >> config
+      echo "#" >> config
+      echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
+      echo "DISKS=\"$DISKS\"" >> config
+      echo "" >> config
+      echo "rrdtool config file updated but not installed ($INTRADO/install/config)"
+      echo "Once you make changes, copy the config file to $INTRADO/rrdtool."
+    fi
+
+
+    COUNT=0
+    SPACE=''
+    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $3}'`
+    do
+      CPUS="${CPUS}${SPACE}${COUNT}"
+      SPACE=' '
+      COUNT=$(( $COUNT + 1 ))
+    done
+
+    echo ""
+    echo "This is the configuration update for the script build normally done in the rrdtool/install directory"
+    echo "The 'install' script is run which builds the data directories and the four scripts necessary for "
+    echo "monitoring the system."
+    echo ""
+    echo ""
+    echo "# Set up the number of cpu's here."
+    echo "CPUS=\"$CPUS\""
+    echo "# Set up the file systems here."
+    echo "DISKS=\"$DISKS\""
+    echo "# Set up the physical devices here"
+    echo "DRIVES=\"$DRIVEME\""
+    echo "# Set up the physical devices here"
+    echo "DEVICES=\"$INTME lo\""
+    echo ""
+
+    echo -n "Is the above configuration correct? [y]? "
+    read INPUT
+
+    if [[ -z $INPUT || $INPUT = 'y' ]]
+    then
+      echo "# Set up the number of cpu's here." >> install.me
+      echo "CPUS=\"$CPUS\"" >> install.me
+      echo "# Set up the file systems here." >> install.me
+      echo "DISKS=\"$DISKS\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DRIVES=\"$DRIVEME\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DEVICES=\"$INTME lo\"" >> install.me
+      cat install.2 >> install.me
+      cp install.me $INTRADO/rrdtool/install/install
+      cd $INTRADO/rrdtool/install
+      ./install
+      cp makerrd ..
+      cp updaterrd ..
+      cp makegraphs ..
+      cp makethumbs ..
+      cd $INTRADO/rrdtool
+      ./makerrd
+      echo "rrdtool configured, installed, and ready to run."
+    else
+      echo "# Set up the number of cpu's here." >> install.me
+      echo "CPUS=\"$CPUS\"" >> install.me
+      echo "# Set up the file systems here." >> install.me
+      echo "DISKS=\"$DISKS\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DRIVES=\"$DRIVEME\"" >> install.me
+      echo "# Set up the physical devices here" >> install.me
+      echo "DEVICES=\"$INTME lo\"" >> install.me
+      cat install.2 >> install.me
+      echo "rrdtool install.me file created. Validate and install."
+    fi
+
+  fi
+
+  echo ""
+  echo "The installation is complete assuming you don't need to make further changes to the configuration files."
+  echo "The rrdtool/install/install script can be reconfigured and run again. You'll need to manually copy "
+  echo "the config files down into the rrdtool directory if necessary"
+  echo ""
+  echo "The following lines need to be added to root's cron:"
+  echo ""
+
+  echo "# Master intrado script which runs scripts that run daily or less often"
+  echo "0 1 * * * /opt/intrado/bin/intrado > /dev/null 2>&1"
+  echo ""
+  echo "# Ensure OpenView continues to run"
+  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * /opt/intrado/bin/chkov > /dev/null 2>&1"
+  echo ""
+  echo "# Processes the sendmail queue every 15 minutes"
+  echo "0,15,30,45 * * * * /usr/sbin/sendmail -q"
+  echo ""
+  echo "# monitor rrdtool"
+  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * /opt/intrado/rrdtool/watchrrd > /dev/null 2>&1"
+  echo ""
+  echo "# generate rrdtool graphs"
+  echo "0,15,30,45 * * * * /opt/intrado/rrdtool/makegraphs > /dev/null 2>&1"
+  echo ""
+
+fi
+

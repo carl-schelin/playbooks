@@ -1,0 +1,84 @@
+#!/bin/ksh
+
+# linux based queries
+OS=`uname`
+if [[ ! $OS = "Linux" ]]
+then
+  echo "This script only works on a Linux platform"
+  exit 0
+fi
+
+# need to be root:
+RUNBY=`/usr/bin/id -u`
+if [[ ! $RUNBY -eq 0 ]]
+then
+  echo "This script must be run by root."
+  exit 0
+fi
+
+if [[ -z $1 ]]
+then
+  echo "You must pass the server ID so it can properly format the output for mysql"
+  exit 0
+fi
+
+echo "Build Date:"
+ls -ld /etc/modprobe.d | awk '{print $8," ",$6," ",$7}'
+
+echo ""
+
+echo "Hardware Info:"
+for i in `ls /dev/sd?`
+do
+  OUTPUT="$i `fdisk -l $i | grep \"Disk $i\" | awk '{print $3, \"GB\"}'`"
+  echo $OUTPUT
+done
+
+grep MemTotal: /proc/meminfo
+grep 'model name' /proc/cpuinfo
+
+echo ""
+
+echo "Filesystem Info:"
+df -kP | grep '^/dev' | awk '{print $1, " ", $6, " ", $2}'
+
+echo ""
+
+echo "Software Info:"
+cat /etc/redhat-release
+
+if [[ -f /opt/OV/bin/ovc ]]
+then
+  /opt/OV/bin/ovc -version
+else
+  echo "Openview not installed"
+fi
+
+if [[ -f /usr/openv/netbackup/bin/version ]]
+then
+  cat /usr/openv/netbackup/bin/version
+else
+  echo "Netbackup not installed"
+fi
+
+echo ""
+
+
+echo "Interface Info:"
+for i in `ls /etc/sysconfig/network-scripts/ifcfg* | grep -v lo | cut -f3 -d-`
+do
+  IFACE=$i
+  IPADDR=`ifconfig $IFACE | grep 'inet addr' | awk '{print $2}' | cut -f2 -d:`
+  HNAME=`grep $IPADDR /etc/hosts | awk '{print $2}'`
+  MAC=`ifconfig $IFACE | grep HWaddr | awk '{print $5}'`
+  MASK=`ifconfig $IFACE | grep 'Mask' | awk '{print $4}' | cut -f2 -d:`
+
+  echo "$HNAME $IFACE $IPADDR $MAC $MASK"
+done
+
+echo ""
+
+
+echo "Routing Info:"
+netstat -rn | egrep -v "(Kernel|Destination)" | awk '{print $1," ",$2," ",$3," ",$8}'
+

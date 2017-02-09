@@ -1,0 +1,23 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Update the nessus key pair
+#
+
+NESSUS=`grep nessus /etc/passwd | cut -f6 -d:`
+
+if [[ -d $NESSUS ]]
+then
+  if [[ ! -d $NESSUS/.ssh ]]
+  then
+    mkdir $NESSUS/.ssh
+    chown nessus $NESSUS/.ssh
+    chmod 700 $NESSUS/.ssh
+  fi
+
+  if [[ -f /opt/intrado/etc/nessus.id_rsa.pub ]]
+  then
+    cp /opt/intrado/etc/nessus.id_rsa.pub $NESSUS/.ssh/authorized_keys
+  fi
+fi
+

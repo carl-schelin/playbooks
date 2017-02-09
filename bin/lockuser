@@ -1,0 +1,189 @@
+#!/bin/ksh
+
+# lockuser - Lock users who have left Intrado
+# Carl Schelin
+# Documentation: https://incowk01/makers/index.php/Lockuser
+# Initially just lock users who no longer work at Intrado.
+# search for passwd. different locations for different versions of os but should always bein the path.
+#
+# TCS: Ubuntu returns 'L' vs 'LK'. It's always something...
+
+OS=`uname`
+ID=`id | cut -f2 -d= | cut -f1 -d\(`
+HOSTNAME=`hostname|cut -f1 -d.`
+PASSWD=`which passwd`
+ADMIN=/opt/intrado
+
+if [[ -f $ADMIN/etc/lockuser.output ]]
+then
+  rm $ADMIN/etc/lockuser.output
+fi
+
+if [[ -z $PASSWD ]]
+then
+  echo "Unable to locate passwd binary" > $ADMIN/etc/lockuser.output
+fi
+
+USERS=$ADMIN/etc/lockuser.dat
+if [[ $OS = "Linux" ]]
+then
+  USERTOLOCK=`/bin/grep -v "^#" $USERS`
+else
+  USERTOLOCK=`/usr/bin/grep -v "^#" $USERS`
+fi
+
+# check for root access
+if [[ $ID != 0 ]]
+then
+  echo "You must run this as root"
+  exit 1
+fi
+
+# if a centrify system, users are removed at the central location
+if [[ -f /usr/bin/adquery ]]
+then
+# returns 0 if joined
+# returns 10 if not joined
+  /usr/bin/adinfo > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo "Centrify managed system. Exiting."
+    exit 1
+  fi
+fi
+
+# exclude root and sysadmin accounts so script has to be modified to remove admins
+EXCLUDE="root kzupan cschelin tcooper jnoyes mchahud escott"
+NEWLOCKUSER=''
+for i in $USERTOLOCK
+do
+# to be sure, pass email address as well
+  UTL=`echo $i | cut -f1 -d:`
+  EML=`echo $i | cut -f2 -d:`
+
+  FLAG=0
+# change list here for new admins
+  for j in $EXCLUDE
+  do
+    if [[ $UTL = $j ]]
+    then
+      FLAG=1
+    fi
+  done
+  if [[ $FLAG = 0 ]]
+  then
+    if [[ ! -z $EML ]]
+    then
+      NEWLOCKUSER="$NEWLOCKUSER $UTL:$EML"
+    else
+      NEWLOCKUSER="$NEWLOCKUSER $UTL"
+    fi
+  fi
+done
+
+USERTOLOCK=$NEWLOCKUSER
+
+
+# Check the user list for users who are actually on the system, 
+# users who are users (id > 100) don't process them.
+
+NEWLOCKUSER=''
+for i in $USERTOLOCK
+do
+  UTL=`echo $i | cut -f1 -d:`
+  EML=`echo $i | cut -f2 -d:`
+
+  if [[ ! -z $EML ]]
+  then
+    OUTPUT=`grep "^$UTL:" /etc/passwd | grep -i $EML`
+  else
+    OUTPUT=`grep "^$UTL:" /etc/passwd`
+  fi
+  if [[ ! -z $OUTPUT ]]
+  then
+# user exists. get the user id
+    if [[ ! -z $EML ]]
+    then
+      USERID=`grep "^$UTL:" /etc/passwd | grep -i $EML | awk -F: '{print $3}'`
+    else
+      USERID=`grep "^$UTL:" /etc/passwd | awk -F: '{print $3}'`
+    fi
+    if [[ $USERID -gt 100 ]]
+    then
+      NEWLOCKUSER="$NEWLOCKUSER $UTL"
+    fi
+  fi
+done
+
+# copy any users that are left back to the list of users to remove
+USERTOLOCK=$NEWLOCKUSER
+
+# if no users are found, exit the script
+if [[ -z $USERTOLOCK ]]
+then
+  echo "No users to be archived on this system."
+  exit 1
+fi
+
+
+#######
+##  All done with the checks. Everyone from here on are locked.
+#######
+
+LOCKED=''
+if [[ $OS = 'SunOS' ]]
+then
+  for i in $USERTOLOCK
+  do
+# check for locked account
+    OUTPUT=`$PASSWD -s $i | awk '{print $2}'`
+    if [[ ! $OUTPUT = 'LK' ]]
+    then
+# lock account
+      $PASSWD -l $i
+      LOCKED="${LOCKED} ${i}"
+    fi
+  done
+fi
+
+if [[ $OS = 'Linux' ]]
+then
+  for i in $USERTOLOCK
+  do
+# check for locked account
+    OUTPUT=`$PASSWD -S $i | awk '{print $2}'`
+    if [[ ! $OUTPUT = 'locked.' ]]
+    then
+# Red Hat returns LK
+# Ubuntu returns L
+      if [[ ! $OUTPUT = 'LK' ]] && [[ ! $OUTPUT = 'L' ]]
+      then
+# lock account
+        $PASSWD -l $i
+        LOCKED="${LOCKED} ${i}"
+      fi
+    fi
+  done
+fi
+
+if [[ $OS = 'HP-UX' ]]
+then
+  for i in $USERTOLOCK
+  do
+# check for locked account
+# alock = YES|NO - Admin Lock
+    OUTPUT=`/usr/lbin/getprpw -m alock $i | awk -F= '{print $2}'`
+    if [[ ! $OUTPUT = 'YES' ]]
+    then
+# lock account
+      $PASSWD -l $i
+      LOCKED="${LOCKED} ${i}"
+    fi
+  done
+fi
+
+if [[ ! -z $LOCKED ]]
+then
+  echo "Locked $LOCKED account(s)" > $ADMIN/etc/locked.output
+fi
+

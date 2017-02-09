@@ -1,0 +1,533 @@
+#!/bin/ksh
+
+# intrado - Carl Schelin - 2011-05-24
+# Script to manage the intrado directory structure and execute intrado specific scripts
+#
+# Note: This script only runs the one-time only scripts. Anything that needs to run often 
+# during the day such as chkov or the rrdtool scripts should have their own entries in cron
+#
+# Changelog:
+# 2011-07-18 - Add logic for processing tasks weekly or monthly.
+# 2011-07-19 - Add rrdtool and intrado.log rolling.
+# 2011-08-17 - Correct chkusers.contrib to add bin to the path for the -f check. Added copy of anaconda-ks.cfg to etc if it exists.
+# 2011-08-18 - Correct script to run chkusers for all systems. Added a permissions change at the end of the script run as well.
+# 2011-08-20 - Added chkversion script, mainly to get openview version but others in the future.
+# 2011-09-06 - Added logroll option for some HP-UX boxes.
+# 2011-09-06 - Added logroll and scanraid option for some OSF1 boxes.
+# 2011-09-10 - added runscript function to ensure the completion of all scripts before final cleanup
+# 2011-09-22 - added a cleanup script
+# 2011-09-29 - Added the permissions and rights update to the various messages files.
+# 2011-09-30 - Added a capture of the output of prtdiag on Sun systems.
+# 2011-10-04 - Added a special cfg2html if statement for FreeBSD systems
+# 2011-10-05 - Added runmrc script check to retrieve the megarc configuration file
+# 2011-10-05 - Added run of sun explorer file
+# 2011-10-10 - Moved explorer run to the first of the month
+# 2011-10-12 - Moved chksudoers to run after chkusers since it depends on chkusers.dat
+# 2011-10-12 - Added a log entry in the runscript function to log if a script doesn't exist.
+# 2011-11-07 - Added a section for server specific execution requirements; wiki server being the first.
+# 2011-11-11 - Changed the above section so that it's looking for the specific $HOSTNAME and runs that as the script
+# 2011-11-29 - Added a weekly server specific execution method. Add .weekly to the hostname filename to execute scripts on Sunday mornings.
+# 2011-12-01 - Added the chksecurity script to check system security
+# 2011-12-06 - Change log file to go to the /opt/intrado/var directory
+# 2011-12-06 - Added a find statement to delete /opt/intrado/etc files that are older than 24 hours. This ensures valid values in the event of a failed script.
+# 2011-12-07 - Added directory creation code for the /opt/intrado/var and /opt/intrado/etc directories in case they're not created during installation
+# 2011-12-07 - Added chkarray for OSF1 systems (mainly lldb01)
+# 2012-01-21 - Added chksan for Sun and Linux systems.
+# 2012-02-27 - Added chkports to list the open ports and what program and owner has the port open
+# 2012-03-01 - Moved the roll/compress logs code section to the beginning of the script so logs for the 1st are written to a new log file.  
+# 2012-04-29 - Added the deletion of old rrdtool.gz files and clearing of the .output files (iostat, mpstat, and vmstat).
+# 2012-06-26 - Corrected an error in the rrdtool log section and added 'disk' as one of the rrdtool log files to be managed
+# 2012-09-05 - Added chkcluster to validate cluster state for those servers running either HP's Serviceguard or Redhat's cluster software. 
+# 2012-09-18 - Added a third chkusers script (chkusrs.Q4) for systems with ancient perl installations (4.0).
+# 2012-10-03 - Added chkapa script for HPUX bonding. Only runs on boxes where OS = hpux.         
+# 2013-01-09 - Modified the chksudoers portion for HP-UX to keep it from running on hpmiamn and hplgmtn due to timeout issues; chksudoers needs to be rewritten
+# 2013-01-21 - Added the rolling of wtmps files on the ALI nodes once a month.
+# 2013-02-19 - KZ: Reduced timeout polling interval to 5 seconds in the runscript function
+# 2013-06-26 - The picld on Sun boxes can cause prtdiag and cfg2html to hang until it's restarted. Added a restart item to be run once a month on Solaris systems.
+# 2013-09-11 - Added chkmessages, msgprocess, and hostname.exclude files to preprocess message log files
+# 2014-01-30 - Added chksys script which attempts to parse system info on Linux systems and write out a comma delimited file suitable for import.
+# 2014-02-06 - Added the management of an etc.tar.gz file to be used to do a mass download vs individual downloads.
+# 2014-03-12 - Restart picld every night
+# 2014-03-26 - Run a pwck script to validate the password and shadow files
+# 2014-04-01 - Added the ovupdate script which only runs 20140402 (one time)
+# 2014-04-16 - Remove the version files so the chkversion script generates a new set of files.
+# 2014-10-01 - Added check for bash vulnerability
+# 2014-10-11 - Removed gzip for etc due to not available in all locations.
+# 2014-10-23 - Changed clearing of the rrdtool .output files to cat /dev/null to the file to zero it out
+# 2014-11-09 - Added package capture scripts
+# 2014-11-12 - Added crash dump check script
+# 2015-01-19 - Added crash dump check script
+# 2015-02-19 - Added chkvx check script
+# 2015-06-09 - Added chkcentrify check script
+# 2015-06-12 - Added chkbackups to check whether backups are working or not.
+# 2015-06-22 - Added chkghost to parse out ghost vulnerabilities on Linux systems.
+# 2015-08-21 - Added chkmachinfo to gather the machinfo data from HP-UX systems.
+# 2015-10-01 - Added a 5 minute pause before creating the etc.tar file due to some slow processes (backups output for instance).
+# 2015-12-10 - Added a random start for the chkbackups scripts, using a time range between 2min-30min
+#            - Requested by JJ East through Remedy WO0000000007931
+#            - To be implemented starting on Mon 12/14/15
+# 2015-12-21 - Capture start/end time stamps of each script and output them along with elapsed time.
+# 2016-03-25 - Add update nessus key to the nessus account
+# 2016-05-19 - Added chktime to get chrony.conf, ntp.conf, and the output of time commands
+# 2016-07-07 - Added chksync to provide a report on the status of sync'd repos in Satellite.
+# 2016-11-10 - Added simplejson check for older RHEL5 systems.
+# 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
+# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left Intrado
+
+INTRADO=/opt/intrado
+HOSTNAME=`hostname|cut -f1 -d.`
+LOG=$INTRADO/var/intrado.log
+EXITCODE=0
+OS=`uname`
+DATE=`date +"%Y%m%d"`
+# Day of Week 1=Monday, 7=Sunday
+DOWEEK=`date +"%u"`
+# Day of Month, 01-31
+DOMONTH=`date +"%d"`
+
+# Roll and compress the logs at the beginning of the month
+if [[ $DOMONTH = '01' ]]
+then
+  cp $LOG $LOG.$DATE
+  cat /dev/null > $LOG
+  gzip -9 $LOG.$DATE
+fi
+
+# ensure directories exist and are writeable
+if [[ ! -d $INTRADO/var ]]
+then
+  mkdir -p $INTRADO/var
+  chown unixsvc:sysadmin $INTRADO/var
+  chmod 770 $INTRADO/var
+fi
+if [[ ! -d $INTRADO/etc ]]
+then
+  mkdir -p $INTRADO/etc
+  chown unixsvc:sysadmin $INTRADO/etc
+  chmod 770 $INTRADO/etc
+fi
+
+echo "`date` intrado script started" >> $LOG
+
+# First ensure the /opt/intrado directory structure is owned properly so data files can be written
+chown -R unixsvc:sysadmin $INTRADO
+chmod -R 770 $INTRADO
+
+# function to run the scripts and set a timeout. this ensures all scripts exit before the final cleanup
+runscript () {
+
+  if [[ -f $INTRADO/bin/$1 ]]
+  then
+    $INTRADO/bin/$1 >> $LOG &
+    PID=$!
+    BSTAMP=`date`
+
+# really just waiting for the scripts to end. don't expect it to take long.
+    TIMEOUT=600
+
+    while [[ $TIMEOUT -gt 0 ]]
+    do
+      /usr/bin/ps -p $PID > /dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        break
+      fi
+      TIMEOUT=$(($TIMEOUT - 5))
+      sleep 5
+    done
+    ESTAMP=`date`
+
+# if the timeout reaches 0, then the process was killed. report something
+
+    if [[ $TIMEOUT -le 0 ]]
+    then
+      echo "ERROR: $1 failed to exit in $TIMEOUT seconds ($BSTAMP / $ESTAMP)" >> $LOG
+      kill -KILL $PID
+    else
+      FINISHED=$((600 - $TIMEOUT))
+      echo "$1 ran in $FINISHED seconds ($BSTAMP / $ESTAMP)" >> $LOG
+    fi
+  else
+    echo "$1 script doesn't exist" >> $LOG
+  fi
+
+# pause to let the scripts finish 
+  sleep 3
+
+  return
+}
+
+# Next run any universal scripts; script that check for the operating system or are generic enough
+
+# Check for backups. Run early since it can take a few minutes to get the information
+# Added random start for the chkbackups scripts, using a range to between 2min-30min
+# Requested by JJ East through Remedy WO0000000007931
+# To be implemented starting on Mon 12/14/15
+rnumber=$((RANDOM%(1800-120+1)+120))
+sleep $rnumber
+runscript chkbackups
+
+# Ensures there's at least one entry in syslog
+runscript logme
+
+# Get interface information for the database
+runscript chkif
+
+# check for defunct processes
+runscript chkdef
+
+# Produces the output of the TMPROOT variable in sudoers
+runscript chksudo
+
+# check all raid devices
+runscript chkraid
+
+# check ethernet settings using ethtool
+runscript chketh
+
+# check security and performance settings
+runscript chkstack
+
+# retrieve version information from installed tools
+# first clean out the old version files
+if [[ $DOMONTH = '01' ]]
+then
+  rm $INTRADO/etc/*.version
+fi
+runscript chkversion
+
+# get prtdiag -lv from sun servers. Internal check of OS so only runs on Sun
+runscript chkprtdiag
+
+# initially get the setting for permitrootlogin from sshd_config. Others will be added.
+runscript chksecurity
+
+# get any san configuration info
+runscript chksan
+
+# gather and validate the open ports
+runscript chkports
+
+# gather and report on time
+runscript chktime
+
+# gather cluster state info 
+runscript chkcluster
+
+# gather cluster state info 
+runscript chkapa
+
+# gather system information
+runscript chksys
+
+# check the sync status of Satellite
+runscript chksync
+
+# gather system information
+runscript chkpwck
+
+# check for bash vulnerabiity
+runscript chkbash
+
+# check for ghost vulnerabiity
+runscript chkghost
+
+# Get list of all packages
+runscript chkpackages
+
+# Check for crash dumps
+runscript chkcrash
+
+# pre-process the messages files
+runscript chkmessages
+
+# Update the nessus key
+runscript nessus
+
+# install simplejson if it exists
+runscript simplejson
+
+# modify sudoers to add unixsvc as NOPASSWD for Ansible
+runscript modifysudo
+
+# lock users listed in the lockuser.dat file
+runscript lockuser
+
+# clean up on aisle three
+runscript cleanup
+
+# testing
+#runscript mailcarl
+
+###
+# any general processes
+###
+
+# a run once script
+#if [[ $DATE = '20140402' ]]
+#then
+#  runscript ovupdate
+#fi
+
+## Kevins ov hotfix check - retired 12/28/2015
+## runscript ovhfchk
+
+## Kevins chkomsa
+runscript chkomsa
+
+## Kevins setcentrify script
+runscript setcentrify
+
+# only on the first of the month
+if [[ $DOMONTH = '01' ]]
+then
+# run cfg2html on the first of the month
+  if [[ $OS = "FreeBSD" ]]
+  then
+    $INTRADO/cfghtml/cfg2html > $INTRADO/cfghtml/$HOSTNAME.html
+  else
+    $INTRADO/cfghtml/cfg2html >> $LOG
+  fi
+
+# run explorer if it exists
+  if [[ $OS = "SunOS" ]]
+  then
+    if [[ -f /opt/SUNWexplo/bin/explorer ]]
+    then
+      /opt/SUNWexplo/bin/explorer -q -P >> $LOG
+    fi
+  fi
+
+# compress the rrdtool logs if they exist
+  if [[ -d /var/rrdtool ]]
+  then
+    for i in cpu disk hdd load mem net ntp 
+    do
+      if [[ -f /var/rrdtool/data/rrdtool.$i ]]
+      then
+        mv -f /var/rrdtool/data/rrdtool.$i /var/rrdtool/data/rrdtool.$i.$DATE
+        gzip -9 /var/rrdtool/data/rrdtool.$i.$DATE
+        echo "Compressing rrdtool.$i" >> $LOG
+        find /var/rrdtool/data -name rrdtool.$i.*.gz -atime +90 -exec rm {} \;
+      fi
+    done
+
+# swap is overwritten each time; the others need a couple of runs for it to start presenting correct data
+    for i in iostat mpstat vmstat
+    do
+      cat /dev/null > /var/rrdtool/data/$i.output
+    done
+  fi
+
+# save the megarc configuration file
+  runscript runmrc
+
+fi
+
+
+# Now any unique OS based scripts. For instance, HP-UX has perl in two different locations
+
+# Linux
+if [[ $OS = "Linux" ]]
+then
+
+# Get interface information for the database
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+# make a backup of the anaconda kickstart config file
+  if [[ -f /root/anaconda-ks.cfg ]]
+  then
+    cp -p /root/anaconda-ks.cfg $INTRADO/etc/ >> $LOG
+  fi
+
+# ensure log files are set up correctly
+  chown root:sysadmin /var/log/messages*
+  chmod 644 /var/log/messages*
+
+fi
+
+# SunOS
+if [[ $OS = "SunOS" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+# ensure log files are set up correctly
+  chown root:sysadmin /var/adm/messages*
+  chmod 644 /var/adm/messages*
+
+# picl: Platform Information and Control Library
+# reset the picld daemon once a month as it causes cfg2html to stick.
+# restarting it releases the stuck processes so it doesn't matter when it's 
+# run (check path for systems not running svcs such as Solaris 8)
+# change it to run nightly since other processes might use it
+  if [[ -f /usr/sbin/svcadm ]]
+  then
+    /usr/sbin/svcadm restart picl
+  fi
+fi
+
+# HP-UX
+if [[ $OS = "HP-UX" ]]
+then
+
+# some systems have an updated perl in a Q4 directory
+  if [[ -f /usr/contrib/Q4/bin/perl ]]
+  then
+    runscript chkusers.Q4
+  else 
+    if [[ -f /usr/contrib/bin/perl ]]
+    then
+      runscript chkusers.contrib
+    fi
+  fi
+  if [[ -f /usr/bin/perl ]]
+  then
+    runscript chkusers
+  fi
+# retrieve sudoers information
+# temporarily prevent the script from running on these two servers 
+# the chksudoers script needs to be converted to perl as a test
+# it seems the script is causing timeouts; verified with Rob
+  if [[ $HOSTNAME != 'hplgmtn' ]] 
+  then
+    if [[ $HOSTNAME != 'hpmiamn' ]]
+    then
+      runscript chksudoers
+    fi
+  fi
+
+  if [[ $DOWEEK = '7' ]]
+  then
+    runscript logroll
+  fi
+
+  if [[ $DOMONTH = '01' ]]
+  then
+    if [[ -f $INTRADO/bin/$HOSTNAME ]]
+    then
+      runscript $HOSTNAME
+    fi
+  fi
+
+
+# ensure log files are set up correctly
+  chown root:sysadmin /var/adm/syslog/syslog.log
+  chmod 644 /var/adm/syslog/syslog.log
+
+  #Retrieve VX information
+  runscript chkvx
+
+# Retrieve machinfo data
+  runscript chkmachinfo
+
+fi
+
+# Tru64
+if [[ $OS = "OSF1" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+# check status of array
+  runscript chkarray
+
+  if [[ $DOWEEK = '2' ]]
+  then
+    runscript logroll
+  fi
+
+  if [[ $DOMONTH = '01' ]]
+  then
+    runscript scanraid
+  fi
+
+# ensure log files are set up correctly
+  chown root:sysadmin /var/cluster/members/{memb]/adm/messages*
+  chmod 644 /var/cluster/members/{memb]/adm/messages*
+
+fi
+
+# FreeBSD
+if [[ $OS = "FreeBSD" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+    runscript chksudoers
+
+# ensure log files are set up correctly
+  chown root:sysadmin /var/log/messages*
+  chmod 644 /var/log/messages*
+
+fi
+
+#====================================================================
+# Run chk_centrify - Verfiy Centrify is in a connected State
+#====================================================================
+runscript chkcentrify
+
+#====================================================================
+# Section for server specific scripts
+# to use, create a script that's the same as the output of the hostname command
+# any commands in that script will be executed only on that system.
+# make sure it matches `hostname` and not what is used to access the host as that 
+# can be two different things.
+#====================================================================
+
+if [[ -f $INTRADO/bin/$HOSTNAME ]]
+then
+  runscript $HOSTNAME
+fi
+
+# added bit to identify and run scripts that run weekly. simply add the extension '.weekly.' to 
+# hostname of the server as the file name to execute scripts on Sunday's run.
+if [[ $DOWEEK = "07" ]]
+then
+  if [[ -f $INTRADO/bin/$HOSTNAME.weekly ]]
+  then
+    runscript $HOSTNAME.weekly
+  fi
+fi
+
+# And finish the log
+echo "`date` intrado script ended" >> $LOG
+echo "======================" >> $LOG
+
+# Ensure the /opt/intrado directory structure is owned properly so data files can be read
+chown -R unixsvc:sysadmin $INTRADO
+chmod -R 770 $INTRADO
+find $INTRADO/etc -type f -exec chmod 660 {} \;
+find $INTRADO/var -type f -exec chmod 660 {} \;
+
+# Clean up the old data files in case they exist.
+find $INTRADO/etc -atime +1 -exec rm {} \;
+
+# Finally create a tar file of all the data in the etc directory. Give it 5 minutes before performing this step
+sleep 300
+if [[ -f $INTRADO/etc.tar.gz ]]
+then
+  rm $INTRADO/etc.tar.gz
+fi
+if [[ -f $INTRADO/etc.tar ]]
+then
+  rm $INTRADO/etc.tar
+fi
+cd $INTRADO/etc
+tar cf ../etc.tar *
+
+exit $EXITCODE
+

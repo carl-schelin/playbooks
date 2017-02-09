@@ -1,0 +1,36 @@
+#!/bin/ksh
+
+# chktime - get ntp.conf, chrony.conf, and the output of the two into chktime.output
+# By: Carl Schelin
+#
+
+ADMIN=/opt/intrado
+
+if [[ -f /etc/chrony.conf ]]
+then
+  cp /etc/chrony.conf $ADMIN/etc
+  if [[ -f /bin/chronyc ]]
+  then
+    /bin/chronyc -n sources > $ADMIN/etc/chktime.output
+  fi
+fi
+
+if [[ -f /etc/ntp.conf ]]
+then
+  cp /etc/ntp.conf $ADMIN/etc
+  if [[ -f /usr/sbin/ntpq ]]
+  then
+    /usr/sbin/ntpq -pn > $ADMIN/etc/chktime.output
+  fi
+fi
+
+# for the Sun gear mainly
+if [[ -f /etc/inet/ntp.conf ]]
+then
+  cp /etc/inet/ntp.conf $ADMIN/etc
+  if [[ -f /usr/sbin/ntpq ]]
+  then
+    /usr/sbin/ntpq -pn > $ADMIN/etc/chktime.output
+  fi
+fi
+

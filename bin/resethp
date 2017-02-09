@@ -1,0 +1,126 @@
+#!/bin/ksh
+
+# resethp - Carl Schelin
+# Full reset of a user on HP-UX
+# 2014-12-05 - Initial
+
+OS=`uname`
+# by default reset the user's password too.
+RESET='yes'
+OPTIONS="uid bootpw audid audflg mintm maxpwln exptm lftm spwchg upwchg acctexp llog expwarn usrpick syspnpw rstrpw "
+OPTIONS="${OPTIONS} nullpw admnum syschpw sysltpw timeod slogint ulogint sloginy culogin uloginy umaxlntr alock lockout"
+
+if [[ ! $OS = 'HP-UX' ]]
+then
+  echo "This only works on HP-UX systems"
+  exit 1
+fi
+
+if [[ -z $1 ]]
+then
+  echo "resethp"
+  echo ""
+  echo "Usage:"
+  echo "resethp username | reset username"
+  echo ""
+  exit 1
+fi
+
+if [[ $1 = 'reset' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "resethp"
+    echo ""
+    echo "Usage:"
+    echo "resethp reset username"
+    echo ""
+    exit 1
+  fi
+  RESETPW='no'
+  shift
+fi
+
+USER=`grep "^$1:" /etc/passwd | cut -f1 -d:`
+if [[ -z $USER ]]
+then
+  echo "Invalid user name. User $1 not in /etc/passwd"
+  exit 1
+fi
+
+# getting userinfo
+if [[ -f /tmp/resethp.current ]]
+then
+  rm /tmp/resethp.current
+fi
+
+for i in $OPTIONS
+do
+  /usr/lbin/getprpw -m $i $1 >> /tmp/resethp.current
+done
+
+# doing a -v -k reset password then -e fails to reset a disabled user account.
+# doing -v -k -e reset password then -v -k -e seems to clear disabled user accounts.
+/usr/lbin/modprpw -v $1
+/usr/lbin/modprpw -k $1
+/usr/lbin/modprpw -e $1
+
+if [[ $RESETPW = 'yes' ]]
+then
+  /opt/intrado/bin/password
+  /usr/bin/passwd $1
+
+  /usr/lbin/modprpw -v $1
+  /usr/lbin/modprpw -k $1
+  /usr/lbin/modprpw -e $1
+fi
+
+if [[ -f /tmp/resethp.new ]]
+then
+  rm /tmp/resethp.new
+fi
+
+for i in $OPTIONS
+do
+  /usr/lbin/getprpw -m $i $1 >> /tmp/resethp.new
+done
+
+diff /tmp/resethp.current /tmp/resethp.new
+
+# values:
+#          uid            user uid
+#          bootpw         boot authorization flag
+#          audid          audit id
+#          audflg         audit flag
+#          mintm          minimum time between password changes
+#          maxpwln        maximum password length
+#          exptm          password expiration time
+#          lftm           password lifetime
+#          spwchg         last successful password change time
+#          upwchg         last unsuccessful password change time
+#          acctexp        account expiration time
+#          llog           last login time interval
+#          expwarn        password expiration warning time
+#          usrpick        whether user picks password, YES/NO/DFT
+#          syspnpw        whether system generates pronounceable passwords, YES/NO/DFT
+#          rstrpw         whether password is restricted, i.e, checked for triviality, YES/NO/DFT
+#          nullpw         NULL passwords are allowed, YES/NO/DFT.  Not recommended!
+#          syschpw        whether system generates passwords having characters only, YES/NO/DFT
+#          sysltpw        whether system generates passwords having letters only, YES/NO/DFT
+#          timeod         time of day allowed for login
+#          slogint        time of last successful login
+#          ulogint        time of last unsuccessful login
+#          sloginy        tty of last successful login
+#          culogin        consecutive number of unsuccessful logins so far
+#          uloginy        tty of last unsuccessful login
+#          umaxlntr       maximum unsuccessful login tries
+#          alock          administrator lock, YES if on, NO if off, DFT if not set.
+#          lockout        returns the reason for a lockout in a "bit" valued string, where 0 = condition not present, 1 is present.  The position, left to right represents:
+#                         1 past password lifetime
+#                         2 past last login time (inactive account)
+#                         3 past absolute account lifetime
+#                         4 exceeded unsuccessful login attempts
+#                         5 password required and a null password
+#                         6 admin lock
+#                         7 password is a *
+#

@@ -1,0 +1,334 @@
+# Set up time servers here
+TIMESVRS="10.100.228.31 192.168.200.20"
+
+###
+### Don't forget to comment out any unnecessary CPUs!
+###
+
+#
+### Make the data directories if they don't exist
+
+if [[ ! -d /var/rrdtool/data ]]
+then
+
+  echo "Creating data directories"
+
+  mkdir -p /var/rrdtool/data
+  mkdir /var/rrdtool/graphs
+fi
+
+#
+### Creation of the makerrd script.
+#
+
+if [[ -f makerrd.header ]]
+then
+
+  echo "Creating makerrd"
+
+  cp makerrd.header makerrd
+  cat makerrd.load >> makerrd
+  cat makerrd.memory >> makerrd
+
+### CPU
+
+  cat makerrd.cpu.header >> makerrd
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" makerrd.cpu.def >> makerrd
+  done
+
+  cat makerrd.cpu.footer >> makerrd
+
+### Network
+
+  cat makerrd.network.header >> makerrd
+
+  for i in $DEVICES
+  do
+    sed -e "s/INTERFACE/$i/g" makerrd.network.def >> makerrd
+  done
+
+  cat makerrd.network.footer >> makerrd
+
+### Disk
+
+  cat makerrd.disk.header >> makerrd
+
+  for i in $DISKS
+  do
+    sed -e "s/DRIVE/$i/g" makerrd.disk.def >> makerrd
+  done
+
+  cat makerrd.disk.footer >> makerrd
+
+### NTP
+
+#  cat makerrd.ntp.header >> makerrd
+
+#  COUNT=0
+#  for i in $TIMESVRS
+#  do
+#    sed -e "s/NUMBER/$COUNT/g" makerrd.ntp.def >> makerrd
+#    COUNT=$(( $COUNT + 1 ))
+#  done
+
+#  cat makerrd.ntp.footer >> makerrd
+
+### Disk Utilization
+
+  cat makerrd.util.header >> makerrd
+
+  for i in $DRIVES
+  do
+    sed -e "s/DRIVE/$i/g" makerrd.util.def >> makerrd
+  done
+
+  cat makerrd.util.footer >> makerrd
+
+# Finish
+
+  cat makerrd.footer >> makerrd
+
+else
+  echo "Unable to create makerrd"
+fi
+
+#
+### Creation of the updaterrd script.
+#
+
+if [[ -f updaterrd.header ]]
+then
+
+  echo "Creating updaterrd"
+
+  cp updaterrd.header updaterrd
+  cat updaterrd.load >> updaterrd
+  cat updaterrd.memory >> updaterrd
+
+### Time Servers
+
+#  cat updaterrd.ntp.header >> updaterrd
+
+#  for i in $TIMESVRS
+#  do
+#    sed -e "s/TIME/$i/g" updaterrd.ntp.def >> updaterrd
+#  done
+
+#  cat updaterrd.ntp.footer >> updaterrd
+
+### CPU
+
+  cat updaterrd.cpu.header >> updaterrd
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" updaterrd.cpu.def >> updaterrd
+  done
+
+  cat updaterrd.cpu.footer >> updaterrd
+
+### Disk
+
+  cat updaterrd.disk.header >> updaterrd
+
+  for i in $DISKS
+  do
+    if [[ $i = root ]]
+    then
+      sed -e "s/DRIVE//g" updaterrd.disk.def >> updaterrd
+    else
+      sed -e "s/DRIVE/$i/g" updaterrd.disk.def >> updaterrd
+    fi
+  done
+
+  cat updaterrd.disk.footer >> updaterrd
+
+### Utilization
+
+  cat updaterrd.util.header >> updaterrd
+
+  for i in $DRIVES
+  do
+    sed -e "s/DRIVE/$i/g" updaterrd.util.def >> updaterrd
+  done
+
+  cat updaterrd.util.footer >> updaterrd
+
+### Network setup
+
+  cat updaterrd.network.header >> updaterrd
+
+  for i in $DEVICES
+  do
+    sed -e "s/INTERFACE/$i/g" updaterrd.network.def >> updaterrd
+  done
+
+  cat updaterrd.network.footer >> updaterrd
+
+# Finish
+
+  cat updaterrd.footer >> updaterrd
+
+else
+  echo "Unable to create updaterrd"
+fi
+
+  ########################################
+#### Creation of the makegraphs script. ####
+  ########################################
+
+if [[ -f makegraphs.header ]]
+then
+
+  echo "Creating makegraphs"
+
+  cp makegraphs.header makegraphs
+
+### CPUs
+#
+# Comment out any unneeded CPUs from the appropriate block at the end of this section.
+
+  cat makegraphs.cpu.header >> makegraphs
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" makegraphs.cpu.def >> makegraphs
+  done
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" makegraphs.cpu.cdef >> makegraphs
+  done
+
+# Color listing array.
+  set -A COLORSYS "660000" "458B00" "4B0082" "0000CC" "CD8500" "B3C95A" "0099CC" "68228B"
+  set -A COLORNIC "FF0000" "5DFC0A" "FF00FF" "0033FF" "FFAA00" "C8F526" "00C5CD" "AA00FF"
+  set -A COLORUSR "FF6103" "00FFAA" "FF1493" "0099FF" "FFCC11" "ADFF2F" "00E5EE" "CC00FF"
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/${i}/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/${COLORSYS[${i}]}/g" | sed -e "s/COLORNIC/${COLORNIC[${i}]}/g" | sed -e "s/COLORUSR/${COLORUSR[${i}]}/g" >> makegraphs
+  done
+
+  cat makegraphs.cpu.footer >> makegraphs
+
+### NTP
+
+#  cat makegraphs.ntp.header >> makegraphs
+
+#  COUNT=0
+#  for i in $TIMESVRS
+#  do
+#    sed -e "s/NUMBER/$COUNT/g" makegraphs.ntp.def >> makegraphs
+#    COUNT=$(( COUNT + 1 ))
+#  done
+
+# Copy the servers into a temp variable so it can be shifted
+#  TIMEHOLD=$TIMESVRS
+#  sed -e "s/NUMBER/0/g" makegraphs.ntp.graph | sed -e "s/SERVER/$TIMEHOLD/g" | sed -e "s/COLOR/FFEE00/g" >> makegraphs
+#  shift $TIMEHOLD
+#  sed -e "s/NUMBER/1/g" makegraphs.ntp.graph | sed -e "s/SERVER/$TIMEHOLD/g" | sed -e "s/COLOR/FFCC00/g" >> makegraphs
+#  shift $TIMEHOLD
+
+#  cat makegraphs.ntp.footer >> makegraphs
+
+### Load
+
+  cat makegraphs.load >> makegraphs
+  cat makegraphs.memory >> makegraphs
+  cat makegraphs.queues >> makegraphs
+  cat makegraphs.swap >> makegraphs
+  cat makegraphs.network >> makegraphs
+
+# the following files are called with entries from config
+  cat makegraphs.disk >> makegraphs
+  cat makegraphs.util >> makegraphs
+  cat makegraphs.xput >> makegraphs
+
+# Finish
+
+  cat makegraphs.footer >> makegraphs
+
+else
+  echo "Unable to create makegraphs"
+fi
+
+#
+### Creation of the makethumbs script.
+
+if [[ -f makethumbs.header ]]
+then
+
+  echo "Creating makethumbs"
+
+  cp makethumbs.header makethumbs
+
+#
+### CPUs
+#
+# Comment out any unneeded CPUs from the appropriate block at the end of this section.
+
+  cat makethumbs.cpu.header >> makethumbs
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" makethumbs.cpu.def >> makethumbs
+  done
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/$i/g" makethumbs.cpu.cdef >> makethumbs
+  done
+
+# Color listing array.
+  set -A COLORSYS "660000" "458B00" "4B0082" "0000CC" "CD8500" "B3C95A" "0099CC" "68228B"
+  set -A COLORNIC "FF0000" "5DFC0A" "FF00FF" "0033FF" "FFAA00" "C8F526" "00C5CD" "AA00FF"
+  set -A COLORUSR "FF6103" "00FFAA" "FF1493" "0099FF" "FFCC11" "ADFF2F" "00E5EE" "CC00FF"
+
+  for i in $CPUS
+  do
+    sed -e "s/NUMBER/${i}/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/${COLORSYS[${i}]}/g" | sed -e "s/COLORNIC/${COLORNIC[${i}]}/g" | sed -e "s/COLORUSR/${COLORUSR[${i}]}/g" >> makethumbs
+  done
+
+  cat makethumbs.cpu.footer >> makethumbs
+
+### NTP
+
+#  cat makethumbs.ntp.header >> makethumbs
+
+#  COUNT=0
+#  for i in $TIMESVRS
+#  do
+#    sed -e "s/NUMBER/$COUNT/g" makethumbs.ntp.def >> makethumbs
+#    COUNT=$(( COUNT + 1 ))
+#  done
+
+#  sed -e "s/NUMBER/0/g" makethumbs.ntp.graph | sed -e "s/COLOR/FFEE00/g" >> makethumbs
+#  sed -e "s/NUMBER/1/g" makethumbs.ntp.graph | sed -e "s/COLOR/FFCC00/g" >> makethumbs
+
+#  cat makethumbs.ntp.footer >> makethumbs
+
+### And the rest
+
+  cat makethumbs.load >> makethumbs
+  cat makethumbs.memory >> makethumbs
+  cat makethumbs.queues >> makethumbs
+  cat makethumbs.swap >> makethumbs
+  cat makethumbs.network >> makethumbs
+
+# the following files are called with entries from config
+  cat makethumbs.disk >> makethumbs
+  cat makethumbs.util >> makethumbs
+  cat makethumbs.xput >> makethumbs
+
+# Finish
+
+  cat makethumbs.footer >> makethumbs
+
+else
+  echo "Unable to create makethumbs"
+fi
+

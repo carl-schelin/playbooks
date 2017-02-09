@@ -1,0 +1,28 @@
+#!/bin/ksh
+
+# logme - Carl Schelin
+#   Intent is to just run the logger command once a day to have at least one guarenteed entry in /var/adm/messages
+#   Solaris usage right now.
+
+UNAME=`uname`
+
+if [[ $UNAME = "SunOS" ]]
+then
+  /usr/bin/logger -p err -t "logme" "Testing the functionality of syslog."
+  exit 0
+fi
+
+if [[ $UNAME = "Linux" ]]
+then
+  /usr/bin/logger -p err -t "logme" "Testing the functionality of syslog."
+  exit 0
+fi
+
+if [[ $UNAME = "HP-UX" ]]
+then
+  /usr/bin/logger -p err -t "logme" "Testing the functionality of syslog."
+  exit 0
+fi
+
+exit 1
+

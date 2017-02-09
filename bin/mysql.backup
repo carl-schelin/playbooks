@@ -1,0 +1,97 @@
+#!/bin/ksh
+
+# mysql.backup - 
+#  1. Dump the mysql databases
+#  2. Note changes with yesterday's databases
+#  3. Archive the directory
+#  4. Delete yesterday's directory
+#  5. E-mail report if there are changes
+
+# set up variables
+ROOT="/var/tmp/mysql"
+DATE=`date +"%Y%m%d"`
+LOG="$ROOT/mysql.$DATE/mysql.report"
+LOC=/var/www/htdocs
+SECURE=/var/www/htsecure
+LINECOMP=0
+WHOCARES="carl.schelin@intrado.com"
+
+# get old date if any
+OLDDATE=`ls -d $ROOT/mysql.* | egrep -v "(tar.gz|$DATE)" | tail -1 | cut -f2 -d.`
+
+# create new directory for backups
+if [ ! -d $ROOT/mysql.$DATE ]
+then
+  mkdir $ROOT/mysql.$DATE
+fi
+
+# ensure mysql can actually write to the directory
+chmod 775 $ROOT/mysql.$DATE
+chown mysql:mysql $ROOT/mysql.$DATE
+
+# dump the databases out
+echo "Beginning mysql report: $DATE" > $LOG
+
+# build the database list
+echo "Extracting database list" >> $LOG
+DBALL=""
+for i in `ls -la $LOC | grep "^d" | awk '{print $9}'`
+do
+  if [[ -f $LOC/$i/LocalSettings.php ]]
+  then
+    DB=`grep wgDBname $LOC/$i/LocalSettings.php | awk -F\" '{print $2}'`
+    DBALL="$DBALL $DB"
+  fi
+done
+
+# now the secure list of sites
+for i in `ls -la $SECURE | grep "^d" | awk '{print $9}'`
+do
+  if [[ -f $SECURE/$i/LocalSettings.php ]]
+  then
+    DB=`grep wgDBname $SECURE/$i/LocalSettings.php | awk -F\" '{print $2}'`
+    DBALL="$DBALL $DB"
+  fi
+done
+
+for i in information_schema mysql $DBALL
+do
+  LINECOMP=$((LINECOMP + 2))
+# create new database directory for backups
+  if [ ! -d $ROOT/mysql.$DATE/$i ]
+  then
+    mkdir -p $ROOT/mysql.$DATE/$i
+  fi
+
+# ensure mysql can actually write to the database directory
+  chmod -R 775 $ROOT/mysql.$DATE
+  chown -R mysql:mysql $ROOT/mysql.$DATE
+
+  echo "Dumping $i" >> $LOG
+  /usr/bin/mysqldump --tab=$ROOT/mysql.$DATE/$i --opt $i --user=root --password=this4now!! >> $LOG
+
+  if [ ! -d $ROOT/mysql.$OLDDATE ]
+  then
+    echo "First time creation of mysql backups (previous day's backup doesn't exist)" >> $LOG
+  fi
+done
+LINECOMP=$((LINECOMP + 1))
+
+# tar and compress today's files so it can be backed up to the remote server, but keep the current backup around.
+cd $ROOT
+tar cf mysql.$DATE.tar mysql.$DATE
+gzip -9 mysql.$DATE.tar
+
+# check to make sure old backup exists before removing yesterday's data directory
+if [ -f $ROOT/mysql.$OLDDATE.tar.gz ]
+then
+  rm -rf $ROOT/mysql.$OLDDATE
+else
+  echo "Unable to archive $ROOT/mysql.$OLDDATE" | mailx -s "MySQL archive failure" $WHOCARES
+fi
+
+# finally, remove all old backups, pick 30 days as a start and let's see how long that works WRT available space.
+find $ROOT -name mysql.\*.gz -prune -atime +15 -exec rm {} \;
+
+exit 0
+
