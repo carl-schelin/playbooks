@@ -1,0 +1,25 @@
+#!/bin/ksh
+
+# chkbackups - Determine the date of the last backup and alert if it's longer than 7 days.
+# Documentation: https://incowk01/makers/index.php?title=Chkbackups
+# Owner: Carl Schelin
+# updated to remove the start date of the beginning of the month. It might take a bit 
+# but we'll get an accurate representation of when the last backup occurred.
+
+PROGNAME="chkbackups"
+OS=`uname`
+
+if [[ -f /opt/intrado/etc/backups.output ]]
+then
+  rm /opt/intrado/etc/backups.output
+fi
+
+if [[ -f /usr/openv/netbackup/bin/bpclimagelist ]]
+then
+  /usr/openv/netbackup/bin/bpclimagelist > /opt/intrado/etc/backups.output
+else
+  echo "Netbackup not installed" /opt/intrado/etc/backups.output
+fi
+
+exit 0
+

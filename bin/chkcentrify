@@ -1,0 +1,38 @@
+#!/bin/bash
+#================================================================
+# PURPOSE: Check CentrifyDC Mode
+# AUTHOR : JSCHREOTER
+# DATE:  : 06/09/2015
+#
+# INFO   : Run adinfo and check mode for connectivity
+#          Script should output nothing if no issues reported
+#
+#          Added CHK_JOIN, this can be disabled, set to 0
+#
+#          For readablity, set ts=3
+#
+#================================================================
+ADINFO="/usr/bin/adinfo"
+CHK_JOIN=1  # 1 = on, 0 = off
+
+# Check to see that Centrify is installed
+# Should be a more definity way
+if [ -x "$ADINFO" ];then
+
+	NOT_JOINED=0
+	if [ "$CHK_JOIN" ];then
+		NOT_JOINED=`adinfo | head -1 | grep -c "Not joined to any domain"`
+	fi
+
+	# If JOINED, then check centrifydc mode
+	if [ "$NOT_JOINED" -eq 0 ];then
+		# Check to see if joined to Domain
+		# Execute $CMD
+		DCMODE=`$ADINFO | awk '/CentrifyDC/ { print $3 }'`
+		if [ "$DCMODE" != "connected" ];then
+			echo "Centrify ALERT: centrifyDC mode is \"$DCMODE\""
+		fi
+	else
+		echo "WARNING: $ADINFO found, but not joined to a domain"
+	fi
+fi

@@ -1,0 +1,90 @@
+#!/usr/bin/ksh
+
+# Check the version of bash installed on the various platforms.
+# Documentation: https://incowk01/makers/index.php?title=Chkbash
+# updated to retrieve the CVE info from the changelog on Red Hat and CentOS
+OS=`uname`
+INTRADO=/opt/intrado
+LOG=$INTRADO/etc/bash.vulnerable
+CVE=$INTRADO/etc/bash.cve
+BIN=$INTRADO/bin
+OUTPUT=''
+
+# try to bypass the 'can't find bash' problem on hp-ux
+if [[ -f /bin/bash ]]
+then
+  BASHBIN=/bin/bash
+fi
+if [[ -f /usr/bin/bash ]]
+then
+  BASHBIN=/usr/bin/bash
+fi
+if [[ -f /usr/local/bin/bash ]]
+then
+  BASHBIN=/usr/local/bin/bash
+fi
+if [[ -f /opt/OpenSource/bin/bash ]]
+then
+  BASHBIN=/opt/OpenSource/bin/bash
+fi
+
+if [[ ! -z $BASHBIN ]]
+then
+
+  if [[ ! -d $INTRADO/log ]]
+  then
+    mkdir $INTRADO/log
+  fi
+
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ -f /etc/redhat-release ]]
+    then
+      BASH=`rpm -qa | grep bash`
+      VERSION=`rpm -qi $BASH | grep Version | awk '{print $3}'`
+      RELEASE=`rpm -qi $BASH | grep Release | awk '{print $3}'`
+      rpm -q --changelog bash | grep -i cve > $CVE
+      echo "$VERSION $RELEASE" > $LOG
+    fi
+    if [[ -f /etc/centos-release ]]
+    then
+      BASH=`rpm -qa | grep bash`
+      VERSION=`rpm -qi $BASH | grep Version | awk '{print $3}'`
+      RELEASE=`rpm -qi $BASH | grep Release | awk '{print $3}'`
+      rpm -q --changelog bash | grep -i cve > $CVE
+      echo "$VERSION $RELEASE" > $LOG
+    fi
+    if [[ -f /etc/debian_version ]]
+    then
+      VERSION=`dpkg -l | grep "bash   " | awk '{print $2" "$3}'`
+# test vulnerabilities
+      $BASHBIN $BIN/bashvul > /dev/null 2>&1
+      echo $VERSION > $LOG
+    fi
+  fi
+
+  if [[ $OS = 'SunOS' ]]
+  then
+    VERSION=`$BASHBIN --version | head -1`
+
+    echo $VERSION > $LOG
+# test vulnerabilities
+    $BASHBIN $BIN/bashvul > /dev/null 2>&1
+  fi
+
+  if [[ $OS = 'HP-UX' ]]
+  then
+    VERSION=`$BASHBIN --version | head -1`
+
+    echo $VERSION > $LOG
+
+# test vulnerabilities
+    $BASHBIN $BIN/bashvul > /dev/null 2>&1
+  fi
+
+# Check for number of running bash processes
+  ps -ef | grep bash | grep -v grep >> $LOG
+else
+  echo "Bash not installed" > $LOG
+fi
+
