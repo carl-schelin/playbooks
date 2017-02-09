@@ -1,0 +1,92 @@
+#!/bin/ksh
+
+# Script to set configuration at the request of Preston Thornton
+# requirements:
+# change all servers with OpenView agents except the openview management servers
+#   check the status of the agent
+# get the current value
+# if it's not right (CERTSVR), change it
+# check the final value to ensure the change worked
+
+HOSTNAME=`hostname|cut -f1 -d.`
+ADMIN=/opt/intrado
+LOG=$ADMIN/etc/ovupdate.output
+
+# OV Version 9
+CERTSVR=lnmtcodcom1vip.scc911.com
+
+# remove old log file if exists
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+# exclude the following servers:
+for i in incoov01 inflov01 lnmtcodcom10 lnmtcodcom20 lnmtcodcnm10 miamfldcom10 miamfldcnm10
+do
+  if [[ $HOSTNAME = $i ]]
+  then
+    echo "$HOSTNAME is an Openview Management Server and will not be updated" >> $LOG
+    exit 0
+  fi
+done
+
+# check to see if openview is installed
+VERSION=''
+if [[ -f /opt/OV/bin/ovc ]]
+then
+  VERSION=`/opt/OV/bin/ovc -version`
+fi
+
+if [[ -z $VERSION ]]
+then
+  echo "$HOSTNAME doesn't have an OpenView agent installed" >> $LOG
+  exit 0
+fi
+
+# looks ready, start retrieving values
+OPC_PRIMARY_MGR=`/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR`
+CERTIFICATE_SERVER=`/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER`
+MANAGER=`/opt/OV/bin/ovconfget sec.core.auth MANAGER`
+
+# check current settings and change if not correct
+if [[ $OPC_PRIMARY_MGR != $CERTSVR ]]
+then
+  echo "$HOSTNAME OPC_PRIMARY_MGR=$OPC_PRIMARY_MGR, resetting..." >> $LOG
+  /opt/OV/bin/ovconfchg -ns eaagt -set OPC_PRIMARY_MGR  $CERTSVR
+fi
+
+if [[ $CERTIFICATE_SERVER != $CERTSVR ]]
+then
+  echo "$HOSTNAME CERTIFICATE_SERVER=$CERTIFICATE_SERVER, resetting..." >> $LOG
+  /opt/OV/bin/ovconfchg -ns sec.cm.client -set CERTIFICATE_SERVER $CERTSVR
+fi
+
+if [[ $MANAGER != $CERTSVR ]]
+then
+  echo "$HOSTNAME MANAGER=$MANAGER, resetting..." >> $LOG
+  /opt/OV/bin/ovconfchg -ns sec.core.auth -set MANAGER $CERTSVR
+fi
+
+OPC_PRIMARY_MGR=`/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR`
+echo "$HOSTNAME OPC_PRIMARY_MGR=$OPC_PRIMARY_MGR" >> $LOG
+CERTIFICATE_SERVER=`/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER`
+echo "$HOSTNAME CERTIFICATE_SERVER=$CERTIFICATE_SERVER" >> $LOG
+MANAGER=`/opt/OV/bin/ovconfget sec.core.auth MANAGER`
+echo "$HOSTNAME MANAGER=$MANAGER" >> $LOG
+
+# Restart the agent (just in case)
+/opt/OV/bin/ovc -restart
+
+# Status of the agent
+/opt/OV/bin.ovc -status >> $LOG
+
+# Since I'm here, if the flag file exists, remove it.
+if [[ -f $ADMIN/var/openview.stop ]]
+then
+  echo "$HOSTNAME Cleared openview stop file"
+  rm $ADMIN/var/openview.stop
+fi
+
+exit 0
+

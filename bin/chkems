@@ -1,0 +1,46 @@
+#!/bin/ksh
+
+# chkapa by Paul Pietras
+# documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
+# This additional script is to supplement the network check in chkif script for hpux auto port aggregation 
+# Future versions of this script could contain checks for linux bonding or solaris ipmp. 
+
+OS=`uname`
+VERS=`uname -a | awk '{print $3}'`
+INTRADO="/opt/intrado"
+
+if [[ $OS = "HP-UX" ]]
+then
+  if [[ -s /etc/lanmon/lanconfig.ascii ]]
+  then 
+    if [[ $VERS = 'B.11.31' ]]	
+    then
+      # use nwmgr utility   
+      echo "APA Configured Interfaces" > $INTRADO/etc/apa.output 
+      echo "-------------------------" >> $INTRADO/etc/apa.output
+      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> $INTRADO/etc/apa.output
+      echo "Active Interfaces" >> $INTRADO/etc/apa.output	
+      echo "-----------------" >> $INTRADO/etc/apa.output
+      /usr/sbin/nwmgr | /usr/bin/grep UP >> $INTRADO/etc/apa.output  
+      echo "APA interfaces and active membership" >> $INTRADO/etc/apa.output 
+      echo "------------------------------------" >> $INTRADO/etc/apa.output
+      /usr/sbin/nwmgr -S apa | /usr/bin/grep -v Not_Enabled >> $INTRADO/etc/apa.output
+    else
+      # grab the failover groups from the APA config file
+      echo "APA Configured Interfaces" > $INTRADO/etc/apa.output
+      echo "-------------------------" >> $INTRADO/etc/apa.output
+      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> $INTRADO/etc/apa.output
+      echo "Active Interfaces" >> $INTRADO/etc/apa.output
+      echo "-----------------" >> $INTRADO/etc/apa.output
+      /usr/sbin/lanscan | grep UP >> $INTRADO/etc/apa.output
+      echo "APA interfaces and active membership" >> $INTRADO/etc/apa.output
+      echo "------------------------------------" >> $INTRADO/etc/apa.output
+      for i in `/usr/bin/grep 'FAILOVER_GROUP' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# | awk '{print $2}' | sed 's/^lan//'`  
+      do 
+        /usr/sbin/lanscan -q | grep $i >> $INTRADO/etc/apa.output
+      done
+    fi
+  else
+    echo "BONDING: APA config file does not exist. No APA configured." > $INTRADO/etc/apa.output    
+  fi 
+fi

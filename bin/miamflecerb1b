@@ -1,0 +1,145 @@
+#!/usr/bin/perl -w
+#=================================================================
+# PURPOSE:  Check status OMSA output (disk,chassis)  on Dell 1955
+#  AUTHOR:  JSchroeter
+#    DATE:  06/15/2015
+#
+#    NOTE:  Should be able to run on any system with OMSA
+#           with small modification
+#
+#=================================================================
+my $BASENAME  = `basename $0 .pl`;
+chop($BASENAME);
+my $DMIDECODE = "/usr/bin/dmidecode";
+my $OMREPORT  = "/opt/dell/srvadmin/oma/bin/omreport";
+our $LOGFILE = "/opt/intrado/var/${BASENAME}.log";
+
+
+#===========================================================
+# Function LOG() - Log messages to $LOGFILE
+#===========================================================
+sub LOG() {
+	my @MSG = @_;
+	#my $LOGFILE = "/tmp/${BASENAME}.log";
+	my $DATE = `date +%x-%T`;
+	chop($DATE);
+	open(LOG,">>$LOGFILE") || die "Cannot open $LOGFILE\n";
+	print LOG "$DATE - $MSG[0]";
+	close(LOG);
+}
+
+#===========================================================
+# Function GET_VERSION() - Get OMSA Version
+#===========================================================
+sub GET_VERSION() {
+
+	open(ABOUT,"$OMREPORT about|") || die "Could not run $OMREPORT about\n";
+	while (<ABOUT>) {
+		# Skip blank line
+		next if /^$/;
+
+		# Parse line by whitespace
+		my @LINE = split(/:/);
+		$LINE[0] =~ s/^\s*(.*?)\s*$/$1/;
+		&LOG("Version = $LINE[1]") if ( $LINE[0] eq "Version" );
+			
+	}
+	close(ABOUT);
+
+}
+
+#===========================================================
+# Function CHK_PDISK() - Check Physical Disk Information
+#===========================================================
+sub CHK_PDISK() {
+
+	#Check pdisk 0
+	my @DISKS = ("0:0:0", "0:0:1");
+	
+	foreach $DISK (@DISKS) {
+		open(DISK,"$OMREPORT storage pdisk pdisk=$DISK controller=0|") || die "Could not run $OMREPORT pdisk=$DISK\n";
+		while (<DISK>) {
+			# Skip blank line
+			next if /^$/;
+
+			# Parse line by whitespace
+			my @LINE = split(/:/);
+			$LINE[0] =~ s/^\s*(.*?)\s*$/$1/;
+			#print "LINE0 = $LINE[0]\n";
+			&LOG("pdisk=$DISK Status = $LINE[1]") if ( $LINE[0] eq "Status" );
+			&LOG("pdisk=$DISK State  = $LINE[1]") if ( $LINE[0] eq "State" );
+			&LOG("pdisk=$DISK Failure Predicted = $LINE[1]") if ( $LINE[0] eq "Failure Predicted" );
+			&LOG("pdisk=$DISK Serial No. = $LINE[1]") if ( $LINE[0] eq "Serial No." );
+			
+		}
+		close(DISK);
+	}
+
+}
+
+#===========================================================
+# Function CHK_VDISK() - Check Virtual Disk Information
+#===========================================================
+sub CHK_VDISK() {
+
+	open(VDISK,"$OMREPORT storage vdisk controller=0|") || die "Could not run $OMREPORT vdisk\n";
+	while (<VDISK>) {
+		# Skip blank line
+		next if /^$/;
+
+		# Parse line by whitespace
+		my @LINE = split(/:/);
+		$LINE[0] =~ s/^\s*(.*?)\s*$/$1/;
+		#print "LINE0 = $LINE[0]\n";
+		&LOG("vdisk Status = $LINE[1]") if ( $LINE[0] eq "Status" );
+		&LOG("vdisk State  = $LINE[1]") if ( $LINE[0] eq "State" );
+		&LOG("vdisk Layout = $LINE[1]") if ( $LINE[0] eq "Layout" );
+			
+	}
+	close(VDISK);
+
+}
+
+#===========================================================
+# Function CHK_CHASSIS() - Check Chassis Information
+#===========================================================
+sub CHK_CHASSIS() {
+
+	open(CHASSIS,"$OMREPORT chassis|") || die "Could not run $OMREPORT chassis\n";
+	while (<CHASSIS>) {
+		# Skip blank line
+		next if /^$/;
+		next if ! /:/;
+
+		# Parse line by whitespace
+		my @LINE = split(/:/);
+		$LINE[0] =~ s/^\s*(.*?)\s*$/$1/;
+		$LINE[1] =~ s/^\s*(.*?)\s*$/$1/;
+
+		# Remove EOC
+		#print "LINE0 = $LINE[0] , LINE1 $LINE[1]\n";
+		&LOG("chassis Status    = $LINE[0]\n") if ( $LINE[1] eq "Memory" );
+		&LOG("chassis State     = $LINE[0]\n") if ( $LINE[1] eq "Processors" );
+		&LOG("chassis Temps     = $LINE[0]\n") if ( $LINE[1] eq "Temperatures" );
+		&LOG("chassis Voltages  = $LINE[0]\n") if ( $LINE[1] eq "Voltages" );
+		&LOG("chassis Hardware  = $LINE[0]\n") if ( $LINE[1] eq "Hardware Log" );
+		&LOG("chassis Batteries = $LINE[0]\n") if ( $LINE[1] eq "Batteries" );
+	}
+	close(CHASSIS);
+
+}
+
+
+#===========================================================
+# Main Starts Here
+#===========================================================
+if ( -f $LOGFILE ) {
+	unlink($LOGFILE);
+}
+
+if ( -x $OMREPORT ) {
+	&GET_VERSION;
+	&CHK_PDISK;
+	&CHK_VDISK;
+	&CHK_CHASSIS;
+}

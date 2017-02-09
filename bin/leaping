@@ -1,0 +1,97 @@
+#!/bin/ksh
+
+#set -x 
+#exec >> /opt/intrado/etc/leaping.run 2>&1
+
+INTRADO=/opt/intrado
+LOG=$INTRADO/var/leaping.log
+OS=`uname`
+RELEASE=`cat /etc/redhat-release`
+ARCH=`uname -i`
+PKGDIR="/tmp/leap"
+NTPSCFG="/etc/sysconfig/ntpd"
+NTPDRIFT="`grep -i driftfile $NTPSCFG | grep -v '^#' | head -1 | awk '{print $2}'`"
+if [[ -z $NTPDRIFT ]]
+then
+  NTPDRIFT="/var/lib/ntp/drift"
+fi
+
+# clear it out first
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+do_ntpfix() {
+  OFFON="on"
+  if [[ -n $1 && ($1 = "OFF" || $1 = "off") ]]
+  then 
+    OFFON="off"
+  fi
+
+  if [[ $OFFON = "off" ]]
+  then
+    NTPSTATUS=`ps -ef | grep ntpd | grep -v grep | wc -l`
+
+    if [[ $NTPSTATUS -gt 0 ]]
+    then
+      if [[ -x "/sbin/service" ]]
+      then
+        /sbin/service ntpd stop
+      fi
+
+      if [[ -x "/sbin/chkconfig" ]]
+      then
+        /sbin/chkconfig ntpd off
+      fi
+      
+      sleep 5
+      NTPSTATUS=`ps -ef | grep ntpd | grep -v grep | wc -l`
+
+      if [[ $NTPSTATUS -gt 0 ]]
+      then
+        echo "ntpfix: Disabling of ntp failed. " >> $LOG
+      else
+        if [[ -f $NTPDRIFT ]]
+        then
+          cat /dev/null > $NTPDRIFT
+          echo "ntpfix: drift file blanked." >> $LOG
+        fi
+        echo "ntpfix: ntpd disabled and stopped." >> $LOG
+      fi # END IF NTPSTATUS 2
+    fi # END IF NTPSTATUS 1
+  else # IF OFFON
+    if [[ -x "/sbin/service" ]]
+    then
+      /sbin/service ntpd start
+    fi
+
+    if [[ -x "/sbin/chkconfig" ]]
+    then
+      /sbin/chkconfig ntpd on
+    fi
+
+    sleep 5
+    NTPSTATUS=`ps -ef | grep ntpd | grep -v grep | wc -l`
+
+    if [[ $NTPSTATUS -lt 1 ]]
+    then
+      echo "ntpfix: Enabling of ntp failed. " >> $LOG
+    else
+      echo "ntpfix: ntpd enabled and running." >> $LOG
+    fi # END IF NTPSTATUS 2
+  fi # END IF OFFON
+
+}
+
+if [[ $OS = "Linux" ]]
+then
+  if [[ -z $1 ]]
+  then
+    do_ntpfix on
+  else
+    do_ntpfix $1
+  fi
+fi
+
+echo "DONE" >> $LOG
