@@ -1,0 +1,146 @@
+#!/bin/ksh
+
+# by Carl Schelin
+# create a list of users who are in sudoers including extracting from etc/group information
+# 9/8/11 - added check for NOPASSWD:ALL in addition to checking for ALL
+# 9/8/11 - changed /,// to /,/ / in the first loop (getting useruseruseruser instead of user user user user)
+# 9/8/11 - changed to exclude multiple ALL's from the loop
+# 9/8/11 - added check to extract the current user status (active/locked) from the users.dat file
+# 9/20/11 - Added TMPSU to be checked and identified as having root access
+# 9/22/11 - Added check to get the name of all cmnd_alias entries with /su - or /su and build an egrep list (alias|alias|alias)
+# 9/22/11 - Fixed a couple of small bugs, one when grepping for ALL on DALLAS and getting the wrong Cmnd_Alias
+# 9/26/11 - Added a bit to trim spaces from the /bin/su check
+# 9/26/11 - Change checking of the last entry to checking if TMPSU (for example) is in the list of Cmnd_Alias's 
+#        (TMPSU, DPLSU caused this fix), also added (,|$) to prevent DALL from succeeding
+# 10/12/11 - changed path for group and passwd file due to centrify being installed on some servers.
+# 02/01/13 - Updated all GECOS= entries to pull from chkusers.dat file to get centrify information. - KSZ
+# 1/20/16 - added sfw sudoers check - TCS
+
+HOSTNAME=`hostname|cut -f1 -d.`
+OUTPUT="/opt/intrado/etc/chksudoers.output"
+CHKSUDOERS="/opt/intrado/etc/chksudoers.dat"
+
+# locate the sudoers file on the system
+
+# sun freeware install
+if [[ -f /opt/sfw/etc/sudoers ]]
+then
+  SUDOERS='/opt/sfw/etc/sudoers'
+fi
+
+# default install
+if [[ -f /etc/sudoers ]]
+then
+  SUDOERS='/etc/sudoers'
+fi
+
+# intrado custom install
+if [[ -f /usr/local/etc/sudoers ]]
+then
+  SUDOERS='/usr/local/etc/sudoers'
+fi
+
+# hp-ux location
+if [[ -f /opt/iexpress/sudo/etc/sudoers ]]
+then
+  SUDOERS='/opt/iexpress/sudo/etc/sudoers'
+fi
+
+# if no sudo file then it's not installed
+if [[ "$SUDOERS" = "" ]]
+then
+  exit 0
+fi
+
+# clean up the file
+if [[ -f $OUTPUT ]]
+then
+  rm $OUTPUT
+fi
+
+# there shouldn't be anyone using the User_Alias entry but this checks just in case
+for i in `grep -v "^#" $SUDOERS | grep "User_Alias" | cut -f2 -d= | sed -e "s/,/ /g"`
+do
+  ROOT=`grep -v "^#" $SUDOERS | egrep "^User_Alias.*TMPROOT" | grep $i`
+  if [[ -z $ROOT ]]
+  then
+    TMPROOT="no"
+  else
+    TMPROOT="yes"
+  fi
+
+  STATUS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
+  GECOS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
+  echo "$HOSTNAME:$i:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+done
+
+# this section builds a list of the Cmnd_Aliases that have root access. Generally TMPSU but others such as BEASU have it as well.
+for i in `grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | cut -f2 -d= | sed -e "s/ /_/g" | sed -e "s/,/ /g"`
+do
+  CMD=`echo $i | sed -e "s/_/ /g"`
+# trim spaces
+  CHKCMD=`echo $CMD`
+
+  if [[ $CHKCMD = "/usr/bin/su" || $CHKCMD = "/usr/bin/su -" || $CHKCMD = "/bin/su" || $CHKCMD = "/bin/su -" ]]
+  then
+    CMND_ALIAS=`grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | egrep "(${CMD}$|${CMD},)" | awk '{print $2}'`
+  fi
+done
+
+# replace the spaces (if any) with a pipe for the egrep command
+CMND_ALIAS=`echo $CMND_ALIAS | sed -e "s/ /|/g"`
+
+# ok, run through the %groups and see who has what. check for space or tabs
+for i in `grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'`
+do
+# get the group info from /opt/intrado/etc/group
+  GID=`grep "^$i:" /opt/intrado/etc/group | cut -f3 -d:`
+
+  for j in `grep "^$i:" /opt/intrado/etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+  do
+
+# check to see if a group is root accessible and set the yes/no flag
+    ROOT=`grep -v "^#" $SUDOERS | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1`
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
+    GECOS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+  done
+
+# parse the passwd file and see if anyone is a member of a root accessible GID
+  for j in `awk -F: '{print $1":"$4}' /opt/intrado/etc/passwd`
+  do
+    USER=`echo $j | cut -f1 -d:`
+    UGID=`echo $j | cut -f2 -d:`
+
+    if [[ $GID = $UGID ]]
+    then
+      ROOT=`grep -v "^#" $SUDOERS | grep "^%$i" | awk '{print $NF}'`
+      if [[ -z $ROOT ]]
+      then
+        TMPROOT="no"
+      else
+        TMPROOT="yes"
+      fi
+
+      STATUS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
+      GECOS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
+      echo "$HOSTNAME:$USER:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+    fi
+  done
+done
+
+# sort and clear out the duplicates if any
+sort $OUTPUT | uniq > $CHKSUDOERS
+
+# make a backup of the sudoers file
+cp $SUDOERS /opt/intrado/etc/
+
+exit 0
+

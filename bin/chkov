@@ -1,0 +1,66 @@
+#!/bin/ksh
+
+# chkov - Check the status of OpenView and restart if it's down
+# Carl Schelin - 2/20/2008
+# Added verification that openview is installed and is enabled
+# changed path to /opt/intrado/var to keep files in one directory structure
+# add the ability to stop and start the script monitoring by passing stop or start to the chkov script
+
+if [[ ! -z $1 ]]
+then
+  if [[ $1 = "stop" ]]
+  then
+    touch /opt/intrado/var/openview.stop
+  fi
+  if [[ $1 = "start" ]]
+  then
+    if [[ -f /opt/intrado/var/openview.stop ]]
+    then
+      rm /opt/intrado/var/openview.stop
+    fi
+  fi
+fi
+
+# check to see if Openview is installed
+if [[ ! -d /opt/OV ]]
+then
+  echo "Openview not installed" > /opt/intrado/etc/ovc.version
+  exit 0
+fi
+
+# check to see if Openview monitoring is disabled
+if [[ -f /opt/intrado/var/openview.stop ]]
+then
+  echo "Openview configured to not auto-start"
+  exit 0
+fi
+
+# now run through checks to see if OpenView is working.
+OVC=`/opt/OV/bin/ovc -status | grep -v ovcs | grep "Aborted"`
+DATE=`date`
+LOG=/opt/intrado/var/openview.failed
+
+if [[ ! -z "$OVC" ]]
+then
+
+  echo "OpenView failed and is not communicating - killing"
+  /usr/bin/logger -p err -t "OpenView" "An OpenView process has aborted. Killing OpenView."
+
+  echo "" >> $LOG
+  echo $DATE >> $LOG
+  /opt/OV/bin/ovc -status >> $LOG
+
+  /opt/OV/bin/ovc -kill
+
+fi
+
+# this takes about 15 seconds and restarts
+
+ERROR=`/opt/OV/bin/ovc -status 2>&1`
+if [[ $ERROR = "(ctrl-111) Ovcd is not yet started." ]]
+then
+  echo "OpenView is not running - restarting"
+  /usr/bin/logger -p err -t "OpenView" "OpenView is not running. Restarting OpenView."
+  /opt/OV/bin/ovc -start
+fi
+

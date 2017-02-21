@@ -1,0 +1,90 @@
+#!/bin/ksh
+
+# prevent the Netbackup Fiber Transport client from starting. Caused an incident where incofmc2 failed to completely start due to the nbfbclnt script halting on starting the agent.
+if [[ -f /usr/openv/netbackup/bin/nbftclnt ]]
+then
+  chmod -x /usr/openv/netbackup/bin/nbftclnt
+fi
+
+for i in chkdef chketh chkif chkov chkprinter chkraid chksan chkstack chksudo chksudoers chkusers chkusers.contrib chkversion logme
+do
+  if [[ -f /usr/local/bin/$i ]]
+  then
+    echo "Removing /usr/local/bin/$i"
+    rm /usr/local/bin/$i
+  fi
+done
+
+for i in arcconf.output chketh.output chkstack.output chksudo.output chkusers.dat defunct.data ifconfig.output megarc.output metadb.output metastat.output raidctl.output
+do
+  if [[ -f /usr/local/etc/$i ]]
+  then
+    echo "Removing /usr/local/etc/$i"
+    rm /usr/local/etc/$i
+  fi
+done
+
+if [[ -d /opt/cfghtml ]]
+then
+  echo "Moving /opt/cfghtml to /opt/intrado/"
+  mv /opt/cfghtml /opt/intrado/
+fi
+
+if [[ -d /opt/ov ]]
+then
+  if [[ -f /opt/OV/bin/ovc ]]
+  then
+    echo "Removing /opt/ov"
+    rm -rf /opt/ov
+  fi
+fi
+
+if [[ -d /opt/nbu ]]
+then
+  echo "Removing /opt/nbu"
+  rm -rf /opt/nbu
+fi
+
+if [[ -f /var/tmp/openview.failed ]]
+then
+  echo "Moving openview.failed to /opt/intrado/var"
+  mv /var/tmp/openview.failed /opt/intrado/var/
+fi
+
+if [[ -f /usr/local/patchdiag ]]
+then
+  echo "Removing /usr/local/patchdiag"
+  rm -rf /usr/local/patchdiag
+fi
+
+if [[ -f /opt/intrado/etc/motd ]]
+then
+  cp /opt/intrado/etc/motd /etc/motd
+  cp /opt/intrado/etc/motd /etc/issue
+fi
+
+if [[ -f /tmp/newuser ]]
+then
+  rm /tmp/newuser
+  rm /tmp/newuser.add
+  rm /tmp/newuser.pw
+  rm /tmp/newuser.users
+fi
+
+if [[ ! -f /usr/bin/ksh ]]
+then
+  if [[ -f /bin/ksh ]]
+  then
+    ln -s /bin/ksh /usr/bin/ksh
+  fi
+fi
+
+# change ownership of unixsvc authorized_keys file
+UNIXSVC=`grep "^unixsvc:" /etc/passwd | cut -f6 -d:`
+if [[ ! -z $UNIXSVC ]]
+then
+  chown unixsvc:unixsvc $UNIXSVC/.ssh/*
+  chmod 600 $UNIXSVC/.ssh/*
+  chmod 700 $UNIXSVC/.ssh
+fi
+

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# chkprinter by Justin Metz - Check status of CUPS printers and email if one or more are down
+# Justin Metz - 10/30/09 - Initial script
+# Carl Schelin - 11/16/10 - Add path to cupsenable and change to https for website link
+# Carl Schelin - 8/9/11 - wrapper PRINTER in brackets to indicate it's a variable and not the command to pass to cupsenable.
+# Justin Metz - 3/1/12 - Add check for hung lpstat processes and kill them, rewrite of variables
+
+INTRADO="/opt/intrado"
+CONTENT="chkprinter"
+LPSTAT=`/usr/bin/lpstat -p |grep disabled`
+MAIL="/bin/mailx"
+EMAIL="UnixAdmins@intrado.com"
+PROC=`ps -ef |grep lpstat |grep -v grep`
+
+# Check for hung lpstat processes, kill any that are found
+if [ ! -z "$PROC" ]; then
+  for pid in `ps -ef |grep lpstat |grep -v grep |awk '{print $2}'`
+  do
+    kill $pid
+  done
+fi
+
+# Check for any disabled printers, email team if any found
+if [ ! -z "$LPSTAT" ]; then
+  hostname > $INTRADO/etc/$CONTENT.output
+  date >> $INTRADO/etc/$CONTENT.output
+  /usr/bin/lpstat -p |grep disabled >> $INTRADO/etc/$CONTENT.output
+  echo "" >> $INTRADO/etc/$CONTENT.output
+  echo "One or more printers are disabled on `hostname`! Manual intervention is required." >> $INTRADO/etc/$CONTENT.output
+  echo "Please run the command \"sudo /usr/sbin/cupsenable \[PRINTER\]\" on each disabled printer." >> $INTRADO/etc/$CONTENT.output
+  echo "See \"https://incowk01/wiki/index.php/Fixing_disabled_printers_in_CUPS\"." for details. >> $INTRADO/etc/$CONTENT.output
+  $MAIL -s "`hostname`: Printer Disabled!!" $EMAIL < $INTRADO/etc/$CONTENT.output
+ else
+  date > $INTRADO/etc/$CONTENT.output
+  hostname > $INTRADO/etc/$CONTENT.output
+  echo "All printers online." >> $INTRADO/etc/$CONTENT.output
+fi
+

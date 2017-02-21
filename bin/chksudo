@@ -1,0 +1,36 @@
+#!/bin/ksh
+
+# check the sudoers file for folk who have root privliges.
+# need to check for the su - command and backtrack but that'll require perl so this is good for now.
+# update to put output in the INTRADO directory
+# 8/10/11 - added /opt/iexpress/sudo/etc/sudoers for the HP systems
+# 9/5/11 - Added a touch to create a file regardless of whether sudo is installed or not.
+
+INTRADO='/opt/intrado'
+
+ID=`id | cut -f1 -d\( | cut -f2 -d=`
+
+if [[ ! $ID = 0 ]]
+then
+  echo "You must be root to run this script"
+  exit 1
+fi
+
+if [[ -f $INTRADO/etc/chksudo.output ]]
+then
+  rm $INTRADO/etc/chksudo.output
+fi
+
+# create a blank file to stop the complaining of the morning report
+touch $INTRADO/etc/chksudo.output
+
+for i in /etc/sudoers /usr/local/etc/sudoers /opt/iexpress/sudo/etc/sudoers
+do
+  if [[ -f $i ]]
+  then
+    grep -v "^#" $i | egrep "^User_Alias.*TMPROOT" | cut -f2 -d= >> $INTRADO/etc/chksudo.output
+  fi
+done
+
+exit 0
+

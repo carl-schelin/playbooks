@@ -1,0 +1,30 @@
+#!/bin/ksh
+
+# Carl Schelin
+# system specific script to run system unique commands
+# 2014-01-31 - Script created to validate the querycarl script has been unmodified.
+
+PROG=querycarl
+WHOCARES=unixadmins@intrado.com
+QUERY=/usr/local/bin/$PROG
+INTRADO=/opt/intrado
+DATE=`date +"%Y%m%d"`
+
+if [[ -f $QUERY ]]
+then
+  /usr/bin/diff $QUERY $INTRADO/bin/$PROG > $INTRADO/var/$PROG.diff
+
+  if [[ -s $INTRADO/var/$PROG.diff ]]
+  then
+    cat $INTRADO/var/$PROG.diff | /usr/bin/mailx -s "$PROG has changed!" $WHOCARES
+    cp -p $QUERY $INTRADO/var/$PROG.$DATE
+    cp -p $INTRADO/bin/$PROG $QUERY
+
+  fi
+
+else
+  echo "$PROG not found!" | /usr/bin/mailx -s"$PROG not found!" $WHOCARES
+  cp -p $INTRADO/bin/$PROG $QUERY
+
+fi
+

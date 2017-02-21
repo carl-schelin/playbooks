@@ -1,0 +1,31 @@
+#!/bin/ksh
+
+# Run the machinfo utility to get a snapshot of HP-UX hardware details
+
+OS=`uname`
+INTRADO='/opt/intrado'
+ID=`id | cut -f1 -d\( | cut -f2 -d=`
+
+if [[ ! $ID = 0 ]]
+then
+  echo "You must be root to run this script"
+  exit 1
+fi
+
+if [[ -f $INTRADO/etc/machinfo.output ]]
+then
+  rm $INTRADO/etc/machinfo.output
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  if [[ -f /usr/contrib/bin/machinfo ]]
+  then
+    /usr/contrib/bin/machinfo > $INTRADO/etc/machinfo.output 2>&1
+  else
+    echo "Unable to locate machinfo" > $INTRADO/etc/machinfo.output
+  fi
+fi
+
+exit 0
+

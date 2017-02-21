@@ -1,0 +1,41 @@
+#!/bin/ksh
+
+# Run the pwck utility to validate the /etc/passwd and /etc/shadow files
+
+OS=`uname`
+INTRADO='/opt/intrado'
+ID=`id | cut -f1 -d\( | cut -f2 -d=`
+
+if [[ ! $ID = 0 ]]
+then
+  echo "You must be root to run this script"
+  exit 1
+fi
+
+if [[ -f $INTRADO/etc/pwck.output ]]
+then
+  rm $INTRADO/etc/pwck.output
+fi
+
+# create a blank file to stop the complaining of the morning report
+touch $INTRADO/etc/pwck.output
+
+if [[ $OS = "Linux" ]]
+then
+  /usr/sbin/pwck > $INTRADO/etc/pwck.output 2>&1
+fi
+if [[ $OS = "SunOS" ]]
+then
+  /usr/sbin/pwck > $INTRADO/etc/pwck.output 2>&1
+fi
+if [[ $OS = "HP-UX" ]]
+then
+  /usr/sbin/pwck > $INTRADO/etc/pwck.output 2>&1
+fi
+if [[ $OS = "OSF1" ]]
+then
+  /usr/sbin/pwck > $INTRADO/etc/pwck.output 2>&1
+fi
+
+exit 0
+

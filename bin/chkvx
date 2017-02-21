@@ -1,0 +1,144 @@
+#!/bin/ksh
+#====================================================================
+# PURPOSE: Check Veritas (vxdisk list/vxprint) output for Issues
+#  AUTHOR: JSCHROETER
+#    DATE: 02/16/2015
+#          02/18/2015 Disabled email, script moved to daily report
+#
+#   NOTES: Need better command to check if VX is installed
+#        : To send email alert, add M as second parameter to LOGD
+# 
+#        : set ts=3 for readability
+#
+#====================================================================
+
+#====================================================================
+# Variables
+#====================================================================
+BASENAME=`basename $0 .sh`
+VXDISK="/sbin/vxdisk"
+VXPRINT="/sbin/vxprint"
+LOGFILE="/opt/intrado/etc/${BASENAME}.output"
+VXDISKOUT="/tmp/${BASENAME}.vxdisk"
+VXPRINTOUT="/tmp/${BASENAME}.vxprint"
+DATE="date +%x-%X"
+SPARES=4
+RC=0
+MAILIST="james.schroeter@intrado.com"
+#MAILIST="unixadmin@intrado.com"
+LINE="==============================================================="
+
+
+#====================================================================
+# LOGD() - Send all standard out to logfile with date
+#          Add M after LOGD as second parameter to send mail alert
+#====================================================================
+LOGD() {
+	echo "`date`  $1" >> $LOGFILE
+	if [ $# -eq 2 ];then
+		MAIL "$1"
+	fi
+}
+
+#====================================================================
+# LOG() - Send all standard out to logfile with date
+#====================================================================
+LOG() {
+	echo "$1" >> $LOGFILE
+	if [ $# -eq 2 ];then
+		MAIL "$1"
+	fi
+}
+
+#====================================================================
+# Function MAIL - Send email alerts
+#====================================================================
+MAIL() {
+	echo "$*" | mailx -s "$BASENAME Warning" $MAILIST
+}
+
+#--------------------------------------------
+# RUN_VX - Check to make sure VX is present
+#--------------------------------------------
+RUN_VX() {
+	NUM=0
+	NUMX=0
+	NUMD=0
+	NUMF=0
+	#NUMI=0
+	NUMS=0
+	$VXDISK list > $VXDISKOUT
+	$VXPRINT > $VXPRINTOUT
+
+	# Test for stale condition
+	NUMX=`grep -ci "stale" $VXPRINTOUT`
+	if [ "$NUMX" -eq 0 ];then
+		LOGD "Number of stale drives : $NUMX"
+	else
+		LOGD "ERROR: Number of stale drives: $NUMX"
+	fi
+
+	# Test for invalid drive
+	#NUMI=`grep -ci "invalid" $VXDISKOUT`
+	#if [ "$NUMI" -eq 0 ];then
+	#	LOGD "Number of invalid drives: $NUMI"
+	#else
+	#	LOGD "ERROR: Number of invalid drives: $NUMI"
+	#fi
+
+	# Test for failed drive
+	NUMF=`grep -ci "fail" $VXDISKOUT`
+	if [ "$NUMF" -eq 0 ];then
+		LOGD "Number of failed drives: $NUMF"
+	else
+		LOGD "ERROR: Number of failed drives: $NUMF"
+	fi
+
+	# Get Number of devices
+	NUMD=`grep -cv "^DEVICE" $VXDISKOUT`
+	LOGD "Number of devices: $NUMD"
+	# Is there a standard number of devices?
+
+	# Spares
+	NUMS=`grep -c "spare" $VXDISKOUT`
+	if [ "$SPARES" -eq "NUMS" ];then
+		LOGD "Number of spares: $NUMS"
+	else
+		LOGD "ERROR: Number of spares: $NUMS"
+	fi
+
+	for drive in `awk '/spare/ {print $3}' $VXDISKOUT`;do
+		DATA=""
+		LOGD "Checking spare drive $drive: \c"
+		DATA=`awk -v search="$drive" '$2 ~ search && $7 != "SPARE" {print $2"  "$3}' $VXPRINTOUT`
+		if [ -z "$DATA" ];then
+			LOG "NO data found"
+		else
+			LOG "ERROR: Data found"
+			LOGD "ERROR: Data found on spare drive $drive: $DATA"
+		fi
+			
+	done
+}
+
+
+#====================================================================
+# Main Starts Here
+#====================================================================
+
+# For sending to reporting server, remove the log each run
+if [ -f "$LOGFILE" ];then
+	rm $LOGFILE
+fi
+
+#echo "$LINE" >> $LOGFILE
+if [ -f "$VXDISK" ];then
+	RUN_VX
+	if [ -f "$VXDISKOUT" ];then
+		rm $VXDISKOUT
+	fi
+	if [ -f "$VXPRINTOUT" ];then
+		rm $VXPRINTOUT
+	fi
+fi
+exit $RC

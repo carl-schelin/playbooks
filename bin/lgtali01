@@ -1,0 +1,21 @@
+#!/usr/bin/ksh
+
+# Justin Metz
+# Roll the wtmpx file on the Florida openview server to stop the out of space pages
+# 20130121 - CS - Added HP-UX /var/adm/wtmps clearing and moved to /opt/intrado/bin
+
+OS=`/usr/bin/uname`
+HOSTNAME=`/usr/bin/hostname|cut -f1 -d.`
+
+if [[ $OS = "HP-UX" ]]
+then
+# fwtmp output is generating errors. Simply devnull it
+  cat /dev/null > /var/adm/wtmps
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+  /usr/lib/acct/fwtmp < /var/adm/wtmpx | tail -500 | /usr/lib/acct/fwtmp -ic > /var/tmp/wtmpx
+  cat /var/tmp/wtmpx > /var/adm/wtmpx
+fi
+

@@ -1,0 +1,56 @@
+#!/bin/ksh
+
+# Carl Schelin
+# need to make sure unixsvc can run privileged ansible playbooks without typing in a password
+
+HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
+BINSH=`which sh`
+
+# sun freeware install
+if [[ -f /opt/sfw/etc/sudoers ]]
+then
+  SUDOERS='/opt/sfw/etc/sudoers'
+fi
+
+# default install
+if [[ -f /etc/sudoers ]]
+then
+  SUDOERS='/etc/sudoers'
+fi
+
+# intrado custom install
+if [[ -f /usr/local/etc/sudoers ]]
+then
+  SUDOERS='/usr/local/etc/sudoers'
+fi
+
+# hp-ux location
+if [[ -f /opt/iexpress/sudo/etc/sudoers ]]
+then
+  SUDOERS='/opt/iexpress/sudo/etc/sudoers'
+fi
+
+# if no sudo file then it's not installed/not found
+if [[ "$SUDOERS" = "" ]]
+then
+  echo "Not found" | mailx -s "Sudoers not found: $HOSTNAME" carl.schelin@intrado.com
+  exit 0
+fi
+
+if [[ -f $SUDOERS ]]
+then
+  grep -q unixsvc $SUDOERS
+  if [[ $? = 1 ]]
+  then
+
+    cp $SUDOERS /opt/intrado/etc/sudoers.unixsvc
+
+    echo "" >> $SUDOERS
+    echo "# Adding capability for unixsvc account to sudo without a password for ansible playbooks" >> $SUDOERS
+    echo "unixsvc		$HOSTNAME = NOPASSWD: $BINSH -c *" >> $SUDOERS
+    echo "" >> $SUDOERS
+    echo "" >> $SUDOERS
+
+  fi
+fi
+

@@ -1,0 +1,67 @@
+#!/bin/ksh
+
+# Carl Schelin
+# system specific script to run system unique commands
+#  update script to show the commands to be run (making it easier to repair)
+# 8/6/12 - add enterprise_architecture and ienvoice to the pneteam listing
+# 11/12/13 - add bi to the pneteam listing
+# 01/20/14 - add wireless_mobility_wiki to pneteam listing
+# 01/27/16 - add v911 to pneteam listing
+
+WHOCARES=unixadmins@intrado.com
+WHOCARES=carl.schelin@intrado.com
+
+#
+# ensure wiki permissions are correctly set
+#
+/usr/bin/find /var/www/htdocs -type f -exec /bin/chmod 660 {} \;
+/usr/bin/find /var/www/htsecure -type f -exec /bin/chmod 660 {} \;
+/usr/bin/find /var/www/htdocs -type d -exec /bin/chmod 770 {} \;
+/usr/bin/find /var/www/htsecure -type d -exec /bin/chmod 770 {} \;
+/bin/chown -R apache:apache /var/www/htdocs /var/www/htsecure
+
+# sites managed by the pneteam:
+/bin/chown -R apache:pneteam /var/www/htsecure/bi
+/bin/chown -R apache:pneteam /var/www/htsecure/pneteam
+/bin/chown -R apache:pneteam /var/www/htsecure/standards
+/bin/chown -R apache:pneteam /var/www/htsecure/v911
+/bin/chown -R apache:pneteam /var/www/htdocs/data_eng
+/bin/chown -R apache:pneteam /var/www/htdocs/enterprise_architecture
+/bin/chown -R apache:pneteam /var/www/htdocs/ienvoice
+/bin/chown -R apache:pneteam /var/www/htdocs/wireless_mobility_wiki
+
+# site managed by the erdhd (ERD Call Handling Call Center team)
+/bin/chown -R apache:erdhd /var/www/htsecure/erd-hd
+
+# site managed by the ext-windows team
+/bin/chown -R apache:wndws /var/www/htdocs/windows
+
+# site managed by the Virtualization team
+/bin/chown -R apache:vtt /var/www/htsecure/vtt
+
+# so the teams can get to their sites
+/bin/chmod 775 /var/www/htdocs
+/bin/chmod 775 /var/www/htsecure
+
+#
+# validate the databases and report any errors
+#
+/usr/bin/mysqlcheck --user=root --password='this4now!!' -A > /opt/intrado/etc/mysql.output
+
+OUTPUT=`grep -v "OK$" /opt/intrado/etc/mysql.output | grep -v "The storage engine for the table doesn't support check" | egrep -v "(^warning|^error|hitcounter)"`
+
+if [[ ! -z $OUTPUT ]]
+then
+  BODY="Wiki Mysql Errors Found"
+  for i in $OUTPUT
+  do
+    DIR=`echo $i|cut -f1 -d.`
+    INDEX=`echo $i|cut -f2 -d.`.MYI
+
+    BODY="${BODY}cd /var/lib/mysql/$DIR"
+    BODY="${BODY}myisamchk -r $INDEX"
+  done
+
+  echo $BODY | mail -s "Wiki Mysql Errors Found" $WHOCARES
+fi
+

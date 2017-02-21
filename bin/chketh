@@ -1,0 +1,78 @@
+#!/bin/ksh
+
+# chketh by Carl Schelin
+# Capture the current network settings; up, link speed, etc
+# modify the script to check for, and kill the dladm or ethtool process if it's taking too long
+
+PROGNAME="chketh"
+CONTENT="chketh"
+TIMEOUT=40
+OS=`uname`
+INTRADO=/opt/intrado
+LOG=$INTRADO/log/intrado.log
+
+if [[ -f $INTRADO/etc/$CONTENT.output ]]
+then
+  rm $INTRADO/etc/$CONTENT.output
+fi
+
+# the process for checking the interfaces on a Sun system
+if [[ $OS = "SunOS" ]]
+then
+  /usr/sbin/dladm show-dev > $INTRADO/etc/chketh.output
+  PID=$!
+
+  while [[ $TIMEOUT -gt 0 ]]
+  do
+    /usr/bin/ps -p $PID > /dev/null 2>&1
+    if [[ $? -ne 0 ]]
+    then
+      break
+    fi
+    TIMEOUT=$(($TIMEOUT - 1))
+    sleep 1
+  done
+
+# if the timeout reaches 0, then the process was killed.
+
+  if [[ $TIMEOUT -le 0 ]]
+  then
+    kill -KILL $PID
+    echo "ERROR: $CONTENT process killed" >> $LOG
+  fi
+fi
+
+
+# the process for checking the interfaces on a Linux system
+if [[ $OS = "Linux" ]]
+then
+  for i in `ls /etc/sysconfig/network-scripts/ifcfg*`
+  do
+    IF=`echo $i | cut -f3 -d\-`
+
+    /sbin/ethtool $IF >> $INTRADO/etc/chketh.output
+    PID=$!
+
+    while [[ $TIMEOUT -gt 0 ]]
+    do
+      /usr/bin/ps -p $PID > /dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        break
+      fi
+      TIMEOUT=$(($TIMEOUT - 1))
+      sleep 1
+    done
+
+# if the timeout reaches 0, then the process was killed.
+
+    if [[ $TIMEOUT -le 0 ]]
+    then
+      kill -KILL $PID
+      echo "ERROR: $CONTENT process killed" >> $LOG
+    fi
+  done
+fi
+
+exit 0
+

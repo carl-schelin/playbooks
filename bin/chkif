@@ -1,0 +1,58 @@
+#!/bin/ksh
+
+# chkif by Carl Schelin
+# documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
+# updated to redirect output to INTRADO/etc/ifconfig.output
+# updated to capture netstat output; checking for collisions
+# changed netstat output to go to a unique file
+# added netstat capture for linux; capturing the collisions and other errors to check against
+# added route table capture
+# modified route table to show the first two or three columns based on the OS
+# added a general capture of the route table (although it should be in the output of cfg2html as well)
+
+OS=`uname`
+INTRADO="/opt/intrado"
+
+if [[ $OS = "SunOS" ]]
+then
+  /usr/sbin/ifconfig -a > $INTRADO/etc/ifconfig.output
+  /usr/bin/netstat -i | /usr/bin/awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$6"\t"$8"\t"$9}' > $INTRADO/etc/netstat.output
+  /usr/bin/netstat -rvn | awk '{printf "%21s %21s %21s\n", $1, $2, $3}' > $INTRADO/etc/routes.output
+  /usr/bin/netstat -rvn > $INTRADO/etc/routes
+fi
+
+if [[ $OS = "Linux" ]]
+then
+  /sbin/ifconfig > $INTRADO/etc/ifconfig.output
+  /bin/netstat -i | /usr/bin/awk '{print $1"\t"$5"\t"$6"\t"$7"\t"$9"\t"$10"\t"$11}' > $INTRADO/etc/netstat.output
+  /bin/netstat -rn | awk '{printf "%21s %21s %21s\n", $1, $2, $3}' > $INTRADO/etc/routes.output
+  /bin/netstat -rn > $INTRADO/etc/routes
+fi
+
+if [[ $OS = "OSF1" ]]
+then
+  /sbin/ifconfig -a > $INTRADO/etc/ifconfig.output
+  /usr/sbin/netstat -rn | awk '{printf "%21s %21s\n", $1, $2}' > $INTRADO/etc/routes.output
+  /usr/sbin/netstat -rn > $INTRADO/etc/routes
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  /usr/sbin/lanscan > $INTRADO/etc/ifconfig.output
+  /usr/sbin/ifconfig lo0 >> $INTRADO/etc/ifconfig.output
+  for i in `/usr/sbin/lanscan | /usr/bin/grep UP | /usr/bin/awk '{print $5}'`
+  do
+    /usr/sbin/ifconfig $i >> $INTRADO/etc/ifconfig.output
+  done
+  /usr/bin/netstat -i | /usr/bin/awk '{print $1"\t"$6"\t"$8"\t"$9}'
+  /usr/bin/netstat -rvn | awk '{printf "%21s %21s\n", $1, $2}' > $INTRADO/etc/routes.output
+  /usr/bin/netstat -rvn > $INTRADO/etc/routes
+fi
+
+if [[ $OS = "FreeBSD" ]]
+then
+  /sbin/ifconfig -u > $INTRADO/etc/ifconfig.output
+  /usr/bin/netstat -rn | awk '{printf "%21s %21s\n", $1, $2}' > $INTRADO/etc/routes.output
+  /usr/bin/netstat -rn > $INTRADO/etc/routes
+fi
+

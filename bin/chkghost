@@ -1,0 +1,20 @@
+#!/usr/bin/ksh
+
+# chkghost
+# By Carl Schelin
+# This script checks for the existance of glibc-2.18 or higher
+# if older than 2.18, vulnerable to ghost
+
+INTRADO=/opt/intrado
+OUT=$INTRADO/etc/ghost.output
+CVE=$INTRADO/etc/ghost.cve
+BIN=$INTRADO/bin
+MONTH=`date | awk '{print $2}'`
+OS=`uname`
+
+if [[ $OS = 'Linux' ]]
+then
+  rpm -qa | grep glibc-2 > $OUT
+  rpm -q --changelog glibc | grep -i cve > $INTRADO/etc/ghost.cve
+fi
+

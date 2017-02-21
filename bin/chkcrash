@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+# chkcrash - Determine if a crash dump file has been created since the last time we checked.
+# Owner: Carl Schelin
+
+PROGNAME="chkcrash"
+OS=`uname`
+
+if [[ -d /var/crash ]]
+then
+  find /var/crash -print > /opt/intrado/etc/chkcrash.output
+fi
+
+exit 0
+

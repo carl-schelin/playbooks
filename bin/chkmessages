@@ -1,0 +1,77 @@
+#!/bin/ksh
+
+# chkmessages
+# This script presets the message log files for the various operating systems 
+# so that a common but severely reduced resultant file has been created.
+# for example, the PGW servers are running 'TimesTen' which increases the log 
+# files from 1,344 bytes to 120,996,964 bytes. A preprocess like the msgprocess
+# script will exclude the major log entries from _applications_ only to make the 
+# resultant file smaller and quicker to process in order to discover potential 
+# problems.
+# 20130918 - change cleanup to a loop, changed perl capture to a `` execute 
+#            vs | read var which fails on linux
+
+# write out the date so the logs can be scanned. 
+SERVER=`hostname | cut -f1 -d.`
+OS=`uname`
+PERL=/usr/bin/perl
+INTRADO=/opt/intrado
+DESTINATION=/var/tmp
+
+# cleanup
+for i in `ls $DESTINATION/messages.*`
+do
+  rm $i
+done
+
+# HP-UX has perl in a few odd places so set them here
+# don't set default perl as it may interfere with the 
+# HP-UX finds.
+if [[ -f /usr/contrib/Q4/bin/perl ]]
+then
+  PERL=/usr/contrib/Q4/bin/perl
+else
+  if [[ -f /usr/contrib/bin/perl ]]
+  then
+    PERL=/usr/contrib/bin/perl
+  fi
+fi
+if [[ -f /usr/bin/perl ]]
+then
+  PERL=/usr/bin/perl
+fi
+
+# default logfile for Solaris
+PLOG="/var/adm/messages"
+if [[ $OS = "Linux" ]]
+then
+  PLOG="/var/log/messages"
+fi
+if [[ $OS = "FreeBSD" ]]
+then
+  PLOG="/var/log/messages"
+fi
+if [[ $OS = "HP-UX" ]]
+then
+  PLOG="/var/adm/syslog/syslog.log"
+fi
+if [[ $OS = "OSF1" ]]
+then
+  PLOG="/var/cluster/members/{memb}/adm/messages"
+fi
+
+# get yesterday's date
+DATE=`$PERL -e '@T=localtime(time-86400);@M=('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');printf("%s %2d",$M[$T[4]],$T[3])'`
+LOGDATE=`$PERL -e '@T=localtime(time-86400);printf("%04d%02d%02d",$T[5]+1900,$T[4]+1,$T[3])'`
+
+if [[ -f $PLOG ]]
+then
+  grep "^$DATE" $PLOG | grep $SERVER > $DESTINATION/messages.intrado
+
+  if [[ -f $DESTINATION/messages.intrado ]]
+  then
+    $PERL $INTRADO/bin/msgprocess > $DESTINATION/messages.$LOGDATE
+    rm $DESTINATION/messages.intrado
+  fi
+fi
+

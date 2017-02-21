@@ -1,0 +1,105 @@
+#!/bin/ksh
+
+LSOF=''
+OS=`uname`
+
+# possible solution to x86 Solaris; need newer lsof for new data structures, but in the mean time, something like this works as well:
+# pfiles 152 | grep sockname | grep AF_INET | grep -v "port: 0" | awk '{print $NF}' | sort | uniq
+# where 152 is returned from lsof when looking for TCP but getting:
+# no TCP/UDP/IP information available
+
+if [[ -f /usr/bin/lsof ]]
+then
+  LSOF=/usr/bin/lsof
+fi
+
+if [[ -f /usr/local/bin/lsof ]]
+then
+  LSOF=/usr/local/bin/lsof
+fi
+
+if [[ -f /opt/csw/bin/lsof ]]
+then
+  LSOF=/opt/csw/bin/lsof
+fi
+
+if [[ -f /usr/sbin/lsof ]]
+then
+  LSOF=/usr/sbin/lsof
+fi
+
+LOG=/opt/intrado/etc/chkports.output
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+if [[ -z $LSOF ]]
+then
+  exit 1
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  PORTS=`netstat -an | grep LISTEN | awk '{print $4}' | awk -F. '{print $NF}' | sort -n`
+  $LSOF -P -n | egrep "(TCP|UDP)" | grep LISTEN | awk '{print $1":"$3":"$9}' | sort | uniq > /opt/intrado/var/lsof.output
+fi
+
+if [[ $OS = "Linux" ]]
+then
+  PORTS=`netstat -an | grep "LISTEN " | awk '{print $4}' | awk -F: '{print $NF}' | sort -n`
+  $LSOF -P -n | egrep "(TCP|UDP)" | grep LISTEN | awk '{print $1":"$3":"$8}' | grep -v "TCP" | sort | uniq > /opt/intrado/var/lsof.output
+# lsof on Ubuntu has a different number of columns
+  if [[ ! -s /opt/intrado/var/lsof.output ]]
+  then
+    $LSOF -P -n | egrep "(TCP|UDP)" | grep LISTEN | awk '{print $1":"$3":"$9}' | sort | uniq > /opt/intrado/var/lsof.output
+  fi
+fi
+
+if [[ $OS = "OSF1" ]]
+then
+  PORTS=`netstat -an | grep LISTEN | awk '{print $4}' | awk -F. '{print $NF}' | sort -n`
+  $LSOF -P -n | egrep "(TCP|UDP)" | grep LISTEN | awk '{print $1":"$3":"$9}' | sort | uniq > /opt/intrado/var/lsof.output
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+  PORTS=`netstat -an | grep LISTEN | awk '{print $1}' | awk -F. '{print $NF}' | sort -n`
+  $LSOF -P -n | egrep "(TCP|UDP)" | grep LISTEN | awk '{print $1":"$3":"$9}' | sort | uniq > /opt/intrado/var/lsof.output
+
+# special setup for x86 sun boxes
+  if [[ ! -s /opt/intrado/var/lsof.output ]]
+  then
+    for i in `lsof -P -n | egrep "(TCP|UDP)" | awk '{print $1":"$2":"$3}' | sort | uniq`
+    do
+      PGM=`echo $i | cut -f1 -d:`
+      PID=`echo $i | cut -f2 -d:`
+      OWN=`echo $i | cut -f3 -d:`
+
+      for j in `pfiles $PID | grep sockname | grep AF_INET | grep -v "port: 0" | awk '{print $NF}'`
+      do
+        echo "$PGM:$OWN:blank:$j" >> /opt/intrado/var/lsof.output
+      done
+    done
+  fi
+fi
+
+for i in $PORTS
+do
+  OUTPUT=`grep ":$i$" /opt/intrado/var/lsof.output`
+
+  PROGRAM=`echo $OUTPUT | cut -f1 -d:`
+  PARENT=`echo $OUTPUT | cut -f2 -d:`
+  PORT=`echo $OUTPUT | awk -F: '{print $NF}'`
+
+  echo "$i - $PROGRAM - $PARENT" >> $LOG
+
+#  ps -e | grep "^$PARENT" | grep $PROGRAM >> $LOG
+
+done
+
+if [[ -f /opt/intrado/var/lsof.output ]]
+then
+  rm /opt/intrado/var/lsof.output
+fi
+

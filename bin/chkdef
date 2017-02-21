@@ -1,0 +1,33 @@
+#!/bin/ksh
+
+# Report on defunct processes
+# updated to add INTRADO variable
+
+OS=`uname`
+INTRADO="/opt/intrado"
+
+if [[ $OS = "Linux" ]]
+then
+  PS=/bin/ps
+  GREP=/bin/grep
+fi
+if [[ $OS = "SunOS" ]]
+then
+  PS=/usr/bin/ps
+  GREP=/usr/bin/grep
+fi
+if [[ $OS = "HP-UX" ]]
+then
+  PS=/usr/bin/ps
+  GREP=/usr/bin/grep
+fi
+if [[ $OS = "OSF1" ]]
+then
+  PS=/sbin/ps
+  GREP=/sbin/grep
+fi
+
+$PS -ef | $GREP defunct | $GREP -v grep > $INTRADO/etc/defunct.data
+
+exit 0
+

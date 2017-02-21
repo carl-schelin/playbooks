@@ -1,0 +1,146 @@
+#!/bin/ksh
+
+# chksecurity
+#   Checks security configurations
+#
+# added default value of yes to Linux, osf1, and hp-ux checks
+# added additional checks for Solaris
+# added additional checks for centrify on linux
+# added /usr/local/etc for some Solaris systems
+# modified script to use SSHD variables for situations where sshd_config is in different directories
+# modified hp-ux and linux entries to identify sshd_config files in different places.
+# added check for freebsd
+# added centrify check for solaris
+
+INTRADO=/opt/intrado
+LOG=$INTRADO/etc/chksecurity.output
+OS=`uname`
+SSHD=''
+
+# clear it out first
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+if [[ $OS = "OSF1" ]]
+then
+  if [[ -f /etc/ssh2/sshd2_config ]]
+  then
+    SSHD="/etc/sshd2/ssh2_config"
+  fi
+
+  if [[ ! -z $SSHD ]]
+  then
+    PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+    if [[ -z $PRL ]]
+    then
+      PRL="yes"
+    fi
+  fi
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  if [[ -f /opt/ssh/etc/sshd_config ]]
+  then
+    SSHD="/opt/ssh/etc/sshd_config"
+  fi
+  if [[ -f /opt/openssh-3.7.1p1/sshd_config ]]
+  then
+    SSHD="/opt/openssh-3.7.1p1/sshd_config"
+  fi
+  if [[ -f /usr/local/etc/sshd_config ]]
+  then
+    SSHD="/usr/local/etc/sshd_config"
+  fi
+
+  if [[ ! -z $SSHD ]]
+  then
+    PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+    if [[ -z $PRL ]]
+    then
+      PRL="yes"
+    fi
+  fi
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+  if [[ -f /etc/ssh/sshd_config ]]
+  then
+    SSHD="/etc/ssh/sshd_config"
+  fi
+  if [[ -f /usr/local/etc/sshd_config ]]
+  then
+    SSHD="/usr/local/etc/sshd_config"
+  fi
+  if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+  then
+    SSHD="/etc/centrifydc/ssh/sshd_config"
+  fi
+
+  if [[ ! -z $SSHD ]]
+  then
+    PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+    if [[ -z $PRL ]]
+    then
+      CONSOLE=`grep -v "^#" /etc/default/login | grep -i console`
+      if [[ -z $CONSOLE ]]
+      then
+        PRL="yes"
+      else
+        PRL="without-password"
+      fi
+    fi
+  fi
+fi
+
+if [[ $OS = "Linux" ]]
+then
+  if [[ -f /etc/ssh/sshd_config ]]
+  then
+    SSHD="/etc/ssh/sshd_config"
+  fi
+  if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+  then
+    SSHD="/etc/centrifydc/ssh/sshd_config"
+  fi
+  if [[ -f /usr/local/etc/sshd_config ]]
+  then
+    SSHD="/usr/local/etc/sshd_config"
+  fi
+
+  if [[ ! -z $SSHD ]]
+  then
+    PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+    if [[ -z $PRL ]]
+    then
+      PRL="yes"
+    fi
+  fi
+fi
+
+if [[ $OS = "FreeBSD" ]]
+then
+  if [[ -f /etc/ssh/sshd_config ]]
+  then
+    SSHD="/etc/ssh/sshd_config"
+  fi
+
+  if [[ ! -z $SSHD ]]
+  then
+    PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+    if [[ -z $PRL ]]
+    then
+      PRL="yes"
+    fi
+  fi
+fi
+
+# only write it out if something was captured.
+if [[ ! -z $PRL ]]
+then
+  echo "PermitRootLogin $PRL" > $LOG
+fi
+

@@ -1,0 +1,56 @@
+#!/bin/ksh
+
+# chksan
+# Carl Schelin
+# documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
+# update to include INTRADO directory
+# added multipath -ll to Linux test
+# corrected multipath output path
+
+OS=`uname`
+INTRADO="/opt/intrado"
+
+if [[ -f $INTRADO/etc/chksan.output ]]
+then
+  rm $INTRADO/etc/chksan.output
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+
+  for i in `/usr/sbin/luxadm probe | /usr/bin/grep "Logical Path" | /usr/bin/cut -f2 -d:`
+  do
+    /usr/sbin/luxadm display $i >> $INTRADO/etc/chksan.output
+  done
+
+fi
+
+if [[ $OS = "Linux" ]]
+then
+
+  /usr/bin/systool -c fc_host -v > $INTRADO/etc/chksan.output
+  /sbin/multipath -ll >> $INTRADO/etc/chksan.output
+
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+
+  /usr/sbin/ioscan -fnC fc | tail +2 | while read MYLINE
+   do 
+    if [[ -z "$HWP" ]]
+      then
+       HWP="`echo $MYLINE | awk '{print $3}'`"
+    fi
+    FCDEV="`echo $MYLINE | grep -v grep | grep '/dev/'`"
+    if [[ -n "$FCDEV" ]]
+     then 
+      echo "======= $FCDEV $HWP ======"
+      /opt/fcms/bin/fcmsutil $FCDEV get remote all
+      /usr/sbin/ioscan -fnC disk -H $HWP
+      unset FCDEV
+      unset HWP
+    fi
+  done > $INTRADO/etc/chksan.output
+
+fi
