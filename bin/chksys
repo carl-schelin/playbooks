@@ -32,7 +32,7 @@
 # 2017-02-03 KZ: Updated routing and interface functions to use network as a subsystem
 # 2017-02-03 KZ: Updated resolv function to use config as a subsystem
 # 2017-02-03 KZ: Updated filesystem function to use system as a subsystem
-
+# 2017-02-21 CS: Updated network_iface function to accommodate multiple ips associated with an interface; virtual IPs (:1, :2, :n)
 
 ## Search for 'main function' to get to the meat
 
@@ -408,31 +408,43 @@ function network_iface {
         fi
 
     # with newer Red Hat, ip becomes the proper tool.
+    # and now virtual interfaces will be presented as 'global secondary'
         if [[ -f /usr/sbin/ip ]]; then
           TEST=`/usr/sbin/ip addr show $INTERFACE`
           if [[ $? = 0 ]]; then
-            IP=`      /usr/sbin/ip addr show $INTERFACE | /bin/grep 'inet '  | /bin/awk '{print $2}' | /bin/cut -f1 -d/`
-            NETMASK=` /usr/sbin/ip addr show $INTERFACE | /bin/grep 'inet '  | /bin/awk '{print $2}' | /bin/cut -f2 -d/`
-            IP6=`     /usr/sbin/ip addr show $INTERFACE | /bin/grep 'inet6 ' | /bin/awk '{print $2}' | /bin/cut -f1 -d/`
-            NETMASK6=`/usr/sbin/ip addr show $INTERFACE | /bin/grep 'inet6 ' | /bin/awk '{print $2}' | /bin/cut -f2 -d/`
             MAC=`/usr/sbin/ip addr show $INTERFACE | /bin/grep 'link/ether' | /bin/awk '{print $2}'`
 
-            OUTGATE=''
-            OUTROUTE=''
-    # found the default gateway information
-            if [[ $DEFDEV = $INTERFACE ]]; then
-              OUTGATE=${DEFGATE}
-              OUTROUTE=${DEFROUTE}
-    # any other interfaces were found in a route file
-            elif [[ $DEVICE = $INTERFACE ]]; then
-              OUTGATE=${GATEWAY}
-              OUTROUTE=0
-            fi
-            logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+            for j in `/usr/sbin/ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}'`
+            do
+              ADDR=`     echo $j | cut -f1 -d#`
+              INTERFACE=`echo $j | cut -f2 -d#`
+              IP=`       echo $ADDR | cut -f1 -d/`
+              NETMASK=`  echo $ADDR | cut -f2 -d/`
 
-            if [[ ! -z $IP6 ]]; then
+              OUTGATE=''
+              OUTROUTE=''
+# found the default gateway information
+              if [[ $DEFDEV = $INTERFACE ]]; then
+                OUTGATE=${DEFGATE}
+                OUTROUTE=${DEFROUTE}
+# any other interfaces were found in a route file
+              elif [[ $DEVICE = $INTERFACE ]]; then
+                OUTGATE=${GATEWAY}
+                OUTROUTE=0
+              fi
+              logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+            done
+
+# now process ipv6 addresses
+            for j in `/usr/sbin/ip addr show $INTERFACE | grep "inet6 " | awk '{print $2"#"$NF}'`
+            do
+              ADDR=`     echo $j | cut -f1 -d#`
+              INTERFACE=`echo $j | cut -f2 -d#`
+              IP=`       echo $ADDR | cut -f1 -d/`
+              NETMASK=`  echo $ADDR | cut -f2 -d/`
+
               logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC"
-            fi
+            done
           fi
         else
           if [[ -f /sbin/ifconfig ]]
