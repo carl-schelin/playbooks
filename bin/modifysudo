@@ -2,9 +2,12 @@
 
 # Carl Schelin
 # need to make sure unixsvc can run privileged ansible playbooks without typing in a password
+# 20170301 CS update to add '(%ansgrp)' and ansgrp with root membership
 
 HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
 BINSH=`which sh`
+SUDOTMP=/opt/intrado/etc/sudoers.unixsvc
+OS=`uname`
 
 # sun freeware install
 if [[ -f /opt/sfw/etc/sudoers ]]
@@ -37,18 +40,38 @@ then
   exit 0
 fi
 
+grep -q ansgrp /etc/group
+if [[ $? = 1 ]]
+then
+  groupadd ansgrp
+fi
+
+egrep -q "ansgrp.*root" /etc/group
+if [[ $? = 1 ]]
+then
+  if [[ $OS = 'Linux' ]]
+  then
+    usermod -a -G ansgrp root
+  fi
+  if [[ $OS = 'SunOS' ]]
+  then
+    usermod -G ansgrp root
+  fi
+fi
+
 if [[ -f $SUDOERS ]]
 then
-  grep -q unixsvc $SUDOERS
+  grep -q ansgrp $SUDOERS
   if [[ $? = 1 ]]
   then
+# back it up
+    cp $SUDOERS $SUDOTMP
+# remove old unixsvc info if it exists
+    egrep -v "^unixsvc.*NOPASSWD:" $SUDOTMP > $SUDOERS
 
-    cp $SUDOERS /opt/intrado/etc/sudoers.unixsvc
-
+# add new info
     echo "" >> $SUDOERS
-    echo "# Adding capability for unixsvc account to sudo without a password for ansible playbooks" >> $SUDOERS
-    echo "unixsvc		$HOSTNAME = NOPASSWD: $BINSH -c *" >> $SUDOERS
-    echo "" >> $SUDOERS
+    echo "unixsvc		$HOSTNAME = (%ansgrp) NOPASSWD: $BINSH -c *" >> $SUDOERS
     echo "" >> $SUDOERS
 
   fi
