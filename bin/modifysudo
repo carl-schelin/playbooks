@@ -13,16 +13,13 @@ OS=`uname`
 USERMOD=/sbin/usermod
 GROUPADD=/sbin/groupadd
 
-if [[ $OS = 'SunOS' ]]
+if [[ -f /usr/sbin/groupadd ]]
 then
-  USERMOD=/usr/sbin/usermod
   GROUPADD=/usr/sbin/groupadd
 fi
-
-if [[ $OS = 'HP-UX' ]]
+if [[ -f /sbin/groupadd ]]
 then
-  USERMOD=/usr/sbin/usermod
-  GROUPADD=/usr/sbin/groupadd
+  GROUPADD=/sbin/groupadd
 fi
 
 # sun freeware install
