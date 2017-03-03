@@ -33,7 +33,8 @@
 # 2017-02-03 KZ: Updated resolv function to use config as a subsystem
 # 2017-02-03 KZ: Updated filesystem function to use system as a subsystem
 # 2017-02-21 CS: Updated network_iface function to accommodate multiple ips associated with an interface; virtual IPs (:1, :2, :n)
-# 2017-02-28 CS: Added system_uuid to pull the uuid from systems.
+# 2017-02-28 CS: Added system_uuid to pull the uuid from linux systems (dmidecode).
+# 2017-02-28 CS: Added system_uuid to pull the uuid from solaris systems (smbios).
 
 ## Search for 'main function' to get to the meat
 
@@ -204,6 +205,11 @@ function system_uuid {
   if [[ $OS = 'Linux' ]]
   then
     UUID=`/sbin/dmidecode | grep UUID | awk '{print $2}'`
+    logit "system" "uuid" "${UUID}"
+  fi
+  if [[ $OS = 'SunOS' ]]
+  then
+    UUID=`/usr/sbin/smbios | grep -i uuid | awk '{print $2}'`
     logit "system" "uuid" "${UUID}"
   fi
 }
