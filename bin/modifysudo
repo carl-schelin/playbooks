@@ -5,21 +5,42 @@
 # 20170301 CS update to add '(%ansgrp)' and ansgrp with root membership
 
 HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
-BINSH=`which sh`
-SUDOTMP=/opt/intrado/etc/sudoers.unixsvc
 OS=`uname`
+SUDOTMP=/opt/intrado/etc/sudoers.unixsvc
 
-# default
+# default bin
+BINSH=/bin/sh
+if [[ -f /usr/bin/sh ]]
+then
+  BINSH=/usr/bin/sh
+fi
+
+# default usermod
 USERMOD=/sbin/usermod
-GROUPADD=/sbin/groupadd
+if [[ -f /usr/sbin/usermod ]]
+then
+  USERMOD=/usr/sbin/usermod
+fi
 
+# default groupadd
+GROUPADD=/sbin/groupadd
 if [[ -f /usr/sbin/groupadd ]]
 then
   GROUPADD=/usr/sbin/groupadd
 fi
-if [[ -f /sbin/groupadd ]]
+
+# default grep
+GREP=/bin/grep
+if [[ -f /usr/bin/grep ]]
 then
-  GROUPADD=/sbin/groupadd
+  GREP=/usr/bin/grep
+fi
+
+# default egrep
+EGREP=/bin/egrep
+if [[ -f /usr/bin/egrep ]]
+then
+  GREP=/usr/bin/egrep
 fi
 
 # sun freeware install
@@ -47,45 +68,45 @@ then
 fi
 
 # if no sudo file then it's not installed/not found
-if [[ "$SUDOERS" = "" ]]
+if [[ "${SUDOERS}" = "" ]]
 then
-  echo "Not found" | mailx -s "Sudoers not found: $HOSTNAME" carl.schelin@intrado.com
+  echo "Not found" | mailx -s "Sudoers not found: ${HOSTNAME}" carl.schelin@intrado.com
   exit 0
 fi
 
-grep -q ansgrp /etc/group
+${GREP} -q ansgrp /etc/group
 if [[ $? = 1 ]]
 then
-  $GROUPADD ansgrp
+  ${GROUPADD} ansgrp
 fi
 
-egrep -q "ansgrp.*root" /etc/group
+${EGREP} -q "ansgrp.*root" /etc/group
 if [[ $? = 1 ]]
 then
-  if [[ $OS = 'Linux' ]]
+  if [[ ${OS} = 'Linux' ]]
   then
-    $USERMOD -a -G ansgrp root
+    ${USERMOD} -a -G ansgrp root
   fi
-  if [[ $OS = 'SunOS' ]]
+  if [[ ${OS} = 'SunOS' ]]
   then
-    $USERMOD -G ansgrp root
+    ${USERMOD} -G ansgrp root
   fi
 fi
 
-if [[ -f $SUDOERS ]]
+if [[ -f ${SUDOERS} ]]
 then
-  grep -q ansgrp $SUDOERS
+  ${GREP} -q ansgrp ${SUDOERS}
   if [[ $? = 1 ]]
   then
 # back it up
-    cp $SUDOERS $SUDOTMP
+    cp ${SUDOERS} ${SUDOTMP}
 # remove old unixsvc info if it exists
-    egrep -v "^unixsvc.*NOPASSWD:" $SUDOTMP > $SUDOERS
+    ${EGREP} -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
 
 # add new info
-    echo "" >> $SUDOERS
-    echo "unixsvc		$HOSTNAME = (%ansgrp) NOPASSWD: $BINSH -c *" >> $SUDOERS
-    echo "" >> $SUDOERS
+    echo "" >> ${SUDOERS}
+    echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
+    echo "" >> ${SUDOERS}
 
   fi
 fi
