@@ -3,6 +3,7 @@
 # Carl Schelin
 # copy monitoring configuration files for nagios into the nagios directory and restart nagios
 # 1/9/17 TCS - updated to not restart nagios if an error occurs with the scripts
+# 3/10/17 KSZ - Updated to use systemctl instead of service and added notification incase of restart failure
 
 TMPDIR=/var/tmp
 NAGIOS=/usr/local/nagios
@@ -44,9 +45,10 @@ then
 
   if [[ $? = 0 ]]
   then
-    service nagios stop
-    sleep 5
-    service nagios start
+    systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
+    if [[ $? != 0 || $(systemctl is-failed nagios) ]]; then
+      systemctl status nagios | mailx -s "Nagios restart failure" $WHOCARES
+    fi
   else
     cat /opt/intrado/etc/nagios.output | mailx -s "Nagios configuration error" $WHOCARES
   fi  
@@ -58,9 +60,10 @@ else
 
     if [[ $? = 0 ]]
     then
-      service nagios stop
-      sleep 5
-      service nagios start
+      systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
+      if [[ $? != 0 || $(systemctl is-failed nagios) ]]; then
+        systemctl status nagios | mailx -s "Nagios restart failure" $WHOCARES
+      fi
     else 
       cat /opt/intrado/etc/nagios.output | mailx -s "Nagios configuration error" $WHOCARES
     fi
