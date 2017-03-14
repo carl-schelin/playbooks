@@ -46,7 +46,7 @@ then
   if [[ $? = 0 ]]
   then
     systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
-    if [[ $? != 0 || $(systemctl is-failed nagios) ]]; then
+    if [[ $? != 0 || ! $(systemctl is-failed nagios) ]]; then
       systemctl status nagios | mailx -s "Nagios restart failure" $WHOCARES
     fi
   else
@@ -61,7 +61,7 @@ else
     if [[ $? = 0 ]]
     then
       systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
-      if [[ $? != 0 || $(systemctl is-failed nagios) ]]; then
+      if [[ $? != 0 || ! $(systemctl is-failed nagios) ]]; then
         systemctl status nagios | mailx -s "Nagios restart failure" $WHOCARES
       fi
     else 
