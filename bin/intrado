@@ -257,7 +257,7 @@ runscript lockuser
 runscript cleanup
 
 # testing
-#runscript mailcarl
+runscript mailcarl
 
 ###
 # any general processes
