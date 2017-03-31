@@ -17,8 +17,14 @@
 # 20150718 - Get Informix version
 # 20150816 - Change mysql check as ./mysqld was found on several servers
 # 20151006 - Check for data palette and Panorama (opnet) installation
+# 20170331 - remove ovc.version file if it exists
 
 ADMIN=/opt/intrado
+
+if [[ -f $ADMIN/etc/ovc.version ]]
+then
+  rm $ADMIN/etc/ovc.version
+fi
 
 if [[ -f /opt/OV/bin/opcagt ]]
 then
