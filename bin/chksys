@@ -35,6 +35,8 @@
 # 2017-02-21 CS: Updated network_iface function to accommodate multiple ips associated with an interface; virtual IPs (:1, :2, :n)
 # 2017-02-28 CS: Added system_uuid to pull the uuid from linux systems (dmidecode).
 # 2017-02-28 CS: Added system_uuid to pull the uuid from solaris systems (smbios).
+# 2017-04-13 CS: Don't log entry if data is missing for kernel dates. older systems won't have a date
+# 2017-04-13 CS: Fix IP6 report on some systems where the last item isn't the interface name.
 
 ## Search for 'main function' to get to the meat
 
@@ -58,7 +60,10 @@ function system {
     KERNEL=`/bin/rpm -q kernel --queryformat '%{installtime}\n' | sort -n | tail -1`
     KERNELDATE=`date -d @${KERNEL} +"%Y-%m-%d"`
 
-    logit "system" "kernel" ${KERNELDATE}
+    if [[ ${KERNELDATE} != '' ]]
+    then
+      logit "system" "kernel" ${KERNELDATE}
+    fi
   elif [[ $OS = 'HP-UX' ]]; then
     SWLIST=`/usr/sbin/swlist -l bundle | grep QPKBASE`
     SWYEAR=`echo $SWLIST | awk '{print $NF}'`
@@ -460,11 +465,15 @@ function network_iface {
             for j in `/usr/sbin/ip addr show $INTERFACE | grep "inet6 " | awk '{print $2"#"$NF}'`
             do
               ADDR=`     echo $j | cut -f1 -d#`
-              INTERFACE=`echo $j | cut -f2 -d#`
+              IFACE=`echo $j | cut -f2 -d#`
+              if [[ $IFACE != 'link' ]] && [[ $IFACE != 'host' ]]
+              then
+                INTERFACE=$IFACE
+              fi
               IP=`       echo $ADDR | cut -f1 -d/`
               NETMASK=`  echo $ADDR | cut -f2 -d/`
 
-              logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC"
+              logit "network" "interface" "$INTERFACE,$IP,1,$NETMASK,$MAC"
             done
           fi
         else
