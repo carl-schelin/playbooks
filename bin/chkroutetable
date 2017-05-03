@@ -1,11 +1,11 @@
 #!/bin/ksh
 
-# chkroutes by Carl Schelin
+# chkroutetable by Carl Schelin
 # Check the route configuration file to make sure it's valid.
 # Check the existing routes against the route configuration file.
 
-PROGNAME="chkroutes"
-CONTENT="chkroutes"
+PROGNAME="chkroutetable"
+CONTENT="chkroutetable"
 OS=`uname`
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/$CONTENT.output
