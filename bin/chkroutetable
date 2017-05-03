@@ -27,9 +27,13 @@ then
   then
     IP=/sbin/ip
   fi
+  if [[ -f /bin/ip ]]
+  then
+    IP=/bin/ip
+  fi
   if [[ ! -z $IP ]]
   then
-    for i in `/usr/sbin/ip addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g"`
+    for i in `$IP addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g"`
     do
       if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
       then
