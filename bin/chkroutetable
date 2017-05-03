@@ -38,7 +38,7 @@ then
     do
       if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
       then
-        for j in `cat /etc/sysconfig/network-scripts/route-$i | awk '{print $1":"$2":"$3":"$4":"$5}'`
+        for j in `egrep -v "^(#|$)" /etc/sysconfig/network-scripts/route-$i | "^$awk '{print $1":"$2":"$3":"$4":"$5}'`
           do
             ADDR=`echo $j | cut -f1 -d:`
             VIA=`echo $j | cut -f2 -d:`
@@ -53,10 +53,13 @@ then
               echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
             fi
 # check gateway
-# check dev keyword
-            if [[ $DEV != 'dev' ]]
+# check dev keyword; if blank then dev is default to the file name interface name
+            if [[ ! -z $DEV ]]
             then
-              echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
+              if [[ $DEV != 'dev' ]]
+              then
+                echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
+              fi
             fi
 # check device
 
