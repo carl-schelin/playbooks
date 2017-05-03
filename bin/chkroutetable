@@ -8,11 +8,11 @@ PROGNAME="chkroutes"
 CONTENT="chkroutes"
 OS=`uname`
 INTRADO=/opt/intrado
-LOG=$INTRADO/log/intrado.log
+LOG=$INTRADO/etc/$CONTENT.output
 
-if [[ -f $INTRADO/etc/$CONTENT.output ]]
+if [[ -f $LOG ]]
 then
-  rm $INTRADO/etc/$CONTENT.output
+  rm $LOG
 fi
 
 # Check routes on a Linux box
@@ -34,13 +34,13 @@ then
 # check via keyword
           if [[ $VIA != 'via' ]]
           then
-            echo "$ADDR line 'via' is incorrect: $VIA"
+            echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
           fi
 # check gateway
 # check dev keyword
           if [[ $DEV != 'dev' ]]
           then
-            echo "$ADDR line 'dev' is incorrect: $DEV"
+            echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
           fi
 # check device
 
@@ -55,7 +55,7 @@ then
         OUTPUT=`grep $ADDR /etc/sysconfig/network-scripts/route-$i | grep $GATEWAY`
         if [[ -z $OUTPUT ]]
         then
-          echo "Missing route: $ADDR  $GATEWAY"
+          echo "Route missing from /etc/sysconfig/network-scripts/route-$i: $ADDR  $GATEWAY" >> $LOG
         fi
       done
     fi
