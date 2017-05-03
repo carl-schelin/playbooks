@@ -5,7 +5,7 @@
 # Check the existing routes against the route configuration file.
 
 PROGNAME="chkroutetable"
-CONTENT="chkroutetable"
+CONTENT="routetable"
 OS=`uname`
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/$CONTENT.output
