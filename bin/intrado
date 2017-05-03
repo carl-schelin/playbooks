@@ -255,7 +255,7 @@ runscript modifysudo
 runscript lockuser
 
 # Check the routing table
-runscript chkroutes
+runscript chkroutetable
 
 # clean up on aisle three
 runscript cleanup
