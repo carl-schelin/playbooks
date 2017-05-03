@@ -18,6 +18,7 @@ fi
 # Check routes on a Linux box
 if [[ $OS = "Linux" ]]
 then
+  date > $LOG
   IP=''
   if [[ -f /usr/sbin/ip ]]
   then
