@@ -73,6 +73,7 @@
 # 2016-11-10 - Added simplejson check for older RHEL5 systems.
 # 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
 # 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left Intrado
+# 2017-05-03 - Added chkroutes script
 
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -252,6 +253,9 @@ runscript modifysudo
 
 # lock users listed in the lockuser.dat file
 runscript lockuser
+
+# Check the routing table
+runscript chkroutes
 
 # clean up on aisle three
 runscript cleanup
