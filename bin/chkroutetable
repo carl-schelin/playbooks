@@ -18,48 +18,60 @@ fi
 # Check routes on a Linux box
 if [[ $OS = "Linux" ]]
 then
-  for i in `/usr/sbin/ip addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g"`
-  do
-    if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
-    then
-      for j in `cat /etc/sysconfig/network-scripts/route-$i | awk '{print $1":"$2":"$3":"$4":"$5}'`
-        do
-          ADDR=`echo $j | cut -f1 -d:`
-          VIA=`echo $j | cut -f2 -d:`
-          GATEWAY=`echo $j | cut -f3 -d:`
-          DEV=`echo $j | cut -f4 -d:`
-          DEVICE=`echo $j | cut -f5 -d:`
+  IP=''
+  if [[ -f /usr/sbin/ip ]]
+  then
+    IP=/usr/sbin/ip
+  fi
+  if [[ -f /sbin/ip ]]
+  then
+    IP=/sbin/ip
+  fi
+  if [[ ! -z $IP ]]
+  then
+    for i in `/usr/sbin/ip addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g"`
+    do
+      if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
+      then
+        for j in `cat /etc/sysconfig/network-scripts/route-$i | awk '{print $1":"$2":"$3":"$4":"$5}'`
+          do
+            ADDR=`echo $j | cut -f1 -d:`
+            VIA=`echo $j | cut -f2 -d:`
+            GATEWAY=`echo $j | cut -f3 -d:`
+            DEV=`echo $j | cut -f4 -d:`
+            DEVICE=`echo $j | cut -f5 -d:`
 
 # check ip address and mask
 # check via keyword
-          if [[ $VIA != 'via' ]]
-          then
-            echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
-          fi
+            if [[ $VIA != 'via' ]]
+            then
+              echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
+            fi
 # check gateway
 # check dev keyword
-          if [[ $DEV != 'dev' ]]
-          then
-            echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
-          fi
+            if [[ $DEV != 'dev' ]]
+            then
+              echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
+            fi
 # check device
 
-      done
+        done
 
 # now check existing routes against the file
-      for j in `netstat -rn | grep $i | awk '{print $1":"$2}' | grep -v 0.0.0.0`; 
-      do
-        ADDR=`echo $j | cut -f1 -d:`
-        GATEWAY=`echo $j | cut -f2 -d:`
+        for j in `netstat -rn | grep $i | awk '{print $1":"$2}' | grep -v 0.0.0.0`; 
+        do
+          ADDR=`echo $j | cut -f1 -d:`
+          GATEWAY=`echo $j | cut -f2 -d:`
 
-        OUTPUT=`grep $ADDR /etc/sysconfig/network-scripts/route-$i | grep $GATEWAY`
-        if [[ -z $OUTPUT ]]
-        then
-          echo "Route missing from /etc/sysconfig/network-scripts/route-$i: $ADDR  $GATEWAY" >> $LOG
-        fi
-      done
-    fi
-  done
+          OUTPUT=`grep $ADDR /etc/sysconfig/network-scripts/route-$i | grep $GATEWAY`
+          if [[ -z $OUTPUT ]]
+          then
+            echo "Route missing from /etc/sysconfig/network-scripts/route-$i: $ADDR  $GATEWAY" >> $LOG
+          fi
+        done
+      fi
+    done
+  fi
 fi
 
 exit 0
