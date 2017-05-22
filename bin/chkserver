@@ -6,9 +6,10 @@
 # Description: Run through the defined steps to quickly see what might need to be done
 #   on a system to complete the installation.
 # 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if intrado script hasn't been run yet
+# 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
 
 PROGNAME="chkserver"
-
+COUNT=0
 OS=`uname`
 
 echo ""
@@ -45,7 +46,7 @@ then
 
 # Step 4: 
   echo "ifcfg files:"
-  for i in `ls /etc/sysconfig/network-scripts/ifcfg*`
+  for i in `ls /etc/sysconfig/network-scripts/ifcfg* | grep -v -- '-lo' | grep -v -- '-none'`
   do
     ONBOOT=`grep "ONBOOT=yes" $i`
     if [[ ! -z $ONBOOT ]]
@@ -53,6 +54,7 @@ then
       echo "$i:"
       cat $i
       echo ""
+      COUNT=$(( $COUNT + 1 ))
     fi
   done
 
@@ -76,12 +78,15 @@ then
   echo ""
 
 # Step 11: check routes
-  for i in `ls /etc/sysconfig/network-scripts/route-*`
-  do
-    echo $i
-    cat $i
-    echo ""
-  done
+  if [[ $COUNT -gt 1 ]]
+  then
+    for i in `ls /etc/sysconfig/network-scripts/route-*`
+    do
+      echo $i
+      cat $i
+      echo ""
+    done
+  fi
 
 # Step 6: root password changed? 
 # check the password against the kickstart default
