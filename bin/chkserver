@@ -7,6 +7,7 @@
 #   on a system to complete the installation.
 # 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if intrado script hasn't been run yet
 # 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
+# 2017/06/20 - CS - added chkserver.input validation steps.
 
 PROGNAME="chkserver"
 COUNT=0
@@ -239,6 +240,110 @@ then
     echo ""
   fi
 
+  if [[ -f /opt/intrado/etc/chkserver.input ]]
+  then
+
+    echo ""
+    echo "Checking chkserver.input file for items to verify:"
+
+    for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
+    do
+
+      FIELD2=`echo $j | cut -f2 -d:`
+      FIELD3=`echo $j | cut -f3 -d:`
+      FIELD4=`echo $j | cut -f4 -d:`
+
+      if [[ $FIELD2 = 'CPU' ]]
+      then
+        COUNT=`grep -c processor /proc/cpuinfo`
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo "  System shows $COUNT CPUs where expected is $FIELD3 CPUs"
+        else
+          echo "  $COUNT CPUs as expected"
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Memory' ]]
+      then
+        COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo "  System shows $COUNT Memory where expected is $FIELD3 Memory"
+        else
+          echo "  ${COUNT}G of Memory as expected"
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'IP' ]]
+      then
+        ip addr | grep -q " ${FIELD3}/"
+        if [[ $? = 0 ]]
+        then
+          echo "  IP $FIELD3 configured"
+          ping -c 2 ${FIELD4} > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            echo "  Gateway ${FIELD4} accessible"
+          else
+            echo "  Gateway ${FIELD4} is not responding to ping"
+          fi
+        else
+          echo "  Unable to locate ${FIELD3} in ip addr output"
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Service' ]]
+      then
+        grep -q "^${FIELD3}:" /etc/passwd
+        if [[ $? = 0 ]]
+        then
+          echo "  Service Account ${FIELD3} exists"
+          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6}'`
+          if [[ $PASSWORD = 'never' ]]
+          then
+            echo "    Password doesn't expire"
+          else
+            echo "    Password expires: $PASSWORD"
+          fi
+          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6}'`
+          if [[ $ACCOUNT = 'never' ]]
+          then
+            echo "    Account doesn't expire"
+          else
+            echo "    Account expires: $ACCOUNT"
+          fi
+        else
+          echo "  Unable to locate ${FIELD3} in /etc/passwd"
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Group' ]]
+      then
+        grep -q "^${FIELD3}:" /etc/group
+        if [[ $? = 0 ]]
+        then
+          echo "  Group ${FIELD3} exists"
+        else
+          echo "  Unable to locate ${FIELD3} in /etc/group"
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Sudoers' ]]
+      then
+        grep -q "^%${FIELD3}" /etc/sudoers
+        if [[ $? = 0 ]]
+        then
+          echo "  Sudoers group %${FIELD3} exists"
+        else
+          echo "  Unable to locate %${FIELD3} in /etc/sudoers"
+        fi
+      fi
+
+    done
+
+    echo ""
+  fi
 fi
 
 echo "External steps to be performed:"
