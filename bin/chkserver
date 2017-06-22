@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # chkserver - Check the postinstall steps where possible
 # Owner: Carl Schelin
@@ -12,6 +12,9 @@
 PROGNAME="chkserver"
 COUNT=0
 OS=`uname`
+GREEN="\e[32m"
+RED="\e[31m"
+RESET="\e[0m"
 
 echo ""
 echo "================================"
@@ -38,26 +41,6 @@ then
     echo "$INHOSTS"
   fi
   echo ""
-
-# if we're here, the network stuff is likely set up so just show the various files to check the output.
-# Step 3: /etc/sysconfig/network
-  echo "/etc/sysconfig/network:"
-  cat /etc/sysconfig/network
-  echo ""
-
-# Step 4: 
-  echo "ifcfg files:"
-  for i in `ls /etc/sysconfig/network-scripts/ifcfg* | grep -v -- '-lo' | grep -v -- '-none'`
-  do
-    ONBOOT=`grep "ONBOOT=yes" $i`
-    if [[ ! -z $ONBOOT ]]
-    then
-      echo "$i:"
-      cat $i
-      echo ""
-      COUNT=$(( $COUNT + 1 ))
-    fi
-  done
 
 # Step 5: sudoers check
   if [[ -f /etc/sudoers ]]
@@ -135,65 +118,6 @@ then
     echo ""
   fi
 
-# Step 13: is Openview running?
-  if [[ -d /opt/OV/bin ]]
-  then
-    echo "OpenView agent is installed"
-    OPENVIEW=`ps -e | grep ovcd`
-    if [[ -z $OPENVIEW ]]
-    then
-      echo "OpenView agent is not running"
-    else
-      echo "OpenView agent is running"
-    fi
-  else
-    echo "OpenView is not installed"
-  fi
-  echo ""
-
-# Step 14: is NetBackup installed? Check hosts.allow as well
-  if [[ -f /usr/openv/netbackup/bp.conf ]]
-  then
-    echo "NetBackup is installed"
-    if [[ -f /etc/hosts.allow ]]
-    then
-      ALLOW=`grep bpcd: /etc/hosts.allow`
-      if [[ -z $ALLOW ]]
-      then
-        echo "/etc/hosts.allow is missing the daemons used by NetBackup"
-      fi
-    else
-      echo "/etc/hosts.allow doesn't exist"
-    fi
-    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
-    if [[ -z $NBLIST ]]
-    then
-      echo "NetBackup is not running"
-    else
-      echo "NetBackup is running"
-    fi
-  else
-    echo "NetBackup is not installed"
-  fi
-  echo ""
-
-
-# Step 15: is Datapal installed?
-  if [[ -f /opt/datapalette/bin/datapal ]]
-  then
-    DPPS=`ps -e | grep datapal`
-    if [[ ! -z $DPPS ]]
-    then
-      echo "Data Palette is installed and running"
-    else
-      echo "Data Palette is installed but is not running"
-    fi
-  else 
-    echo "Data Palette is not installed on this system"
-  fi
-  echo ""
-
-
 # Step 16: cfg2html installed?
   if [[ ! -d /opt/intrado/cfghtml ]]
   then
@@ -224,14 +148,6 @@ then
   fi
 
 
-# Step 16: is Centrify installed
-  CENTRIFY=`ps -e | grep adclient`
-  if [[ -z $CENTRIFY ]]
-  then
-    echo "Centrify is not installed"
-    echo ""
-  fi
-
 
 # Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
   if [[ ! -f /usr/bin/ksh ]]
@@ -258,9 +174,9 @@ then
         COUNT=`grep -c processor /proc/cpuinfo`
         if [[ $COUNT -ne $FIELD3 ]]
         then
-          echo "  System shows $COUNT CPUs where expected is $FIELD3 CPUs"
+          echo -e "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}"
         else
-          echo "  $COUNT CPUs as expected"
+          echo -e "  ${GREEN}$COUNT CPUs as expected${RESET}"
         fi
       fi
     
@@ -269,9 +185,9 @@ then
         COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
         if [[ $COUNT -ne $FIELD3 ]]
         then
-          echo "  System shows $COUNT Memory where expected is $FIELD3 Memory"
+          echo -e "  ${RED}System shows $COUNT Memory where expected is $FIELD3 Memory${RESET}"
         else
-          echo "  ${COUNT}G of Memory as expected"
+          echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}"
         fi
       fi
     
@@ -280,16 +196,31 @@ then
         ip addr | grep -q " ${FIELD3}/"
         if [[ $? = 0 ]]
         then
-          echo "  IP $FIELD3 configured"
+          INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
+          echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}"
+          grep -qi "onboot=yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}"
+          else
+            echo -e "    ${RED}$INTERFACE is not configured to start on boot${RESET}"
+          fi
           ping -c 2 ${FIELD4} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            echo "  Gateway ${FIELD4} accessible"
+            echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}"
           else
-            echo "  Gateway ${FIELD4} is not responding to ping"
+            echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}"
+          fi
+          grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}"
+          else
+            echo -e "    ${RED}/etc/sysconfig/network:GATEWAY=${FIELD4} not configured${RESET}"
           fi
         else
-          echo "  Unable to locate ${FIELD3} in ip addr output"
+          echo -e"  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}"
         fi
       fi
 
@@ -298,23 +229,23 @@ then
         grep -q "^${FIELD3}:" /etc/passwd
         if [[ $? = 0 ]]
         then
-          echo "  Service Account ${FIELD3} exists"
+          echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}"
           PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6}'`
-          if [[ $PASSWORD = 'never' ]]
+          if [[ $PASSWORD = 'never  ' ]]
           then
-            echo "    Password doesn't expire"
+            echo -e "    ${GREEN}Password doesn't expire${RESET}"
           else
-            echo "    Password expires: $PASSWORD"
+            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET}"
           fi
           ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6}'`
-          if [[ $ACCOUNT = 'never' ]]
+          if [[ $ACCOUNT = 'never  ' ]]
           then
-            echo "    Account doesn't expire"
+            echo -e "    ${GREEN}Account doesn't expire${RESET}"
           else
-            echo "    Account expires: $ACCOUNT"
+            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET}"
           fi
         else
-          echo "  Unable to locate ${FIELD3} in /etc/passwd"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}"
         fi
       fi
     
@@ -323,9 +254,9 @@ then
         grep -q "^${FIELD3}:" /etc/group
         if [[ $? = 0 ]]
         then
-          echo "  Group ${FIELD3} exists"
+          echo -e "  ${GREEN}Group ${FIELD3} exists${RESET}"
         else
-          echo "  Unable to locate ${FIELD3} in /etc/group"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}"
         fi
       fi
     
@@ -334,9 +265,81 @@ then
         grep -q "^%${FIELD3}" /etc/sudoers
         if [[ $? = 0 ]]
         then
-          echo "  Sudoers group %${FIELD3} exists"
+          echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}"
         else
-          echo "  Unable to locate %${FIELD3} in /etc/sudoers"
+          echo -e "  ${RED}Unable to locate %${FIELD3} in /etc/sudoers${RESET}"
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Openview' ]]
+      then
+        if [[ -d /opt/OV/bin ]]
+        then
+          echo -e "  ${GREEN}OpenView agent is installed${RESET}"
+          OPENVIEW=`ps -e | grep ovcd`
+          if [[ -z $OPENVIEW ]]
+          then
+            echo -e "    ${RED}OpenView agent is not running${RESET}"
+          else
+            echo -e "    ${GREEN}OpenView agent is running${RESET}"
+          fi
+        else
+          echo -e "  ${RED}OpenView is not installed${RESET}"
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Netbackup' ]]
+      then
+        if [[ -f /usr/openv/netbackup/bp.conf ]]
+        then
+          echo -e "  ${GREEN}NetBackup is installed${RESET}"
+          if [[ -f /etc/hosts.allow ]]
+          then
+            ALLOW=`grep bpcd: /etc/hosts.allow`
+            if [[ -z $ALLOW ]]
+            then
+              echo -e "    ${RED}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}"
+            fi
+          else
+            echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}"
+          fi
+          NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+          if [[ -z $NBLIST ]]
+          then
+            echo -e "    ${RED}NetBackup is not running${RESET}"
+          else
+            echo -e "    ${GREEN}NetBackup is running${RESET}"
+          fi
+        else
+          echo -e "  ${RED}NetBackup is not installed${RESET}"
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Datapalette' ]]
+      then
+        if [[ -f /opt/datapalette/bin/datapal ]]
+        then
+          echo -e "  ${GREEN}Data Palette is installed${RESET}"
+          DPPS=`ps -e | grep datapal`
+          if [[ ! -z $DPPS ]]
+          then
+            echo -e "    ${GREEN}Data Palette is running${RESET}"
+          else
+            echo -e "    ${RED}Data Palette is not running${RESET}"
+          fi
+        else 
+          echo -e "  ${RED}Data Palette is not installed${RESET}"
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Centrify' ]]
+      then
+        CENTRIFY=`ps -e | grep adclient`
+        if [[ ! -z $CENTRIFY ]]
+        then
+          echo -e "  ${GREEN}Centrify is installed${RESET}"
+        else
+          echo -e "  ${RED}Centrify is not installed${RESET}"
         fi
       fi
 
