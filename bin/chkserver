@@ -26,21 +26,18 @@ if [[ $OS = "Linux" ]]
 then
   if [[ `id -u` -ne 0 ]]
   then
-    echo "Due to the checks, this script must be run by root."
+    echo -e "${RED}Due to the checks, this script must be run by root.${RESET}"
     exit 0
   fi
 
-# Step 2: /etc hosts file
   HOSTNAME=`hostname|cut -f1 -d.`
   INHOSTS=`grep $HOSTNAME /etc/hosts`
   if [[ -z $INHOSTS ]]
   then
-    echo "$HOSTNAME not in /etc/hosts"
+    echo -e "  ${RED}${HOSTNAME} not in /etc/hosts${RESET}"
   else
-    echo "/etc/hosts:"
-    echo "$INHOSTS"
+    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}"
   fi
-  echo ""
 
 # Step 5: sudoers check
   if [[ -f /etc/sudoers ]]
@@ -48,29 +45,44 @@ then
     SUDOERS=`grep $HOSTNAME /etc/sudoers`
     if [[ -z $SUDOERS ]]
     then
-      echo "/etc/sudoers doesn't contain $HOSTNAME alias"
-      echo ""
+      echo -e "  ${RED}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}"
     fi
   else
-    echo "/etc/sudoers not found"
-    echo ""
+    echo -e "  ${RED}/etc/sudoers not found${RESET}"
   fi
 
 # Step 10: check /etc/resolv.conf
-  echo "/etc/resolv.conf:"
-  cat /etc/resolv.conf
-  echo ""
+  if [[ -f /etc/resolv.conf ]]
+  then
+    COUNT=`grep -c nameserver /etc/resolv.conf`
+    if [[ $COUNT = 0 ]]
+    then
+      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}"
+    else
+      for i in `grep nameserver /etc/resolv.conf | awk '{print $2}'`
+      do
+        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}"
+        OUTPUT=`nslookup incojs01 | grep "Address: 10.100.78.143"`
+        if [[ -z $OUTPUT ]]
+        then
+          echo -e "    ${RED}Unable to resolve incojs01${RESET}"
+        else
+          echo -e "    ${GREEN}Resolved incojs01${RESET}"
+        fi
+      done
+    fi
+  fi
 
 # Step 11: check routes
-  if [[ $COUNT -gt 1 ]]
-  then
-    for i in `ls /etc/sysconfig/network-scripts/route-*`
-    do
-      echo $i
-      cat $i
-      echo ""
-    done
-  fi
+#  if [[ $COUNT -gt 1 ]]
+#  then
+#    for i in `ls /etc/sysconfig/network-scripts/route-*`
+#    do
+#      echo $i
+#      cat $i
+#      echo ""
+#    done
+#  fi
 
 # Step 6: root password changed? 
 # check the password against the kickstart default
@@ -78,8 +90,7 @@ then
   ROOTPW=`grep "^root:" /etc/shadow | grep $ROOTDEF`
   if [[ ! -z $ROOTPW ]]
   then
-    echo "Root password is still set to the default"
-    echo ""
+    echo -e "  ${RED}Root password is still set to the default${RESET}"
   fi
 
 # Step 7: check service processor/iLOM password; external to this check; skipped
@@ -90,44 +101,41 @@ then
   UNIXPW=`grep "^unixsvc:" /etc/shadow | grep $UNIXDEF`
   if [[ ! -z $UNIXPW ]]
   then
-    echo "UnixSvc account password is still set to the default"
-    echo ""
+    echo -e "  ${RED}UnixSvc account password is still set to the default${RESET}"
   fi
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
 
 # Step 1: vmware?
-  if [[ -f /usr/sbin/vmtoolsd ]]
+  if [[ -f /usr/bin/vmtoolsd ]]
   then
-    echo "VMWare Agent is installed"
+    echo -e "  ${GREEN}VMWare Agent is installed${RESET}"
     VMWARE=`ps -e | grep vmtoolsd`
     if [[ -z $VMWARE ]]
     then
-      echo "VMWare Agent is Running"
+      echo -e "    ${RED}VMWare Agent is not running${RESET}"
+    else
+      echo -e "    ${GREEN}VMWare Agent is running${RESET}"
     fi
   else
-    echo "VMWare Agent is not installed"
+    echo -e "  ${RED}VMWare Agent is not installed${RESET}"
   fi
-  echo ""
 
 # Step 12: is rrdtool running?
   UPDATERRD=`ps -e | grep updaterrd`
   if [[ -z $UPDATERRD ]]
   then
-    echo "rrdtool is not configured or running"
-    echo ""
+    echo -e "  ${RED}rrdtool is not configured or running${RESET}"
   fi
 
 # Step 16: cfg2html installed?
   if [[ ! -d /opt/intrado/cfghtml ]]
   then
-    echo "cfg2html not installed"
-    echo ""
+    echo -e "  ${RED}cfg2html not installed${RESET}"
   else
     if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
     then
-      echo "cfg2html has not been run"
-      echo ""
+      echo -e "  ${RED}cfg2html has not been run${RESET}"
     fi
   fi
 
@@ -138,29 +146,24 @@ then
 # Step 18: was /opt/intrado/bin/intrado run?
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
-    echo "The /opt/intrado/bin/intrado script hasn't run yet."
+    echo -e "  ${RED}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}"
     CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
     if [[ -z $CRON ]]
     then
-      echo "Need to update root's cron"
+      echo -e "  ${RED}Need to update root's cron${RESET}"
     fi
-    echo ""
   fi
-
 
 
 # Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
   if [[ ! -f /usr/bin/ksh ]]
   then
-    echo "Need to create a symbolic link between /bin/ksh and /usr/bin/ksh"
-    echo ""
+    echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}"
   fi
 
   if [[ -f /opt/intrado/etc/chkserver.input ]]
   then
 
-    echo ""
-    echo "Checking chkserver.input file for items to verify:"
 
     for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
     do
@@ -220,7 +223,7 @@ then
             echo -e "    ${RED}/etc/sysconfig/network:GATEWAY=${FIELD4} not configured${RESET}"
           fi
         else
-          echo -e"  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}"
         fi
       fi
 
@@ -235,14 +238,14 @@ then
           then
             echo -e "    ${GREEN}Password doesn't expire${RESET}"
           else
-            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET}"
+            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}"
           fi
           ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6}'`
           if [[ $ACCOUNT = 'never  ' ]]
           then
             echo -e "    ${GREEN}Account doesn't expire${RESET}"
           else
-            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET}"
+            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}"
           fi
         else
           echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}"
@@ -346,6 +349,8 @@ then
     done
 
     echo ""
+  else 
+    echo -e "${RED}chkserver.input file not found${RESET}"
   fi
 fi
 
