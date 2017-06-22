@@ -107,7 +107,7 @@ then
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
 
 # Step 1: vmware?
-  if [[ -f /usr/bin/vmtoolsd ]]
+  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
   then
     echo -e "  ${GREEN}VMWare Agent is installed${RESET}"
     VMWARE=`ps -e | grep vmtoolsd`
