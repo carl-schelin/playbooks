@@ -190,12 +190,19 @@ then
 
 
     COUNT=0
-    SPACE=''
-    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $3}'`
+# getting '2 cores' and breaking out the '2' as a count
+    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
-      CPUS="${CPUS}${SPACE}${COUNT}"
+      COUNT=$(( $COUNT + $i ))
+    done
+
+    CNT=0
+    SPACE=''
+    while [[ $CNT -lt $COUNT ]]
+    do
+      CPUS="${CPUS}${SPACE}${CNT}"
       SPACE=' '
-      COUNT=$(( $COUNT + 1 ))
+      CNT=$(( $CNT + 1 ))
     done
 
     echo ""
@@ -477,12 +484,19 @@ then
 
 
     COUNT=0
-    SPACE=''
-    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $3}'`
+# getting '2 cores' and breaking out the '2' as a count
+    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
-      CPUS="${CPUS}${SPACE}${COUNT}"
+      COUNT=$(( $COUNT + $i ))
+    done
+
+    CNT=0
+    SPACE=''
+    while [[ $CNT -lt $COUNT ]]
+    do
+      CPUS="${CPUS}${SPACE}${CNT}"
       SPACE=' '
-      COUNT=$(( $COUNT + 1 ))
+      CNT=$(( $CNT + 1 ))
     done
 
     echo ""
