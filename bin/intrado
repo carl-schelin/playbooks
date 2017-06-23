@@ -74,6 +74,7 @@
 # 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
 # 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left Intrado
 # 2017-05-03 - Added chkroutes script
+# 2017-06-23 - Added SKIPRANDOM variable check. if it's set to anything, skip the random pause for the chkbackups script
 
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -164,8 +165,11 @@ runscript () {
 # Added random start for the chkbackups scripts, using a range to between 2min-30min
 # Requested by JJ East through Remedy WO0000000007931
 # To be implemented starting on Mon 12/14/15
-rnumber=$((RANDOM%(1800-120+1)+120))
-sleep $rnumber
+if [[ ! -z $SKIPRANDOM ]]
+then
+  rnumber=$((RANDOM%(1800-120+1)+120))
+  sleep $rnumber
+fi
 runscript chkbackups
 
 # Ensures there's at least one entry in syslog
