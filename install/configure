@@ -107,7 +107,7 @@ then
 
 # build interface variable
     SPACE=''
-    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $3}'`
+    for i in `grep interface /opt/intrado/etc/chksys.import | egrep -v ',(lo|1),' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -123,7 +123,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $5}'`
+    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
@@ -394,7 +394,7 @@ then
 
 # build interface variable
     SPACE=''
-    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $3}'`
+    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -410,7 +410,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $5}'`
+    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
