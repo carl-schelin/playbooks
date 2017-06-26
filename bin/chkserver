@@ -15,12 +15,19 @@ OS=`uname`
 GREEN="\e[32m"
 RED="\e[31m"
 RESET="\e[0m"
+INTRADO=/opt/intrado
+LOG=$INTRADO/etc/chkserver.output
 
-echo ""
-echo "================================"
-echo "Running Postinstall System Check"
-echo "================================"
-echo ""
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+echo "" > $LOG
+echo "================================" >> $LOG
+echo "Running Postinstall System Check" >> $LOG
+echo "================================" >> $LOG
+echo "" >> $LOG
 
 if [[ $OS = "Linux" ]]
 then
@@ -34,9 +41,9 @@ then
   INHOSTS=`grep $HOSTNAME /etc/hosts`
   if [[ -z $INHOSTS ]]
   then
-    echo -e "  ${RED}${HOSTNAME} not in /etc/hosts${RESET}"
+    echo -e "  ${RED}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
   else
-    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}"
+    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
   fi
 
 # Step 5: sudoers check
@@ -45,10 +52,10 @@ then
     SUDOERS=`grep $HOSTNAME /etc/sudoers`
     if [[ -z $SUDOERS ]]
     then
-      echo -e "  ${RED}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}"
+      echo -e "  ${RED}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
     fi
   else
-    echo -e "  ${RED}/etc/sudoers not found${RESET}"
+    echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
   fi
 
 # Step 10: check /etc/resolv.conf
@@ -57,17 +64,17 @@ then
     COUNT=`grep -c nameserver /etc/resolv.conf`
     if [[ $COUNT = 0 ]]
     then
-      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}"
+      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
     else
       for i in `grep nameserver /etc/resolv.conf | awk '{print $2}'`
       do
-        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}"
+        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
         OUTPUT=`nslookup incojs01 | grep "Address: 10.100.78.143"`
         if [[ -z $OUTPUT ]]
         then
-          echo -e "    ${RED}Unable to resolve incojs01${RESET}"
+          echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
         else
-          echo -e "    ${GREEN}Resolved incojs01${RESET}"
+          echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
         fi
       done
     fi
@@ -90,7 +97,7 @@ then
   ROOTPW=`grep "^root:" /etc/shadow | grep $ROOTDEF`
   if [[ ! -z $ROOTPW ]]
   then
-    echo -e "  ${RED}Root password is still set to the default${RESET}"
+    echo -e "  ${RED}Root password is still set to the default${RESET}" >> $LOG
   fi
 
 # Step 7: check service processor/iLOM password; external to this check; skipped
@@ -101,7 +108,7 @@ then
   UNIXPW=`grep "^unixsvc:" /etc/shadow | grep $UNIXDEF`
   if [[ ! -z $UNIXPW ]]
   then
-    echo -e "  ${RED}UnixSvc account password is still set to the default${RESET}"
+    echo -e "  ${RED}UnixSvc account password is still set to the default${RESET}" >> $LOG
   fi
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
@@ -109,33 +116,33 @@ then
 # Step 1: vmware?
   if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
   then
-    echo -e "  ${GREEN}VMWare Agent is installed${RESET}"
+    echo -e "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
     VMWARE=`ps -e | grep vmtoolsd`
     if [[ -z $VMWARE ]]
     then
-      echo -e "    ${RED}VMWare Agent is not running${RESET}"
+      echo -e "    ${RED}VMWare Agent is not running${RESET}" >> $LOG
     else
-      echo -e "    ${GREEN}VMWare Agent is running${RESET}"
+      echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
     fi
   else
-    echo -e "  ${RED}VMWare Agent is not installed${RESET}"
+    echo -e "  ${RED}VMWare Agent is not installed${RESET}" >> $LOG
   fi
 
 # Step 12: is rrdtool running?
   UPDATERRD=`ps -e | grep updaterrd`
   if [[ -z $UPDATERRD ]]
   then
-    echo -e "  ${RED}rrdtool is not configured or running${RESET}"
+    echo -e "  ${RED}rrdtool is not configured or running${RESET}" >> $LOG
   fi
 
 # Step 16: cfg2html installed?
   if [[ ! -d /opt/intrado/cfghtml ]]
   then
-    echo -e "  ${RED}cfg2html not installed${RESET}"
+    echo -e "  ${RED}cfg2html not installed${RESET}" >> $LOG
   else
     if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
     then
-      echo -e "  ${RED}cfg2html has not been run${RESET}"
+      echo -e "  ${RED}cfg2html has not been run${RESET}" >> $LOG
     fi
   fi
 
@@ -146,11 +153,11 @@ then
 # Step 18: was /opt/intrado/bin/intrado run?
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
-    echo -e "  ${RED}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}"
+    echo -e "  ${RED}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
     CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
     if [[ -z $CRON ]]
     then
-      echo -e "  ${RED}Need to update root's cron${RESET}"
+      echo -e "  ${RED}Need to update root's cron${RESET}" >> $LOG
     fi
   fi
 
@@ -158,7 +165,7 @@ then
 # Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
   if [[ ! -f /usr/bin/ksh ]]
   then
-    echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}"
+    echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
   fi
 
   if [[ -f /opt/intrado/etc/chkserver.input ]]
@@ -177,9 +184,9 @@ then
         COUNT=`grep -c processor /proc/cpuinfo`
         if [[ $COUNT -ne $FIELD3 ]]
         then
-          echo -e "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}"
+          echo -e "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> $LOG
         else
-          echo -e "  ${GREEN}$COUNT CPUs as expected${RESET}"
+          echo -e "  ${GREEN}$COUNT CPUs as expected${RESET}" >> $LOG
         fi
       fi
     
@@ -188,9 +195,9 @@ then
         COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
         if [[ $COUNT -ne $FIELD3 ]]
         then
-          echo -e "  ${RED}System shows $COUNT Memory where expected is $FIELD3 Memory${RESET}"
+          echo -e "  ${RED}System shows $COUNT Memory where expected is $FIELD3 Memory${RESET}" >> $LOG
         else
-          echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}"
+          echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
         fi
       fi
     
@@ -200,30 +207,30 @@ then
         if [[ $? = 0 ]]
         then
           INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
-          echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}"
+          echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
           grep -qi "onboot=yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
           then
-            echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}"
+            echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}" >> $LOG
           else
-            echo -e "    ${RED}$INTERFACE is not configured to start on boot${RESET}"
+            echo -e "    ${RED}$INTERFACE is not configured to start on boot${RESET}" >> $LOG
           fi
           ping -c 2 ${FIELD4} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}"
+            echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
           else
-            echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}"
+            echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> $LOG
           fi
           grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
           if [[ $? = 0 ]]
           then
-            echo -e "    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}"
+            echo -e "    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}" >> $LOG
           else
-            echo -e "    ${RED}/etc/sysconfig/network:GATEWAY=${FIELD4} not configured${RESET}"
+            echo -e "    ${RED}/etc/sysconfig/network:GATEWAY=${FIELD4} not configured${RESET}" >> $LOG
           fi
         else
-          echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> $LOG
         fi
       fi
 
@@ -232,23 +239,23 @@ then
         grep -q "^${FIELD3}:" /etc/passwd
         if [[ $? = 0 ]]
         then
-          echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}"
+          echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
           PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6}'`
           if [[ $PASSWORD = 'never  ' ]]
           then
-            echo -e "    ${GREEN}Password doesn't expire${RESET}"
+            echo -e "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
-            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}"
+            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
           fi
           ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6}'`
           if [[ $ACCOUNT = 'never  ' ]]
           then
-            echo -e "    ${GREEN}Account doesn't expire${RESET}"
+            echo -e "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
           else
-            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}"
+            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
           fi
         else
-          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
         fi
       fi
     
@@ -257,9 +264,9 @@ then
         grep -q "^${FIELD3}:" /etc/group
         if [[ $? = 0 ]]
         then
-          echo -e "  ${GREEN}Group ${FIELD3} exists${RESET}"
+          echo -e "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
         else
-          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}"
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}" >> $LOG
         fi
       fi
     
@@ -268,9 +275,9 @@ then
         grep -q "^%${FIELD3}" /etc/sudoers
         if [[ $? = 0 ]]
         then
-          echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}"
+          echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
         else
-          echo -e "  ${RED}Unable to locate %${FIELD3} in /etc/sudoers${RESET}"
+          echo -e "  ${RED}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
         fi
       fi
 
@@ -278,16 +285,16 @@ then
       then
         if [[ -d /opt/OV/bin ]]
         then
-          echo -e "  ${GREEN}OpenView agent is installed${RESET}"
+          echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
           OPENVIEW=`ps -e | grep ovcd`
           if [[ -z $OPENVIEW ]]
           then
-            echo -e "    ${RED}OpenView agent is not running${RESET}"
+            echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
           else
-            echo -e "    ${GREEN}OpenView agent is running${RESET}"
+            echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
           fi
         else
-          echo -e "  ${RED}OpenView is not installed${RESET}"
+          echo -e "  ${RED}OpenView is not installed${RESET}" >> $LOG
         fi
       fi
 
@@ -295,26 +302,26 @@ then
       then
         if [[ -f /usr/openv/netbackup/bp.conf ]]
         then
-          echo -e "  ${GREEN}NetBackup is installed${RESET}"
+          echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
           if [[ -f /etc/hosts.allow ]]
           then
             ALLOW=`grep bpcd: /etc/hosts.allow`
             if [[ -z $ALLOW ]]
             then
-              echo -e "    ${RED}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}"
+              echo -e "    ${RED}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
             fi
           else
-            echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}"
+            echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
           fi
           NBLIST=`netstat -a | grep LISTEN | grep bpcd`
           if [[ -z $NBLIST ]]
           then
-            echo -e "    ${RED}NetBackup is not running${RESET}"
+            echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
           else
-            echo -e "    ${GREEN}NetBackup is running${RESET}"
+            echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
           fi
         else
-          echo -e "  ${RED}NetBackup is not installed${RESET}"
+          echo -e "  ${RED}NetBackup is not installed${RESET}" >> $LOG
         fi
       fi
 
@@ -322,16 +329,16 @@ then
       then
         if [[ -f /opt/datapalette/bin/datapal ]]
         then
-          echo -e "  ${GREEN}Data Palette is installed${RESET}"
+          echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
           DPPS=`ps -e | grep datapal`
           if [[ ! -z $DPPS ]]
           then
-            echo -e "    ${GREEN}Data Palette is running${RESET}"
+            echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
           else
-            echo -e "    ${RED}Data Palette is not running${RESET}"
+            echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
           fi
         else 
-          echo -e "  ${RED}Data Palette is not installed${RESET}"
+          echo -e "  ${RED}Data Palette is not installed${RESET}" >> $LOG
         fi
       fi
 
@@ -340,23 +347,28 @@ then
         CENTRIFY=`ps -e | grep adclient`
         if [[ ! -z $CENTRIFY ]]
         then
-          echo -e "  ${GREEN}Centrify is installed${RESET}"
+          echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
         else
-          echo -e "  ${RED}Centrify is not installed${RESET}"
+          echo -e "  ${RED}Centrify is not installed${RESET}" >> $LOG
         fi
       fi
 
     done
 
-    echo ""
+    echo "" >> $LOG
   else 
-    echo -e "${RED}chkserver.input file not found${RESET}"
+    echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
 fi
 
-echo "External steps to be performed:"
-echo ""
-echo "1. Check service processor password"
-echo "2. Have the unixsvc account ssh to this system to make sure it all works."
-echo "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server"
+echo "External steps to be performed:" >> $LOG
+echo "" >> $LOG
+echo "1. Check service processor password" >> $LOG
+echo "2. Have the unixsvc account ssh to this system to make sure it all works." >> $LOG
+echo "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server" >> $LOG
+
+if [[ ! -z $1 ]]
+then
+  cat $LOG
+fi
 
