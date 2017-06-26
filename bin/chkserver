@@ -8,9 +8,13 @@
 # 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if intrado script hasn't been run yet
 # 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
 # 2017/06/20 - CS - added chkserver.input validation steps.
+# 2017/06/26 - CS - write out to .output file like all the others.
 
 PROGNAME="chkserver"
 COUNT=0
+GATEWAY=''
+GWFLAG='no'
+GWMSG=''
 OS=`uname`
 GREEN="\e[32m"
 RED="\e[31m"
@@ -222,12 +226,12 @@ then
           else
             echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> $LOG
           fi
+          GATEWAY="${GATEWAY} ${FIELD4}"
           grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
           if [[ $? = 0 ]]
           then
-            echo -e "    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}" >> $LOG
-          else
-            echo -e "    ${RED}/etc/sysconfig/network:GATEWAY=${FIELD4} not configured${RESET}" >> $LOG
+            GWMSG="    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}"
+            GWFLAG='yes'
           fi
         else
           echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> $LOG
@@ -354,6 +358,18 @@ then
       fi
 
     done
+
+# if gateway has been found (eg there are IP entries)
+    if [[ ! -z ${GATEWAY} ]]
+    then
+      echo -e "  ${GREEN}Default gateway entry found${RESET}" >> $LOG
+      if [[ ${GWFLAG} = 'yes' ]]
+      then
+        echo -e "$GWMSG" >> $LOG
+      else
+        echo -e "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> $LOG
+      fi
+    fi
 
     echo "" >> $LOG
   else 
