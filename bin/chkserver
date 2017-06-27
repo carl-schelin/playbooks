@@ -106,14 +106,17 @@ then
 
 # Step 7: check service processor/iLOM password; external to this check; skipped
 
-# Step 8: reset unixsvc account password
 # check the password against the kickstart default
-  UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-  UNIXPW=`grep "^unixsvc:" /etc/shadow | grep $UNIXDEF`
-  if [[ ! -z $UNIXPW ]]
-  then
-    echo -e "  ${RED}UnixSvc account password is still set to the default${RESET}" >> $LOG
-  fi
+# leave all the admins in the listing, even the ones that are gone, as they may still be set to default
+  for j in cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
+  do
+    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
+    UNIXPW=`grep "^${j}:" /etc/shadow | grep $UNIXDEF`
+    if [[ ! -z $UNIXPW ]]
+    then
+      echo -e "  ${RED}${j} account password is still set to the default${RESET}" >> $LOG
+    fi
+  done
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
 
