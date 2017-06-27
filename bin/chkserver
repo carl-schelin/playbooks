@@ -95,20 +95,9 @@ then
 #    done
 #  fi
 
-# Step 6: root password changed? 
 # check the password against the kickstart default
-  ROOTDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-  ROOTPW=`grep "^root:" /etc/shadow | grep $ROOTDEF`
-  if [[ ! -z $ROOTPW ]]
-  then
-    echo -e "  ${RED}Root password is still set to the default${RESET}" >> $LOG
-  fi
-
-# Step 7: check service processor/iLOM password; external to this check; skipped
-
-# check the password against the kickstart default
-# leave all the admins in the listing, even the ones that are gone, as they may still be set to default
-  for j in cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
+# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
     UNIXPW=`grep "^${j}:" /etc/shadow | grep $UNIXDEF`
