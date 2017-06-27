@@ -199,7 +199,15 @@ then
     
       if [[ $FIELD2 = 'IP' ]]
       then
-        /usr/sbin/ip addr | grep -q " ${FIELD3}/"
+        if [[ -f /sbin/ip ]]
+        then
+          IPADDR=/sbin/ip
+        fi
+        if [[ -f /usr/sbin/ip ]]
+        then
+          IPADDR=/usr/sbin/ip
+        fi
+        ${IPADDR} addr | grep -q " ${FIELD3}/"
         if [[ $? = 0 ]]
         then
           INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
