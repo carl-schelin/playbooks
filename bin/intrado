@@ -166,7 +166,7 @@ runscript () {
 # Added random start for the chkbackups scripts, using a range to between 2min-30min
 # Requested by JJ East through Remedy WO0000000007931
 # To be implemented starting on Mon 12/14/15
-if [[ ! -z $SKIPRANDOM ]]
+if [[ -z "$SKIPRANDOM" ]]
 then
   rnumber=$((RANDOM%(1800-120+1)+120))
   sleep $rnumber
