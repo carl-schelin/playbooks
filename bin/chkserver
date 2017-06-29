@@ -212,7 +212,7 @@ then
         then
           INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
           echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
-          grep -qi "onboot=yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          egrep -qi "onboot=(\")yes(\")" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
           then
             echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}" >> $LOG
