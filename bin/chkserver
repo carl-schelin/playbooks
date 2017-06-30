@@ -95,12 +95,58 @@ then
 #    done
 #  fi
 
+  if [[ ! -f /usr/bin/subscription-manager ]]
+  then
+    echo -e "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
+  else
+    echo -e "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
+    STATUS=`/usr/bin/subscription-manager list | grep "^Status:" | awk '{print $2}'`
+    if [[ $STATUS = 'Unknown' ]]
+    then
+      echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+    fi
+    if [[ $STATUS = 'Subscribed' ]]
+    then
+      echo -e "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
+    fi
+    if [[ $STATUS = 'Expired' ]]
+    then
+      echo -e "    ${RED}System subscription has expired${RESET}" >> $LOG
+    fi
+  fi
+
+  for i in `cut -f1 -d: /etc/group`
+  do
+    grep "^${i}:" $INTRADO/etc/group.master
+    if [[ $? = 0 ]]
+    then
+# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
+      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
+      do
+        egrep "^${i}:.*(,)${j}(,|$)"" /etc/group
+        if [[ $? = 1 ]]
+        then
+          echo -e "  ${j} was not found in the ${i} group in /etc/group"
+        fi
+      done
+# now check all users in /etc/group against group.master and throw an error if found
+      for j in `grep "^${i}:" /etc/group | cut -f2 -d: | sed -e "s/,/ /g"`
+      do
+        egrep "^${i}:.*(,)${j}(,|$)"" $INTRADO/etc/group.master
+        if [[ $? = 1 ]]
+        then
+          echo -e "  ${j} was found in the ${i} group in /etc/group but not in group.master"
+        fi
+      done
+    fi
+  done
+
 # check the password against the kickstart default
 # leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-    UNIXPW=`grep "^${j}:" /etc/shadow | grep $UNIXDEF`
+    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
     if [[ ! -z $UNIXPW ]]
     then
       echo -e "  ${RED}${j} account password is still set to the default${RESET}" >> $LOG
@@ -212,7 +258,7 @@ then
         then
           INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
           echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
-          egrep -qi "onboot=(\")yes(\")" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
           then
             echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}" >> $LOG
