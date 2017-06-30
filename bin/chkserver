@@ -128,7 +128,7 @@ then
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
       for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f4 -d: | sed -e "s/,/ /g"`
       do
-        egrep -qi "^${i}:.*(,)${j}(,|$)"" /etc/group
+        egrep -qi "^${i}:.*(,)${j}(,|$)" /etc/group
         if [[ $? = 1 ]]
         then
           echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
@@ -137,7 +137,7 @@ then
 # now check all users in /etc/group against group.master and throw an error if found
       for j in `grep "^${i}:" /etc/group | cut -f2 -d: | sed -e "s/,/ /g"`
       do
-        egrep -qi "^${i}.*(,)${j}(,|$)"" $INTRADO/etc/group.master
+        egrep -qi "^${i}.*(,)${j}(,|$)" $INTRADO/etc/group.master
         if [[ $? = 1 ]]
         then
           echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
