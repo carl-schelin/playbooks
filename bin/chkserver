@@ -105,6 +105,10 @@ then
     then
       echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
     fi
+    if [[ $STATUS = 'No' ]]
+    then
+      echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+    fi
     if [[ $STATUS = 'Subscribed' ]]
     then
       echo -e "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
@@ -115,27 +119,28 @@ then
     fi
   fi
 
+  echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
   for i in `cut -f1 -d: /etc/group`
   do
-    grep "^${i}:" $INTRADO/etc/group.master
+    grep -qi "^${i}:" $INTRADO/etc/group.master
     if [[ $? = 0 ]]
     then
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
-      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
+      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f4 -d: | sed -e "s/,/ /g"`
       do
-        egrep "^${i}:.*(,)${j}(,|$)" /etc/group
+        egrep -qi "^${i}:.*(,)${j}(,|$)"" /etc/group
         if [[ $? = 1 ]]
         then
-          echo -e "  ${j} was not found in the ${i} group in /etc/group"
+          echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
         fi
       done
 # now check all users in /etc/group against group.master and throw an error if found
       for j in `grep "^${i}:" /etc/group | cut -f2 -d: | sed -e "s/,/ /g"`
       do
-        egrep "^${i}:.*(,)${j}(,|$)" $INTRADO/etc/group.master
+        egrep -qi "^${i}.*(,)${j}(,|$)"" $INTRADO/etc/group.master
         if [[ $? = 1 ]]
         then
-          echo -e "  ${j} was found in the ${i} group in /etc/group but not in group.master"
+          echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
         fi
       done
     fi
@@ -143,13 +148,14 @@ then
 
 # check the password against the kickstart default
 # leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  echo -e "  ${GREEN}Account verification${RESET}" >> $LOG
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
     UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
     if [[ ! -z $UNIXPW ]]
     then
-      echo -e "  ${RED}${j} account password is still set to the default${RESET}" >> $LOG
+      echo -e "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
     fi
   done
 
