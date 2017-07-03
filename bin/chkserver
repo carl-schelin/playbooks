@@ -29,7 +29,7 @@ fi
 
 echo "" > $LOG
 echo "================================" >> $LOG
-echo "Running Postinstall System Check" >> $LOG
+echo "Running System Validation Script" >> $LOG
 echo "================================" >> $LOG
 echo "" >> $LOG
 
@@ -216,9 +216,30 @@ then
     echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
   fi
 
+# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
+# if without comments it's yes, report an error
+# if blank and with comments it's yes, report an error
+  if [[ -f /etc/systemd/logind.conf ]]
+  then
+# get the answer
+    OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
+    if [[ $OUTPUT = 'yes' ]]
+    then
+      echo -e "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+    fi
+    if [[ -z $OUTPUT ]]
+    then
+      OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
+      if [[ $OUTPUT = 'yes' ]]
+      then
+        echo -e "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+      fi
+    fi
+  fi
+
+# these checks are pulled from the auto-generated chkserver.input file.
   if [[ -f /opt/intrado/etc/chkserver.input ]]
   then
-
 
     for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
     do
