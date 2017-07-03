@@ -18,6 +18,7 @@ GWMSG=''
 OS=`uname`
 GREEN="\e[32m"
 RED="\e[31m"
+YELLOW="\e[33m"
 RESET="\e[0m"
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
@@ -33,6 +34,11 @@ echo "Running System Validation Script" >> $LOG
 echo "================================" >> $LOG
 echo "" >> $LOG
 
+echo "${GREEN}Passed${RESET} - Test was successful" >> $LOG
+echo "${YELLOW}Warning${RESET} - Setting should be checked and corrected" >> $LOG
+echo "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
+echo "" >> $LOG
+
 if [[ $OS = "Linux" ]]
 then
   if [[ `id -u` -ne 0 ]]
@@ -45,7 +51,7 @@ then
   INHOSTS=`grep $HOSTNAME /etc/hosts`
   if [[ -z $INHOSTS ]]
   then
-    echo -e "  ${RED}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
+    echo -e "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
   else
     echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
   fi
@@ -115,7 +121,7 @@ then
     fi
     if [[ $STATUS = 'Expired' ]]
     then
-      echo -e "    ${RED}System subscription has expired${RESET}" >> $LOG
+      echo -e "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
     fi
   fi
 
@@ -168,25 +174,25 @@ then
     VMWARE=`ps -e | grep vmtoolsd`
     if [[ -z $VMWARE ]]
     then
-      echo -e "    ${RED}VMWare Agent is not running${RESET}" >> $LOG
+      echo -e "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
     else
       echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
     fi
   else
-    echo -e "  ${RED}VMWare Agent is not installed${RESET}" >> $LOG
+    echo -e "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
   fi
 
 # Step 12: is rrdtool running?
   UPDATERRD=`ps -e | grep updaterrd`
   if [[ -z $UPDATERRD ]]
   then
-    echo -e "  ${RED}rrdtool is not configured or running${RESET}" >> $LOG
+    echo -e "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
   fi
 
 # Step 16: cfg2html installed?
   if [[ ! -d /opt/intrado/cfghtml ]]
   then
-    echo -e "  ${RED}cfg2html not installed${RESET}" >> $LOG
+    echo -e "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
   else
     if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
     then
@@ -201,7 +207,7 @@ then
 # Step 18: was /opt/intrado/bin/intrado run?
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
-    echo -e "  ${RED}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    echo -e "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
     CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
     if [[ -z $CRON ]]
     then
