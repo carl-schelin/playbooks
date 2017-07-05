@@ -154,7 +154,7 @@ then
 
 # check the password against the kickstart default
 # leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
-  echo -e "  ${GREEN}Account verification${RESET}" >> $LOG
+  echo -e "  ${GREEN}Account password verification${RESET}" >> $LOG
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
@@ -195,6 +195,35 @@ then
           fi
         else
           echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
+        fi
+      fi
+    done
+  fi
+
+# active employee check
+# loop through the users on a system
+# exclude users in the users.exclude file
+# once passes, check gecos field for email
+# check intrado.email for email
+# report error if it doesn't exist.
+# found == 0
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Active employee verification${RESET}" >> $LOG
+    for j in `cut -f1 -d: /etc/passwd`
+    do
+      grep -qi "^${j}$" $INTRADO/etc/users.exclude
+      if [[ $? = 1 ]]
+      then
+        OUTPUT=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+        if [[ ! -z $OUTPUT ]]
+        then
+echo $OUTPUT
+          grep "^${OUTPUT}$" $INTRADO/etc/intrado.email
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${RED}${j} was not found in the intrado.email file and may have left the company.${RESET}" >> $LOG
+          fi
         fi
       fi
     done
