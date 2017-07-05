@@ -165,6 +165,42 @@ then
     fi
   done
 
+
+# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
+# error if the user is not in the chksudo.dat file.
+# error if the date is older than the expiration date.
+#lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
+    EPOCH=`date +"%s"`
+    for j in `awk '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.dat`
+    do
+      SERVER=`echo $j | cut -f1 -d:`
+      USER=`echo $j | cut -f2 -d:`
+      ROOT=`echo $j | cut -f3 -d:`
+
+      if [[ ${ROOT} = 'yes' ]]
+      then
+        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+        if [[ ! -z $OUTPUT ]]
+        then
+# only need the date
+#wkkihiecerb21:escott:999999:30010101
+          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
+          EXPIRE=`date --date="${EXPIREDATE}" +"%s"`
+          if [[ $EPOCH -gt $EXPIRE ]]
+          then
+            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}"
+          fi
+        else
+          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}"
+        fi
+      fi
+    done
+  fi
+
+
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
 
 # Step 1: vmware?
