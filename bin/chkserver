@@ -174,7 +174,7 @@ then
   then
     echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
     EPOCH=`date +"%s"`
-    for j in `awk '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.dat`
+    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
     do
       SERVER=`echo $j | cut -f1 -d:`
       USER=`echo $j | cut -f2 -d:`
@@ -191,10 +191,10 @@ then
           EXPIRE=`date --date="${EXPIREDATE}" +"%s"`
           if [[ $EPOCH -gt $EXPIRE ]]
           then
-            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}"
+            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
           fi
         else
-          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}"
+          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
         fi
       fi
     done
@@ -330,9 +330,9 @@ then
           egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
           then
-            echo -e "    ${GREEN}$INTERFACE is configured to start on boot${RESET}" >> $LOG
+            echo -e "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
           else
-            echo -e "    ${RED}$INTERFACE is not configured to start on boot${RESET}" >> $LOG
+            echo -e "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
           fi
           ping -c 2 ${FIELD4} > /dev/null 2>&1
           if [[ $? = 0 ]]
@@ -346,6 +346,13 @@ then
           if [[ $? = 0 ]]
           then
             GWMSG="    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}"
+            GWFLAG='yes'
+          fi
+# check the interface file too
+          grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          if [[ $? = 0 ]]
+          then
+            GWMSG="    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}"
             GWFLAG='yes'
           fi
         else
