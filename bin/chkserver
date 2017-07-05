@@ -215,14 +215,13 @@ then
       grep -qi "^${j}$" $INTRADO/etc/users.exclude
       if [[ $? = 1 ]]
       then
-        OUTPUT=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
-        if [[ ! -z $OUTPUT ]]
+        EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+        if [[ ! -z $EMAIL ]]
         then
-echo $OUTPUT
-          grep "^${OUTPUT}$" $INTRADO/etc/intrado.email
+          grep "^${EMAIL}$" $INTRADO/etc/intrado.email
           if [[ $? = 1 ]]
           then
-            echo -e "    ${RED}${j} was not found in the intrado.email file and may have left the company.${RESET}" >> $LOG
+            echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
           fi
         fi
       fi
