@@ -34,9 +34,9 @@ echo "Running System Validation Script" >> $LOG
 echo "================================" >> $LOG
 echo "" >> $LOG
 
-echo "${GREEN}Passed${RESET} - Test was successful" >> $LOG
-echo "${YELLOW}Warning${RESET} - Setting should be checked and corrected" >> $LOG
-echo "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
+echo -e "${GREEN}Passed${RESET} - Test or value was successful" >> $LOG
+echo -e "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> $LOG
+echo -e "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
 echo "" >> $LOG
 
 if [[ $OS = "Linux" ]]
@@ -270,7 +270,7 @@ then
         COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
         if [[ $COUNT -ne $FIELD3 ]]
         then
-          echo -e "  ${RED}System shows $COUNT Memory where expected is $FIELD3 Memory${RESET}" >> $LOG
+          echo -e "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
         else
           echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
         fi
