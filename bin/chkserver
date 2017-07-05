@@ -373,14 +373,14 @@ then
           grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
           if [[ $? = 0 ]]
           then
-            GWMSG="    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}"
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
             GWFLAG='yes'
           fi
 # check the interface file too
           grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
           then
-            GWMSG="    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}"
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
             GWFLAG='yes'
           fi
         else
