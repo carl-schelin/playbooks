@@ -366,7 +366,7 @@ then
         ${IPADDR} addr | grep -q " ${FIELD3}/"
         if [[ $? = 0 ]]
         then
-          INTERFACE=`grep ${FIELD3} /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
+          INTERFACE=`grep ${FIELD3}$ /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
           echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
           egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
