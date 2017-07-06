@@ -203,6 +203,7 @@ then
 # active employee check
 # loop through the users on a system
 # exclude users in the users.exclude file
+# exclude locked users
 # once passes, check gecos field for email
 # check intrado.email for email
 # report error if it doesn't exist.
@@ -215,13 +216,17 @@ then
       grep -qi "^${j}$" $INTRADO/etc/users.exclude
       if [[ $? = 1 ]]
       then
-        EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
-        if [[ ! -z $EMAIL ]]
+        LOCKED=`passwd -S ${j} | awk '{print $2}'`
+        if [[ ! $LOCKED = 'LK' ]]
         then
-          grep -qi "^${EMAIL}$" $INTRADO/etc/intrado.email
-          if [[ $? = 1 ]]
+          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+          if [[ ! -z $EMAIL ]]
           then
-            echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
+            grep -qi "^${EMAIL}$" $INTRADO/etc/intrado.email
+            if [[ $? = 1 ]]
+            then
+              echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
+            fi
           fi
         fi
       fi
