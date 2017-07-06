@@ -218,7 +218,7 @@ then
         EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
         if [[ ! -z $EMAIL ]]
         then
-          grep "^${EMAIL}$" $INTRADO/etc/intrado.email
+          grep -qi "^${EMAIL}$" $INTRADO/etc/intrado.email
           if [[ $? = 1 ]]
           then
             echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
