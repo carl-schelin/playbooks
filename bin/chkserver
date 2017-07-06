@@ -507,6 +507,23 @@ then
         fi
       fi
 
+      if [[ $FIELD2 = 'OpNet' ]]
+      then
+        if [[ -d /opt/Panorama ]]
+        then
+          echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+          APPI=`ps -e | grep Panorama`
+          if [[ ! -z $APPI ]]
+          then
+            echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
+          else
+            echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+          fi
+        else 
+          echo -e "  ${RED}OpNet is not installed${RESET}" >> $LOG
+        fi
+      fi
+
       if [[ $FIELD2 = 'Centrify' ]]
       then
         CENTRIFY=`ps -e | grep adclient`
