@@ -233,6 +233,12 @@ then
     done
   fi
 
+# check for email server access
+  echo "quit" | /bin/nc -vn 10.100.104.6 25 > /dev/null 2>&1
+  if [[ $? = 1 ]]
+  then
+    echo -e "  ${RED}Email server (10.100.104.6) not accessible${RESET}" >> $LOG
+  fi
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
 
