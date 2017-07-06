@@ -407,15 +407,20 @@ then
         if [[ $? = 0 ]]
         then
           echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
-          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6}'`
-          if [[ $PASSWORD = 'never  ' ]]
+          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6" "$7}'`
+          if [[ $PASSWORD = 'never   ' ]]
           then
             echo -e "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
-            echo -e "    ${RED}Password expires: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            if [[ $PASSWORD = 'password must be changed' ]]
+            then
+              echo -e "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> $LOG
+            else
+              echo -e "    ${RED}Password expires date/message: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            fi
           fi
-          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6}'`
-          if [[ $ACCOUNT = 'never  ' ]]
+          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6" "$7}'`
+          if [[ $ACCOUNT = 'never   ' ]]
           then
             echo -e "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
           else
