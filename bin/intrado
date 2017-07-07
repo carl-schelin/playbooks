@@ -76,6 +76,7 @@
 # 2017-05-03 - Added chkroutes script
 # 2017-06-23 - Added SKIPRANDOM variable check. if it's set to anything, skip the random pause for the chkbackups script
 # 2017-06-26 - Added chkserver script
+# 2017-07-07 - Added update.gecos script
 
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -264,6 +265,9 @@ runscript chkroutetable
 
 # Check the server configuration
 runscript chkserver
+
+# Update GECOS for all users if needed
+runscript update.gecos
 
 # clean up on aisle three
 runscript cleanup
