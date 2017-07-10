@@ -489,7 +489,7 @@ then
         then
           echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
         else
-          echo -e "  ${RED}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+          echo -e "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
         fi
       fi
 
