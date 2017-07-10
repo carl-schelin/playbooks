@@ -6,46 +6,50 @@
 
 INTRADO=/opt/intrado
 OS=`uname`
-
-if [[ $OS = 'Linux' ]]
+if [[ -f /bin/grep ]]
 then
-  for i in `/bin/grep -v "^#" $INTRADO/etc/valid.email | /bin/cut -f1 -d:`
-  do
-    /bin/egrep "^${i}:" /etc/passwd
-    if [[ $? = 0 ]]
-    then
-      EMAIL=`/bin/grep "^${i}:" $INTRADO/etc/valid.email | /bin/cut -f2 -d:`
-      /sbin/usermod -c "${EMAIL}" ${i}
-      /bin/egrep "^${i}:" /etc/passwd
-    fi
-  done
+  GREP=/bin/grep
+fi
+if [[ -f /usr/bin/grep ]]
+then
+  GREP=/usr/bin/grep
 fi
 
-if [[ $OS = 'Solaris' ]]
+if [[ -f /bin/egrep ]]
 then
-  for i in `/usr/bin/grep -v "^#" $INTRADO/etc/valid.email | /usr/bin/cut -f1 -d:`
-  do
-    /usr/bin/egrep "^${i}:" /etc/passwd
-    if [[ $? = 0 ]]
-    then
-      EMAIL=`/usr/bin/grep "^${i}:" $INTRADO/etc/valid.email | /usr/bin/cut -f2 -d:`
-      /usr/sbin/usermod -c "${EMAIL}" ${i}
-      /usr/bin/egrep "^${i}:" /etc/passwd
-    fi
-  done
+  EGREP=/bin/egrep
+fi
+if [[ -f /usr/bin/egrep ]]
+then
+  EGREP=/usr/bin/egrep
 fi
 
-if [[ $OS = 'HP-UX' ]]
+if [[ -f /bin/cut ]]
 then
-  for i in `/usr/bin/grep -v "^#" $INTRADO/etc/valid.email | /usr/bin/cut -f1 -d:`
-  do
-    /usr/bin/egrep "^${i}:" /etc/passwd
-    if [[ $? = 0 ]]
-    then
-      EMAIL=`/usr/bin/grep "^${i}:" $INTRADO/etc/valid.email | /usr/bin/cut -f2 -d:`
-      /usr/sbin/usermod -c "${EMAIL}" ${i}
-      /usr/bin/egrep "^${i}:" /etc/passwd
-    fi
-  done
+  CUT=/bin/cut
 fi
+if [[ -f /usr/bin/cut ]]
+then
+  CUT=/usr/bin/cut
+fi
+
+if [[ -f /sbin/usermod ]]
+then
+  USERMOD=/sbin/usermod
+fi
+if [[ -f /usr/sbin/usermod ]]
+then
+  USERMOD=/usr/sbin/usermod
+fi
+
+for i in `${GREP} -v "^#" ${INTRADO}/etc/valid.email | ${CUT} -f1 -d:`
+do
+  ${EGREP} "^${i}:" /etc/passwd
+  if [[ $? = 0 ]]
+  then
+    EMAIL=`${EGREP} "^${i}:" ${INTRADO}/etc/valid.email | ${CUT} -f2 -d:`
+    ${USERMOD} -c "${EMAIL}" ${i}
+    ${EGREP} "^${i}:" /etc/passwd
+  fi
+done
 
