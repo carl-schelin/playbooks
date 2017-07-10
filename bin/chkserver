@@ -6,9 +6,39 @@
 # Description: Run through the defined steps to quickly see what might need to be done
 #   on a system to complete the installation.
 # 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if intrado script hasn't been run yet
+# 2017/02/21 - CS - Checked in to RCS
 # 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
 # 2017/06/20 - CS - added chkserver.input validation steps.
+# 2017/06/22 - CS - Updated to add color and add more things to check
+# 2017/06/22 - CS - Updated to check for vmtools installation
+# 2017/06/22 - CS - Added color and clean up some of the messages
 # 2017/06/26 - CS - write out to .output file like all the others.
+# 2017/06/26 - CS - Updated to manage gateways better
+# 2017/06/27 - CS - Updated to check all admin default passwords, not just unixsvc
+# 2017/06/27 - CS - Updated to show root in the listing
+# 2017/06/27 - CS - Updated to fine the right path to the ip command
+# 2017/06/29 - CS - Updated the check with grep
+# 2017/06/30 - CS - Added subscription manager check, added group membership check
+# 2017/06/30 - CS - Fixed typo
+# 2017/06/30 - CS - Updated with the correct info
+# 2017/06/30 - CS - Remove extra quotes from check
+# 2017/06/30 - CS - Fixed the output of grep
+# 2017/07/03 - CS - Updated to check for the RemoveIPC value (set to yes; warning)
+# 2017/07/03 - CS - Updated to manage colors better (warning, error, and good)
+# 2017/07/05 - CS - Updated to fix messages
+# 2017/07/05 - CS - Updated to add a security check
+# 2017/07/05 - CS - Fixed log info. Fixed data file parse. Updated to check the interface file for Gateway info in addition to the network file
+# 2017/07/05 - CS - Updated to change the title and to add the email check for user access
+# 2017/07/05 - CS - Updated text
+# 2017/07/05 - CS - Updated to add every GATEWAY to the output
+# 2017/07/06 - CS - Fix grep output (was displaying emails; add -q to quiet) also added -i to ignore case
+# 2017/07/06 - CS - Check for locked account in order to filter messages out
+# 2017/07/06 - CS - Add check for Mail Server access
+# 2017/07/06 - CS - Added OpNet check
+# 2017/07/06 - CS - Update message display
+# 2017/07/06 - CS - Add a trailing $ to the IP check to keep from multiple hits due to single digit host IPs
+# 2017/07/06 - CS - Updated to add a message for the email check
+# 2017/07/10 - CS - Update warning messages with appropriate color
 
 PROGNAME="chkserver"
 COUNT=0
@@ -62,7 +92,7 @@ then
     SUDOERS=`grep $HOSTNAME /etc/sudoers`
     if [[ -z $SUDOERS ]]
     then
-      echo -e "  ${RED}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+      echo -e "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
     fi
   else
     echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
