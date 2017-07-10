@@ -40,6 +40,7 @@
 # 2017/07/06 - CS - Updated to add a message for the email check
 # 2017/07/10 - CS - Update warning messages with appropriate color
 # 2017/07/10 - CS - Added check for access to incojs01
+# 2017/07/10 - CS - Added check for time
 
 PROGNAME="chkserver"
 COUNT=0
@@ -131,6 +132,59 @@ then
 #      echo ""
 #    done
 #  fi
+
+# running red hat 7
+  if [[ -f /bin/chronyc ]]
+  then
+    OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
+    if [[ -z $OUTPUT ]]
+    then
+      echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+    fi
+    OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
+    if [[ -z $OUTPUT ]]
+    then
+      echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+    fi
+    DRIFTFILE=`grep driftfile /etc/chrony.conf | awk '{print $2}'`
+    DRIFTPATH=`dirname $DRIFTFILE`
+    if [[ -d ${DRIFTPATH} ]]
+    then
+      if [[ ! -f ${DRIFTFILE} ]]
+      then
+        echo -e "  ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "  ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+    fi
+  fi
+
+# running red hat 6
+  if [[ -f /usr/sbin/ntpq ]]
+  then
+    OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
+    if [[ -z $OUTPUT ]]
+    then
+      echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+    fi
+    OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
+    if [[ -z $OUTPUT ]]
+    then
+      echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+    fi
+    DRIFTFILE=`grep driftfile /etc/ntp.conf | awk '{print $2}'`
+    DRIFTPATH=`dirname $DRIFTFILE`
+    if [[ -d ${DRIFTPATH} ]]
+    then
+      if [[ ! -f ${DRIFTFILE} ]]
+      then
+        echo -e "  ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "  ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+    fi
+  fi
+
 
   if [[ ! -f /usr/bin/subscription-manager ]]
   then
