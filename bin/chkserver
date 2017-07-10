@@ -39,6 +39,7 @@
 # 2017/07/06 - CS - Add a trailing $ to the IP check to keep from multiple hits due to single digit host IPs
 # 2017/07/06 - CS - Updated to add a message for the email check
 # 2017/07/10 - CS - Update warning messages with appropriate color
+# 2017/07/10 - CS - Added check for access to incojs01
 
 PROGNAME="chkserver"
 COUNT=0
@@ -270,6 +271,15 @@ then
     echo -e "  ${GREEN}Email server is accessible${RESET}" >> $LOG
   else
     echo -e "  ${RED}Email server (10.100.104.6) is not accessible${RESET}" >> $LOG
+  fi
+
+# check for incojs01 server access
+  echo "\n\n" | nc -vn 10.100.78.143 80 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "  ${GREEN}Jumpstart server is accessible${RESET}" >> $LOG
+  else
+    echo -e "  ${RED}Jumpstart server (10.100.78.143) is not accessible${RESET}" >> $LOG
   fi
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
@@ -510,7 +520,7 @@ then
             ALLOW=`grep bpcd: /etc/hosts.allow`
             if [[ -z $ALLOW ]]
             then
-              echo -e "    ${RED}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
+              echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
             fi
           else
             echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
