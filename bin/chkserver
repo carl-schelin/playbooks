@@ -112,12 +112,19 @@ then
       for i in `grep nameserver /etc/resolv.conf | awk '{print $2}'`
       do
         echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
-        OUTPUT=`nslookup incojs01 | grep "Address: 10.100.78.143"`
-        if [[ -z $OUTPUT ]]
+        ping -c 1 ${i} > /dev/null 2>&1
+        if [[ $? = 0 ]]
         then
-          echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+          echo -e "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
+          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
+          if [[ -z $OUTPUT ]]
+          then
+            echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+          else
+            echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
+          fi
         else
-          echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
+          echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
         fi
       done
     fi
@@ -137,15 +144,30 @@ then
 # running red hat 7
   if [[ -f /bin/chronyc ]]
   then
-    OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
-    if [[ -z $OUTPUT ]]
+    echo -e "  ${GREEN}Checking chrony time sources.${RESET}" >> $LOG
+    ping -c 1 10.100.228.31 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
     fi
-    OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
-    if [[ -z $OUTPUT ]]
+    ping -c 1 192.168.200.20 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
     fi
     DRIFTFILE=`grep driftfile /etc/chrony.conf | awk '{print $2}'`
     DRIFTPATH=`dirname $DRIFTFILE`
@@ -153,25 +175,40 @@ then
     then
       if [[ ! -f ${DRIFTFILE} ]]
       then
-        echo -e "  ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+        echo -e "    ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
       fi
     else
-      echo -e "  ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+      echo -e "    ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
     fi
   fi
 
 # running red hat 6
   if [[ -f /usr/sbin/ntpq ]]
   then
-    OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
-    if [[ -z $OUTPUT ]]
+    echo -e "  ${GREEN}Checking ntp time sources.${RESET}" >> $LOG
+    ping -c 1 10.100.228.31 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
     fi
-    OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
-    if [[ -z $OUTPUT ]]
+    ping -c 1 192.168.200.20 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
     fi
     DRIFTFILE=`grep driftfile /etc/ntp.conf | awk '{print $2}'`
     DRIFTPATH=`dirname $DRIFTFILE`
@@ -179,11 +216,45 @@ then
     then
       if [[ ! -f ${DRIFTFILE} ]]
       then
-        echo -e "  ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+        echo -e "    ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
       fi
     else
-      echo -e "  ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+      echo -e "    ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
     fi
+  fi
+
+# check for email server access
+  echo -e "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
+  ping -c 1 10.100.104.6 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
+    echo "quit" | /bin/nc -vn 10.100.104.6 25 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
+    fi
+  else
+    echo -e "    ${RED}Email server is not pingable${RESET}" >> $LOG
+  fi
+
+# check for incojs01 server access
+  echo -e "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
+  ping -c 1 10.100.78.143 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
+    echo "\n\n" | nc -vn 10.100.78.143 80 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
+    fi
+  else
+    echo -e "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
   fi
 
 
@@ -210,6 +281,7 @@ then
       echo -e "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
     fi
   fi
+
 
   echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
   for i in `cut -f1 -d: /etc/group`
@@ -317,24 +389,6 @@ then
         fi
       fi
     done
-  fi
-
-# check for email server access
-  echo "quit" | /bin/nc -vn 10.100.104.6 25 > /dev/null 2>&1
-  if [[ $? = 0 ]]
-  then
-    echo -e "  ${GREEN}Email server is accessible${RESET}" >> $LOG
-  else
-    echo -e "  ${RED}Email server (10.100.104.6) is not accessible${RESET}" >> $LOG
-  fi
-
-# check for incojs01 server access
-  echo "\n\n" | nc -vn 10.100.78.143 80 > /dev/null 2>&1
-  if [[ $? = 0 ]]
-  then
-    echo -e "  ${GREEN}Jumpstart server is accessible${RESET}" >> $LOG
-  else
-    echo -e "  ${RED}Jumpstart server (10.100.78.143) is not accessible${RESET}" >> $LOG
   fi
 
 # Step 9: set unixsvc keys for access to the system; external to this check; skipped
@@ -475,7 +529,7 @@ then
           then
             echo -e "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
           else
-            ping -c 2 ${FIELD4} > /dev/null 2>&1
+            ping -c 1 ${FIELD4} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
               echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
