@@ -106,7 +106,7 @@ then
 # Step 10: check /etc/resolv.conf
   if [[ -f /etc/resolv.conf ]]
   then
-    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c`
+    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
     if [[ $COUNT = 0 ]]
     then
       echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
