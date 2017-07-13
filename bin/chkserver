@@ -106,12 +106,12 @@ then
 # Step 10: check /etc/resolv.conf
   if [[ -f /etc/resolv.conf ]]
   then
-    COUNT=`grep -c nameserver /etc/resolv.conf`
+    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c`
     if [[ $COUNT = 0 ]]
     then
       echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
     else
-      for i in `grep nameserver /etc/resolv.conf | awk '{print $2}'`
+      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
       do
         echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
         ping -c 1 ${i} > /dev/null 2>&1
