@@ -43,6 +43,7 @@
 # 2017/07/10 - CS - Added check for time
 # 2017/07/11 - CS - Removed private networks from gateway ping test
 # 2017/07/11 - CS - updated to ping servers before checking functionality
+# 2017/07/13 - CS - Add check of the route table. Just parrot the routetable.output file
 
 PROGNAME="chkserver"
 COUNT=0
@@ -131,16 +132,18 @@ then
     fi
   fi
 
+
 # Step 11: check routes
-#  if [[ $COUNT -gt 1 ]]
-#  then
-#    for i in `ls /etc/sysconfig/network-scripts/route-*`
-#    do
-#      echo $i
-#      cat $i
-#      echo ""
-#    done
-#  fi
+  if [[ ! -f $INTRADO/etc/routetable.output ]]
+  then
+    $INTRADO/bin/chkroutetable
+  fi
+  if [[ -s $INTRADO/etc/routetable.output ]]
+  then
+    echo -e "  ${RED}Route table mismatch." >> $LOG
+    cat $INTRADO/etc/routetable.output >> $LOG
+    echo -en "${RESET}" >> $LOG
+  fi
 
 # running red hat 7
   if [[ -f /bin/chronyc ]]
