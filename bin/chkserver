@@ -44,6 +44,7 @@
 # 2017/07/11 - CS - Removed private networks from gateway ping test
 # 2017/07/11 - CS - updated to ping servers before checking functionality
 # 2017/07/13 - CS - Add check of the route table. Just parrot the routetable.output file
+# 2017/07/17 - CS - Backup check
 
 PROGNAME="chkserver"
 COUNT=0
@@ -57,6 +58,7 @@ YELLOW="\e[33m"
 RESET="\e[0m"
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
+SEVEN=$(( 86400 * 7 ))
 
 if [[ -f $LOG ]]
 then
@@ -655,6 +657,29 @@ then
             echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
           else
             echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+          fi
+# check for last backup
+#Backed Up         Expires       Files      KB     C Sched Type      Policy
+#----------------  ---------- -------- ----------- - --------------- ------------
+#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+
+          if [[ -f  $INTRADO/etc/backups.output ]]
+          then
+            if [[ ! -s $INTRADO/etc/backups.output ]]
+            then
+              echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+            else
+              OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+              BUDATE=`date --date=$OUTPUT +"%s"`
+              EXPIRED=$(( $BUDATE + $SEVEN ))
+              TODAY=`date +"%s"`
+              if [[ ${EXPIRED} -lt ${TODAY} ]]
+              then
+                echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+              else
+                echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+              fi
+            fi
           fi
         else
           echo -e "  ${RED}NetBackup is not installed${RESET}" >> $LOG
