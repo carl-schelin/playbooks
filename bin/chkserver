@@ -625,114 +625,46 @@ then
         fi
       fi
 
+# it's supposed to be installed, let's check
       if [[ $FIELD2 = 'Openview' ]]
       then
-        if [[ -d /opt/OV/bin ]]
+        if [[ ! -d /opt/OV/bin ]]
         then
-          echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
-          OPENVIEW=`ps -e | grep ovcd`
-          if [[ -z $OPENVIEW ]]
-          then
-            echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
-          else
-            echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-          fi
-        else
           echo -e "  ${RED}OpenView is not installed${RESET}" >> $LOG
         fi
       fi
 
+# it's supposed to be installed, let's check
       if [[ $FIELD2 = 'Netbackup' ]]
       then
-        if [[ -f /usr/openv/netbackup/bp.conf ]]
-        then
-          echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-          if [[ -f /etc/hosts.allow ]]
-          then
-            ALLOW=`grep bpcd: /etc/hosts.allow`
-            if [[ -z $ALLOW ]]
-            then
-              echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
-            fi
-          else
-            echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
-          fi
-          NBLIST=`netstat -a | grep LISTEN | grep bpcd`
-          if [[ -z $NBLIST ]]
-          then
-            echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
-          else
-            echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
-          fi
-# check for last backup
-#Backed Up         Expires       Files      KB     C Sched Type      Policy
-#----------------  ---------- -------- ----------- - --------------- ------------
-#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
-
-          if [[ -f  $INTRADO/etc/backups.output ]]
-          then
-            if [[ ! -s $INTRADO/etc/backups.output ]]
-            then
-              echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
-            else
-              OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
-              BUDATE=`date --date=$OUTPUT +"%s"`
-              EXPIRED=$(( $BUDATE + $SEVEN ))
-              TODAY=`date +"%s"`
-              if [[ ${EXPIRED} -lt ${TODAY} ]]
-              then
-                echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
-              else
-                echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
-              fi
-            fi
-          fi
-        else
+        if [[ ! -f /usr/openv/netbackup/bp.conf ]]
           echo -e "  ${RED}NetBackup is not installed${RESET}" >> $LOG
         fi
       fi
 
+# it's supposed to be installed, let's check
       if [[ $FIELD2 = 'Datapalette' ]]
       then
-        if [[ -f /opt/datapalette/bin/datapal ]]
+        if [[ ! -f /opt/datapalette/bin/datapal ]]
         then
-          echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-          DPPS=`ps -e | grep datapal`
-          if [[ ! -z $DPPS ]]
-          then
-            echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
-          else
-            echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
-          fi
-        else 
           echo -e "  ${RED}Data Palette is not installed${RESET}" >> $LOG
         fi
       fi
 
+# it's supposed to be installed, let's check
       if [[ $FIELD2 = 'OpNet' ]]
       then
-        if [[ -d /opt/Panorama ]]
+        if [[ ! -d /opt/Panorama ]]
         then
-          echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-          APPI=`ps -e | grep Panorama`
-          if [[ ! -z $APPI ]]
-          then
-            echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
-          else
-            echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
-          fi
-        else 
           echo -e "  ${RED}OpNet is not installed${RESET}" >> $LOG
         fi
       fi
 
+# it's supposed to be installed, let's check
       if [[ $FIELD2 = 'Centrify' ]]
       then
-        CENTRIFY=`ps -e | grep adclient`
-        if [[ ! -z $CENTRIFY ]]
+        if [[ ! -f /usr/sbin/adclient ]]
         then
-          echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
-        else
           echo -e "  ${RED}Centrify is not installed${RESET}" >> $LOG
         fi
       fi
@@ -755,6 +687,118 @@ then
   else 
     echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
+
+
+
+#####
+# Check the status of installed agents
+#####
+
+# if Openview was found, check to see if it's running
+  if [[ -d /opt/OV/bin ]]
+  then
+    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
+    OPENVIEW=`ps -e | grep ovcd`
+    if [[ -z $OPENVIEW ]]
+    then
+      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+    fi
+  fi
+
+# if Netbackup was found, check it out
+  if [[ -f /usr/openv/netbackup/bp.conf ]]
+  then
+    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+    if [[ -f /etc/hosts.allow ]]
+    then
+      ALLOW=`grep bpcd: /etc/hosts.allow`
+      if [[ -z $ALLOW ]]
+      then
+        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
+    fi
+    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+    if [[ -z $NBLIST ]]
+    then
+      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+    fi
+# check for last backup
+#Backed Up         Expires       Files      KB     C Sched Type      Policy
+#----------------  ---------- -------- ----------- - --------------- ------------
+#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+
+    if [[ -f  $INTRADO/etc/backups.output ]]
+    then
+      if [[ ! -s $INTRADO/etc/backups.output ]]
+      then
+        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+      else
+        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+        BUDATE=`date --date=$OUTPUT +"%s"`
+        EXPIRED=$(( $BUDATE + $SEVEN ))
+        TODAY=`date +"%s"`
+        if [[ ${EXPIRED} -lt ${TODAY} ]]
+        then
+          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+        else
+          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+
+# if it's found, let's check it out
+  if [[ -f /opt/datapalette/bin/datapal ]]
+  then
+    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
+    DPPS=`ps -e | grep datapal`
+    if [[ ! -z $DPPS ]]
+    then
+      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
+    fi
+  fi
+
+
+# if opnet is found, check it out
+  if [[ -d /opt/Panorama ]]
+  then
+    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+    APPI=`ps -e | grep Panorama`
+    if [[ ! -z $APPI ]]
+    then
+      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
+    else
+      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+  fi 
+
+# check for centrify
+  if [[ -f /usr/sbin/adclient ]]
+  then
+    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
+    CENTRIFY=`ps -e | grep adclient`
+    if [[ ! -z $CENTRIFY ]]
+    then
+      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
+
+
+
+
+
+
+    else
+      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+    fi
+  else
+
 fi
 
 echo "External steps to be performed:" >> $LOG
