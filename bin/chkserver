@@ -85,6 +85,15 @@ then
     exit 0
   fi
 
+  if [[ -f /bin/nc ]]
+  then
+    NETCAT=/bin/nc
+  fi
+  if [[ -f /usr/bin/nc ]]
+  then
+    NETCAT=/usr/bin/nc
+  fi
+
   HOSTNAME=`hostname|cut -f1 -d.`
   grep -qi ${HOSTNAME} /etc/hosts
   if [[ $? = 0 ]]
@@ -236,7 +245,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    echo "quit" | /bin/nc -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
+    echo "quit" | ${NETCAT} -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
@@ -253,7 +262,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    echo "\n\n" | nc -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
+    echo "\n\n" | ${NETCAT} -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
@@ -706,14 +715,14 @@ then
 # check for access to the vips; Longmont and Miami
 #10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      echo "quit" | /bin/nc -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Longmont VIPEmail is accessible${RESET}" >> $LOG
       else
         echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
       fi
-      echo "quit" | /bin/nc -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
