@@ -684,7 +684,6 @@ then
       fi
     fi
 
-    echo "" >> $LOG
   else 
     echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
@@ -789,12 +788,33 @@ then
     if [[ ! -z $CENTRIFY ]]
     then
       echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
-
-
-
-
-
-
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 0 ]]
+      then
+#[root@cofmcc1 bin]# adinfo
+#Local host name:   cofmcc1
+#Joined to domain:  unix.intrado.pri
+#Joined as:         cofmcc1.unix.intrado.pri
+#Pre-win2K name:    cofmcc1
+#Current DC:        lmv08-udc01.unix.intrado.pri
+#Preferred site:    LGMT-CO
+#Zone:              unix.intrado.pri/Unix/Zones/FMCC
+#Last password set: 2017-07-14 15:47:36 MDT
+#CentrifyDC mode:   connected
+#Licensed Features: Enabled
+        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
+        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
+      fi
+#Linux:cschelin@infltx10$ adinfo
+#Not joined to any domain
+#Licensed Features: Enabled
+#Linux:cschelin@infltx10$ echo $?
+#10
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 10 ]]
+      then
+        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
+      fi
     else
       echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
     fi
@@ -802,6 +822,7 @@ then
 
 fi
 
+echo "" >> $LOG
 echo "External steps to be performed:" >> $LOG
 echo "" >> $LOG
 echo "1. Check service processor password" >> $LOG
