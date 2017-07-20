@@ -718,7 +718,7 @@ then
       echo "quit" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
-        echo -e "    ${GREEN}Longmont VIPEmail is accessible${RESET}" >> $LOG
+        echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
       else
         echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
       fi
@@ -788,6 +788,13 @@ then
       echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
     else
       echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
+    fi
+    echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
     fi
   fi
 
