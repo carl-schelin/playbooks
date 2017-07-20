@@ -704,6 +704,23 @@ then
       echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
     else
       echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+# check for access to the vips; Longmont and Miami
+#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
+#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
+      echo "quit" | /bin/nc -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Longmont VIPEmail is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | /bin/nc -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+      fi
     fi
   fi
 
