@@ -236,7 +236,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    echo "quit" | /bin/nc -vn 10.100.104.6 25 > /dev/null 2>&1
+    echo "quit" | /bin/nc -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
@@ -253,7 +253,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    echo "\n\n" | nc -vn 10.100.78.143 80 > /dev/null 2>&1
+    echo "\n\n" | nc -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
