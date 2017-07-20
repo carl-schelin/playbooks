@@ -490,6 +490,163 @@ then
     fi
   fi
 
+
+#####
+# Check the status of installed agents
+#####
+
+# if Openview was found, check to see if it's running
+  if [[ -d /opt/OV/bin ]]
+  then
+    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
+    OPENVIEW=`ps -e | grep ovcd`
+    if [[ -z $OPENVIEW ]]
+    then
+      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+# check for access to the vips; Longmont and Miami
+#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
+#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
+      echo "quit" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+      fi
+    fi
+  fi
+
+# if Netbackup was found, check it out
+  if [[ -f /usr/openv/netbackup/bp.conf ]]
+  then
+    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+    if [[ -f /etc/hosts.allow ]]
+    then
+      ALLOW=`grep bpcd: /etc/hosts.allow`
+      if [[ -z $ALLOW ]]
+      then
+        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
+    fi
+    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+    if [[ -z $NBLIST ]]
+    then
+      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+    fi
+# check for last backup
+#Backed Up         Expires       Files      KB     C Sched Type      Policy
+#----------------  ---------- -------- ----------- - --------------- ------------
+#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+
+    if [[ -f  $INTRADO/etc/backups.output ]]
+    then
+      if [[ ! -s $INTRADO/etc/backups.output ]]
+      then
+        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+      else
+        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+        BUDATE=`date --date=$OUTPUT +"%s"`
+        EXPIRED=$(( $BUDATE + $SEVEN ))
+        TODAY=`date +"%s"`
+        if [[ ${EXPIRED} -lt ${TODAY} ]]
+        then
+          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+        else
+          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+
+# if it's found, let's check it out
+  if [[ -f /opt/datapalette/bin/datapal ]]
+  then
+    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
+    DPPS=`ps -e | grep datapal`
+    if [[ ! -z $DPPS ]]
+    then
+      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
+    fi
+    echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+    fi
+  fi
+
+
+# if opnet is found, check it out
+  if [[ -d /opt/Panorama ]]
+  then
+    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+    APPI=`ps -e | grep Panorama`
+    if [[ ! -z $APPI ]]
+    then
+      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
+    else
+      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+  fi 
+
+# check for centrify
+  if [[ -f /usr/sbin/adclient ]]
+  then
+    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
+    CENTRIFY=`ps -e | grep adclient`
+    if [[ ! -z $CENTRIFY ]]
+    then
+      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 0 ]]
+      then
+#[root@cofmcc1 bin]# adinfo
+#Local host name:   cofmcc1
+#Joined to domain:  unix.intrado.pri
+#Joined as:         cofmcc1.unix.intrado.pri
+#Pre-win2K name:    cofmcc1
+#Current DC:        lmv08-udc01.unix.intrado.pri
+#Preferred site:    LGMT-CO
+#Zone:              unix.intrado.pri/Unix/Zones/FMCC
+#Last password set: 2017-07-14 15:47:36 MDT
+#CentrifyDC mode:   connected
+#Licensed Features: Enabled
+        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
+        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
+      fi
+#Linux:cschelin@infltx10$ adinfo
+#Not joined to any domain
+#Licensed Features: Enabled
+#Linux:cschelin@infltx10$ echo $?
+#10
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 10 ]]
+      then
+        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+    fi
+  fi
+
+fi
+
 # these checks are pulled from the auto-generated chkserver.input file.
   if [[ -f /opt/intrado/etc/chkserver.input ]]
   then
@@ -687,7 +844,10 @@ then
       echo -e "  ${GREEN}Default gateway entry found${RESET}" >> $LOG
       if [[ ${GWFLAG} = 'yes' ]]
       then
-        echo -e "$GWMSG" >> $LOG
+        if [[ ! -z ${GWMSG} ]]
+        then
+          echo -e "$GWMSG" >> $LOG
+        fi
       else
         echo -e "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> $LOG
       fi
@@ -696,163 +856,6 @@ then
   else 
     echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
-
-
-#####
-# Check the status of installed agents
-#####
-
-# if Openview was found, check to see if it's running
-  if [[ -d /opt/OV/bin ]]
-  then
-    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
-    OPENVIEW=`ps -e | grep ovcd`
-    if [[ -z $OPENVIEW ]]
-    then
-      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-# check for access to the vips; Longmont and Miami
-#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
-#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      echo "quit" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
-      fi
-      echo "quit" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
-      fi
-    fi
-  fi
-
-# if Netbackup was found, check it out
-  if [[ -f /usr/openv/netbackup/bp.conf ]]
-  then
-    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-    if [[ -f /etc/hosts.allow ]]
-    then
-      ALLOW=`grep bpcd: /etc/hosts.allow`
-      if [[ -z $ALLOW ]]
-      then
-        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
-    fi
-    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
-    if [[ -z $NBLIST ]]
-    then
-      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
-    fi
-# check for last backup
-#Backed Up         Expires       Files      KB     C Sched Type      Policy
-#----------------  ---------- -------- ----------- - --------------- ------------
-#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
-
-    if [[ -f  $INTRADO/etc/backups.output ]]
-    then
-      if [[ ! -s $INTRADO/etc/backups.output ]]
-      then
-        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
-      else
-        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
-        BUDATE=`date --date=$OUTPUT +"%s"`
-        EXPIRED=$(( $BUDATE + $SEVEN ))
-        TODAY=`date +"%s"`
-        if [[ ${EXPIRED} -lt ${TODAY} ]]
-        then
-          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
-        else
-          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
-        fi
-      fi
-    fi
-  fi
-
-# if it's found, let's check it out
-  if [[ -f /opt/datapalette/bin/datapal ]]
-  then
-    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-    DPPS=`ps -e | grep datapal`
-    if [[ ! -z $DPPS ]]
-    then
-      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
-    fi
-    echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
-    fi
-  fi
-
-
-# if opnet is found, check it out
-  if [[ -d /opt/Panorama ]]
-  then
-    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-    APPI=`ps -e | grep Panorama`
-    if [[ ! -z $APPI ]]
-    then
-      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
-    else
-      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
-    fi
-  fi 
-
-# check for centrify
-  if [[ -f /usr/sbin/adclient ]]
-  then
-    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
-    CENTRIFY=`ps -e | grep adclient`
-    if [[ ! -z $CENTRIFY ]]
-    then
-      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 0 ]]
-      then
-#[root@cofmcc1 bin]# adinfo
-#Local host name:   cofmcc1
-#Joined to domain:  unix.intrado.pri
-#Joined as:         cofmcc1.unix.intrado.pri
-#Pre-win2K name:    cofmcc1
-#Current DC:        lmv08-udc01.unix.intrado.pri
-#Preferred site:    LGMT-CO
-#Zone:              unix.intrado.pri/Unix/Zones/FMCC
-#Last password set: 2017-07-14 15:47:36 MDT
-#CentrifyDC mode:   connected
-#Licensed Features: Enabled
-        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
-        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
-      fi
-#Linux:cschelin@infltx10$ adinfo
-#Not joined to any domain
-#Licensed Features: Enabled
-#Linux:cschelin@infltx10$ echo $?
-#10
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 10 ]]
-      then
-        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
-    fi
-  fi
-
-fi
 
 echo "" >> $LOG
 echo "External steps to be performed:" >> $LOG
