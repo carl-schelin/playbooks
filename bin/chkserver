@@ -46,6 +46,8 @@
 # 2017/07/13 - CS - Add check of the route table. Just parrot the routetable.output file
 # 2017/07/17 - CS - Backup check
 # 2017/07/19 - CS - Added user doesn't exist error for users who may not be in the right group
+# 2017/07/20 - CS - Moved further app tests from inside the chkserver.input file and out where it executes if it finds the agent
+# 2017/07/21 - CS - Added a specific check for bits for nginx
 
 PROGNAME="chkserver"
 COUNT=0
@@ -766,6 +768,20 @@ fi
           fi
         else
           echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
+        fi
+# special checks for special accounts.
+        if [[ ${FIELD3} = 'nginx' ]]
+        then
+          grep -qi 640 /etc/logrotate.d/nginx
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
+          fi
+          ls -l /var/log/nginx/* | head -1 | grep -q "^-rw-r-----"
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
+          fi
         fi
       fi
     
