@@ -510,14 +510,14 @@ then
 # check for access to the vips; Longmont and Miami
 #10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      echo "quit" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+      echo "" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
       else
         echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
       fi
-      echo "quit" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+      echo "" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
