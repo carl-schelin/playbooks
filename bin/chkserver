@@ -776,7 +776,7 @@ then
             echo -e "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
           fi
           grep -qi nginx /etc/sudoers
-          if [[ $? = 0 ]]
+          if [[ $? = 1 ]]
           then
             echo -e "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
           fi
