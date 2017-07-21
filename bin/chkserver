@@ -647,8 +647,6 @@ then
     fi
   fi
 
-fi
-
 # these checks are pulled from the auto-generated chkserver.input file.
   if [[ -f /opt/intrado/etc/chkserver.input ]]
   then
@@ -872,6 +870,7 @@ fi
   else 
     echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
+fi
 
 echo "" >> $LOG
 echo "External steps to be performed:" >> $LOG
