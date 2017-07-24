@@ -48,6 +48,7 @@
 # 2017/07/19 - CS - Added user doesn't exist error for users who may not be in the right group
 # 2017/07/20 - CS - Moved further app tests from inside the chkserver.input file and out where it executes if it finds the agent
 # 2017/07/21 - CS - Added a specific check for bits for nginx
+# 2017/07/24 - CS - Added bits for Solaris (need to pull out common bits to functions.
 
 PROGNAME="chkserver"
 COUNT=0
@@ -68,6 +69,31 @@ then
   rm $LOG
 fi
 
+#Get date values of the date to be converted for second, minute, hour, day, month, year.
+#day=(year*365)+(year/4)-(year/100)+(year/400)+(month*306001/10000)+day
+#days_since_epoch=day-719591 (which is Jan 1 1970)
+#seconds_since_epoch=(days_since_epoch*86400)+(hour*3600)+(minute*60)+seconds
+epoch() {
+  EP_YEAR=$1
+  EP_MONTH=$2
+  EP_DAY=$3
+
+  NUMBER_DAYS=$(( $EP_YEAR * 365 ))
+  LEAP_YEARS=$(( $EP_YEAR / 4 ))
+  LEAP_CENTURY=$(( $EP_YEAR / 100 ))
+  LEAP_CENTURIES=$(( $EP_YEAR / 400 ))
+  DAYS_IN_MONTH=$(( $EP_MONTH * 306001 / 10000 ))
+  EXPIRE=$(( ( $NUMBER_DAYS + $LEAP_YEARS - $LEAP_CENTURY + $LEAP_CENTURIES + $DAYS_IN_MONTH + $EP_DAY ) * 86400 ))
+
+  echo $EXPIRE
+}
+
+EPYEAR=`date +"%Y"`
+EPMONTH=`date +"%m"`
+EPDAY=`date +"%d"`
+EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
+
+
 echo "" > $LOG
 echo "================================" >> $LOG
 echo "Running System Validation Script" >> $LOG
@@ -78,6 +104,12 @@ echo -e "${GREEN}Passed${RESET} - Test or value was successful" >> $LOG
 echo -e "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> $LOG
 echo -e "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
 echo "" >> $LOG
+
+
+###########
+### Linux
+### Red Hat
+###########
 
 if [[ $OS = "Linux" ]]
 then
@@ -876,6 +908,810 @@ then
     echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
   fi
 fi
+
+
+
+###########
+### Solaris
+### SunOS
+###########
+
+if [[ $OS = "SunOS" ]]
+then
+  if [[ `id | cut -f2 -d= | cut -f1 -d\(` -ne 0 ]]
+  then
+    echo -e "${RED}Due to the checks, this script must be run by root.${RESET}"
+    exit 0
+  fi
+
+  NETCAT=''
+  if [[ -f /bin/nc ]]
+  then
+    NETCAT=/bin/nc
+  fi
+  if [[ -f /usr/bin/nc ]]
+  then
+    NETCAT=/usr/bin/nc
+  fi
+  if [[ -f /opt/csw/bin/nc ]]
+  then
+    NETCAT=/opt/csw/bin/nc
+  fi
+  if [[ ! -z $1 ]]
+  then
+    NETCAT=''
+  fi
+
+  HOSTNAME=`hostname|cut -f1 -d.`
+  grep -i ${HOSTNAME} /etc/hosts > /dev/null
+  if [[ $? = 0 ]]
+  then
+    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
+  else
+    echo -e "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
+  fi
+
+# Step 5: sudoers check
+  if [[ -f /etc/sudoers ]]
+  then
+    grep -i ${HOSTNAME} /etc/sudoers > /dev/null
+    if [[ $? = 1 ]]
+    then
+      echo -e "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+    fi
+  else
+    echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
+  fi
+
+# Step 10: check /etc/resolv.conf
+  if [[ -f /etc/resolv.conf ]]
+  then
+    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
+    if [[ $COUNT = 0 ]]
+    then
+      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+    else
+      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
+      do
+        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
+        ping -c 1 ${i} > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
+          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
+          if [[ -z $OUTPUT ]]
+          then
+            echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+          else
+            echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
+          fi
+        else
+          echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
+        fi
+      done
+    fi
+  fi
+
+
+# Step 11: check routes
+  if [[ ! -f $INTRADO/etc/routetable.output ]]
+  then
+    $INTRADO/bin/chkroutetable
+  fi
+  if [[ -s $INTRADO/etc/routetable.output ]]
+  then
+    echo -e "  ${RED}Route table mismatch." >> $LOG
+    cat $INTRADO/etc/routetable.output >> $LOG
+    echo -en "${RESET}" >> $LOG
+  fi
+
+# running red hat 7
+  if [[ -f /bin/chronyc ]]
+  then
+    echo -e "  ${GREEN}Checking chrony time sources.${RESET}" >> $LOG
+    ping -c 1 10.100.228.31 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+    fi
+    ping -c 1 192.168.200.20 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
+    fi
+    DRIFTFILE=`grep driftfile /etc/chrony.conf | awk '{print $2}'`
+    DRIFTPATH=`dirname $DRIFTFILE`
+    if [[ -d ${DRIFTPATH} ]]
+    then
+      if [[ ! -f ${DRIFTFILE} ]]
+      then
+        echo -e "    ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+    fi
+  fi
+
+# running red hat 6
+  if [[ -f /usr/sbin/ntpq ]]
+  then
+    echo -e "  ${GREEN}Checking ntp time sources.${RESET}" >> $LOG
+    ping -c 1 10.100.228.31 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+    fi
+    ping -c 1 192.168.200.20 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+      OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
+    fi
+    DRIFTFILE=`grep driftfile /etc/inet/ntp.conf | awk '{print $2}'`
+    DRIFTPATH=`dirname $DRIFTFILE`
+    if [[ -d ${DRIFTPATH} ]]
+    then
+      if [[ ! -f ${DRIFTFILE} ]]
+      then
+        echo -e "    ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+    fi
+  fi
+
+# check for email server access
+  echo -e "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
+  ping -c 1 10.100.104.6 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "quit" | ${NETCAT} -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
+      fi
+    fi
+  else
+    echo -e "    ${RED}Email server is not pingable${RESET}" >> $LOG
+  fi
+
+# check for incojs01 server access
+  echo -e "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
+  ping -c 1 10.100.78.143 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "\n\n" | ${NETCAT} -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
+      fi
+    fi
+  else
+    echo -e "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
+  fi
+
+
+  echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
+  for i in `cut -f1 -d: /etc/group`
+  do
+    grep -i "^${i}:" $INTRADO/etc/group.master > /dev/null
+    if [[ $? = 0 ]]
+    then
+# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
+      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
+      do
+        egrep -i "^${j}:" /etc/passwd > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo -e "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          egrep -i "^${i}:.*(:|,)${j}(,|$)" /etc/group > /dev/null
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          fi
+        fi
+      done
+# now check all users in /etc/group against group.master and throw an error if found
+      for j in `grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+      do
+        egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
+        fi
+      done
+    fi
+  done
+
+# check the password against the kickstart default
+# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  echo -e "  ${GREEN}Account password verification${RESET}" >> $LOG
+  for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
+  do
+    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
+    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
+    if [[ ! -z $UNIXPW ]]
+    then
+      echo -e "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
+    fi
+  done
+
+
+# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
+# error if the user is not in the chksudo.dat file.
+# error if the date is older than the expiration date.
+#lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
+    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
+    do
+      SERVER=`echo $j | cut -f1 -d:`
+      USER=`echo $j | cut -f2 -d:`
+      ROOT=`echo $j | cut -f3 -d:`
+
+      if [[ ${ROOT} = 'yes' ]]
+      then
+        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+        if [[ ! -z $OUTPUT ]]
+        then
+# only need the date
+#wkkihiecerb21:escott:999999:30010101
+          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
+#Get date values of the date to be converted for second, minute, hour, day, month, year.
+#day=(year*365)+(year/4)-(year/100)+(year/400)+(month*306001/10000)+day
+#days_since_epoch=day-719591 (which is Jan 1 1970)
+#seconds_since_epoch=(days_since_epoch*86400)+(hour*3600)+(minute*60)+seconds
+          EXYEAR=`echo $EXPIREDATE | cut -c1-4`
+          EXMONTH=`echo $EXPIREDATE | cut -c5-6`
+          EXDAY=`echo $EXPIREDATE | cut -c7-8`
+          EXPIRE=`epoch $EXYEAR $EXMONTH $EXDAY`
+          if [[ $EPOCH -gt $EXPIRE ]]
+          then
+            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
+          fi
+        else
+          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
+        fi
+      fi
+    done
+  fi
+
+# active employee check
+# loop through the users on a system
+# exclude users in the users.exclude file
+# exclude locked users
+# once passes, check gecos field for email
+# check intrado.email for email
+# report error if it doesn't exist.
+# found == 0
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Active employee verification${RESET}" >> $LOG
+    for j in `cut -f1 -d: /etc/passwd`
+    do
+      grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
+      if [[ $? = 1 ]]
+      then
+        LOCKED=`passwd -s ${j} | awk '{print $2}'`
+        if [[ ! $LOCKED = 'LK' ]]
+        then
+          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+          if [[ ! -z $EMAIL ]]
+          then
+            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
+            if [[ $? = 1 ]]
+            then
+              echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
+            fi
+          fi
+        fi
+      fi
+    done
+  fi
+
+# Step 9: set unixsvc keys for access to the system; external to this check; skipped
+
+# Step 1: vmware?
+  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
+  then
+    echo -e "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
+    VMWARE=`ps -e | grep vmtoolsd`
+    if [[ -z $VMWARE ]]
+    then
+      echo -e "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
+    fi
+  else
+    echo -e "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+  fi
+
+# Step 12: is rrdtool running?
+  UPDATERRD=`ps -e | grep updaterrd`
+  if [[ -z $UPDATERRD ]]
+  then
+    echo -e "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
+  fi
+
+# Step 16: cfg2html installed?
+  if [[ ! -d /opt/intrado/cfghtml ]]
+  then
+    echo -e "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
+  else
+    if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
+    then
+      echo -e "  ${RED}cfg2html has not been run${RESET}" >> $LOG
+    fi
+  fi
+
+
+# Step 17: copy the cfg2html file to the jumpstart server; update the jumpstart $ADMIN/bin/getcfg2html
+
+
+# Step 18: was /opt/intrado/bin/intrado run?
+  if [[ ! -f /opt/intrado/var/intrado.log ]]
+  then
+    echo -e "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
+    if [[ -z $CRON ]]
+    then
+      echo -e "  ${RED}Need to update root's cron${RESET}" >> $LOG
+    fi
+  fi
+
+
+# Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
+  if [[ ! -f /usr/bin/ksh ]]
+  then
+    echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
+  fi
+
+# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
+# if without comments it's yes, report an error
+# if blank and with comments it's yes, report an error
+  if [[ -f /etc/systemd/logind.conf ]]
+  then
+# get the answer
+    OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
+    if [[ $OUTPUT = 'yes' ]]
+    then
+      echo -e "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+    fi
+    if [[ -z $OUTPUT ]]
+    then
+      OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
+      if [[ $OUTPUT = 'yes' ]]
+      then
+        echo -e "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+      fi
+    fi
+  fi
+
+
+#####
+# Check the status of installed agents
+#####
+
+# if Openview was found, check to see if it's running
+  if [[ -d /opt/OV/bin ]]
+  then
+    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
+    OPENVIEW=`ps -e | grep ovcd`
+    if [[ -z $OPENVIEW ]]
+    then
+      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+# check for access to the vips; Longmont and Miami
+#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
+#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
+      if [[ ! -z ${NETCAT} ]]
+      then
+        echo "" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
+        fi
+        echo "" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+
+# if Netbackup was found, check it out
+  if [[ -f /usr/openv/netbackup/bp.conf ]]
+  then
+    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+    if [[ -f /etc/hosts.allow ]]
+    then
+      ALLOW=`grep bpcd: /etc/hosts.allow`
+      if [[ -z $ALLOW ]]
+      then
+        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
+    fi
+    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+    if [[ -z $NBLIST ]]
+    then
+      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+    fi
+# check for last backup
+#Backed Up         Expires       Files      KB     C Sched Type      Policy
+#----------------  ---------- -------- ----------- - --------------- ------------
+#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+
+    if [[ -f  $INTRADO/etc/backups.output ]]
+    then
+      if [[ ! -s $INTRADO/etc/backups.output ]]
+      then
+        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+      else
+        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+        BUYEAR=`echo $OUTPUT | cut -f1 -d/`
+        BUMONTH=`echo $OUTPUT | cut -f2 -d/`
+        BUDAY=`echo $OUTPUT | cut -f3 -d/`
+        BUDATE=`epoch $BUYEAR $BUMONTH $BUDAY`
+        EXPIRED=$(( $BUDATE + $SEVEN ))
+        if [[ ${EPOCH} -gt ${EXPIRED} ]]
+        then
+          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+        else
+          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+
+# if it's found, let's check it out
+  if [[ -f /opt/datapalette/bin/datapal ]]
+  then
+    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
+    DPPS=`ps -e | grep datapal`
+    if [[ ! -z $DPPS ]]
+    then
+      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
+    fi
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+      fi
+    fi
+  fi
+
+
+# if opnet is found, check it out
+  if [[ -d /opt/Panorama ]]
+  then
+    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+    APPI=`ps -e | grep Panorama`
+    if [[ ! -z $APPI ]]
+    then
+      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
+    else
+      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+  fi 
+
+# check for centrify
+  if [[ -f /usr/sbin/adclient ]]
+  then
+    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
+    CENTRIFY=`ps -e | grep adclient`
+    if [[ ! -z $CENTRIFY ]]
+    then
+      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 0 ]]
+      then
+#[root@cofmcc1 bin]# adinfo
+#Local host name:   cofmcc1
+#Joined to domain:  unix.intrado.pri
+#Joined as:         cofmcc1.unix.intrado.pri
+#Pre-win2K name:    cofmcc1
+#Current DC:        lmv08-udc01.unix.intrado.pri
+#Preferred site:    LGMT-CO
+#Zone:              unix.intrado.pri/Unix/Zones/FMCC
+#Last password set: 2017-07-14 15:47:36 MDT
+#CentrifyDC mode:   connected
+#Licensed Features: Enabled
+        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
+        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
+      fi
+#Linux:cschelin@infltx10$ adinfo
+#Not joined to any domain
+#Licensed Features: Enabled
+#Linux:cschelin@infltx10$ echo $?
+#10
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 10 ]]
+      then
+        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+    fi
+  fi
+
+# these checks are pulled from the auto-generated chkserver.input file.
+  if [[ -f /opt/intrado/etc/chkserver.input ]]
+  then
+
+    for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
+    do
+
+      FIELD2=`echo $j | cut -f2 -d:`
+      FIELD3=`echo $j | cut -f3 -d:`
+      FIELD4=`echo $j | cut -f4 -d:`
+
+      if [[ $FIELD2 = 'CPU' ]]
+      then
+        COUNT=`grep -c processor /proc/cpuinfo`
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo -e "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> $LOG
+        else
+          echo -e "  ${GREEN}$COUNT CPUs as expected${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Memory' ]]
+      then
+        COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo -e "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+        else
+          echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'IP' ]]
+      then
+        if [[ -f /sbin/ip ]]
+        then
+          IPADDR=/sbin/ip
+        fi
+        if [[ -f /usr/sbin/ip ]]
+        then
+          IPADDR=/usr/sbin/ip
+        fi
+        ${IPADDR} addr | grep " ${FIELD3}/" > /dev/null
+        if [[ $? = 0 ]]
+        then
+          INTERFACE=`grep ${FIELD3}$ /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
+          echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
+          egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
+          else
+            echo -e "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
+          fi
+          grep -i ${FIELD3} /etc/hosts > /dev/null
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> $LOG
+          fi
+          PRIVATE=`ipcalc -n ${FIELD4}/24 | cut -f2 -d=`
+          if [[ ${PRIVATE} = '192.168.0.0' ]]
+          then
+            echo -e "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
+          else
+            ping -c 1 ${FIELD4} > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
+            else
+              echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> $LOG
+            fi
+          fi
+          GATEWAY="${GATEWAY} ${FIELD4}"
+          grep "GATEWAY=${FIELD4}" /etc/sysconfig/network > /dev/null
+          if [[ $? = 0 ]]
+          then
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
+            GWFLAG='yes'
+          fi
+# check the interface file too
+          grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+          if [[ $? = 0 ]]
+          then
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
+            GWFLAG='yes'
+          fi
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> $LOG
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Service' ]]
+      then
+        grep "^${FIELD3}:" /etc/passwd > /dev/null
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
+          PASSWORD=`grep "^${FIELD3}:" /etc/shadow | cut -f5 -d:`
+          if [[ $PASSWORD = '' ]]
+          then
+            echo -e "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+          else
+            PASSWORD=`passwd -s | awk '{print $3}'`
+            if [[ $PASSWORD = '00/00/00' ]]
+            then
+              echo -e "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+            else
+              echo -e "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+            fi
+          fi
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
+        fi
+# special checks for special accounts.
+        if [[ ${FIELD3} = 'nginx' ]]
+        then
+          grep -i 640 /etc/logrotate.d/nginx > /dev/null
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
+          fi
+          grep -i nginx /etc/sudoers > /dev/null
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
+          fi
+          ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
+          fi
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Group' ]]
+      then
+        grep "^${FIELD3}:" /etc/group > /dev/null
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Sudoers' ]]
+      then
+        grep "^%${FIELD3}" /etc/sudoers > /dev/null
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
+        else
+          echo -e "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Openview' ]]
+      then
+        if [[ ! -d /opt/OV/bin ]]
+        then
+          echo -e "  ${RED}OpenView is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Netbackup' ]]
+      then
+        if [[ ! -f /usr/openv/netbackup/bp.conf ]]
+        then
+          echo -e "  ${RED}NetBackup is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Datapalette' ]]
+      then
+        if [[ ! -f /opt/datapalette/bin/datapal ]]
+        then
+          echo -e "  ${RED}Data Palette is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'OpNet' ]]
+      then
+        if [[ ! -d /opt/Panorama ]]
+        then
+          echo -e "  ${RED}OpNet is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Centrify' ]]
+      then
+        if [[ ! -f /usr/sbin/adclient ]]
+        then
+          echo -e "  ${RED}Centrify is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+    done
+
+# if gateway has been found (eg there are IP entries)
+    if [[ ! -z ${GATEWAY} ]]
+    then
+      echo -e "  ${GREEN}Default gateway entry found${RESET}" >> $LOG
+      if [[ ${GWFLAG} = 'yes' ]]
+      then
+        if [[ ! -z ${GWMSG} ]]
+        then
+          echo -e "$GWMSG" >> $LOG
+        fi
+      else
+        echo -e "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> $LOG
+      fi
+    fi
+
+  else 
+    echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
+  fi
+fi
+
 
 echo "" >> $LOG
 echo "External steps to be performed:" >> $LOG
