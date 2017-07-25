@@ -49,6 +49,7 @@
 # 2017/07/20 - CS - Moved further app tests from inside the chkserver.input file and out where it executes if it finds the agent
 # 2017/07/21 - CS - Added a specific check for bits for nginx
 # 2017/07/24 - CS - Added bits for Solaris (need to pull out common bits to functions.
+# 2017/07/25 - CS - Updated to properly locate Panorama
 
 PROGNAME="chkserver"
 COUNT=0
@@ -630,7 +631,8 @@ then
   if [[ -d /opt/Panorama ]]
   then
     echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-    APPI=`ps -e | grep Panorama`
+# Panorama starts as /bin/sh /opt/Panorama/....
+    APPI=`ps -ef | grep Panorama`
     if [[ ! -z $APPI ]]
     then
       echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
@@ -1439,7 +1441,8 @@ then
   if [[ -d /opt/Panorama ]]
   then
     echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-    APPI=`ps -e | grep Panorama`
+# Panorama starts as /bin/sh /opt/Panorama/....
+    APPI=`ps -ef | grep Panorama`
     if [[ ! -z $APPI ]]
     then
       echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
