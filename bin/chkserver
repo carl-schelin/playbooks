@@ -280,7 +280,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    echo "quit" | ${NETCAT} -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
+    echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
@@ -297,7 +297,7 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    echo "\n\n" | ${NETCAT} -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
+    echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
@@ -543,14 +543,14 @@ then
 # check for access to the vips; Longmont and Miami
 #10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      echo "" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+      echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
       else
         echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
       fi
-      echo "" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+      echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
@@ -617,7 +617,7 @@ then
     else
       echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
+    echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
@@ -638,6 +638,37 @@ then
       echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
     else
       echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+    OUTPUT=`chkconfig --list appinternals | grep ":on"`
+    if [[ -z $OUTPUT ]]
+    then
+      echo -e "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
+    fi
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.32.10.1:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
+      fi
     fi
   fi 
 
@@ -1097,7 +1128,7 @@ then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "quit" | ${NETCAT} -w 5 -vn 10.100.104.6 25 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
@@ -1117,7 +1148,7 @@ then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "\n\n" | ${NETCAT} -w 5 -vn 10.100.78.143 80 > /dev/null 2>&1
+      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
@@ -1347,14 +1378,14 @@ then
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
       if [[ ! -z ${NETCAT} ]]
       then
-        echo "" | ${NETCAT} -w 5 -vn 10.109.243.19 383 > /dev/null 2>&1
+        echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
           echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
         else
           echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
         fi
-        echo "" | ${NETCAT} -w 5 -vn 10.109.226.19 383 > /dev/null 2>&1
+        echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
           echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
@@ -1426,7 +1457,7 @@ then
     fi
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "quit" | ${NETCAT} -w 5 -vn 10.100.128.3 8080 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
@@ -1448,6 +1479,37 @@ then
       echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
     else
       echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+#    OUTPUT=`chkconfig --list appinternals | grep ":on"`
+#    if [[ -z $OUTPUT ]]
+#    then
+#      echo -e "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
+#    else
+#      echo -e "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
+#    fi
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.32.10.1) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
+      fi
     fi
   fi 
 
