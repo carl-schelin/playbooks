@@ -50,6 +50,9 @@
 # 2017/07/21 - CS - Added a specific check for bits for nginx
 # 2017/07/24 - CS - Added bits for Solaris (need to pull out common bits to functions.
 # 2017/07/25 - CS - Updated to properly locate Panorama
+# 2017/07/25 - CS - Updated to block out nc checks if netcat isn't found.
+# 2017/07/25 - CS - Added status messages for nc to identify when it's stopped.
+# 2017/07/25 - CS - Put in more status messages for ping to show where slowdowns are.
 
 PROGNAME="chkserver"
 COUNT=0
@@ -70,21 +73,49 @@ then
   rm $LOG
 fi
 
+NETCAT=''
+if [[ -f /bin/nc ]]
+then
+  NETCAT=/bin/nc
+fi
+if [[ -f /usr/bin/nc ]]
+then
+  NETCAT=/usr/bin/nc
+fi
+if [[ -f /opt/csw/bin/nc ]]
+then
+  NETCAT=/opt/csw/bin/nc
+fi
+# the sun nc doesn't handle -w wait flag well
+if [[ $OS = 'SunOS' ]] && [[ ! -z $1 ]]
+then
+  NETCAT=''
+fi
+
+
+######################
+### Return the epoch
+######################
+
 #Get date values of the date to be converted for second, minute, hour, day, month, year.
 #day=(year*365)+(year/4)-(year/100)+(year/400)+(month*306001/10000)+day
 #days_since_epoch=day-719591 (which is Jan 1 1970)
 #seconds_since_epoch=(days_since_epoch*86400)+(hour*3600)+(minute*60)+seconds
+
 epoch() {
   EP_YEAR=$1
   EP_MONTH=$2
   EP_DAY=$3
 
-  NUMBER_DAYS=$(( $EP_YEAR * 365 ))
-  LEAP_YEARS=$(( $EP_YEAR / 4 ))
-  LEAP_CENTURY=$(( $EP_YEAR / 100 ))
-  LEAP_CENTURIES=$(( $EP_YEAR / 400 ))
-  DAYS_IN_MONTH=$(( $EP_MONTH * 306001 / 10000 ))
-  EXPIRE=$(( ( $NUMBER_DAYS + $LEAP_YEARS - $LEAP_CENTURY + $LEAP_CENTURIES + $DAYS_IN_MONTH + $EP_DAY ) * 86400 ))
+  if [[ $OS = 'SunOS' ]]
+  then
+    NUMBER_DAYS=$(( $EP_YEAR * 365 ))
+    LEAP_YEARS=$(( $EP_YEAR / 4 ))
+    LEAP_CENTURY=$(( $EP_YEAR / 100 ))
+    LEAP_CENTURIES=$(( $EP_YEAR / 400 ))
+    DAYS_IN_MONTH=$(( $EP_MONTH * 306001 / 10000 ))
+    EXPIRE=$(( ( $NUMBER_DAYS + $LEAP_YEARS - $LEAP_CENTURY + $LEAP_CENTURIES + $DAYS_IN_MONTH + $EP_DAY ) * 86400 ))
+  fi
 
   echo $EXPIRE
 }
@@ -95,187 +126,39 @@ EPDAY=`date +"%d"`
 EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
 
 
-echo "" > $LOG
-echo "================================" >> $LOG
-echo "Running System Validation Script" >> $LOG
-echo "================================" >> $LOG
-echo "" >> $LOG
-
-echo -e "${GREEN}Passed${RESET} - Test or value was successful" >> $LOG
-echo -e "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> $LOG
-echo -e "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
-echo "" >> $LOG
+###################################
+### Functions:
+###   Note that functions are in alphabetical order where defined here but in logical, checkbox order in the OS specific check areas
+###################################
 
 
-###########
-### Linux
-### Red Hat
-###########
+######################
+### Check default installation passwords
+######################
 
-if [[ $OS = "Linux" ]]
-then
-  if [[ `id -u` -ne 0 ]]
-  then
-    echo -e "${RED}Due to the checks, this script must be run by root.${RESET}"
-    exit 0
-  fi
-
-  if [[ -f /bin/nc ]]
-  then
-    NETCAT=/bin/nc
-  fi
-  if [[ -f /usr/bin/nc ]]
-  then
-    NETCAT=/usr/bin/nc
-  fi
-
-  HOSTNAME=`hostname|cut -f1 -d.`
-  grep -qi ${HOSTNAME} /etc/hosts
-  if [[ $? = 0 ]]
-  then
-    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
-  else
-    echo -e "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
-  fi
-
-# Step 5: sudoers check
-  if [[ -f /etc/sudoers ]]
-  then
-    grep -qi ${HOSTNAME} /etc/sudoers
-    if [[ $? = 1 ]]
+check_default_passwords() {
+# check the password against the kickstart default
+# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  echo -e "  ${GREEN}Account password verification${RESET}" >> $LOG
+  for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
+  do
+    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
+    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
+    if [[ ! -z $UNIXPW ]]
     then
-      echo -e "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+      echo -e "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
     fi
-  else
-    echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
-  fi
-
-# Step 10: check /etc/resolv.conf
-  if [[ -f /etc/resolv.conf ]]
-  then
-    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
-    if [[ $COUNT = 0 ]]
-    then
-      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
-    else
-      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
-      do
-        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
-        ping -c 1 ${i} > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
-          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
-          if [[ -z $OUTPUT ]]
-          then
-            echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
-          else
-            echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
-          fi
-        else
-          echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
-        fi
-      done
-    fi
-  fi
+  done
+}
 
 
-# Step 11: check routes
-  if [[ ! -f $INTRADO/etc/routetable.output ]]
-  then
-    $INTRADO/bin/chkroutetable
-  fi
-  if [[ -s $INTRADO/etc/routetable.output ]]
-  then
-    echo -e "  ${RED}Route table mismatch." >> $LOG
-    cat $INTRADO/etc/routetable.output >> $LOG
-    echo -en "${RESET}" >> $LOG
-  fi
+######################
+### Check access to the mail server
+######################
 
-# running red hat 7
-  if [[ -f /bin/chronyc ]]
-  then
-    echo -e "  ${GREEN}Checking chrony time sources.${RESET}" >> $LOG
-    ping -c 1 10.100.228.31 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-    fi
-    ping -c 1 192.168.200.20 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-    fi
-    DRIFTFILE=`grep driftfile /etc/chrony.conf | awk '{print $2}'`
-    DRIFTPATH=`dirname $DRIFTFILE`
-    if [[ -d ${DRIFTPATH} ]]
-    then
-      if [[ ! -f ${DRIFTFILE} ]]
-      then
-        echo -e "    ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
-    fi
-  fi
-
-# running red hat 6
-  if [[ -f /usr/sbin/ntpq ]]
-  then
-    echo -e "  ${GREEN}Checking ntp time sources.${RESET}" >> $LOG
-    ping -c 1 10.100.228.31 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-    fi
-    ping -c 1 192.168.200.20 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-    fi
-    DRIFTFILE=`grep driftfile /etc/ntp.conf | awk '{print $2}'`
-    DRIFTPATH=`dirname $DRIFTFILE`
-    if [[ -d ${DRIFTPATH} ]]
-    then
-      if [[ ! -f ${DRIFTFILE} ]]
-      then
-        echo -e "    ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
-    fi
-  fi
-
-# check for email server access
+check_email() {
   echo -e "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
+  echo "ping check of mail server: 10.100.104.6"
   ping -c 1 10.100.104.6 > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
@@ -286,17 +169,79 @@ then
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
-        echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
+        echo -e "    ${GREEN}Email server (10.100.104.6:25) is accessible${RESET}" >> $LOG
       else
-        echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
+        echo -e "    ${RED}Email server (10.100.104.6:25) is not accessible${RESET}" >> $LOG
       fi
     fi
   else
     echo -e "    ${RED}Email server is not pingable${RESET}" >> $LOG
   fi
+}
 
-# check for incojs01 server access
+
+######################
+### Check group memberships
+######################
+
+check_group_membership() {
+  echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
+  for i in `cut -f1 -d: /etc/group`
+  do
+    grep -i "^${i}:" $INTRADO/etc/group.master > /dev/null
+    if [[ $? = 0 ]]
+    then
+# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
+      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
+      do
+        egrep -i "^${j}:" /etc/passwd > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo -e "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          egrep -i "^${i}:.*(:|,)${j}(,|$)" /etc/group > /dev/null
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          fi
+        fi
+      done
+# now check all users in /etc/group against group.master and throw an error if found
+      for j in `grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+      do
+        egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
+        fi
+      done
+    fi
+  done
+}
+
+
+######################
+### Check the hostname
+######################
+
+check_hostname() {
+  HOSTNAME=`hostname|cut -f1 -d.`
+  grep -i ${HOSTNAME} /etc/hosts > /dev/null
+  if [[ $? = 0 ]]
+  then
+    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
+  else
+    echo -e "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check access to the Jumpstart web site
+######################
+
+check_jumpstart() {
   echo -e "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
+  echo "ping check of jumpstart server: 10.100.78.143"
   ping -c 1 10.100.78.143 > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
@@ -315,78 +260,290 @@ then
   else
     echo -e "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
   fi
+}
 
 
-  if [[ ! -f /usr/bin/subscription-manager ]]
+######################
+### Check the status of Openview
+######################
+
+check_openview() {
+# if Openview was found, check to see if it's running
+  if [[ -d /opt/OV/bin ]]
   then
-    echo -e "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
-  else
-    echo -e "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
-    STATUS=`/usr/bin/subscription-manager list | grep "^Status:" | awk '{print $2}'`
-    if [[ $STATUS = 'Unknown' ]]
+    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
+    OPENVIEW=`ps -e | grep ovcd`
+    if [[ -z $OPENVIEW ]]
     then
-      echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+      ping -c 1 10.109.243.19 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Longmont Openview VIP is pingable${RESET}" >> $LOG
+        if [[ ! -z ${NETCAT} ]]
+        then
+# check for access to the vips; Longmont and Miami
+#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
+          echo "nc check of Longmont Openview Server"
+          echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
+          else
+            echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
+          fi
+        fi
+      else
+        echo -e "    ${RED}Longmont Openview VIP is not pingable${RESET}" >> $LOG
+      fi
+
+      ping -c 1 10.109.226.19 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Miami Openview VIP is pingable${RESET}" >> $LOG
+        if [[ ! -z ${NETCAT} ]]
+        then
+# check for access to the vips; Longmont and Miami
+#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
+          echo "nc check of Miami Openview Server"
+          echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
+          else
+            echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+          fi
+        fi
+      else
+        echo -e "    ${RED}Miami Openview VIP is not pingable${RESET}" >> $LOG
+      fi
     fi
-    if [[ $STATUS = 'No' ]]
+  fi
+}
+
+
+######################
+### Check the status of subscriptions for Red Hat servers only (so not an OS check)
+######################
+
+check_redhat_subscription() {
+  if [[ -f /etc/redhat-release ]]
+  then
+    if [[ ! -f /usr/bin/subscription-manager ]]
     then
-      echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+      echo -e "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
+    else
+      echo -e "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
+      STATUS=`/usr/bin/subscription-manager list | grep "^Status:" | awk '{print $2}'`
+      if [[ $STATUS = 'Unknown' ]]
+      then
+        echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+      fi
+      if [[ $STATUS = 'No' ]]
+      then
+        echo -e "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+      fi
+      if [[ $STATUS = 'Subscribed' ]]
+      then
+        echo -e "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
+      fi
+      if [[ $STATUS = 'Expired' ]]
+      then
+        echo -e "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
+      fi
     fi
-    if [[ $STATUS = 'Subscribed' ]]
+  fi
+}
+
+
+######################
+### Check the resolv.conf nameserver entries
+######################
+
+check_resolver() {
+  if [[ -f /etc/resolv.conf ]]
+  then
+    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
+    if [[ $COUNT = 0 ]]
     then
-      echo -e "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
+      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+    else
+      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
+      do
+        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
+        echo "ping check of nameserver: ${i}"
+        ping -c 1 ${i} > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
+          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
+          if [[ -z $OUTPUT ]]
+          then
+            echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+          else
+            echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
+          fi
+        else
+          echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
+        fi
+      done
     fi
-    if [[ $STATUS = 'Expired' ]]
+  fi
+}
+
+
+######################
+### Check the status of the routing tables
+######################
+
+check_routetable() {
+  if [[ ! -f $INTRADO/etc/routetable.output ]]
+  then
+    $INTRADO/bin/chkroutetable
+  fi
+  if [[ -s $INTRADO/etc/routetable.output ]]
+  then
+    echo -e "  ${RED}Route table mismatch." >> $LOG
+    cat $INTRADO/etc/routetable.output >> $LOG
+    echo -en "${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check the time sources
+######################
+
+check_time() {
+# if chrony is running (Red Hat 7 mostly)
+  if [[ -f /bin/chronyc ]]
+  then
+    T_MSG='chrony'
+    T_COMMAND='/bin/chronyc -n sources'
+    T_CONFIG='/etc/chrony.conf'
+  fi
+
+# everything else; Sun and older Red Hat
+  if [[ -f /usr/sbin/ntpq ]]
+  then
+    T_MSG='ntp'
+    T_COMMAND='/usr/sbin/ntpq -pn'
+    if [[ $OS = 'SunOS' ]]
     then
-      echo -e "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
+      T_CONFIG='/etc/inet/ntp.conf'
+    else
+      T_CONFIG='/etc/ntp.conf'
     fi
   fi
 
+  echo -e "  ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
 
-  echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
-  for i in `cut -f1 -d: /etc/group`
-  do
-    grep -qi "^${i}:" $INTRADO/etc/group.master
-    if [[ $? = 0 ]]
+  echo "ping check of time server: 10.100.228.31"
+  ping -c 1 10.100.228.31 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+    OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
+    if [[ -z $OUTPUT ]]
     then
-# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
-      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
-      do
-        egrep -qi "^${j}:" /etc/passwd
-        if [[ $? = 1 ]]
-        then
-          echo -e "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
-          egrep -qi "^${i}:.*(:|,)${j}(,|$)" /etc/group
-          if [[ $? = 1 ]]
-          then
-            echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
-          fi
-        fi
-      done
-# now check all users in /etc/group against group.master and throw an error if found
-      for j in `grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
-      do
-        egrep -qi "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master
-        if [[ $? = 1 ]]
-        then
-          echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
-        fi
-      done
+      echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
     fi
-  done
+  else
+    echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+  fi
 
-# check the password against the kickstart default
-# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
-  echo -e "  ${GREEN}Account password verification${RESET}" >> $LOG
-  for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
-  do
-    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
-    if [[ ! -z $UNIXPW ]]
+  echo "ping check of time server: 192.168.200.20"
+  ping -c 1 192.168.200.20 > /dev/null 2>&1
+  if [[ $? = 0 ]]
+  then
+    echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+    OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
+    if [[ -z $OUTPUT ]]
     then
-      echo -e "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
+      echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
     fi
-  done
+  else
+    echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
+  fi
 
+  DRIFTFILE=`grep driftfile ${T_CONFIG} | awk '{print $2}'`
+  DRIFTPATH=`dirname $DRIFTFILE`
+  if [[ -d ${DRIFTPATH} ]]
+  then
+    if [[ ! -f ${DRIFTFILE} ]]
+    then
+      echo -e "    ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+    fi
+  else
+    echo -e "    ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+  fi
+
+}
+
+
+
+echo "" > $LOG
+echo "================================" >> $LOG
+echo "Running System Validation Script" >> $LOG
+echo "================================" >> $LOG
+echo "" >> $LOG
+
+echo -e "${GREEN}Passed${RESET} - Test or value was successful" >> $LOG
+echo -e "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> $LOG
+echo -e "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
+echo "" >> $LOG
+
+echo "Note:"
+echo "  Ping checks have a count of 1"
+echo "  Netcat (nc) checks have a wait of 2"
+echo ""
+
+
+###########
+### Linux
+### Red Hat
+###########
+
+if [[ $OS = "Linux" ]]
+then
+  if [[ `id -u` -ne 0 ]]
+  then
+    echo -e "${RED}Due to the checks, this script must be run by root.${RESET}"
+    exit 0
+  fi
+
+
+  check_hostname
+
+# Step 5: sudoers check
+  if [[ -f /etc/sudoers ]]
+  then
+    grep -qi ${HOSTNAME} /etc/sudoers
+    if [[ $? = 1 ]]
+    then
+      echo -e "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+    fi
+  else
+    echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
+  fi
+
+  check_resolver
+
+  check_routetable
+
+  check_time
+
+  check_email
+
+  check_jumpstart
+
+  check_redhat_subscription
+
+  check_group_membership
+
+  check_default_passwords
 
 # see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
 # error if the user is not in the chksudo.dat file.
@@ -538,40 +695,7 @@ then
 # Check the status of installed agents
 #####
 
-# if Openview was found, check to see if it's running
-  if [[ -d /opt/OV/bin ]]
-  then
-    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
-    OPENVIEW=`ps -e | grep ovcd`
-    if [[ -z $OPENVIEW ]]
-    then
-      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-      if [[ ! -z ${NETCAT} ]]
-      then
-# check for access to the vips; Longmont and Miami
-#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
-#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-        echo "nc check of Longmont Openview Server"
-        echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
-        fi
-        echo "nc check of Miami Openview Server"
-        echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
-        fi
-      fi
-    fi
-  fi
+  check_openview
 
 # if Netbackup was found, check it out
   if [[ -f /usr/openv/netbackup/bp.conf ]]
@@ -630,16 +754,24 @@ then
     else
       echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    if [[ ! -z ${NETCAT} ]]
+    echo "ping check of data palette nerve center: 10.100.128.3"
+    ping -c 1 10.100.128.3 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo "nc check of Data Palette Nerve Center Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-      if [[ $? = 0 ]]
+      echo -e "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
       then
-        echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+        echo "nc check of Data Palette Nerve Center Server"
+        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
+        fi
       fi
+    else
+      echo -e "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
     fi
   fi
 
@@ -797,6 +929,7 @@ then
           then
             echo -e "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
           else
+            echo "ping check of the gateway: ${FIELD4}"
             ping -c 1 ${FIELD4} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
@@ -977,32 +1110,7 @@ then
     exit 0
   fi
 
-  NETCAT=''
-  if [[ -f /bin/nc ]]
-  then
-    NETCAT=/bin/nc
-  fi
-  if [[ -f /usr/bin/nc ]]
-  then
-    NETCAT=/usr/bin/nc
-  fi
-  if [[ -f /opt/csw/bin/nc ]]
-  then
-    NETCAT=/opt/csw/bin/nc
-  fi
-  if [[ ! -z $1 ]]
-  then
-    NETCAT=''
-  fi
-
-  HOSTNAME=`hostname|cut -f1 -d.`
-  grep -i ${HOSTNAME} /etc/hosts > /dev/null
-  if [[ $? = 0 ]]
-  then
-    echo -e "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
-  else
-    echo -e "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
-  fi
+  check_hostname
 
 # Step 5: sudoers check
   if [[ -f /etc/sudoers ]]
@@ -1016,217 +1124,21 @@ then
     echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
   fi
 
-# Step 10: check /etc/resolv.conf
-  if [[ -f /etc/resolv.conf ]]
-  then
-    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
-    if [[ $COUNT = 0 ]]
-    then
-      echo -e "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
-    else
-      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
-      do
-        echo -e "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
-        ping -c 1 ${i} > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
-          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
-          if [[ -z $OUTPUT ]]
-          then
-            echo -e "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
-          else
-            echo -e "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
-          fi
-        else
-          echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
-        fi
-      done
-    fi
-  fi
+  check_resolver
 
+  check_routetable
 
-# Step 11: check routes
-  if [[ ! -f $INTRADO/etc/routetable.output ]]
-  then
-    $INTRADO/bin/chkroutetable
-  fi
-  if [[ -s $INTRADO/etc/routetable.output ]]
-  then
-    echo -e "  ${RED}Route table mismatch." >> $LOG
-    cat $INTRADO/etc/routetable.output >> $LOG
-    echo -en "${RESET}" >> $LOG
-  fi
+  check_time
 
-# running red hat 7
-  if [[ -f /bin/chronyc ]]
-  then
-    echo -e "  ${GREEN}Checking chrony time sources.${RESET}" >> $LOG
-    ping -c 1 10.100.228.31 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/bin/chronyc -n sources | grep 10.100.228.31`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-    fi
-    ping -c 1 192.168.200.20 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/bin/chronyc -n sources | grep 192.168.200.20`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-    fi
-    DRIFTFILE=`grep driftfile /etc/chrony.conf | awk '{print $2}'`
-    DRIFTPATH=`dirname $DRIFTFILE`
-    if [[ -d ${DRIFTPATH} ]]
-    then
-      if [[ ! -f ${DRIFTFILE} ]]
-      then
-        echo -e "    ${YELLOW}chrony drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}chrony drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
-    fi
-  fi
+  check_email
 
-# running red hat 6
-  if [[ -f /usr/sbin/ntpq ]]
-  then
-    echo -e "  ${GREEN}Checking ntp time sources.${RESET}" >> $LOG
-    ping -c 1 10.100.228.31 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/usr/sbin/ntpq -pn | grep 10.100.228.31`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "  ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-    fi
-    ping -c 1 192.168.200.20 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-      OUTPUT=`/usr/sbin/ntpq -pn | grep 192.168.200.20`
-      if [[ -z $OUTPUT ]]
-      then
-        echo -e "  ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-    fi
-    DRIFTFILE=`grep driftfile /etc/inet/ntp.conf | awk '{print $2}'`
-    DRIFTPATH=`dirname $DRIFTFILE`
-    if [[ -d ${DRIFTPATH} ]]
-    then
-      if [[ ! -f ${DRIFTFILE} ]]
-      then
-        echo -e "    ${YELLOW}ntp drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}ntp drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
-    fi
-  fi
+  check_jumpstart
 
-# check for email server access
-  echo -e "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
-  ping -c 1 10.100.104.6 > /dev/null 2>&1
-  if [[ $? = 0 ]]
-  then
-    echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    if [[ ! -z ${NETCAT} ]]
-    then
-      echo "nc check of Email Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
-      fi
-    fi
-  else
-    echo -e "    ${RED}Email server is not pingable${RESET}" >> $LOG
-  fi
+  check_redhat_subscription
 
-# check for incojs01 server access
-  echo -e "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
-  ping -c 1 10.100.78.143 > /dev/null 2>&1
-  if [[ $? = 0 ]]
-  then
-    echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    if [[ ! -z ${NETCAT} ]]
-    then
-      echo "nc check of Jumpstart Server"
-      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
-      fi
-    fi
-  else
-    echo -e "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
-  fi
+  check_group_membership
 
-
-  echo -e "  ${GREEN}Group membership verification${RESET}" >> $LOG
-  for i in `cut -f1 -d: /etc/group`
-  do
-    grep -i "^${i}:" $INTRADO/etc/group.master > /dev/null
-    if [[ $? = 0 ]]
-    then
-# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
-      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
-      do
-        egrep -i "^${j}:" /etc/passwd > /dev/null
-        if [[ $? = 1 ]]
-        then
-          echo -e "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
-          egrep -i "^${i}:.*(:|,)${j}(,|$)" /etc/group > /dev/null
-          if [[ $? = 1 ]]
-          then
-            echo -e "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
-          fi
-        fi
-      done
-# now check all users in /etc/group against group.master and throw an error if found
-      for j in `grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
-      do
-        egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
-        if [[ $? = 1 ]]
-        then
-          echo -e "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
-        fi
-      done
-    fi
-  done
-
-# check the password against the kickstart default
-# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
-  echo -e "  ${GREEN}Account password verification${RESET}" >> $LOG
-  for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
-  do
-    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
-    if [[ ! -z $UNIXPW ]]
-    then
-      echo -e "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
-    fi
-  done
+  check_default_passwords
 
 
 # see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
@@ -1385,40 +1297,7 @@ then
 # Check the status of installed agents
 #####
 
-# if Openview was found, check to see if it's running
-  if [[ -d /opt/OV/bin ]]
-  then
-    echo -e "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
-    OPENVIEW=`ps -e | grep ovcd`
-    if [[ -z $OPENVIEW ]]
-    then
-      echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-# check for access to the vips; Longmont and Miami
-#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
-#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      if [[ ! -z ${NETCAT} ]]
-      then
-        echo "nc check of Longmont Openview Server"
-        echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
-        fi
-        echo "nc check of Miami Openview Server"
-        echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
-        fi
-      fi
-    fi
-  fi
+  check_openview
 
 # if Netbackup was found, check it out
   if [[ -f /usr/openv/netbackup/bp.conf ]]
@@ -1479,16 +1358,24 @@ then
     else
       echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    if [[ ! -z ${NETCAT} ]]
+    echo "ping check of data palette nerve center: 10.100.128.3"
+    ping -c 1 10.100.128.3 > /dev/null 2>&1
+    if [[ $? = 0 ]]
     then
-      echo "nc check of Data Palette Nerve Center Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-      if [[ $? = 0 ]]
+      echo -e "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
       then
-        echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+        echo "nc check of Data Palette Nerve Center Server"
+        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
+        fi
       fi
+    else
+      echo -e "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
     fi
   fi
 
@@ -1646,6 +1533,7 @@ then
           then
             echo -e "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
           else
+           echo "ping check of the gateway: ${FIELD4}"
             ping -c 1 ${FIELD4} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
