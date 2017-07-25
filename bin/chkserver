@@ -280,12 +280,16 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
-    if [[ $? = 0 ]]
+    if [[ ! -z ${NETCAT} ]]
     then
-      echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
+      echo "nc check of Mail Server"
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Email is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Email is not accessible${RESET}" >> $LOG
+      fi
     fi
   else
     echo -e "    ${RED}Email server is not pingable${RESET}" >> $LOG
@@ -297,12 +301,16 @@ then
   if [[ $? = 0 ]]
   then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
-    if [[ $? = 0 ]]
+    if [[ ! -z ${NETCAT} ]]
     then
-      echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
+      echo "nc check of Jumpstart Server"
+      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
+      fi
     fi
   else
     echo -e "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
@@ -540,22 +548,27 @@ then
       echo -e "    ${RED}OpenView agent is not running${RESET}" >> $LOG
     else
       echo -e "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
+      then
 # check for access to the vips; Longmont and Miami
 #10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-      echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
-      fi
-      echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+        echo "nc check of Longmont Openview Server"
+        echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
+        fi
+        echo "nc check of Miami Openview Server"
+        echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+        fi
       fi
     fi
   fi
@@ -617,12 +630,16 @@ then
     else
       echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-    if [[ $? = 0 ]]
+    if [[ ! -z ${NETCAT} ]]
     then
-      echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+      echo "nc check of Data Palette Nerve Center Server"
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Data Palette Nerve Center is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Data Palette Nerve Center is not accessible${RESET}" >> $LOG
+      fi
     fi
   fi
 
@@ -648,6 +665,7 @@ then
     fi
     if [[ ! -z ${NETCAT} ]]
     then
+      echo "nc check of OpNet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -655,6 +673,7 @@ then
       else
         echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
       fi
+      echo "nc check of OpNet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -662,6 +681,7 @@ then
       else
         echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
       fi
+      echo "nc check of OpNet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1128,6 +1148,7 @@ then
     echo -e "    ${GREEN}Email server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
+      echo "nc check of Email Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1148,6 +1169,7 @@ then
     echo -e "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
+      echo "nc check of Jumpstart Server"
       echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1378,6 +1400,7 @@ then
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
       if [[ ! -z ${NETCAT} ]]
       then
+        echo "nc check of Longmont Openview Server"
         echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
@@ -1385,6 +1408,7 @@ then
         else
           echo -e "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
         fi
+        echo "nc check of Miami Openview Server"
         echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
@@ -1457,6 +1481,7 @@ then
     fi
     if [[ ! -z ${NETCAT} ]]
     then
+      echo "nc check of Data Palette Nerve Center Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1489,6 +1514,7 @@ then
 #    fi
     if [[ ! -z ${NETCAT} ]]
     then
+      echo "nc check of Opnet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1496,6 +1522,7 @@ then
       else
         echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
       fi
+      echo "nc check of Opnet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -1503,6 +1530,7 @@ then
       else
         echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
       fi
+      echo "nc check of Opnet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
