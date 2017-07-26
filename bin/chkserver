@@ -133,6 +133,137 @@ EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
 
 
 ######################
+### Check to make sure employees haven't departed (accounts need to be locked)
+######################
+
+check_active_employees() {
+# active employee check
+# loop through the users on a system
+# exclude users in the users.exclude file
+# exclude locked users
+# once passes, check gecos field for email
+# check intrado.email for email
+# report error if it doesn't exist.
+# found == 0
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Active employee verification${RESET}" >> $LOG
+    for j in `cut -f1 -d: /etc/passwd`
+    do
+      grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
+      if [[ $? = 1 ]]
+      then
+        if [[ $OS = 'Linux' ]]
+        then
+          LOCKED=`passwd -S ${j} | awk '{print $2}'`
+        fi
+        if [[ $OS = 'SunOS' ]]
+        then
+          LOCKED=`passwd -s ${j} | awk '{print $2}'`
+        fi
+        if [[ ! $LOCKED = 'LK' ]]
+        then
+          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+          if [[ ! -z $EMAIL ]]
+          then
+            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
+            if [[ $? = 1 ]]
+            then
+              echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
+            fi
+          fi
+        fi
+      fi
+    done
+  fi
+}
+
+
+######################
+### Check Centrify if installed
+######################
+
+check_centrify() {
+  if [[ -f /usr/sbin/adclient ]]
+  then
+    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
+    CENTRIFY=`ps -e | grep adclient`
+    if [[ ! -z $CENTRIFY ]]
+    then
+      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 0 ]]
+      then
+#[root@cofmcc1 bin]# adinfo
+#Local host name:   cofmcc1
+#Joined to domain:  unix.intrado.pri
+#Joined as:         cofmcc1.unix.intrado.pri
+#Pre-win2K name:    cofmcc1
+#Current DC:        lmv08-udc01.unix.intrado.pri
+#Preferred site:    LGMT-CO
+#Zone:              unix.intrado.pri/Unix/Zones/FMCC
+#Last password set: 2017-07-14 15:47:36 MDT
+#CentrifyDC mode:   connected
+#Licensed Features: Enabled
+        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
+        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
+      fi
+#Linux:cschelin@infltx10$ adinfo
+#Not joined to any domain
+#Licensed Features: Enabled
+#Linux:cschelin@infltx10$ echo $?
+#10
+      /usr/bin/adinfo > /dev/null
+      if [[ $? = 10 ]]
+      then
+        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+    fi
+  fi
+}
+
+
+######################
+### Check Data Palette if installed
+######################
+
+check_data_palette() {
+  if [[ -f /opt/datapalette/bin/datapal ]]
+  then
+    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
+    DPPS=`ps -e | grep datapal`
+    if [[ ! -z $DPPS ]]
+    then
+      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
+    else
+      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
+    fi
+    echo "ping check of data palette nerve center: 10.100.128.3"
+    ping -c 1 10.100.128.3 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      echo -e "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
+      then
+        echo "nc check of Data Palette Nerve Center Server"
+        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          echo -e "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
+        else
+          echo -e "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
+        fi
+      fi
+    else
+      echo -e "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
+    fi
+  fi
+}
+
+
+######################
 ### Check default installation passwords
 ######################
 
@@ -264,6 +395,65 @@ check_jumpstart() {
 
 
 ######################
+### Check the status of Netbackup
+######################
+
+check_netbackup() {
+  if [[ -f /usr/openv/netbackup/bp.conf ]]
+  then
+    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+    if [[ -f /etc/hosts.allow ]]
+    then
+      ALLOW=`grep bpcd: /etc/hosts.allow`
+      if [[ -z $ALLOW ]]
+      then
+        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
+      fi
+    else
+      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
+    fi
+    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+    if [[ -z $NBLIST ]]
+    then
+      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+    fi
+# check for last backup
+#Backed Up         Expires       Files      KB     C Sched Type      Policy
+#----------------  ---------- -------- ----------- - --------------- ------------
+#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+
+    if [[ -f  $INTRADO/etc/backups.output ]]
+    then
+      if [[ ! -s $INTRADO/etc/backups.output ]]
+      then
+        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+      else
+        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+        if [[ $OS = 'Linux' ]]
+        then
+          BUDATE=`date --date=$OUTPUT +"%s"`
+        else
+          BUYEAR=`echo $OUTPUT | cut -f1 -d/`
+          BUMONTH=`echo $OUTPUT | cut -f2 -d/`
+          BUDAY=`echo $OUTPUT | cut -f3 -d/`
+          BUDATE=`epoch $BUYEAR $BUMONTH $BUDAY`
+        fi
+        EXPIRED=$(( $BUDATE + $SEVEN ))
+        if [[ ${EPOCH} -gt ${EXPIRED} ]]
+        then
+          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+        else
+          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+}
+
+
+######################
 ### Check the status of Openview
 ######################
 
@@ -320,6 +510,111 @@ check_openview() {
         echo -e "    ${RED}Miami Openview VIP is not pingable${RESET}" >> $LOG
       fi
     fi
+  fi
+}
+
+
+######################
+### Check Opnet if found
+######################
+
+check_opnet() {
+  if [[ -d /opt/Panorama ]]
+  then
+    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+# Panorama starts as /bin/sh /opt/Panorama/....
+    APPI=`ps -ef | grep Panorama`
+    if [[ ! -z $APPI ]]
+    then
+      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
+    else
+      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+    fi
+    if [[ $OS = 'Linux' ]]
+    then
+      OUTPUT=`chkconfig --list appinternals | grep ":on"`
+      if [[ -z $OUTPUT ]]
+      then
+        echo -e "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
+      else
+        echo -e "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
+      fi
+    fi
+    if [[ ! -z ${NETCAT} ]]
+    then
+      echo "nc check of OpNet Server"
+      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.32.10.1:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "nc check of OpNet Server"
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
+      fi
+      echo "nc check of OpNet Server"
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
+      else
+        echo -e "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
+      fi
+    fi
+  fi 
+}
+
+
+######################
+### Check to see if users who have privileged access have expired or shouldn't have it
+######################
+
+check_privileged_access() {
+# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
+# error if the user is not in the chksudo.dat file.
+# error if the date is older than the expiration date.
+#lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
+  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  then
+    echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
+    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
+    do
+      SERVER=`echo $j | cut -f1 -d:`
+      USER=`echo $j | cut -f2 -d:`
+      ROOT=`echo $j | cut -f3 -d:`
+
+      if [[ ${ROOT} = 'yes' ]]
+      then
+        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+        if [[ ! -z $OUTPUT ]]
+        then
+# only need the date
+#wkkihiecerb21:escott:999999:30010101
+          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
+          if [[ $OS = 'Linux' ]]
+          then
+            EXPIRE=`date --date="${EXPIREDATE}" +"%s"`
+          else
+            EXYEAR=`echo $EXPIREDATE | cut -c1-4`
+            EXMONTH=`echo $EXPIREDATE | cut -c5-6`
+            EXDAY=`echo $EXPIREDATE | cut -c7-8`
+            EXPIRE=`epoch $EXYEAR $EXMONTH $EXDAY`
+          fi
+          if [[ ${EPOCH} -gt ${EXPIRE} ]]
+          then
+            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
+          fi
+        else
+          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
+        fi
+      fi
+    done
   fi
 }
 
@@ -448,7 +743,16 @@ check_time() {
     OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
     if [[ -z $OUTPUT ]]
     then
-      echo -e "    ${RED}Unable to locate Longmont time server (10.100.228.31) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+    else
+      echo "time check of time server: 10.100.228.31"
+      ntpdate -q 10.100.228.31 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
+      fi
     fi
   else
     echo -e "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
@@ -462,7 +766,16 @@ check_time() {
     OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
     if [[ -z $OUTPUT ]]
     then
-      echo -e "    ${RED}Unable to locate Miami time server (192.168.200.20) using chronyc.${RESET}" >> $LOG
+      echo -e "    ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+    else
+      echo "time check of time server: 192.168.200.20"
+      ntpdate -q 192.168.200.20 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        echo -e "    ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
+      else
+        echo -e "    ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
+      fi
     fi
   else
     echo -e "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
@@ -481,6 +794,31 @@ check_time() {
   fi
 
 }
+
+
+######################
+### Check the vmware agent
+######################
+
+check_vmware_agent() {
+  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
+  then
+    echo -e "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
+    VMWARE=`ps -e | grep vmtoolsd`
+    if [[ -z $VMWARE ]]
+    then
+      echo -e "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
+    else
+      echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
+    fi
+  else
+    echo -e "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+  fi
+}
+
+######################
+### End of Functions
+######################
 
 
 
@@ -545,89 +883,11 @@ then
 
   check_default_passwords
 
-# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
-# error if the user is not in the chksudo.dat file.
-# error if the date is older than the expiration date.
-#lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
-  then
-    echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
-    EPOCH=`date +"%s"`
-    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
-    do
-      SERVER=`echo $j | cut -f1 -d:`
-      USER=`echo $j | cut -f2 -d:`
-      ROOT=`echo $j | cut -f3 -d:`
+  check_privileged_access
 
-      if [[ ${ROOT} = 'yes' ]]
-      then
-        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
-        if [[ ! -z $OUTPUT ]]
-        then
-# only need the date
-#wkkihiecerb21:escott:999999:30010101
-          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
-          EXPIRE=`date --date="${EXPIREDATE}" +"%s"`
-          if [[ $EPOCH -gt $EXPIRE ]]
-          then
-            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
-          fi
-        else
-          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
-        fi
-      fi
-    done
-  fi
+  check_active_employees
 
-# active employee check
-# loop through the users on a system
-# exclude users in the users.exclude file
-# exclude locked users
-# once passes, check gecos field for email
-# check intrado.email for email
-# report error if it doesn't exist.
-# found == 0
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
-  then
-    echo -e "  ${GREEN}Active employee verification${RESET}" >> $LOG
-    for j in `cut -f1 -d: /etc/passwd`
-    do
-      grep -qi "^${j}$" $INTRADO/etc/users.exclude
-      if [[ $? = 1 ]]
-      then
-        LOCKED=`passwd -S ${j} | awk '{print $2}'`
-        if [[ ! $LOCKED = 'LK' ]]
-        then
-          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
-          if [[ ! -z $EMAIL ]]
-          then
-            grep -qi "^${EMAIL}$" $INTRADO/etc/intrado.email
-            if [[ $? = 1 ]]
-            then
-              echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
-            fi
-          fi
-        fi
-      fi
-    done
-  fi
-
-# Step 9: set unixsvc keys for access to the system; external to this check; skipped
-
-# Step 1: vmware?
-  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
-  then
-    echo -e "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
-    VMWARE=`ps -e | grep vmtoolsd`
-    if [[ -z $VMWARE ]]
-    then
-      echo -e "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
-    fi
-  else
-    echo -e "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
-  fi
+  check_vmware_agent
 
 # Step 12: is rrdtool running?
   UPDATERRD=`ps -e | grep updaterrd`
@@ -697,172 +957,13 @@ then
 
   check_openview
 
-# if Netbackup was found, check it out
-  if [[ -f /usr/openv/netbackup/bp.conf ]]
-  then
-    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-    if [[ -f /etc/hosts.allow ]]
-    then
-      ALLOW=`grep bpcd: /etc/hosts.allow`
-      if [[ -z $ALLOW ]]
-      then
-        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
-    fi
-    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
-    if [[ -z $NBLIST ]]
-    then
-      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
-    fi
-# check for last backup
-#Backed Up         Expires       Files      KB     C Sched Type      Policy
-#----------------  ---------- -------- ----------- - --------------- ------------
-#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+  check_netbackup
 
-    if [[ -f  $INTRADO/etc/backups.output ]]
-    then
-      if [[ ! -s $INTRADO/etc/backups.output ]]
-      then
-        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
-      else
-        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
-        BUDATE=`date --date=$OUTPUT +"%s"`
-        EXPIRED=$(( $BUDATE + $SEVEN ))
-        TODAY=`date +"%s"`
-        if [[ ${EXPIRED} -lt ${TODAY} ]]
-        then
-          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
-        else
-          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
-        fi
-      fi
-    fi
-  fi
+  check_datapalette
 
-# if it's found, let's check it out
-  if [[ -f /opt/datapalette/bin/datapal ]]
-  then
-    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-    DPPS=`ps -e | grep datapal`
-    if [[ ! -z $DPPS ]]
-    then
-      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
-    fi
-    echo "ping check of data palette nerve center: 10.100.128.3"
-    ping -c 1 10.100.128.3 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
-      if [[ ! -z ${NETCAT} ]]
-      then
-        echo "nc check of Data Palette Nerve Center Server"
-        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
-        fi
-      fi
-    else
-      echo -e "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
-    fi
-  fi
+  check_opnet
 
-
-# if opnet is found, check it out
-  if [[ -d /opt/Panorama ]]
-  then
-    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-# Panorama starts as /bin/sh /opt/Panorama/....
-    APPI=`ps -ef | grep Panorama`
-    if [[ ! -z $APPI ]]
-    then
-      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
-    else
-      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
-    fi
-    OUTPUT=`chkconfig --list appinternals | grep ":on"`
-    if [[ -z $OUTPUT ]]
-    then
-      echo -e "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
-    fi
-    if [[ ! -z ${NETCAT} ]]
-    then
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.32.10.1:19090) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
-      fi
-    fi
-  fi 
-
-# check for centrify
-  if [[ -f /usr/sbin/adclient ]]
-  then
-    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
-    CENTRIFY=`ps -e | grep adclient`
-    if [[ ! -z $CENTRIFY ]]
-    then
-      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 0 ]]
-      then
-#[root@cofmcc1 bin]# adinfo
-#Local host name:   cofmcc1
-#Joined to domain:  unix.intrado.pri
-#Joined as:         cofmcc1.unix.intrado.pri
-#Pre-win2K name:    cofmcc1
-#Current DC:        lmv08-udc01.unix.intrado.pri
-#Preferred site:    LGMT-CO
-#Zone:              unix.intrado.pri/Unix/Zones/FMCC
-#Last password set: 2017-07-14 15:47:36 MDT
-#CentrifyDC mode:   connected
-#Licensed Features: Enabled
-        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
-        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
-      fi
-#Linux:cschelin@infltx10$ adinfo
-#Not joined to any domain
-#Licensed Features: Enabled
-#Linux:cschelin@infltx10$ echo $?
-#10
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 10 ]]
-      then
-        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
-    fi
-  fi
+  check_centrify
 
 # these checks are pulled from the auto-generated chkserver.input file.
   if [[ -f /opt/intrado/etc/chkserver.input ]]
@@ -1140,96 +1241,11 @@ then
 
   check_default_passwords
 
+  check_privileged_access
 
-# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
-# error if the user is not in the chksudo.dat file.
-# error if the date is older than the expiration date.
-#lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
-  then
-    echo -e "  ${GREEN}Privileged access review${RESET}" >> $LOG
-    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
-    do
-      SERVER=`echo $j | cut -f1 -d:`
-      USER=`echo $j | cut -f2 -d:`
-      ROOT=`echo $j | cut -f3 -d:`
+  check_active_employees
 
-      if [[ ${ROOT} = 'yes' ]]
-      then
-        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
-        if [[ ! -z $OUTPUT ]]
-        then
-# only need the date
-#wkkihiecerb21:escott:999999:30010101
-          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
-#Get date values of the date to be converted for second, minute, hour, day, month, year.
-#day=(year*365)+(year/4)-(year/100)+(year/400)+(month*306001/10000)+day
-#days_since_epoch=day-719591 (which is Jan 1 1970)
-#seconds_since_epoch=(days_since_epoch*86400)+(hour*3600)+(minute*60)+seconds
-          EXYEAR=`echo $EXPIREDATE | cut -c1-4`
-          EXMONTH=`echo $EXPIREDATE | cut -c5-6`
-          EXDAY=`echo $EXPIREDATE | cut -c7-8`
-          EXPIRE=`epoch $EXYEAR $EXMONTH $EXDAY`
-          if [[ $EPOCH -gt $EXPIRE ]]
-          then
-            echo -e "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
-          fi
-        else
-          echo -e "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
-        fi
-      fi
-    done
-  fi
-
-# active employee check
-# loop through the users on a system
-# exclude users in the users.exclude file
-# exclude locked users
-# once passes, check gecos field for email
-# check intrado.email for email
-# report error if it doesn't exist.
-# found == 0
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
-  then
-    echo -e "  ${GREEN}Active employee verification${RESET}" >> $LOG
-    for j in `cut -f1 -d: /etc/passwd`
-    do
-      grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
-      if [[ $? = 1 ]]
-      then
-        LOCKED=`passwd -s ${j} | awk '{print $2}'`
-        if [[ ! $LOCKED = 'LK' ]]
-        then
-          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
-          if [[ ! -z $EMAIL ]]
-          then
-            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
-            if [[ $? = 1 ]]
-            then
-              echo -e "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
-            fi
-          fi
-        fi
-      fi
-    done
-  fi
-
-# Step 9: set unixsvc keys for access to the system; external to this check; skipped
-
-# Step 1: vmware?
-  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
-  then
-    echo -e "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
-    VMWARE=`ps -e | grep vmtoolsd`
-    if [[ -z $VMWARE ]]
-    then
-      echo -e "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
-    fi
-  else
-    echo -e "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
-  fi
+  check_vmware_agent
 
 # Step 12: is rrdtool running?
   UPDATERRD=`ps -e | grep updaterrd`
@@ -1299,174 +1315,13 @@ then
 
   check_openview
 
-# if Netbackup was found, check it out
-  if [[ -f /usr/openv/netbackup/bp.conf ]]
-  then
-    echo -e "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-    if [[ -f /etc/hosts.allow ]]
-    then
-      ALLOW=`grep bpcd: /etc/hosts.allow`
-      if [[ -z $ALLOW ]]
-      then
-        echo -e "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
-    fi
-    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
-    if [[ -z $NBLIST ]]
-    then
-      echo -e "    ${RED}NetBackup is not running${RESET}" >> $LOG
-    else
-      echo -e "    ${GREEN}NetBackup is running${RESET}" >> $LOG
-    fi
-# check for last backup
-#Backed Up         Expires       Files      KB     C Sched Type      Policy
-#----------------  ---------- -------- ----------- - --------------- ------------
-#07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
+  check_netbackup
 
-    if [[ -f  $INTRADO/etc/backups.output ]]
-    then
-      if [[ ! -s $INTRADO/etc/backups.output ]]
-      then
-        echo -e "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
-      else
-        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
-        BUYEAR=`echo $OUTPUT | cut -f1 -d/`
-        BUMONTH=`echo $OUTPUT | cut -f2 -d/`
-        BUDAY=`echo $OUTPUT | cut -f3 -d/`
-        BUDATE=`epoch $BUYEAR $BUMONTH $BUDAY`
-        EXPIRED=$(( $BUDATE + $SEVEN ))
-        if [[ ${EPOCH} -gt ${EXPIRED} ]]
-        then
-          echo -e "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
-        else
-          echo -e "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
-        fi
-      fi
-    fi
-  fi
+  check_data_palette
 
-# if it's found, let's check it out
-  if [[ -f /opt/datapalette/bin/datapal ]]
-  then
-    echo -e "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-    DPPS=`ps -e | grep datapal`
-    if [[ ! -z $DPPS ]]
-    then
-      echo -e "    ${GREEN}Data Palette is running${RESET}" >> $LOG
-    else
-      echo -e "    ${RED}Data Palette is not running${RESET}" >> $LOG
-    fi
-    echo "ping check of data palette nerve center: 10.100.128.3"
-    ping -c 1 10.100.128.3 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      echo -e "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
-      if [[ ! -z ${NETCAT} ]]
-      then
-        echo "nc check of Data Palette Nerve Center Server"
-        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          echo -e "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
-        else
-          echo -e "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
-        fi
-      fi
-    else
-      echo -e "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
-    fi
-  fi
+  check_opnet
 
-
-# if opnet is found, check it out
-  if [[ -d /opt/Panorama ]]
-  then
-    echo -e "  ${GREEN}OpNet is installed${RESET}" >> $LOG
-# Panorama starts as /bin/sh /opt/Panorama/....
-    APPI=`ps -ef | grep Panorama`
-    if [[ ! -z $APPI ]]
-    then
-      echo -e "    ${GREEN}OpNet is running${RESET}" >> $LOG
-    else
-      echo -e "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
-    fi
-#    OUTPUT=`chkconfig --list appinternals | grep ":on"`
-#    if [[ -z $OUTPUT ]]
-#    then
-#      echo -e "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
-#    else
-#      echo -e "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
-#    fi
-    if [[ ! -z ${NETCAT} ]]
-    then
-      echo "nc check of Opnet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.32.10.1) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of Opnet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of Opnet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        echo -e "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
-      else
-        echo -e "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
-      fi
-    fi
-  fi 
-
-# check for centrify
-  if [[ -f /usr/sbin/adclient ]]
-  then
-    echo -e "  ${GREEN}Centrify is installed${RESET}" >> $LOG
-    CENTRIFY=`ps -e | grep adclient`
-    if [[ ! -z $CENTRIFY ]]
-    then
-      echo -e "    ${GREEN}Centrify is running${RESET}" >> $LOG
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 0 ]]
-      then
-#[root@cofmcc1 bin]# adinfo
-#Local host name:   cofmcc1
-#Joined to domain:  unix.intrado.pri
-#Joined as:         cofmcc1.unix.intrado.pri
-#Pre-win2K name:    cofmcc1
-#Current DC:        lmv08-udc01.unix.intrado.pri
-#Preferred site:    LGMT-CO
-#Zone:              unix.intrado.pri/Unix/Zones/FMCC
-#Last password set: 2017-07-14 15:47:36 MDT
-#CentrifyDC mode:   connected
-#Licensed Features: Enabled
-        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
-        echo -e "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
-      fi
-#Linux:cschelin@infltx10$ adinfo
-#Not joined to any domain
-#Licensed Features: Enabled
-#Linux:cschelin@infltx10$ echo $?
-#10
-      /usr/bin/adinfo > /dev/null
-      if [[ $? = 10 ]]
-      then
-        echo -e "    ${RED}Centrify is not connected${RESET}" >> $LOG
-      fi
-    else
-      echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
-    fi
-  fi
+  check_centrify
 
 # these checks are pulled from the auto-generated chkserver.input file.
   if [[ -f /opt/intrado/etc/chkserver.input ]]
