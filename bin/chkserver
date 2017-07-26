@@ -53,6 +53,8 @@
 # 2017/07/25 - CS - Updated to block out nc checks if netcat isn't found.
 # 2017/07/25 - CS - Added status messages for nc to identify when it's stopped.
 # 2017/07/25 - CS - Put in more status messages for ping to show where slowdowns are.
+# 2017/07/26 - CS - Moving code blocks into functions and updating for different versions where appropriate
+# 2017/07/26 - CS - Updated time server check to include seeing if the time servers can sync
 
 PROGNAME="chkserver"
 COUNT=0
@@ -220,6 +222,23 @@ check_centrify() {
       fi
     else
       echo -e "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+    fi
+  fi
+}
+
+
+######################
+### Check the status of cfg2html
+######################
+
+check_cfg2html() {
+  if [[ ! -d /opt/intrado/cfghtml ]]
+  then
+    echo -e "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
+  else
+    if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
+    then
+      echo -e "  ${RED}cfg2html has not been run${RESET}" >> $LOG
     fi
   fi
 }
@@ -654,6 +673,37 @@ check_redhat_subscription() {
 
 
 ######################
+### Check the status of RemoveIPS on Red Hat systems
+######################
+
+check_removeips() {
+  if [[ -f /etc/redhat-release ]]
+  then
+# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
+# if without comments it's yes, report an error
+# if blank and with comments it's yes, report an error
+    if [[ -f /etc/systemd/logind.conf ]]
+    then
+# get the answer
+      OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
+      if [[ $OUTPUT = 'yes' ]]
+      then
+        echo -e "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+      fi
+      if [[ -z $OUTPUT ]]
+      then
+        OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
+        if [[ $OUTPUT = 'yes' ]]
+        then
+          echo -e "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+        fi
+      fi
+    fi
+  fi
+}
+
+
+######################
 ### Check the resolv.conf nameserver entries
 ######################
 
@@ -703,6 +753,22 @@ check_routetable() {
     echo -e "  ${RED}Route table mismatch." >> $LOG
     cat $INTRADO/etc/routetable.output >> $LOG
     echo -en "${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check the status of rrdtool; should be running on Linux and Sun systems
+######################
+
+check_rrdtool() {
+  if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
+  then
+    UPDATERRD=`ps -e | grep updaterrd`
+    if [[ -z $UPDATERRD ]]
+    then
+      echo -e "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
+    fi
   fi
 }
 
@@ -889,27 +955,9 @@ then
 
   check_vmware_agent
 
-# Step 12: is rrdtool running?
-  UPDATERRD=`ps -e | grep updaterrd`
-  if [[ -z $UPDATERRD ]]
-  then
-    echo -e "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
-  fi
+  check_rrdtool
 
-# Step 16: cfg2html installed?
-  if [[ ! -d /opt/intrado/cfghtml ]]
-  then
-    echo -e "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
-  else
-    if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
-    then
-      echo -e "  ${RED}cfg2html has not been run${RESET}" >> $LOG
-    fi
-  fi
-
-
-# Step 17: copy the cfg2html file to the jumpstart server; update the jumpstart $ADMIN/bin/getcfg2html
-
+  check_cfg2html
 
 # Step 18: was /opt/intrado/bin/intrado run?
   if [[ ! -f /opt/intrado/var/intrado.log ]]
@@ -929,27 +977,7 @@ then
     echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
   fi
 
-# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
-# if without comments it's yes, report an error
-# if blank and with comments it's yes, report an error
-  if [[ -f /etc/systemd/logind.conf ]]
-  then
-# get the answer
-    OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
-    if [[ $OUTPUT = 'yes' ]]
-    then
-      echo -e "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
-    fi
-    if [[ -z $OUTPUT ]]
-    then
-      OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
-      if [[ $OUTPUT = 'yes' ]]
-      then
-        echo -e "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
-      fi
-    fi
-  fi
-
+  check_removeips
 
 #####
 # Check the status of installed agents
@@ -1247,26 +1275,9 @@ then
 
   check_vmware_agent
 
-# Step 12: is rrdtool running?
-  UPDATERRD=`ps -e | grep updaterrd`
-  if [[ -z $UPDATERRD ]]
-  then
-    echo -e "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
-  fi
+  check_rrdtool
 
-# Step 16: cfg2html installed?
-  if [[ ! -d /opt/intrado/cfghtml ]]
-  then
-    echo -e "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
-  else
-    if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
-    then
-      echo -e "  ${RED}cfg2html has not been run${RESET}" >> $LOG
-    fi
-  fi
-
-
-# Step 17: copy the cfg2html file to the jumpstart server; update the jumpstart $ADMIN/bin/getcfg2html
+  check_cfg2html
 
 
 # Step 18: was /opt/intrado/bin/intrado run?
@@ -1287,27 +1298,7 @@ then
     echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
   fi
 
-# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
-# if without comments it's yes, report an error
-# if blank and with comments it's yes, report an error
-  if [[ -f /etc/systemd/logind.conf ]]
-  then
-# get the answer
-    OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
-    if [[ $OUTPUT = 'yes' ]]
-    then
-      echo -e "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
-    fi
-    if [[ -z $OUTPUT ]]
-    then
-      OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
-      if [[ $OUTPUT = 'yes' ]]
-      then
-        echo -e "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
-      fi
-    fi
-  fi
-
+  check_removeips
 
 #####
 # Check the status of installed agents
