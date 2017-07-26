@@ -987,7 +987,7 @@ then
 
   check_netbackup
 
-  check_datapalette
+  check_data_palette
 
   check_opnet
 
