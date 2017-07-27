@@ -56,6 +56,7 @@
 # 2017/07/26 - CS - Moving code blocks into functions and updating for different versions where appropriate
 # 2017/07/26 - CS - Updated time server check to include seeing if the time servers can sync
 # 2017/07/27 - CS - Fixed first/New opnet server access port (443)
+# 2017/07/27 - CS - Updated to support HP-UX
 
 PROGNAME="chkserver"
 COUNT=0
@@ -977,6 +978,325 @@ then
   then
     echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
   fi
+
+  check_removeips
+
+#####
+# Check the status of installed agents
+#####
+
+  check_openview
+
+  check_netbackup
+
+  check_data_palette
+
+  check_opnet
+
+  check_centrify
+
+# these checks are pulled from the auto-generated chkserver.input file.
+  if [[ -f /opt/intrado/etc/chkserver.input ]]
+  then
+
+    for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
+    do
+
+      FIELD2=`echo $j | cut -f2 -d:`
+      FIELD3=`echo $j | cut -f3 -d:`
+      FIELD4=`echo $j | cut -f4 -d:`
+
+      if [[ $FIELD2 = 'CPU' ]]
+      then
+        COUNT=`grep -c processor /proc/cpuinfo`
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo -e "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> $LOG
+        else
+          echo -e "  ${GREEN}$COUNT CPUs as expected${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Memory' ]]
+      then
+        COUNT=$(( `grep MemTotal /proc/meminfo | awk '{print $2}'` / 1024 / 1024 + 1 ))
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          echo -e "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+        else
+          echo -e "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'IP' ]]
+      then
+        if [[ -f /sbin/ip ]]
+        then
+          IPADDR=/sbin/ip
+        fi
+        if [[ -f /usr/sbin/ip ]]
+        then
+          IPADDR=/usr/sbin/ip
+        fi
+        ${IPADDR} addr | grep -q " ${FIELD3}/"
+        if [[ $? = 0 ]]
+        then
+          INTERFACE=`grep ${FIELD3}$ /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
+          echo -e "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
+          egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
+          else
+            echo -e "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
+          fi
+          grep -qi ${FIELD3} /etc/hosts
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> $LOG
+          fi
+          PRIVATE=`ipcalc -n ${FIELD4}/24 | cut -f2 -d=`
+          if [[ ${PRIVATE} = '192.168.0.0' ]]
+          then
+            echo -e "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
+          else
+            echo "ping check of the gateway: ${FIELD4}"
+            ping -c 1 ${FIELD4} > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              echo -e "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
+            else
+              echo -e "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> $LOG
+            fi
+          fi
+          GATEWAY="${GATEWAY} ${FIELD4}"
+          grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
+          if [[ $? = 0 ]]
+          then
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
+            GWFLAG='yes'
+          fi
+# check the interface file too
+          grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+          if [[ $? = 0 ]]
+          then
+            GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
+            GWFLAG='yes'
+          fi
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> $LOG
+        fi
+      fi
+
+      if [[ $FIELD2 = 'Service' ]]
+      then
+        grep -q "^${FIELD3}:" /etc/passwd
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
+          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6" "$7}'`
+          if [[ $PASSWORD = 'never   ' ]]
+          then
+            echo -e "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+          else
+            if [[ $PASSWORD = 'password must be changed' ]]
+            then
+              echo -e "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> $LOG
+            else
+              echo -e "    ${RED}Password expires date/message: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            fi
+          fi
+          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6" "$7}'`
+          if [[ $ACCOUNT = 'never   ' ]]
+          then
+            echo -e "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
+          else
+            echo -e "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+          fi
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
+        fi
+# special checks for special accounts.
+        if [[ ${FIELD3} = 'nginx' ]]
+        then
+          grep -qi 640 /etc/logrotate.d/nginx
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
+          fi
+          grep -qi nginx /etc/sudoers
+          if [[ $? = 1 ]]
+          then
+            echo -e "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
+          fi
+          ls -l /var/log/nginx/* | head -1 | grep -q "^-rw-r-----"
+          if [[ $? = 0 ]]
+          then
+            echo -e "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
+          fi
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Group' ]]
+      then
+        grep -q "^${FIELD3}:" /etc/group
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
+        else
+          echo -e "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}" >> $LOG
+        fi
+      fi
+    
+      if [[ $FIELD2 = 'Sudoers' ]]
+      then
+        grep -q "^%${FIELD3}" /etc/sudoers
+        if [[ $? = 0 ]]
+        then
+          echo -e "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
+        else
+          echo -e "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Openview' ]]
+      then
+        if [[ ! -d /opt/OV/bin ]]
+        then
+          echo -e "  ${RED}OpenView is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Netbackup' ]]
+      then
+        if [[ ! -f /usr/openv/netbackup/bp.conf ]]
+        then
+          echo -e "  ${RED}NetBackup is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Datapalette' ]]
+      then
+        if [[ ! -f /opt/datapalette/bin/datapal ]]
+        then
+          echo -e "  ${RED}Data Palette is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'OpNet' ]]
+      then
+        if [[ ! -d /opt/Panorama ]]
+        then
+          echo -e "  ${RED}OpNet is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+# it's supposed to be installed, let's check
+      if [[ $FIELD2 = 'Centrify' ]]
+      then
+        if [[ ! -f /usr/sbin/adclient ]]
+        then
+          echo -e "  ${RED}Centrify is not installed${RESET}" >> $LOG
+        fi
+      fi
+
+    done
+
+# if gateway has been found (eg there are IP entries)
+    if [[ ! -z ${GATEWAY} ]]
+    then
+      echo -e "  ${GREEN}Default gateway entry found${RESET}" >> $LOG
+      if [[ ${GWFLAG} = 'yes' ]]
+      then
+        if [[ ! -z ${GWMSG} ]]
+        then
+          echo -e "$GWMSG" >> $LOG
+        fi
+      else
+        echo -e "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> $LOG
+      fi
+    fi
+
+  else 
+    echo -e "${RED}chkserver.input file not found${RESET}" >> $LOG
+  fi
+fi
+
+
+
+###########
+### HP-UX
+###########
+
+if [[ $OS = "HP-UX" ]]
+then
+  if [[ `id -u` -ne 0 ]]
+  then
+    echo -e "${RED}Due to the checks, this script must be run by root.${RESET}"
+    exit 0
+  fi
+
+  check_hostname
+
+# Step 5: sudoers check
+  if [[ -f /etc/sudoers ]]
+  then
+    grep -qi ${HOSTNAME} /etc/sudoers
+    if [[ $? = 1 ]]
+    then
+      echo -e "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+    fi
+  else
+    echo -e "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
+  fi
+
+  check_resolver
+
+  check_routetable
+
+  check_time
+
+  check_email
+
+  check_jumpstart
+
+  check_redhat_subscription
+
+  check_group_membership
+
+  check_default_passwords
+
+  check_privileged_access
+
+  check_active_employees
+
+  check_vmware_agent
+
+  check_rrdtool
+
+  check_cfg2html
+
+# Step 18: was /opt/intrado/bin/intrado run?
+  if [[ ! -f /opt/intrado/var/intrado.log ]]
+  then
+    echo -e "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
+    if [[ -z $CRON ]]
+    then
+      echo -e "  ${RED}Need to update root's cron${RESET}" >> $LOG
+    fi
+  fi
+
+
+# Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
+#  if [[ ! -f /usr/bin/ksh ]]
+#  then
+#    echo -e "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
+#  fi
 
   check_removeips
 
