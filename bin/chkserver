@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/ksh
 
 # chkserver - Check the postinstall steps where possible
 # Owner: Carl Schelin
@@ -57,6 +57,7 @@
 # 2017/07/26 - CS - Updated time server check to include seeing if the time servers can sync
 # 2017/07/27 - CS - Fixed first/New opnet server access port (443)
 # 2017/07/27 - CS - Updated to support HP-UX
+# 2017/07/27 - CS - Switch to ksh (need to fix error output)
 
 PROGNAME="chkserver"
 COUNT=0
@@ -65,9 +66,13 @@ GWFLAG='no'
 GWMSG=''
 OS=`uname`
 GREEN="\e[32m"
+GREEN="GREEN: "
 RED="\e[31m"
+RED="RED: "
 YELLOW="\e[33m"
+YELLOW="YELLOW: "
 RESET="\e[0m"
+RESET=""
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
@@ -736,6 +741,10 @@ check_resolver() {
           echo -e "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
         fi
       done
+    fi
+    if [[ $COUNT -gt 3 ]]
+    then
+      echo -e "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
     fi
   fi
 }
