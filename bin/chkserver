@@ -55,6 +55,7 @@
 # 2017/07/25 - CS - Put in more status messages for ping to show where slowdowns are.
 # 2017/07/26 - CS - Moving code blocks into functions and updating for different versions where appropriate
 # 2017/07/26 - CS - Updated time server check to include seeing if the time servers can sync
+# 2017/07/27 - CS - Fixed first/New opnet server access port (443)
 
 PROGNAME="chkserver"
 COUNT=0
@@ -562,12 +563,12 @@ check_opnet() {
     if [[ ! -z ${NETCAT} ]]
     then
       echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 19090 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 443 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
-        echo -e "    ${GREEN}OpNet Server (10.32.10.1:19090) is accessible${RESET}" >> $LOG
+        echo -e "    ${GREEN}OpNet Server (10.32.10.1:443) is accessible${RESET}" >> $LOG
       else
-        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:19090) is not accessible${RESET}" >> $LOG
+        echo -e "    ${YELLOW}OpNet Server (10.32.10.1:443) is not accessible${RESET}" >> $LOG
       fi
       echo "nc check of OpNet Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
