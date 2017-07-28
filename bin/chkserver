@@ -59,6 +59,7 @@
 # 2017/07/27 - CS - Updated to support HP-UX
 # 2017/07/27 - CS - Switch to ksh (need to fix error output)
 # 2017/07/28 - CS - Updated so colors work again. Updated to add path info as overnight runs seem to be reporting errors that were corrected
+# 2017/07/28 - CS - Updated HP sections for password and expiration dates
 
 PROGNAME="chkserver"
 COUNT=0
@@ -90,6 +91,24 @@ then
   NETCAT=''
 else
   NETCAT='nc'
+fi
+
+# defualt installation of sudoers
+if [[ -f /etc/sudoers ]]
+then
+  SUDOERS='/etc/sudoers'
+fi
+
+# intrado custom install
+if [[ -f /usr/local/etc/sudoers ]]
+then
+  SUDOERS='/usr/local/etc/sudoers'
+fi
+
+# hp-ux location
+if [[ -f /opt/iexpress/sudo/etc/sudoers ]]
+then
+  SUDOERS='/opt/iexpress/sudo/etc/sudoers'
 fi
 
 
@@ -153,6 +172,21 @@ check_active_employees() {
       grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
       if [[ $? = 1 ]]
       then
+
+        if [[ $OS = 'HP-UX' ]]
+        then
+# is the system "TRUSTED"?
+          if [[ -f "/tcb/files/auth/system/default" ]]
+          then
+            OUTPUT=`/usr/lbin/getprpw -m alock ${j}`
+            if [[ $OUTPUT = "alock=YES" ]]
+            then
+              LOCKED="LK"
+            fi
+          else
+            LOCKED=`passwd -s ${j} | awk '{print $2}'`
+          fi
+        fi
         if [[ $OS = 'Linux' ]]
         then
           LOCKED=`passwd -S ${j} | awk '{print $2}'`
@@ -169,7 +203,7 @@ check_active_employees() {
             grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
             if [[ $? = 1 ]]
             then
-              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the user may have left the company.${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the account isn't locked.${RESET}" >> $LOG
             fi
           fi
         fi
@@ -291,7 +325,18 @@ check_default_passwords() {
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
-    UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
+
+# hp-ux; get the first character of the user name
+# then go to /tcb/files/auth/[userchar]/username
+# grep :u_pwd=, cut on colon and equal to get unixpw
+# since it's not a kickstart, it's unlikely to be set on HP or Solaris systems
+    FIRSTCHAR=`echo $j | cut -c1`
+    if [[ -f /tcb/files/auth/${FIRSTCHAR}/${j} ]]
+    then
+      UNIXPW=`grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j}`
+    else
+      UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
+    fi
     if [[ ! -z $UNIXPW ]]
     then
       printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
@@ -776,6 +821,24 @@ check_rrdtool() {
 
 
 ######################
+### Check the sudoers file
+######################
+
+check_sudoers() {
+  if [[ -f ${SUDOERS} ]]
+  then
+    grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
+    if [[ $? = 1 ]]
+    then
+      printf "%b\n" "  ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+    fi
+  else
+    printf "%b\n" "  ${RED}sudoers file not found${RESET}" >> $LOG
+  fi
+}
+
+
+######################
 ### Check the time sources
 ######################
 
@@ -923,17 +986,7 @@ then
 
   check_hostname
 
-# Step 5: sudoers check
-  if [[ -f /etc/sudoers ]]
-  then
-    grep -qi ${HOSTNAME} /etc/sudoers
-    if [[ $? = 1 ]]
-    then
-      printf "%b\n" "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
-    fi
-  else
-    printf "%b\n" "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
-  fi
+  check_sudoers
 
   check_resolver
 
@@ -1116,6 +1169,7 @@ then
         else
           printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
         fi
+
 # special checks for special accounts.
         if [[ ${FIELD3} = 'nginx' ]]
         then
@@ -1124,7 +1178,7 @@ then
           then
             printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
           fi
-          grep -qi nginx /etc/sudoers
+          grep -qi nginx ${SUDOERS}
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
@@ -1150,12 +1204,12 @@ then
     
       if [[ $FIELD2 = 'Sudoers' ]]
       then
-        grep -q "^%${FIELD3}" /etc/sudoers
+        grep -q "^%${FIELD3}" ${SUDOERS}
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
         else
-          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
         fi
       fi
 
@@ -1242,17 +1296,7 @@ then
 
   check_hostname
 
-# Step 5: sudoers check
-  if [[ -f /etc/sudoers ]]
-  then
-    grep -qi ${HOSTNAME} /etc/sudoers
-    if [[ $? = 1 ]]
-    then
-      printf "%b\n" "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
-    fi
-  else
-    printf "%b\n" "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
-  fi
+  check_sudoers
 
   check_resolver
 
@@ -1407,14 +1451,15 @@ then
         fi
       fi
 
+# /usr/lbin/modprpw -l -m mintm=0,exptm=0 username
       if [[ $FIELD2 = 'Service' ]]
       then
         grep -q "^${FIELD3}:" /etc/passwd
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
-          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6" "$7}'`
-          if [[ $PASSWORD = 'never   ' ]]
+          PASSWORD=`passwd -s ${FIELD3} | awk '{print $5}'`
+          if [[ $PASSWORD = '0' ]] || [[ -z $PASSWORD ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
@@ -1422,19 +1467,19 @@ then
             then
               printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> $LOG
             else
-              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+# if a trusted system:
+              if [[ -f "/tcb/files/auth/system/default" ]]
+              then
+                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> $LOG
+              else
+                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+              fi
             fi
-          fi
-          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6" "$7}'`
-          if [[ $ACCOUNT = 'never   ' ]]
-          then
-            printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
-          else
-            printf "%b\n" "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
           fi
         else
           printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
         fi
+
 # special checks for special accounts.
         if [[ ${FIELD3} = 'nginx' ]]
         then
@@ -1443,7 +1488,7 @@ then
           then
             printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
           fi
-          grep -qi nginx /etc/sudoers
+          grep -qi nginx ${SUDOERS}
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
@@ -1469,12 +1514,12 @@ then
     
       if [[ $FIELD2 = 'Sudoers' ]]
       then
-        grep -q "^%${FIELD3}" /etc/sudoers
+        grep -q "^%${FIELD3}" ${SUDOERS}
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
         else
-          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
         fi
       fi
 
@@ -1562,17 +1607,7 @@ then
 
   check_hostname
 
-# Step 5: sudoers check
-  if [[ -f /etc/sudoers ]]
-  then
-    grep -i ${HOSTNAME} /etc/sudoers > /dev/null
-    if [[ $? = 1 ]]
-    then
-      printf "%b\n" "  ${YELLOW}/etc/sudoers doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
-    fi
-  else
-    printf "%b\n" "  ${RED}/etc/sudoers not found${RESET}" >> $LOG
-  fi
+  check_sudoers
 
   check_resolver
 
@@ -1763,7 +1798,7 @@ then
           then
             printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
           fi
-          grep -i nginx /etc/sudoers > /dev/null
+          grep -i nginx ${SUDOERS} > /dev/null
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
@@ -1789,12 +1824,12 @@ then
     
       if [[ $FIELD2 = 'Sudoers' ]]
       then
-        grep "^%${FIELD3}" /etc/sudoers > /dev/null
+        grep "^%${FIELD3}" ${SUDOERS} > /dev/null
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
         else
-          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in /etc/sudoers${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
         fi
       fi
 
