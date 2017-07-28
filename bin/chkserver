@@ -849,7 +849,7 @@ check_time() {
     printf "%b\n" "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
   fi
 
-  DRIFTFILE=`grep driftfile ${T_CONFIG} | awk '{print $2}'`
+  DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}'`
   DRIFTPATH=`dirname $DRIFTFILE`
   if [[ -d ${DRIFTPATH} ]]
   then
