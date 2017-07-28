@@ -509,7 +509,7 @@ check_openview() {
       ping -c 1 10.109.226.19 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
-        printf "%b\n"."    ${GREEN}Miami Openview VIP is pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Miami Openview VIP is pingable${RESET}" >> $LOG
         if [[ ! -z ${NETCAT} ]]
         then
 # check for access to the vips; Longmont and Miami
@@ -1871,7 +1871,7 @@ then
 
   if [[ $TOTAL = 0 ]]
   then
-    printf "%b\n" "    ${YELLOW}No Inventory configuration built entries found${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}No Inventory configuration built entries found${RESET}" >> $LOG
   fi
 fi
 
