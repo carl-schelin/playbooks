@@ -58,6 +58,7 @@
 # 2017/07/27 - CS - Fixed first/New opnet server access port (443)
 # 2017/07/27 - CS - Updated to support HP-UX
 # 2017/07/27 - CS - Switch to ksh (need to fix error output)
+# 2017/07/28 - CS - Updated so colors work again. Updated to add path info as overnight runs seem to be reporting errors that were corrected
 
 PROGNAME="chkserver"
 COUNT=0
