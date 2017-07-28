@@ -886,7 +886,7 @@ check_time() {
       fi
     fi
   else
-    printf "%b\n" "    ${GREEN}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
   fi
 
   echo "ping check of time server: 192.168.200.20"
@@ -909,7 +909,7 @@ check_time() {
       fi
     fi
   else
-    printf "%b\n" "    ${GREEN}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
   fi
 
   DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}'`
