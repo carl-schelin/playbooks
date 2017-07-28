@@ -60,6 +60,8 @@
 # 2017/07/27 - CS - Switch to ksh (need to fix error output)
 # 2017/07/28 - CS - Updated so colors work again. Updated to add path info as overnight runs seem to be reporting errors that were corrected
 # 2017/07/28 - CS - Updated HP sections for password and expiration dates
+# 2017/07/28 - CS - Updated to use dig instead of nslookup with a timeout and outside the ping test
+# 2017/07/28 - CS - Updated to check time servers even if ping failed
 
 PROGNAME="chkserver"
 COUNT=0
@@ -330,10 +332,14 @@ check_default_passwords() {
 # then go to /tcb/files/auth/[userchar]/username
 # grep :u_pwd=, cut on colon and equal to get unixpw
 # since it's not a kickstart, it's unlikely to be set on HP or Solaris systems
-    FIRSTCHAR=`echo $j | cut -c1`
-    if [[ -f /tcb/files/auth/${FIRSTCHAR}/${j} ]]
+    UNIXPW=""
+    if [[ $OS = 'HP-UX' ]]
     then
-      UNIXPW=`grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j}`
+      FIRSTCHAR=`echo $j | cut -c1`
+      if [[ -f /tcb/files/auth/${FIRSTCHAR}/${j} ]]
+      then
+        UNIXPW=`grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j}`
+      fi
     else
       UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
     fi
@@ -766,15 +772,15 @@ check_resolver() {
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
-          OUTPUT=`nslookup incojs01 ${i} | grep "Address: 10.100.78.143"`
-          if [[ -z $OUTPUT ]]
-          then
-            printf "%b\n" "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
-          else
-            printf "%b\n" "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
-          fi
         else
           printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
+        fi
+        OUTPUT=`dig @${i} +time=1 incojs01.scc911.com | grep -v "^;" | grep "10.100.78.143"`
+        if [[ -z $OUTPUT ]]
+        then
+          printf "%b\n" "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
         fi
       done
     fi
@@ -871,22 +877,22 @@ check_time() {
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-    OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
-    if [[ -z $OUTPUT ]]
-    then
-      printf "%b\n" "    ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-    else
-      echo "time check of time server: 10.100.228.31"
-      ntpdate -q 10.100.228.31 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
-      fi
-    fi
   else
     printf "%b\n" "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+  fi
+  OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
+  if [[ -z $OUTPUT ]]
+  then
+    printf "%b\n" "    ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+  else
+    echo "time check of time server: 10.100.228.31"
+    ntpdate -q 10.100.228.31 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
+    else
+      printf "%b\n" "    ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
+    fi
   fi
 
   echo "ping check of time server: 192.168.200.20"
@@ -894,25 +900,25 @@ check_time() {
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-    OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
-    if [[ -z $OUTPUT ]]
-    then
-      printf "%b\n" "    ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-    else
-      echo "time check of time server: 192.168.200.20"
-      ntpdate -q 192.168.200.20 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
-      fi
-    fi
   else
     printf "%b\n" "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
   fi
+  OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
+  if [[ -z $OUTPUT ]]
+  then
+    printf "%b\n" "    ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+  else
+    echo "time check of time server: 192.168.200.20"
+    ntpdate -q 192.168.200.20 > /dev/null 2>&1
+    if [[ $? = 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
+    else
+      printf "%b\n" "    ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
+    fi
+  fi
 
-  DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}'`
+  DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}' | tail -1`
   DRIFTPATH=`dirname $DRIFTFILE`
   if [[ -d ${DRIFTPATH} ]]
   then
