@@ -822,7 +822,7 @@ check_routetable() {
 check_rrdtool() {
   if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
   then
-    UPDATERRD=`ps -e | grep updaterrd`
+    UPDATERRD=`ps -ef | grep updaterrd`
     if [[ -z $UPDATERRD ]]
     then
       printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
