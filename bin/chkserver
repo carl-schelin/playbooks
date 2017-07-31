@@ -382,6 +382,8 @@ check_email() {
 ### Check group memberships
 ######################
 
+# check for centrify to be installed
+
 check_group_membership() {
   printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
   for i in `cut -f1 -d: /etc/group`
@@ -395,11 +397,35 @@ check_group_membership() {
         egrep -i "^${j}:" /etc/passwd > /dev/null
         if [[ $? = 1 ]]
         then
-          printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          /usr/bin/adinfo > /dev/null
+          if [[ $? = 0 ]]
+          then
+            if [[ -f /usr/bin/adquery ]]
+            then
+              adquery user $j > /dev/null
+              if [[ ! $? = 0 ]]
+              then
+                printf "%b\n" "    ${RED}${j} does not have a Centrify login on this system${RESET}" >> $LOG
+              fi
+            fi
+          else
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          fi
           egrep -i "^${i}:.*(:|,)${j}(,|$)" /etc/group > /dev/null
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          fi
+        else
+# if you do have an account and the system is under centrify control
+          /usr/bin/adinfo > /dev/null
+          if [[ $? = 0 ]]
+          then
+            adquery user $j > /dev/null
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${RED}${j} has a Local account but system is managed by Centrify${RESET}" >> $LOG
+            fi
           fi
         fi
       done
