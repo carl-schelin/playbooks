@@ -502,9 +502,9 @@ check_netbackup() {
         then
           BUDATE=`date --date=$OUTPUT +"%s"`
         else
-          BUYEAR=`echo $OUTPUT | cut -f1 -d/`
+          BUYEAR=`echo $OUTPUT | cut -f3 -d/`
           BUMONTH=`echo $OUTPUT | cut -f2 -d/`
-          BUDAY=`echo $OUTPUT | cut -f3 -d/`
+          BUDAY=`echo $OUTPUT | cut -f1 -d/`
           BUDATE=`epoch $BUYEAR $BUMONTH $BUDAY`
         fi
         EXPIRED=$(( $BUDATE + $SEVEN ))
@@ -954,7 +954,7 @@ check_vmware_agent() {
   else
     if [[ $OS = 'Linux' ]]
     then
-      OUTPUT=`ifconfig | grep ether | grep " 00:50:56"`
+      OUTPUT=`ip addr | grep ether | grep " 00:50:56"`
     else
       OUTPUT=`ifconfig -a | grep ether | grep " 0:50:56"`
     fi
@@ -1113,16 +1113,11 @@ then
     
       if [[ $FIELD2 = 'IP' ]]
       then
-        if [[ -f /sbin/ip ]]
+        if [[ $OS = 'Linux' ]]
         then
-          IPADDR=/sbin/ip
+          OUTPUT=`ip addr | grep -q " ${FIELD3}/"`
         fi
-        if [[ -f /usr/sbin/ip ]]
-        then
-          IPADDR=/usr/sbin/ip
-        fi
-        ${IPADDR} addr | grep -q " ${FIELD3}/"
-        if [[ $? = 0 ]]
+        if [[ ! -z $OUTPUT ]]
         then
           INTERFACE=`grep ${FIELD3}$ /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
           printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
