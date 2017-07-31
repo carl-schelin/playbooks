@@ -756,7 +756,7 @@ check_removeips() {
 ######################
 
 check_resolver() {
-  OUTPUT=`grep -i ^files: /etc/nsswitch.conf | grep -i dns`
+  OUTPUT=`grep -i ^hosts: /etc/nsswitch.conf | grep -i dns`
   if [[ -z $OUTPUT ]]
   then
     printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> $LOG
