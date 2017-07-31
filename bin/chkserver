@@ -62,6 +62,9 @@
 # 2017/07/28 - CS - Updated HP sections for password and expiration dates
 # 2017/07/28 - CS - Updated to use dig instead of nslookup with a timeout and outside the ping test
 # 2017/07/28 - CS - Updated to check time servers even if ping failed
+# 2017/07/31 - CS - Check nsswitch.conf to see if DNS is enabled before doing DNS checks
+# 2017/07/31 - CS - fix extra "m" in the backup output
+# 2017/07/31 - CS - check ethernet address to see if a vm before checking for vmware tools. if 00:50:56, then VMWare, for now.
 
 PROGNAME="chkserver"
 COUNT=0
@@ -69,13 +72,9 @@ GATEWAY=''
 GWFLAG='no'
 GWMSG=''
 OS=`uname`
-GREEN="GREEN(32m): "
 GREEN="\033[32m"
-RED="RED(31m): "
 RED="\033[31m"
-YELLOW="YELLOW(33m): "
 YELLOW="\033[33m"
-RESET=""
 RESET="\033[0m"
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
@@ -496,7 +495,7 @@ check_netbackup() {
     then
       if [[ ! -s $INTRADO/etc/backups.output ]]
       then
-        printf "%b\n"m"    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+        printf "%b\n" "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
       else
         OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
         if [[ $OS = 'Linux' ]]
@@ -757,36 +756,42 @@ check_removeips() {
 ######################
 
 check_resolver() {
-  if [[ -f /etc/resolv.conf ]]
+  OUTPUT=`grep -i ^files: /etc/nsswitch.conf | grep -i dns`
+  if [[ -z $OUTPUT ]]
   then
-    COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
-    if [[ $COUNT = 0 ]]
+    printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> $LOG
+  else
+    if [[ -f /etc/resolv.conf ]]
     then
-      printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
-    else
-      for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
-      do
-        printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
-        echo "ping check of nameserver: ${i}"
-        ping -c 1 ${i} > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
-        else
-          printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
-        fi
-        OUTPUT=`dig @${i} +time=1 incojs01.scc911.com | grep -v "^;" | grep "10.100.78.143"`
-        if [[ -z $OUTPUT ]]
-        then
-          printf "%b\n" "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
-        else
-          printf "%b\n" "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
-        fi
-      done
-    fi
-    if [[ $COUNT -gt 3 ]]
-    then
-      printf "%b\n" "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+      COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
+      if [[ $COUNT = 0 ]]
+      then
+        printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+      else
+        for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
+        do
+          printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
+          echo "ping check of nameserver: ${i}"
+          ping -c 1 ${i} > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
+          fi
+          OUTPUT=`dig @${i} +time=1 incojs01.scc911.com | grep -v "^;" | grep "10.100.78.143"`
+          if [[ -z $OUTPUT ]]
+          then
+            printf "%b\n" "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
+          fi
+        done
+      fi
+      if [[ $COUNT -gt 3 ]]
+      then
+        printf "%b\n" "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+      fi
     fi
   fi
 }
@@ -937,19 +942,33 @@ check_time() {
 ### Check the vmware agent
 ######################
 
+# check ethernet addresses. if 00:50:56, then it's a VMWare vm
+# linux would be 00:50:56
+# solaris would be 0:50:56
+# hpux would be 0x005056
+
 check_vmware_agent() {
-  if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
+  if [[ $OS = 'HP-UX' ]]
   then
-    printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
-    VMWARE=`ps -e | grep vmtoolsd`
-    if [[ -z $VMWARE ]]
-    then
-      printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
-    else
-      printf "%b\n" "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
-    fi
+    OUTPUT=`lanscan | grep " 0x005056"`
   else
-    printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+    OUTPUT=`ip addr | grep ether | egrep " (0)0:50:56"`
+  fi
+  if [[ ! -z $OUTPUT ]]
+  then
+    if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
+    then
+      printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
+      VMWARE=`ps -e | grep vmtoolsd`
+      if [[ -z $VMWARE ]]
+      then
+        printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
+      else
+        printf "%b\n" "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
+      fi
+    else
+      printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+    fi
   fi
 }
 
