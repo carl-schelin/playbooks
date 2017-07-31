@@ -952,7 +952,12 @@ check_vmware_agent() {
   then
     OUTPUT=`lanscan | grep " 0x005056"`
   else
-    OUTPUT=`ip addr | grep ether | egrep " (0)0:50:56"`
+    if [[ $OS = 'Linux' ]]
+    then
+      OUTPUT=`ifconfig | grep ether | grep " 00:50:56"`
+    else
+      OUTPUT=`ifconfig -a | grep ether | grep " 0:50:56"`
+    fi
   fi
   if [[ ! -z $OUTPUT ]]
   then
