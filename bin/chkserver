@@ -397,10 +397,10 @@ check_group_membership() {
         egrep -i "^${j}:" /etc/passwd > /dev/null
         if [[ $? = 1 ]]
         then
-          /usr/bin/adinfo > /dev/null
-          if [[ $? = 0 ]]
+          if [[ -f /usr/bin/adinfo ]]
           then
-            if [[ -f /usr/bin/adquery ]]
+            adinfo > /dev/null
+            if [[ $? = 0 ]]
             then
               adquery user $j > /dev/null
               if [[ ! $? = 0 ]]
@@ -418,13 +418,16 @@ check_group_membership() {
           fi
         else
 # if you do have an account and the system is under centrify control
-          /usr/bin/adinfo > /dev/null
-          if [[ $? = 0 ]]
+          if [[ -f /usr/bin/adinfo ]]
           then
-            adquery user $j > /dev/null
+            adinfo > /dev/null
             if [[ $? = 0 ]]
             then
-              printf "%b\n" "    ${RED}${j} has a Local account but system is managed by Centrify${RESET}" >> $LOG
+              adquery user $j > /dev/null
+              if [[ $? = 0 ]]
+              then
+                printf "%b\n" "    ${RED}${j} has a Local account but system is managed by Centrify${RESET}" >> $LOG
+              fi
             fi
           fi
         fi
