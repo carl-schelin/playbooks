@@ -196,7 +196,7 @@ check_active_employees() {
         then
           LOCKED=`passwd -s ${j} | awk '{print $2}'`
         fi
-        if [[ ! $LOCKED = 'LK' ]]
+        if [[ ! $LOCKED = 'LK' ]] && [[ ! $LOCKED = 'locked.' ]]
         then
           EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
           if [[ ! -z $EMAIL ]]
