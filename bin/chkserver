@@ -65,6 +65,8 @@
 # 2017/07/31 - CS - Check nsswitch.conf to see if DNS is enabled before doing DNS checks
 # 2017/07/31 - CS - fix extra "m" in the backup output
 # 2017/07/31 - CS - check ethernet address to see if a vm before checking for vmware tools. if 00:50:56, then VMWare, for now.
+# 2017/08/02 - CS - Updated group check to use getent vs parsing the passwd and group files
+# 2017/08/02 - CS - Added kubernetes check
 
 PROGNAME="chkserver"
 COUNT=0
@@ -394,46 +396,20 @@ check_group_membership() {
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
       for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
       do
-        egrep -i "^${j}:" /etc/passwd > /dev/null
+# getent will pull from whatever database is in place; on board, idm, or centrify
+        getent passwd ${j} > /dev/null
+        if [[ $? = 2 ]]
+        then
+          printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+        fi
+        getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
         if [[ $? = 1 ]]
         then
-          if [[ -f /usr/bin/adinfo ]]
-          then
-            adinfo > /dev/null
-            if [[ $? = 0 ]]
-            then
-              adquery user $j > /dev/null
-              if [[ ! $? = 0 ]]
-              then
-                printf "%b\n" "    ${RED}${j} does not have a Centrify login on this system${RESET}" >> $LOG
-              fi
-            fi
-          else
-            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
-          fi
-          egrep -i "^${i}:.*(:|,)${j}(,|$)" /etc/group > /dev/null
-          if [[ $? = 1 ]]
-          then
-            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
-          fi
-        else
-# if you do have an account and the system is under centrify control
-          if [[ -f /usr/bin/adinfo ]]
-          then
-            adinfo > /dev/null
-            if [[ $? = 0 ]]
-            then
-              adquery user $j > /dev/null
-              if [[ $? = 0 ]]
-              then
-                printf "%b\n" "    ${RED}${j} has a Local account but system is managed by Centrify${RESET}" >> $LOG
-              fi
-            fi
-          fi
+          printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
         fi
       done
 # now check all users in /etc/group against group.master and throw an error if found
-      for j in `grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+      for j in `getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g"`
       do
         egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
         if [[ $? = 1 ]]
@@ -486,6 +462,42 @@ check_jumpstart() {
     fi
   else
     printf "%b\n" "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check the status of running pods
+######################
+
+check_kubernetes() {
+# enumerate namespaces to see what's running on the server.
+# then get the number of processes and report any containers that aren't fully running
+  if [[ -f /bin/kubectl ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> $LOG
+    for i in `kubectl get namespaces | grep Active | egrep -v "(NAME|default)"`
+    do
+      FLAG=0
+      for j in `kubectl --namespace=${i} get pods | awk '{print $1":"$2":"$3":"$4}'`
+      do
+        CONTAINER=`echo ${j} | cut -f1 -d:`
+        ACTIVE=`echo ${j} | cut -f2 -d: | cut -f1 -d/`
+        EXPECTED=`echo ${j} | cut -f2 -d: | cut -f2 -d/`
+        ERROR=`echo ${j} | cut -f3 -d:`
+        DAYS=`echo ${j} | cut -f4 -d:`
+
+        if [[ ${ACTIVE} -ne ${EXPECTED} ]]
+        then
+          if [[ ${FLAG} -eq 0 ]]
+          then
+            printf "%b\n" "    ${RED}Namespace ${i} is reporting errors:${RESET}" >> $LOG
+            FLAG=1
+          fi
+          printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> $LOG
+        fi
+      done
+    done
   fi
 }
 
@@ -1066,6 +1078,8 @@ then
   check_privileged_access
 
   check_active_employees
+
+  check_kubernetes
 
   check_vmware_agent
 
