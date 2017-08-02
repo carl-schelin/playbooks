@@ -1158,11 +1158,11 @@ then
       then
         if [[ $OS = 'Linux' ]]
         then
-          OUTPUT=`ip addr | grep -q " ${FIELD3}/"`
+          OUTPUT=`ip addr | grep " ${FIELD3}/"`
         fi
         if [[ ! -z $OUTPUT ]]
         then
-          INTERFACE=`grep ${FIELD3}$ /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
+          INTERFACE=`egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
           printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
           egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
           if [[ $? = 0 ]]
