@@ -68,6 +68,7 @@
 # 2017/08/02 - CS - Updated group check to use getent vs parsing the passwd and group files
 # 2017/08/02 - CS - Added kubernetes check
 # 2017/08/03 - CS - HP-UX doesn't have getent. Add bits to accommodate hp-ux for user capture info
+# 2017/08/03 - CS - Updated time check to check to see if it's installed and if it's running before pinging or nc'ing anything
 
 PROGNAME="chkserver"
 COUNT=0
@@ -916,12 +917,18 @@ check_sudoers() {
 ######################
 
 check_time() {
+  printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
+  T_MSG=''
+  T_COMMAND=''
+  T_CONFIG=''
+  T_RUNNING=''
 # if chrony is running (Red Hat 7 mostly)
   if [[ -f /bin/chronyc ]]
   then
     T_MSG='chrony'
     T_COMMAND='/bin/chronyc -n sources'
     T_CONFIG='/etc/chrony.conf'
+    T_RUNNING=`ps -e | grep chronyd`
   fi
 
 # everything else; Sun and older Red Hat
@@ -935,68 +942,81 @@ check_time() {
     else
       T_CONFIG='/etc/ntp.conf'
     fi
+    T_RUNNING=`ps -ef | egrep "(xntpd|ntpd)"`
   fi
 
-  printf "%b\n" "  ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
-
-  echo "ping check of time server: 10.100.228.31"
-  ping -c 1 10.100.228.31 > /dev/null 2>&1
-  if [[ $? = 0 ]]
+# is it installed?
+  if [[ ! -z ${T_MSG} ]]
   then
-    printf "%b\n" "    ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-  else
-    printf "%b\n" "    ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-  fi
-  OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
-  if [[ -z $OUTPUT ]]
-  then
-    printf "%b\n" "    ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-  else
-    echo "time check of time server: 10.100.228.31"
-    ntpdate -q 10.100.228.31 > /dev/null 2>&1
-    if [[ $? = 0 ]]
+    printf "%b\n" "    ${GREEN}Checking ${T_MSG} time server.${RESET}" >> $LOG
+    if [[ ! -z ${T_RUNNING} ]]
     then
-      printf "%b\n" "    ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
+
+      echo "ping check of time server: 10.100.228.31"
+      ping 10.100.228.31 -c 1 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        printf "%b\n" "      ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
+      else
+        printf "%b\n" "      ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
+      fi
+      OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
+      if [[ -z $OUTPUT ]]
+      then
+        printf "%b\n" "      ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+      else
+        echo "time check of time server: 10.100.228.31"
+        ntpdate -q 10.100.228.31 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "      ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
+        else
+          printf "%b\n" "      ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
+        fi
+      fi
+
+      echo "ping check of time server: 192.168.200.20"
+      ping 192.168.200.20 -c 1 > /dev/null 2>&1
+      if [[ $? = 0 ]]
+      then
+        printf "%b\n" "      ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
+      else
+        printf "%b\n" "      ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
+      fi
+      OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
+      if [[ -z $OUTPUT ]]
+      then
+        printf "%b\n" "      ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+      else
+        echo "time check of time server: 192.168.200.20"
+        ntpdate -q 192.168.200.20 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "      ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
+        else
+          printf "%b\n" "      ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
+        fi
+      fi
+
+      DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}' | tail -1`
+      DRIFTPATH=`dirname $DRIFTFILE`
+      if [[ -d ${DRIFTPATH} ]]
+      then
+        if [[ ! -f ${DRIFTFILE} ]]
+        then
+          printf "%b\n" "      ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+        fi
+      else
+        printf "%b\n" "      ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+      fi
     else
-      printf "%b\n" "    ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
-    fi
-  fi
-
-  echo "ping check of time server: 192.168.200.20"
-  ping -c 1 192.168.200.20 > /dev/null 2>&1
-  if [[ $? = 0 ]]
-  then
-    printf "%b\n" "    ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-  else
-    printf "%b\n" "    ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-  fi
-  OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
-  if [[ -z $OUTPUT ]]
-  then
-    printf "%b\n" "    ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-  else
-    echo "time check of time server: 192.168.200.20"
-    ntpdate -q 192.168.200.20 > /dev/null 2>&1
-    if [[ $? = 0 ]]
-    then
-      printf "%b\n" "    ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
-    else
-      printf "%b\n" "    ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
-    fi
-  fi
-
-  DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}' | tail -1`
-  DRIFTPATH=`dirname $DRIFTFILE`
-  if [[ -d ${DRIFTPATH} ]]
-  then
-    if [[ ! -f ${DRIFTFILE} ]]
-    then
-      printf "%b\n" "    ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Time servers is not running.${RESET}" >> $LOG
     fi
   else
-    printf "%b\n" "    ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> $LOG
   fi
-
 }
 
 
