@@ -67,6 +67,7 @@
 # 2017/07/31 - CS - check ethernet address to see if a vm before checking for vmware tools. if 00:50:56, then VMWare, for now.
 # 2017/08/02 - CS - Updated group check to use getent vs parsing the passwd and group files
 # 2017/08/02 - CS - Added kubernetes check
+# 2017/08/03 - CS - HP-UX doesn't have getent. Add bits to accommodate hp-ux for user capture info
 
 PROGNAME="chkserver"
 COUNT=0
@@ -396,20 +397,40 @@ check_group_membership() {
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
       for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
       do
+        if [[ $OS = 'HP-UX' ]]
+        then
+          grep -i "^${j}:" /etc/passwd > /dev/null
+          if [[ $? = 1 ]]
+          then
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          fi
+          egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group > /dev/null
+          if [[ $? = 1 ]]
+          then
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          fi
+        else
 # getent will pull from whatever database is in place; on board, idm, or centrify
-        getent passwd ${j} > /dev/null
-        if [[ $? = 2 ]]
-        then
-          printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
-        fi
-        getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
-        if [[ $? = 1 ]]
-        then
-          printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          getent passwd ${j} > /dev/null
+          if [[ $? = 2 ]]
+          then
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+          fi
+          getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
+          if [[ $? = 1 ]]
+          then
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+          fi
         fi
       done
 # now check all users in /etc/group against group.master and throw an error if found
-      for j in `getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g"`
+      if [[ $OS = 'HP-UX' ]]
+      then
+        USERLIST=`grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+      else
+        USERLIST=`getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g"`
+      fi
+      for j in ${USERLIST}
       do
         egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
         if [[ $? = 1 ]]
