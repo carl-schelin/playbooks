@@ -195,6 +195,10 @@ check_active_employees() {
         if [[ $OS = 'Linux' ]]
         then
           LOCKED=`passwd -S ${j} | awk '{print $2}'`
+          if [[ $LOCKED = "L" ]]
+          then
+            LOCKED="LK"
+          fi
         fi
         if [[ $OS = 'SunOS' ]]
         then
