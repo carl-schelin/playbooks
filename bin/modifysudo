@@ -81,7 +81,7 @@ then
 # add new info
     echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
     echo "" >> ${SUDOERS}
-    echo "Added unixsvc rule to $SUDOERS" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
 
   fi
 
@@ -96,7 +96,7 @@ then
 # then update the tower rule if it doesn't exist
       echo "towersvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
       echo "" >> ${SUDOERS}
-      echo "Added towersvc rule to $SUDOERS" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+      echo "Added towersvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
     fi
   fi
 fi
