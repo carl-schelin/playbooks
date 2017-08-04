@@ -6,7 +6,8 @@
 # Initially just lock users who no longer work at Intrado.
 # search for passwd. different locations for different versions of os but should always bein the path.
 #
-# TCS: Ubuntu returns 'L' vs 'LK'. It's always something...
+# CS: Ubuntu returns 'L' vs 'LK'. It's always something...
+# CS: Added email to changelog
 
 OS=`uname`
 ID=`id | cut -f2 -d= | cut -f1 -d\(`
@@ -142,6 +143,7 @@ then
 # lock account
       $PASSWD -l $i
       LOCKED="${LOCKED} ${i}"
+      echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
     fi
   done
 fi
@@ -161,6 +163,7 @@ then
 # lock account
         $PASSWD -l $i
         LOCKED="${LOCKED} ${i}"
+        echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
       fi
     fi
   done
@@ -178,6 +181,7 @@ then
 # lock account
       $PASSWD -l $i
       LOCKED="${LOCKED} ${i}"
+      echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
     fi
   done
 fi
