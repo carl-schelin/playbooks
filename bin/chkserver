@@ -2,6 +2,7 @@
 
 # chkserver - Check the postinstall steps where possible
 # Owner: Carl Schelin
+# $Id $
 # 2013/05/21
 # Description: Run through the defined steps to quickly see what might need to be done
 #   on a system to complete the installation.
