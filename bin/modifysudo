@@ -3,44 +3,18 @@
 # Carl Schelin
 # need to make sure unixsvc can run privileged ansible playbooks without typing in a password
 # 20170301 CS update to add '(%ansgrp)' and ansgrp with root membership
+# 20170321 CS update to add '(%ansgrp)' and ansgrp with root membership
 
 HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
 OS=`uname`
 SUDOTMP=/opt/intrado/etc/sudoers.unixsvc
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin; export PATH
 
 # default bin
 BINSH=/bin/sh
 if [[ -f /usr/bin/sh ]]
 then
   BINSH=/usr/bin/sh
-fi
-
-# default usermod
-USERMOD=/sbin/usermod
-if [[ -f /usr/sbin/usermod ]]
-then
-  USERMOD=/usr/sbin/usermod
-fi
-
-# default groupadd
-GROUPADD=/sbin/groupadd
-if [[ -f /usr/sbin/groupadd ]]
-then
-  GROUPADD=/usr/sbin/groupadd
-fi
-
-# default grep
-GREP=/bin/grep
-if [[ -f /usr/bin/grep ]]
-then
-  GREP=/usr/bin/grep
-fi
-
-# default egrep
-EGREP=/bin/egrep
-if [[ -f /usr/bin/egrep ]]
-then
-  GREP=/usr/bin/egrep
 fi
 
 # sun freeware install
@@ -74,40 +48,56 @@ then
   exit 0
 fi
 
-${GREP} -q ansgrp /etc/group
+grep ansgrp /etc/group > /dev/null
 if [[ $? = 1 ]]
 then
-  ${GROUPADD} ansgrp
+  groupadd ansgrp
 fi
 
-${EGREP} -q "ansgrp.*root" /etc/group
+egrep "ansgrp.*root" /etc/group > /dev/null
 if [[ $? = 1 ]]
 then
   if [[ ${OS} = 'Linux' ]]
   then
-    ${USERMOD} -a -G ansgrp root
+    usermod -a -G ansgrp root
   fi
   if [[ ${OS} = 'SunOS' ]]
   then
-    ${USERMOD} -G ansgrp root
+    usermod -G ansgrp root
   fi
 fi
 
 if [[ -f ${SUDOERS} ]]
 then
-  ${GREP} -q ansgrp ${SUDOERS}
+# search for the ansible group and add the unixsvc rule if it's missing
+  grep ansgrp ${SUDOERS} > /dev/null
   if [[ $? = 1 ]]
   then
 # back it up
     cp ${SUDOERS} ${SUDOTMP}
 # remove old unixsvc info if it exists
-    ${EGREP} -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
+    egrep -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
 
 # add new info
-    echo "" >> ${SUDOERS}
     echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
     echo "" >> ${SUDOERS}
+    echo "Added unixsvc rule to $SUDOERS" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
 
+  fi
+
+# add the same for towersvc if the account exists
+  grep towersvc /etc/passwd > /dev/null
+  if [[ $? = 0 ]]
+  then
+    grep "^towersvc" ${SUDOERS}
+    if [[ $? = 1 ]]
+    then
+
+# then update the tower rule if it doesn't exist
+      echo "towersvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
+      echo "" >> ${SUDOERS}
+      echo "Added towersvc rule to $SUDOERS" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    fi
   fi
 fi
 
