@@ -69,6 +69,7 @@
 # 2017/08/02 - CS - Added kubernetes check
 # 2017/08/03 - CS - HP-UX doesn't have getent. Add bits to accommodate hp-ux for user capture info
 # 2017/08/03 - CS - Updated time check to check to see if it's installed and if it's running before pinging or nc'ing anything
+# 2017/08/04 - CS - Fixed chage check for service accounts to just look for 'never'
 
 PROGNAME="chkserver"
 COUNT=0
@@ -1260,8 +1261,8 @@ then
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
-          PASSWORD=`chage -l ${FIELD3} | grep 'Password expires' | awk '{print $4" "$5" "$6" "$7}'`
-          if [[ $PASSWORD = 'never   ' ]]
+          PASSWORD=`chage -l ${FIELD3} | grep -i 'password expires' | awk '{print $NF}' | tr A-Z a-z`
+          if [[ $PASSWORD = 'never' ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
@@ -1272,8 +1273,8 @@ then
               printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
             fi
           fi
-          ACCOUNT=`chage -l ${FIELD3} | grep 'Account expires' | awk '{print $4" "$5" "$6" "$7}'`
-          if [[ $ACCOUNT = 'never   ' ]]
+          ACCOUNT=`chage -l ${FIELD3} | grep -i 'account expires' | awk '{print $NF}' | tr A-Z a-z`
+          if [[ $ACCOUNT = 'never' ]]
           then
             printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
           else
