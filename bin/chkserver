@@ -72,6 +72,8 @@
 # 2017/08/03 - CS - Updated time check to check to see if it's installed and if it's running before pinging or nc'ing anything
 # 2017/08/04 - CS - Fixed chage check for service accounts to just look for 'never'
 
+echo "chkserver v1.95"
+
 PROGNAME="chkserver"
 COUNT=0
 GATEWAY=''
