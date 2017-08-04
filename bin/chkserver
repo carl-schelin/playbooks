@@ -71,8 +71,9 @@
 # 2017/08/03 - CS - HP-UX doesn't have getent. Add bits to accommodate hp-ux for user capture info
 # 2017/08/03 - CS - Updated time check to check to see if it's installed and if it's running before pinging or nc'ing anything
 # 2017/08/04 - CS - Fixed chage check for service accounts to just look for 'never'
+# 2017/08/04 - CS - Fixed chage again. Trying to get the last item was returning never\n7 for some reason.
 
-echo "chkserver v1.95"
+echo "chkserver v1.96"
 
 PROGNAME="chkserver"
 COUNT=0
@@ -1264,24 +1265,19 @@ then
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
-          PASSWORD=`chage -l ${FIELD3} | grep -i 'password expires' | awk '{print $NF}' | tr A-Z a-z`
-          if [[ $PASSWORD = 'never' ]]
+          PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*never"`
+          if [[ ! -z ${PASSWORD} ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
-            if [[ $PASSWORD = 'password must be changed' ]]
-            then
-              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> $LOG
-            else
-              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
-            fi
+            printf "%b\n" "    ${RED}Password expires{RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
           fi
-          ACCOUNT=`chage -l ${FIELD3} | grep -i 'account expires' | awk '{print $NF}' | tr A-Z a-z`
-          if [[ $ACCOUNT = 'never' ]]
+          ACCOUNT=`chage -l ${FIELD3} | egrep -i "account expires.*never"`
+          if [[ ! -z $ACCOUNT ]]
           then
             printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${RED}Account expires: ${ACCOUNT}${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
           fi
         else
           printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
