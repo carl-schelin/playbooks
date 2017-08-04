@@ -73,8 +73,9 @@
 # 2017/08/04 - CS - Fixed chage check for service accounts to just look for 'never'
 # 2017/08/04 - CS - Fixed chage again. Trying to get the last item was returning never\n7 for some reason.
 # 2017/08/04 - CS - Minor missing $ error
+# 2017/08/04 - CS - Update to show service account password that has to be changed
 
-echo "chkserver v1.97"
+echo "chkserver v1.98"
 
 PROGNAME="chkserver"
 COUNT=0
@@ -1271,7 +1272,13 @@ then
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*changed"`
+            if [[ ! -z ${PASSWORD} ]]
+            then
+              printf "%b\n" "    ${RED}Password must be changed${RESET}" >> $LOG
+            else
+              printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            fi
           fi
           ACCOUNT=`chage -l ${FIELD3} | egrep -i "account expires.*never"`
           if [[ ! -z $ACCOUNT ]]
