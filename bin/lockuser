@@ -106,7 +106,9 @@ then
       LOCKED="${LOCKED} ${i}"
     fi
   done
-  echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  if [[ ! -z $LOCKED ]]; then
+    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  fi
 fi
 
 if [[ $OS = 'Linux' ]]
@@ -127,7 +129,9 @@ then
       fi
     fi
   done
-  echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  if [[ ! -z $LOCKED ]]; then
+    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  fi
 fi
 
 if [[ $OS = 'HP-UX' ]]
@@ -144,7 +148,9 @@ then
       LOCKED="${LOCKED} ${i}"
     fi
   done
-  echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  if [[ ! -z $LOCKED ]]; then
+    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+  fi
 fi
 
 if [[ ! -z $LOCKED ]]
