@@ -74,6 +74,7 @@
 # 2017/08/04 - CS - Fixed chage again. Trying to get the last item was returning never\n7 for some reason.
 # 2017/08/04 - CS - Minor missing $ error
 # 2017/08/04 - CS - Update to show service account password that has to be changed
+# 2017/08/07 - CS - Added check_log to make sure messages file is being updated
 
 echo "chkserver v1.98"
 
@@ -531,6 +532,38 @@ check_kubernetes() {
         fi
       done
     done
+  fi
+}
+
+
+######################
+### Check the status of Netbackup
+######################
+
+check_logs() {
+  CL_TODAY=`date +"%b %e"`
+
+# default logfile for Solaris
+  PLOG="/var/adm/messages"
+  if [[ $OS = "Linux" ]]
+  then
+    PLOG="/var/log/messages"
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+    PLOG="/var/log/messages"
+  fi
+  if [[ $OS = "HP-UX" ]]
+  then
+    PLOG="/var/adm/syslog/syslog.log"
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> $LOG
+
+  OUTPUT=`grep "^${CL_TODAY}" ${PLOG}`
+  if [[ -z $OUTPUT ]]
+  then
+    printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> $LOG
   fi
 }
 
@@ -1123,6 +1156,8 @@ then
 
   check_redhat_subscription
 
+  check_logs
+
   check_group_membership
 
   check_default_passwords
@@ -1430,6 +1465,8 @@ then
   check_jumpstart
 
   check_redhat_subscription
+
+  check_logs
 
   check_group_membership
 
@@ -1741,6 +1778,8 @@ then
   check_jumpstart
 
   check_redhat_subscription
+
+  check_logs
 
   check_group_membership
 
