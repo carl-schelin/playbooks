@@ -107,7 +107,7 @@ then
     fi
   done
   if [[ ! -z $LOCKED ]]; then
-    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
   fi
 fi
 
@@ -130,7 +130,7 @@ then
     fi
   done
   if [[ ! -z $LOCKED ]]; then
-    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
   fi
 fi
 
@@ -149,7 +149,7 @@ then
     fi
   done
   if [[ ! -z $LOCKED ]]; then
-    echo "Locked user ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
   fi
 fi
 
