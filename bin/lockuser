@@ -14,6 +14,7 @@ OS=`uname`
 ID=`id | cut -f2 -d= | cut -f1 -d\(`
 HOSTNAME=`hostname|cut -f1 -d.`
 PASSWD=`which passwd`
+export PATH=$PATH:/usr/sbin:/sbin
 ADMIN=/opt/intrado
 LOGFILE=$ADMIN/etc/lockuser.log
 # List of users that will be excluded, sysadmins will need to be removed from this list in order to be locked.
@@ -171,7 +172,7 @@ UPDATEGROUPS() {
 	        usermod -G "" $i
   	    ;;
 	      Linux)
-	        /usr/sbin/usermod -G "" $i
+	        usermod -G "" $i
 	      ;;
   	    HP-UX)
 	        usermod -G users $i
