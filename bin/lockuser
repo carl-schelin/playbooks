@@ -171,7 +171,7 @@ UPDATEGROUPS() {
 	        usermod -G "" $i
   	    ;;
 	      Linux)
-	        OUTPUT=`usermod -G "" $i`
+	        /usr/sbin/usermod -G "" $i
 	      ;;
   	    HP-UX)
 	        usermod -G users $i
