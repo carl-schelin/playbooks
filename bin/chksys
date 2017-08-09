@@ -210,7 +210,7 @@ function system_uuid {
   if [[ $OS = 'Linux' ]]
   then
     UUID=`/sbin/dmidecode | grep UUID | awk '{print $2}'`
-    if [[ ! -z $UID ]]
+    if [[ ! -z $UUID ]]
     then
       logit "system" "uuid" "${UUID}"
     fi
@@ -218,7 +218,7 @@ function system_uuid {
   if [[ $OS = 'SunOS' ]]
   then
     UUID=`/usr/sbin/smbios | grep -i uuid | awk '{print $2}'`
-    if [[ ! -z $UID ]]
+    if [[ ! -z $UUID ]]
     then
       logit "system" "uuid" "${UUID}"
     fi
