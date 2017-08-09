@@ -169,13 +169,13 @@ UPDATEGROUPS() {
 	  if [[ $i != $GROUPS ]]; then
 	    case $OS in
 	      SunOS)
-	        usermod -G "" $i
+	        /usr/sbin/usermod -G "" $i
   	    ;;
 	      Linux)
-	        usermod -G "" $i
+	        /usr/sbin/usermod -G "" $i
 	      ;;
   	    HP-UX)
-	        usermod -G users $i
+	        /usr/sbin/usermod -G users $i
 	      ;;
 	      *)
 	        echo "Lockuser script not configured to run on $OS"
