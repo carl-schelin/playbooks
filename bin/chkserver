@@ -79,7 +79,7 @@
 # 2017/08/09 - CS - Moved two more code bits into functions.
 # 2017/08/09 - CS - Removed extra code and have a single block of 'checkid' type checks before bailing.
 
-echo "chkserver v1.101"
+echo "chkserver v1.102"
 
 PROGNAME="chkserver"
 COUNT=0
@@ -1036,7 +1036,7 @@ check_time() {
 
       for i in $GPSSERVERS
       do
-        echo "ping check of time server: ${i}
+        echo "ping check of time server: ${i}"
         ping ${i} -c 1 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
