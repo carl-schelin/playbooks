@@ -75,8 +75,10 @@
 # 2017/08/04 - CS - Minor missing $ error
 # 2017/08/04 - CS - Update to show service account password that has to be changed
 # 2017/08/07 - CS - Added check_log to make sure messages file is being updated
+# 2017/08/09 - CS - Updated to make checking the time servers generic (variable and a loop)
+# 2017/08/09 - CS - Moved two more code bits into functions.
 
-echo "chkserver v1.98"
+echo "chkserver v1.100"
 
 PROGNAME="chkserver"
 COUNT=0
@@ -92,6 +94,7 @@ INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin; export PATH
+GPSSERVERS="10.100.228.31 192.168.200.20"
 
 if [[ -f $LOG ]]
 then
@@ -473,6 +476,23 @@ check_hostname() {
 
 
 ######################
+### Check to make sure intrado scripts have run
+######################
+
+check_intrado() {
+  if [[ ! -f /opt/intrado/var/intrado.log ]]
+  then
+    printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
+    if [[ -z $CRON ]]
+    then
+      printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
+    fi
+  fi
+}
+
+
+######################
 ### Check access to the Jumpstart web site
 ######################
 
@@ -496,6 +516,21 @@ check_jumpstart() {
     fi
   else
     printf "%b\n" "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check to make sure ksh is linked. On RH7, ksh is in /bin vs /usr/bin as it is on every other system.
+######################
+
+check_ksh() {
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ ! -f /usr/bin/ksh ]]
+    then
+      printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
+    fi
   fi
 }
 
@@ -998,51 +1033,31 @@ check_time() {
       printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> $LOG
       printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
 
-      echo "ping check of time server: 10.100.228.31"
-      ping 10.100.228.31 -c 1 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "      ${GREEN}Longmont (10.100.228.31) is pingable.${RESET}" >> $LOG
-      else
-        printf "%b\n" "      ${RED}Longmont (10.100.228.31) is not pingable.${RESET}" >> $LOG
-      fi
-      OUTPUT=`${T_COMMAND} | grep 10.100.228.31`
-      if [[ -z $OUTPUT ]]
-      then
-        printf "%b\n" "      ${RED}Longmont time server (10.100.228.31) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-      else
-        echo "time check of time server: 10.100.228.31"
-        ntpdate -q 10.100.228.31 > /dev/null 2>&1
+      for i in $GPSSERVERS
+      do
+        echo "ping check of time server: ${i}
+        ping ${i} -c 1 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "      ${GREEN}Longmont time server (10.100.228.31) is providing time.${RESET}" >> $LOG
+          printf "%b\n" "      ${GREEN}GPS Server ${i} is pingable.${RESET}" >> $LOG
         else
-          printf "%b\n" "      ${RED}Longmont time server (10.100.228.31:UDP/123) is not reachable.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${i} is not pingable.${RESET}" >> $LOG
         fi
-      fi
-
-      echo "ping check of time server: 192.168.200.20"
-      ping 192.168.200.20 -c 1 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "      ${GREEN}Miami (192.168.200.20) is pingable.${RESET}" >> $LOG
-      else
-        printf "%b\n" "      ${RED}Miami (192.168.200.20) is not pingable.${RESET}" >> $LOG
-      fi
-      OUTPUT=`${T_COMMAND} | grep 192.168.200.20`
-      if [[ -z $OUTPUT ]]
-      then
-        printf "%b\n" "      ${RED}Miami time server (192.168.200.20) is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
-      else
-        echo "time check of time server: 192.168.200.20"
-        ntpdate -q 192.168.200.20 > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        OUTPUT=`${T_COMMAND} | grep ${i}`
+        if [[ -z $OUTPUT ]]
         then
-          printf "%b\n" "      ${GREEN}Miami time server (192.168.200.20) is providing time.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
         else
-          printf "%b\n" "      ${RED}Miami time server (192.168.200.20:UDP/123) is not reachable.${RESET}" >> $LOG
+          echo "time check of time server: ${i}"
+          ntpdate -q ${i} > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "      ${GREEN}GPS Server ${i} is providing time.${RESET}" >> $LOG
+          else
+            printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET}" >> $LOG
+          fi
         fi
-      fi
+      done
 
       DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}' | tail -1`
       DRIFTPATH=`dirname $DRIFTFILE`
@@ -1174,23 +1189,9 @@ then
 
   check_cfg2html
 
-# Step 18: was /opt/intrado/bin/intrado run?
-  if [[ ! -f /opt/intrado/var/intrado.log ]]
-  then
-    printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
-    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
-    if [[ -z $CRON ]]
-    then
-      printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
-    fi
-  fi
+  check_intrado
 
-
-# Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
-  if [[ ! -f /usr/bin/ksh ]]
-  then
-    printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
-  fi
+  check_ksh
 
   check_removeips
 
@@ -1482,23 +1483,9 @@ then
 
   check_cfg2html
 
-# Step 18: was /opt/intrado/bin/intrado run?
-  if [[ ! -f /opt/intrado/var/intrado.log ]]
-  then
-    printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
-    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
-    if [[ -z $CRON ]]
-    then
-      printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
-    fi
-  fi
+  check_intrado
 
-
-# Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
-#  if [[ ! -f /usr/bin/ksh ]]
-#  then
-#    printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
-#  fi
+  check_ksh
 
   check_removeips
 
@@ -1795,24 +1782,9 @@ then
 
   check_cfg2html
 
+  check_intrado
 
-# Step 18: was /opt/intrado/bin/intrado run?
-  if [[ ! -f /opt/intrado/var/intrado.log ]]
-  then
-    printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
-    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
-    if [[ -z $CRON ]]
-    then
-      printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
-    fi
-  fi
-
-
-# Step 17: is there a link in /usr/bin/ksh from /bin/ksh?
-  if [[ ! -f /usr/bin/ksh ]]
-  then
-    printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
-  fi
+  check_ksh
 
   check_removeips
 
