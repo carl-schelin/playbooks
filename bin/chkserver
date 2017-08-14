@@ -80,10 +80,13 @@
 # 2017/08/09 - CS - Removed extra code and have a single block of 'checkid' type checks before bailing.
 # 2017/08/10 - CS - Older Red Hat's didn't like execute ticks within $(( )). Moved Memory check execute out of $(( )) to fix error.
 # 2017/08/10 - CS - Updated to support FreeBSDisms plus moving bits around to accommodate FreeBSD.
+# 2017/08/14 - CS - Updated the group.master file to add *:or hostname: so updated the check_groupmembership to account for this.
+# 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
 
-echo "chkserver v1.105"
+echo "chkserver v1.106"
 
 PROGNAME="chkserver"
+HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -423,11 +426,16 @@ check_group_membership() {
   printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
   for i in `cut -f1 -d: /etc/group`
   do
-    grep -i "^${i}:" $INTRADO/etc/group.master > /dev/null
-    if [[ $? = 0 ]]
+# look for the hostname first then all servers if hostname not found
+    GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+    if [[ -z ${GROUP} ]]
+    then
+      GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+    fi
+    if [[ ! -z ${GROUP} ]]
     then
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
-      for j in `grep "^${i}:" $INTRADO/etc/group.master | cut -f2 -d: | sed -e "s/,/ /g"`
+      for j in ${GROUP}
       do
         if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
         then
@@ -455,6 +463,7 @@ check_group_membership() {
           fi
         fi
       done
+
 # now check all users in /etc/group against group.master and throw an error if found
       if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
       then
@@ -464,8 +473,13 @@ check_group_membership() {
       fi
       for j in ${USERLIST}
       do
-        egrep -i "^${i}.*(:|,)${j}(,|$)" $INTRADO/etc/group.master > /dev/null
-        if [[ $? = 1 ]]
+# look for the hostname first then all servers if hostname not found
+        PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}.*(:|,)${j}(,|$)"`
+        if [[ -z ${PRESENT} ]]
+        then
+          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}.*(:|,)${j}(,|$)"`
+        fi
+        if [[ -z ${PRESENT} ]]
         then
           printf "%b\n" "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
         fi
@@ -1305,14 +1319,14 @@ then
       then
         INTERFACE=`egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
         printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
-        egrep -qi "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+        egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
         else
           printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
         fi
-        grep -qi ${FIELD3} /etc/hosts
+        grep -i ${FIELD3} /etc/hosts > /dev/null
         if [[ $? = 1 ]]
         then
           printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> $LOG
@@ -1332,14 +1346,14 @@ then
           fi
         fi
         GATEWAY="${GATEWAY} ${FIELD4}"
-        grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network
+        grep "GATEWAY=${FIELD4}" /etc/sysconfig/network > /dev/null
         if [[ $? = 0 ]]
         then
           GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
           GWFLAG='yes'
         fi
 # check the interface file too
-        grep -q "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
+        grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
         if [[ $? = 0 ]]
         then
           GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
@@ -1353,7 +1367,7 @@ then
 
     if [[ $FIELD2 = 'Service' ]]
     then
-      grep -q "^${FIELD3}:" /etc/passwd
+      grep "^${FIELD3}:" /etc/passwd > /dev/null
       if [[ $? = 0 ]]
       then
         printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
@@ -1447,17 +1461,17 @@ then
 # special checks for special accounts.
       if [[ ${FIELD3} = 'nginx' ]]
       then
-        grep -qi 640 /etc/logrotate.d/nginx
+        grep -i 640 /etc/logrotate.d/nginx > /dev/null
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
         fi
-        grep -qi nginx ${SUDOERS}
+        grep -i nginx ${SUDOERS} > /dev/null
         if [[ $? = 1 ]]
         then
           printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
         fi
-        ls -l /var/log/nginx/* | head -1 | grep -q "^-rw-r-----"
+        ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
@@ -1467,7 +1481,7 @@ then
     
     if [[ $FIELD2 = 'Group' ]]
     then
-      grep -q "^${FIELD3}:" /etc/group
+      grep "^${FIELD3}:" /etc/group > /dev/null
       if [[ $? = 0 ]]
       then
         printf "%b\n" "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
@@ -1478,7 +1492,7 @@ then
     
     if [[ $FIELD2 = 'Sudoers' ]]
     then
-      grep -q "^%${FIELD3}" ${SUDOERS}
+      grep "^%${FIELD3}" ${SUDOERS} > /dev/null
       if [[ $? = 0 ]]
       then
         printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
