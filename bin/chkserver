@@ -84,8 +84,9 @@
 # 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
 # 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
 # 2017/08/15 - CS - Added debugging options
+# 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
 
-echo "chkserver v1.108"
+echo "chkserver v1.109"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -734,12 +735,21 @@ check_netbackup() {
     else
       printf "%b\n" "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
     fi
-    NBLIST=`netstat -a | grep LISTEN | grep bpcd`
+# 13724 is vnetd
+    NBLIST=`netstat -an | grep LISTEN | grep 13724`
     if [[ -z $NBLIST ]]
     then
-      printf "%b\n" "    ${RED}NetBackup is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}NetBackup vnetd is not running${RESET}" >> $LOG
     else
-      printf "%b\n" "    ${GREEN}NetBackup is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}NetBackup vnetd is running${RESET}" >> $LOG
+    fi
+# 13782 is bpcd
+    NBLIST=`netstat -an | grep LISTEN | egrep 13782`
+    if [[ -z $NBLIST ]]
+    then
+      printf "%b\n" "    ${RED}NetBackup bpcd is not running${RESET}" >> $LOG
+    else
+      printf "%b\n" "    ${GREEN}NetBackup bpcd is running${RESET}" >> $LOG
     fi
 # check for last backup
 #Backed Up         Expires       Files      KB     C Sched Type      Policy
