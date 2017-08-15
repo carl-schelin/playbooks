@@ -85,8 +85,9 @@
 # 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
 # 2017/08/15 - CS - Added debugging options
 # 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
+# 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
 
-echo "chkserver v1.109"
+echo "chkserver v1.111"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -705,7 +706,7 @@ check_logs() {
 
   printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> $LOG
 
-  OUTPUT=`grep "^${CL_TODAY}" ${PLOG}`
+  OUTPUT=`tail -1 ${PLOG} | grep "^${CL_TODAY}"`
   if [[ -z $OUTPUT ]]
   then
     printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> $LOG
