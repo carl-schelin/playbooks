@@ -1658,7 +1658,7 @@ then
       then
         echo "Entering Sudoers check"
       fi
-      if [[ -z ${SUDOERS} ]]
+      if [[ ! -z ${SUDOERS} ]]
       then
         grep "^%${FIELD3}" ${SUDOERS} > /dev/null
         if [[ $? = 0 ]]
