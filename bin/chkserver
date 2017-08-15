@@ -83,8 +83,9 @@
 # 2017/08/14 - CS - Updated the group.master file to add *:or hostname: so updated the check_groupmembership to account for this.
 # 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
 # 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
+# 2017/08/15 - CS - Added debugging options
 
-echo "chkserver v1.107"
+echo "chkserver v1.108"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -102,6 +103,17 @@ LOG=$INTRADO/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
+MONSERVERS=""
+
+# enable debugging
+DEBUG='no'
+if [[ ! -z $1 ]]
+then
+  if [[ $1 = 'debug' ]]
+  then
+    DEBUG='yes'
+  fi
+fi
 
 if [[ -f $LOG ]]
 then
@@ -126,6 +138,12 @@ fi
 if [[ $OS = 'HP-UX' ]]
 then
   PINGCT="-n 2"
+fi
+
+# sun freeware install
+if [[ -f /opt/sfw/etc/sudoers ]]
+then
+  SUDOERS='/opt/sfw/etc/sudoers'
 fi
 
 # defualt installation of sudoers
@@ -199,6 +217,10 @@ check_active_employees() {
 # check intrado.email for email
 # report error if it doesn't exist.
 # found == 0
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_active_employees()"
+  fi
   if [[ -f $INTRADO/etc/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> $LOG
@@ -265,6 +287,10 @@ check_active_employees() {
 ######################
 
 check_centrify() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_centrify()"
+  fi
   if [[ -f /usr/sbin/adclient ]]
   then
     printf "%b\n" "  ${GREEN}Centrify is installed${RESET}" >> $LOG
@@ -328,6 +354,10 @@ check_cfg2html() {
 ######################
 
 check_data_palette() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_data_palette()"
+  fi
   if [[ -f /opt/datapalette/bin/datapal ]]
   then
     printf "%b\n" "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
@@ -368,6 +398,10 @@ check_data_palette() {
 check_default_passwords() {
 # check the password against the kickstart default
 # leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_default_passwords()"
+  fi
   printf "%b\n" "  ${GREEN}Account password verification${RESET}" >> $LOG
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
   do
@@ -406,6 +440,10 @@ check_default_passwords() {
 ######################
 
 check_email() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_email()"
+  fi
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
   echo "ping check of mail server: 10.100.104.6"
   ping 10.100.104.6 ${PINGCT} > /dev/null 2>&1
@@ -436,6 +474,10 @@ check_email() {
 # check for centrify to be installed
 
 check_group_membership() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_group_membership()"
+  fi
   printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
   for i in `cut -f1 -d: /etc/group`
   do
@@ -507,6 +549,10 @@ check_group_membership() {
 ######################
 
 check_hostname() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_hostname()"
+  fi
   HOSTNAME=`hostname|cut -f1 -d.`
   grep -i ${HOSTNAME} /etc/hosts > /dev/null
   if [[ $? = 0 ]]
@@ -523,6 +569,10 @@ check_hostname() {
 ######################
 
 check_intrado() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_intrado()"
+  fi
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
     printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
@@ -540,6 +590,10 @@ check_intrado() {
 ######################
 
 check_jumpstart() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_jumpstart()"
+  fi
   printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
   echo "ping check of jumpstart server: 10.100.78.143"
   ping 10.100.78.143 ${PINGCT} > /dev/null 2>&1
@@ -568,6 +622,10 @@ check_jumpstart() {
 ######################
 
 check_ksh() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_ksh()"
+  fi
   if [[ $OS = 'Linux' ]]
   then
     if [[ ! -f /usr/bin/ksh ]]
@@ -585,6 +643,10 @@ check_ksh() {
 check_kubernetes() {
 # enumerate namespaces to see what's running on the server.
 # then get the number of processes and report any containers that aren't fully running
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_kubernetes()"
+  fi
   if [[ -f /bin/kubectl ]]
   then
     printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> $LOG
@@ -619,6 +681,10 @@ check_kubernetes() {
 ######################
 
 check_logs() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_logs()"
+  fi
   CL_TODAY=`date +"%b %e"`
 
 # default logfile for Solaris
@@ -651,6 +717,10 @@ check_logs() {
 ######################
 
 check_netbackup() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_netbackup()"
+  fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
     printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
@@ -711,6 +781,10 @@ check_netbackup() {
 
 check_openview() {
 # if Openview was found, check to see if it's running
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_openview()"
+  fi
   if [[ -d /opt/OV/bin ]]
   then
     printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
@@ -771,6 +845,10 @@ check_openview() {
 ######################
 
 check_opnet() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_opnet()"
+  fi
   if [[ -d /opt/Panorama ]]
   then
     printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> $LOG
@@ -832,6 +910,10 @@ check_privileged_access() {
 # error if the user is not in the chksudo.dat file.
 # error if the date is older than the expiration date.
 #lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_privileged_access()"
+  fi
   if [[ -f $INTRADO/etc/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> $LOG
@@ -876,6 +958,10 @@ check_privileged_access() {
 ######################
 
 check_redhat_subscription() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_redhat_subscription()"
+  fi
   if [[ -f /etc/redhat-release ]]
   then
     if [[ ! -f /usr/bin/subscription-manager ]]
@@ -910,6 +996,10 @@ check_redhat_subscription() {
 ######################
 
 check_removeips() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_removeips()"
+  fi
   if [[ -f /etc/redhat-release ]]
   then
 # removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
@@ -941,6 +1031,10 @@ check_removeips() {
 ######################
 
 check_resolver() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_resolver()"
+  fi
   if [[ -f /etc/nsswitch.conf ]]
   then
     OUTPUT=`grep -i ^hosts: /etc/nsswitch.conf | grep -i dns`
@@ -990,6 +1084,10 @@ check_resolver() {
 ######################
 
 check_routetable() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_routetable()"
+  fi
   if [[ ! -f $INTRADO/etc/routetable.output ]]
   then
     $INTRADO/bin/chkroutetable
@@ -1008,6 +1106,10 @@ check_routetable() {
 ######################
 
 check_rrdtool() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_rrdtool()"
+  fi
   if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
   then
     UPDATERRD=`ps -ef | grep updaterrd`
@@ -1024,6 +1126,10 @@ check_rrdtool() {
 ######################
 
 check_sudoers() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_sudoers()"
+  fi
   if [[ -f ${SUDOERS} ]]
   then
     grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
@@ -1042,6 +1148,10 @@ check_sudoers() {
 ######################
 
 check_time() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_time()"
+  fi
   printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
   T_MSG=''
   T_COMMAND=''
@@ -1135,6 +1245,10 @@ check_time() {
 # hpux would be 0x005056
 
 check_vmware_agent() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_vmware_agent()"
+  fi
   if [[ $OS = 'HP-UX' ]]
   then
     OUTPUT=`lanscan | grep " 0x005056"`
@@ -1292,6 +1406,11 @@ check_centrify
 if [[ -f /opt/intrado/etc/chkserver.input ]]
 then
 
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering chkserver.input check"
+  fi
+
   for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
   do
 
@@ -1301,6 +1420,10 @@ then
 
     if [[ $FIELD2 = 'CPU' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering CPU check"
+      fi
       COUNT=`grep -c processor /proc/cpuinfo`
       if [[ $COUNT -ne $FIELD3 ]]
       then
@@ -1312,6 +1435,10 @@ then
     
     if [[ $FIELD2 = 'Memory' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Memory check"
+      fi
       MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
       COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
       if [[ $COUNT -ne $FIELD3 ]]
@@ -1324,6 +1451,10 @@ then
     
     if [[ $FIELD2 = 'IP' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering IP check"
+      fi
       if [[ $OS = 'Linux' ]]
       then
         OUTPUT=`ip addr | grep " ${FIELD3}/"`
@@ -1380,6 +1511,10 @@ then
 
     if [[ $FIELD2 = 'Service' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Service check"
+      fi
       grep "^${FIELD3}:" /etc/passwd > /dev/null
       if [[ $? = 0 ]]
       then
@@ -1494,6 +1629,10 @@ then
     
     if [[ $FIELD2 = 'Group' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Group check"
+      fi
       grep "^${FIELD3}:" /etc/group > /dev/null
       if [[ $? = 0 ]]
       then
@@ -1505,18 +1644,31 @@ then
     
     if [[ $FIELD2 = 'Sudoers' ]]
     then
-      grep "^%${FIELD3}" ${SUDOERS} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ ${DEBUG} = 'yes' ]]
       then
-        printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
+        echo "Entering Sudoers check"
+      fi
+      if [[ -z ${SUDOERS} ]]
+      then
+        grep "^%${FIELD3}" ${SUDOERS} > /dev/null
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
+        else
+          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
+        fi
       else
-        printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
+        printf "%b\n" "  ${YELLOW}Unable to locate sudoers file.${RESET}" >> $LOG
       fi
     fi
 
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Openview' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Openview check"
+      fi
       if [[ ! -d /opt/OV/bin ]]
       then
         printf "%b\n" "  ${RED}OpenView is not installed${RESET}" >> $LOG
@@ -1526,6 +1678,10 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Netbackup' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Netbackup check"
+      fi
       if [[ ! -f /usr/openv/netbackup/bp.conf ]]
       then
         printf "%b\n" "  ${RED}NetBackup is not installed${RESET}" >> $LOG
@@ -1535,6 +1691,10 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Datapalette' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Datapalette check"
+      fi
       if [[ ! -f /opt/datapalette/bin/datapal ]]
       then
         printf "%b\n" "  ${RED}Data Palette is not installed${RESET}" >> $LOG
@@ -1544,6 +1704,10 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'OpNet' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Opnet check"
+      fi
       if [[ ! -d /opt/Panorama ]]
       then
         printf "%b\n" "  ${RED}OpNet is not installed${RESET}" >> $LOG
@@ -1553,6 +1717,10 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Centrify' ]]
     then
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Entering Centrify check"
+      fi
       if [[ ! -f /usr/sbin/adclient ]]
       then
         printf "%b\n" "  ${RED}Centrify is not installed${RESET}" >> $LOG
