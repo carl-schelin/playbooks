@@ -82,8 +82,9 @@
 # 2017/08/10 - CS - Updated to support FreeBSDisms plus moving bits around to accommodate FreeBSD.
 # 2017/08/14 - CS - Updated the group.master file to add *:or hostname: so updated the check_groupmembership to account for this.
 # 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
+# 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
 
-echo "chkserver v1.106"
+echo "chkserver v1.107"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -113,6 +114,18 @@ then
   NETCAT=''
 else
   NETCAT='nc'
+fi
+
+# The ping count flags are different on the three OSs'
+
+PINGCT="-c 1"
+if [[ $OS = "SunOS" ]]
+then
+  PINGCT="2"
+fi
+if [[ $OS = 'HP-UX' ]]
+then
+  PINGCT="-n 2"
 fi
 
 # defualt installation of sudoers
@@ -326,7 +339,7 @@ check_data_palette() {
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
     echo "ping check of data palette nerve center: 10.100.128.3"
-    ping -c 1 10.100.128.3 > /dev/null 2>&1
+    ping 10.100.128.3 ${PINGCT} > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       printf "%b\n" "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
@@ -395,7 +408,7 @@ check_default_passwords() {
 check_email() {
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
   echo "ping check of mail server: 10.100.104.6"
-  ping -c 1 10.100.104.6 > /dev/null 2>&1
+  ping 10.100.104.6 ${PINGCT} > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Email server is pingable${RESET}" >> $LOG
@@ -529,7 +542,7 @@ check_intrado() {
 check_jumpstart() {
   printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
   echo "ping check of jumpstart server: 10.100.78.143"
-  ping -c 1 10.100.78.143 > /dev/null 2>&1
+  ping 10.100.78.143 ${PINGCT} > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
@@ -707,7 +720,7 @@ check_openview() {
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> $LOG
     else
       printf "%b\n" "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-      ping -c 1 10.109.243.19 > /dev/null 2>&1
+      ping 10.109.243.19 ${PINGCT} > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         printf "%b\n" "    ${GREEN}Longmont Openview VIP is pingable${RESET}" >> $LOG
@@ -728,7 +741,7 @@ check_openview() {
         printf "%b\n" "    ${RED}Longmont Openview VIP is not pingable${RESET}" >> $LOG
       fi
 
-      ping -c 1 10.109.226.19 > /dev/null 2>&1
+      ping 10.109.226.19 ${PINGCT} > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
         printf "%b\n" "    ${GREEN}Miami Openview VIP is pingable${RESET}" >> $LOG
@@ -946,7 +959,7 @@ check_resolver() {
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
             echo "ping check of nameserver: ${i}"
-            ping -c 1 ${i} > /dev/null 2>&1
+            ping ${i} ${PINGCT} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
               printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
@@ -1069,7 +1082,7 @@ check_time() {
       for i in $GPSSERVERS
       do
         echo "ping check of time server: ${i}"
-        ping ${i} -c 1 > /dev/null 2>&1
+        ping ${i} ${PINGCT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
           printf "%b\n" "      ${GREEN}GPS Server ${i} is pingable.${RESET}" >> $LOG
@@ -1337,7 +1350,7 @@ then
         printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
         else
           echo "ping check of the gateway: ${FIELD4}"
-          ping -c 1 ${FIELD4} > /dev/null 2>&1
+          ping ${FIELD4} ${PINGCT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
             printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
