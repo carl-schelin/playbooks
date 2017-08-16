@@ -87,7 +87,7 @@
 # 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
 # 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
 
-echo "chkserver v1.111"
+echo "chkserver v1.112"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1105,7 +1105,7 @@ check_routetable() {
   fi
   if [[ -s $INTRADO/etc/routetable.output ]]
   then
-    printf "%b\n" "  ${RED}Route table mismatch." >> $LOG
+    printf "%b\n" "  ${RED}Route table mismatch.${RESET}" >> $LOG
     cat $INTRADO/etc/routetable.output >> $LOG
     echo -en "${RESET}" >> $LOG
   fi
