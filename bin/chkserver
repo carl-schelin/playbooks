@@ -86,8 +86,9 @@
 # 2017/08/15 - CS - Added debugging options
 # 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
 # 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
+# 2017/08/17 - CS - Updated to report non-standard groups on a system
 
-echo "chkserver v1.112"
+echo "chkserver v1.113"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -488,6 +489,15 @@ check_group_membership() {
     if [[ -z ${GROUP} ]]
     then
       GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+# check non-standard groups
+      if [[ -z ${GROUP} ]]
+      then
+        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        if [[ ! -z ${GROUP} ]]
+        then
+          printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> $LOG
+        fi
+      fi
     fi
     if [[ ! -z ${GROUP} ]]
     then
