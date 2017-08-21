@@ -19,6 +19,7 @@ fi
 if [[ $OS = "Linux" ]]
 then
   touch $LOG
+  DEFAULT=`grep -i gateway /etc/sysconfig/network | cut -f2 -d= | sed -e "s/\"//g"`
   IP=''
   if [[ -f /usr/sbin/ip ]]
   then
@@ -39,28 +40,33 @@ then
       if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
       then
         for j in `egrep -v "^(#|$)" /etc/sysconfig/network-scripts/route-$i | awk '{print $1":"$2":"$3":"$4":"$5}'`
-          do
-            ADDR=`echo $j | cut -f1 -d:`
-            VIA=`echo $j | cut -f2 -d:`
-            GATEWAY=`echo $j | cut -f3 -d:`
-            DEV=`echo $j | cut -f4 -d:`
-            DEVICE=`echo $j | cut -f5 -d:`
+        do
+          ADDR=`echo $j | cut -f1 -d:`
+          VIA=`echo $j | cut -f2 -d:`
+          GATEWAY=`echo $j | cut -f3 -d:`
+          DEV=`echo $j | cut -f4 -d:`
+          DEVICE=`echo $j | cut -f5 -d:`
 
 # check ip address and mask
 # check via keyword
-            if [[ $VIA != 'via' ]]
-            then
-              echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
-            fi
+          if [[ $VIA != 'via' ]]
+          then
+            echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
+          fi
 # check gateway
 # check dev keyword; if blank then dev is default to the file name interface name
-            if [[ ! -z $DEV ]]
+          if [[ ! -z $DEV ]]
+          then
+            if [[ $DEV != 'dev' ]]
             then
-              if [[ $DEV != 'dev' ]]
-              then
-                echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
-              fi
+              echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
             fi
+          fi
+# check unnecessary routes
+          if [[ ! -z ${DEFAULT} ]] && [[ ! -z ${GATEWAY} ]] && [[ $DEFAULT = $GATEWAY ]]
+          then
+            echo "$ADDR uses ${DEFAULT} as its gateway and ${GATEWAY} is the default gateway so the route probably isn't needed" >> $LOG
+          fi
 # check device
 
         done
