@@ -87,8 +87,9 @@
 # 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
 # 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
 # 2017/08/17 - CS - Updated to report non-standard groups on a system
+# 2017/08/21 - CS - Added cron check
 
-echo "chkserver v1.113"
+echo "chkserver v1.114"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1745,6 +1746,29 @@ then
       if [[ ! -f /usr/sbin/adclient ]]
       then
         printf "%b\n" "  ${RED}Centrify is not installed${RESET}" >> $LOG
+      fi
+    fi
+
+# check to see if an account is supposed to be allowed to use cron
+    if [[ $FIELD2 = 'Cron' ]]
+    then
+# if cron.allow exists, cron.deny is ignored
+      if [[ -f /etc/cron.allow ]]
+      then
+        grep -i ${FIELD3} /etc/cron.allow > /dev/null
+        if [[ $? = 1 ]]
+        then
+          printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET}" >> $LOG
+        fi
+      else
+        if [[ -f /etc/cron.deny ]]
+        then
+          grep -i ${FIELD3} /etc/cron.deny > /dev/null
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET}" >> $LOG
+          fi
+        fi
       fi
     fi
 
