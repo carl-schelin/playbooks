@@ -89,8 +89,10 @@
 # 2017/08/17 - CS - Updated to report non-standard groups on a system
 # 2017/08/21 - CS - Added cron check
 # 2017/08/21 - CS - Updated to check files on different OSs (different locations)
+# 2017/08/22 - CS - Add check for centrify to add more groups to the check script.
+# 2017/08/22 - CS - Updated group loop check to use getent to determine if a group exists on the system
 
-echo "chkserver v1.115"
+echo "chkserver v1.116"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -99,6 +101,7 @@ GATEWAY=''
 GWFLAG='no'
 GWMSG=''
 OS=`uname`
+CENTRIFY='no'
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
@@ -313,6 +316,7 @@ check_centrify() {
       /usr/bin/adinfo > /dev/null
       if [[ $? = 0 ]]
       then
+        CENTRIFY='yes'
 #[root@cofmcc1 bin]# adinfo
 #Local host name:   cofmcc1
 #Joined to domain:  unix.intrado.pri
@@ -325,7 +329,7 @@ check_centrify() {
 #CentrifyDC mode:   connected
 #Licensed Features: Enabled
         ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
-        printf "%b\n" "    ${GREEN}Centrify is connect to ${ADDOMAIN}${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Centrify is connected to ${ADDOMAIN}${RESET}" >> $LOG
       fi
 #Linux:cschelin@infltx10$ adinfo
 #Not joined to any domain
@@ -483,7 +487,10 @@ check_email() {
 ### Check group memberships
 ######################
 
-# check for centrify to be installed
+# todo: check for centrify to be installed
+# need to check groups and if centrify, check centrify groups
+# need to get group id and check passwd as well
+# 
 
 check_group_membership() {
   if [[ ${DEBUG} = 'yes' ]]
@@ -491,7 +498,15 @@ check_group_membership() {
     echo "Entering check_group_membership()"
   fi
   printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
-  for i in `cut -f1 -d: /etc/group`
+
+  GROUPLIST=`cut -f1 -d: /etc/group`
+  if [[ ${CENTRIFY} = 'yes' ]]
+  then
+    GROUPLIST="${GROUPLIST} `adquery group | cut -f1 -d:`"
+  fi
+
+# check all system groups to see if they're in the group.master file
+  for i in ${GROUPLIST}
   do
 # look for the hostname first then all servers if hostname not found
     GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
@@ -508,6 +523,7 @@ check_group_membership() {
         fi
       fi
     fi
+
     if [[ ! -z ${GROUP} ]]
     then
 # found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
@@ -535,7 +551,7 @@ check_group_membership() {
           getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
           if [[ $? = 1 ]]
           then
-            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group${RESET}" >> $LOG
           fi
         fi
       done
@@ -557,7 +573,7 @@ check_group_membership() {
         fi
         if [[ -z ${PRESENT} ]]
         then
-          printf "%b\n" "    ${RED}${j} was found in the ${i} group in /etc/group but not in group.master${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in group.master${RESET}" >> $LOG
         fi
       done
     fi
@@ -1396,6 +1412,8 @@ check_redhat_subscription
 
 check_logs
 
+check_centrify
+
 check_group_membership
 
 check_default_passwords
@@ -1429,8 +1447,6 @@ check_netbackup
 check_data_palette
 
 check_opnet
-
-check_centrify
 
 # these checks are pulled from the auto-generated chkserver.input file.
 if [[ -f /opt/intrado/etc/chkserver.input ]]
@@ -1663,12 +1679,17 @@ then
       then
         echo "Entering Group check"
       fi
-      grep "^${FIELD3}:" /etc/group > /dev/null
+      if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
+      then
+        grep "^${FIELD3}:" /etc/group > /dev/null
+      else
+        getent group ${FIELD3} > /dev/null
+      fi
       if [[ $? = 0 ]]
       then
         printf "%b\n" "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
       else
-        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/group${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} group${RESET}" >> $LOG
       fi
     fi
     
