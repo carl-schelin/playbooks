@@ -91,8 +91,9 @@
 # 2017/08/21 - CS - Updated to check files on different OSs (different locations)
 # 2017/08/22 - CS - Add check for centrify to add more groups to the check script.
 # 2017/08/22 - CS - Updated group loop check to use getent to determine if a group exists on the system
+# 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
 
-echo "chkserver v1.116"
+echo "chkserver v1.117"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -565,15 +566,31 @@ check_group_membership() {
       fi
       for j in ${USERLIST}
       do
-# look for the hostname first then all servers if hostname not found
-        PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}.*(:|,)${j}(,|$)"`
-        if [[ -z ${PRESENT} ]]
+# look for the hostname first, if not found, then check the * groups. if not found, check the ? groups
+        GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:"`
+        if [[ -z ${GRPFND} ]]
         then
-          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}.*(:|,)${j}(,|$)"`
+          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:"`
+          if [[ -z ${GRPFND} ]]
+          then
+            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:"`
+            if [[ ! -z ${GRPFND} ]]
+            then
+              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}.*(:|,)${j}(,|$)"`
+              FOUND="?:${i}"
+            fi
+          else
+            PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}.*(:|,)${j}(,|$)"`
+            FOUND="*:${i}"
+          fi
+        else
+          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}.*(:|,)${j}(,|$)"`
+          FOUND="${HOSTNAME}:${i}"
         fi
+# if the user wasn't found in the group.master list for the host, * or ? config, call it out.
         if [[ -z ${PRESENT} ]]
         then
-          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in group.master${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in ${FOUND} in group.master${RESET}" >> $LOG
         fi
       done
     fi
