@@ -242,13 +242,15 @@ fi
 
 # Check to see if users need to be locked
 EXCLUDEUSERS
+
+# Remove users from groups
+echo "#---------- $(date +%m/%d/%Y-%H:%M:%S) ----------#" >> $LOGFILE
+UPDATEGROUPS
+
 # if no users are found, exit the script
 if [[ -z $USERTOLOCK ]]; then
   echo "No users to be archived on this system."
   exit 1
-else
-  echo "#---------- $(date +%m/%d/%Y-%H:%M:%S) ----------#" >> $LOGFILE
-  UPDATEGROUPS
 fi
 
 # if a centrify system, users are removed at the central location
