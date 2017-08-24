@@ -92,8 +92,9 @@
 # 2017/08/22 - CS - Add check for centrify to add more groups to the check script.
 # 2017/08/22 - CS - Updated group loop check to use getent to determine if a group exists on the system
 # 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
+# 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
 
-echo "chkserver v1.117"
+echo "chkserver v1.118"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -449,6 +450,35 @@ check_default_passwords() {
       printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
     fi
   done
+}
+
+
+######################
+### Check the health of Solaris Disk Suite
+######################
+
+check_disk_suite() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_disk_suite()"
+  fi
+
+  if [[ -f /usr/sbin/metadb ]] && [[ -f /usr/sbin/metastat ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> $LOG
+
+    OUTPUT=`metadb | egrep "(W|M|D|F|S|R)" | awk '{print $NF}' | head -1`
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> $LOG
+    fi
+
+    OUTPUT=`metastat | grep metareplace | awk '{print $3" "$4}' | head -1`
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> $LOG
+    fi
+  fi
 }
 
 
@@ -1440,6 +1470,8 @@ check_privileged_access
 check_active_employees
 
 check_kubernetes
+
+check_disk_suite
 
 check_vmware_agent
 
