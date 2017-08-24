@@ -93,8 +93,9 @@
 # 2017/08/22 - CS - Updated group loop check to use getent to determine if a group exists on the system
 # 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
 # 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
+# 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
 
-echo "chkserver v1.118"
+echo "chkserver v1.119"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -644,6 +645,44 @@ check_hostname() {
     printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
   else
     printf "%b\n" "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check to make sure intrado scripts have run
+######################
+
+check_interfaces() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_interfaces()"
+  fi
+  printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> $LOG
+  if [[ $OS = 'SunOS' ]]
+  then
+    OUTPUT=`ifconfig -a | grep FAILED`
+  fi
+  if [[ $OS = 'Linux' ]]
+  then
+    OUTPUT=`ifconfig | grep FAILED`
+  fi
+  if [[ $OS = 'HP-UX' ]]
+  then
+    OUTPUT=''
+    for i in `lanscan | grep lan | awk '{print $5}' > /dev/null`
+    do
+      OUTPUT="${OUTPU}`ifconfig $i | grep FAILED`"
+    done
+  fi
+  if [[ $OS = 'FreeBSD' ]]
+  then
+    OUTPUT=`ifconfig | grep FAILED`
+  fi
+
+  if [[ ! -z ${OUTPUT} ]]
+  then
+    printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> $LOG
   fi
 }
 
@@ -1456,6 +1495,8 @@ check_email
 check_jumpstart
 
 check_redhat_subscription
+
+check_interfaces
 
 check_logs
 
