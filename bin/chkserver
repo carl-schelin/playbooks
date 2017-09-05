@@ -95,8 +95,9 @@
 # 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
 # 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
 # 2017/09/05 - CS - Removed the hosts.allow issues as unneeded for Netbackup any more.
+# 2017/09/05 - CS - Fixed group.master check.
 
-echo "chkserver v1.120"
+echo "chkserver v1.121"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -596,29 +597,31 @@ check_group_membership() {
       else
         USERLIST=`getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g"`
       fi
+
       for j in ${USERLIST}
       do
 # look for the hostname first, if not found, then check the * groups. if not found, check the ? groups
-        GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:"`
+        GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
         if [[ -z ${GRPFND} ]]
         then
-          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:"`
+          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:"`
           if [[ -z ${GRPFND} ]]
           then
-            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:"`
+            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:"`
             if [[ ! -z ${GRPFND} ]]
             then
-              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}.*(:|,)${j}(,|$)"`
+              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
               FOUND="?:${i}"
             fi
           else
-            PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}.*(:|,)${j}(,|$)"`
+            PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
             FOUND="*:${i}"
           fi
         else
-          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}.*(:|,)${j}(,|$)"`
+          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
           FOUND="${HOSTNAME}:${i}"
         fi
+
 # if the user wasn't found in the group.master list for the host, * or ? config, call it out.
         if [[ -z ${PRESENT} ]]
         then
@@ -1030,6 +1033,7 @@ check_opnet() {
 
 check_privileged_access() {
 # see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
+# check for * for sysadmins who should be on every server
 # error if the user is not in the chksudo.dat file.
 # error if the date is older than the expiration date.
 #lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
@@ -1048,7 +1052,16 @@ check_privileged_access() {
 
       if [[ ${ROOT} = 'yes' ]]
       then
-        OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+        OUTPUT=`grep "^\*:${USER}:" $INTRADO/etc/chksudo.dat`
+        if [[ -z $OUTPUT ]]
+        then
+          OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+          if [[ -z $OUTPUT ]]
+          then
+            printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
+          fi
+        fi
+
         if [[ ! -z $OUTPUT ]]
         then
 # only need the date
@@ -1067,8 +1080,6 @@ check_privileged_access() {
           then
             printf "%b\n" "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
           fi
-        else
-          printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
         fi
       fi
     done
