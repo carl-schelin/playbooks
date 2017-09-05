@@ -96,8 +96,9 @@
 # 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
 # 2017/09/05 - CS - Removed the hosts.allow issues as unneeded for Netbackup any more.
 # 2017/09/05 - CS - Fixed group.master check.
+# 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
 
-echo "chkserver v1.121"
+echo "chkserver v1.122"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -840,6 +841,23 @@ check_logs() {
 
 
 ######################
+### Check for deleted items indicating a lost log file typically
+######################
+
+check_lsof() {
+  which lsof > /dev/null
+  if [[ $? = 0 ]]
+  then
+    OUTPUT=`lsof | grep "(deleted)" | wc -l`
+    if [[ $OUTPUT -gt 0 ]]
+    then
+      printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> $LOG
+    fi
+  fi
+}
+
+
+######################
 ### Check the status of Netbackup
 ######################
 
@@ -1513,6 +1531,8 @@ check_privileged_access
 check_active_employees
 
 check_kubernetes
+
+check_lsof
 
 check_disk_suite
 
