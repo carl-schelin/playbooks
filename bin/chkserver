@@ -94,8 +94,9 @@
 # 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
 # 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
 # 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
+# 2017/09/05 - CS - Removed the hosts.allow issues as unneeded for Netbackup any more.
 
-echo "chkserver v1.119"
+echo "chkserver v1.120"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -847,16 +848,6 @@ check_netbackup() {
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
     printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-    if [[ -f /etc/hosts.allow ]]
-    then
-      ALLOW=`grep bpcd: /etc/hosts.allow`
-      if [[ -z $ALLOW ]]
-      then
-        printf "%b\n" "    ${YELLOW}/etc/hosts.allow is missing the daemons used by NetBackup${RESET}" >> $LOG
-      fi
-    else
-      printf "%b\n" "    ${RED}/etc/hosts.allow doesn't exist${RESET}" >> $LOG
-    fi
 # 13724 is vnetd
     NBLIST=`netstat -an | grep LISTEN | grep 13724`
     if [[ -z $NBLIST ]]
