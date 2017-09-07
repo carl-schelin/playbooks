@@ -13,7 +13,7 @@ PATH="$PATH:/bin:/usr/bin:/sbin:/usr/sbin"; export PATH
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
 DATE=`date +"%Y%m%d"`
-LOG=${INTRADO}/logs/update.groups.output
+LOG=${INTRADO}/log/update.groups.output
 DEBUG="no"
 DEBUG="yes"
 
