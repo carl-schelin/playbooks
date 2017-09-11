@@ -97,8 +97,9 @@
 # 2017/09/05 - CS - Removed the hosts.allow issues as unneeded for Netbackup any more.
 # 2017/09/05 - CS - Fixed group.master check.
 # 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
+# 2017/09/11 - CS - Updated netbackup to check hosts.allow but only on nb 6 clients (55 as of last count)
 
-echo "chkserver v1.122"
+echo "chkserver v1.123"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -858,6 +859,21 @@ check_lsof() {
 
 
 ######################
+### Check to make sure swap is appropriatly sized
+### For Red Hat:
+### < 2 Gig is 2 times ram
+### 2-8 Gig is same as ram
+### 8 > Gig is 4 Gig or more of ram based on performance
+######################
+
+check_swap() {
+
+echo "hi"
+
+}
+
+
+######################
 ### Check the status of Netbackup
 ######################
 
@@ -869,6 +885,43 @@ check_netbackup() {
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
     printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+# netbackup versino 7 doesn't use hosts.allow any more.
+    if [[ -f /usr/openv/netbackup/bin/version ]]
+    then
+      VERSION=`awk '{print $2}' /usr/openv/netbackup/bin/version | cut -f1 -d.`
+# if 6, check for hosts.allow
+# if 7, no need to check; warning if it exists?      
+      if [[ ${VERSION} = 6 ]]
+      then
+        if [[ ! -f /etc/hosts.allow ]]
+        then
+          printf "%b\n" "    ${RED}/etc/hosts.allow is missing${RESET}" >> $LOG
+        else
+# look for bpcd, bpjava-msvc, vnetd, and vopied.
+          for nb in bpcd bpjava-msvc vnetd vopied
+          do
+            grep "^${nb}:" /etc/hosts.allow > /dev/null
+            if [[ ! $? = 0 ]]
+            then
+              printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> $LOG
+            fi
+            NBLIST="inveri01-gig0 10.100.6.25 inveri02 10.32.138.14 incobu01 10.100.77.77 incobu02 10.100.5.89"
+            if [[ ${nb} = "vnetd" ]]
+            then
+              NBLIST="$NBLIST incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
+            fi
+            for nbip in ${NBLIST}
+            do
+              grep "^${nb}:" /etc/hosts.allow | egrep "(:|,)${nbip}(,|$)" > /dev/null
+              if [[ ! $? = 0 ]]
+              then
+                printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> $LOG
+              fi
+            done
+          done
+        fi
+      fi
+    fi
 # 13724 is vnetd
     NBLIST=`netstat -an | grep LISTEN | grep 13724`
     if [[ -z $NBLIST ]]
