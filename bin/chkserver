@@ -98,8 +98,9 @@
 # 2017/09/05 - CS - Fixed group.master check.
 # 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
 # 2017/09/11 - CS - Updated netbackup to check hosts.allow but only on nb 6 clients (55 as of last count)
+# 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
 
-echo "chkserver v1.123"
+echo "chkserver v1.124"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -859,21 +860,6 @@ check_lsof() {
 
 
 ######################
-### Check to make sure swap is appropriatly sized
-### For Red Hat:
-### < 2 Gig is 2 times ram
-### 2-8 Gig is same as ram
-### 8 > Gig is 4 Gig or more of ram based on performance
-######################
-
-check_swap() {
-
-echo "hi"
-
-}
-
-
-######################
 ### Check the status of Netbackup
 ######################
 
@@ -1349,6 +1335,40 @@ check_sudoers() {
 
 
 ######################
+### Check to make sure swap is appropriatly sized
+### For Red Hat:
+### Swap >= Ram up to 8G
+### Swap >= 8 Ram over 8G
+######################
+
+check_swap() {
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ -f /usr/sbin/lvdisplay ]]
+    then
+      SWAP=`grep swap /etc/fstab | awk '{print $1}'`
+      SIZE=`lvdisplay ${SWAP} | grep 'LV Size' | awk '{print $3}'`
+      TOTAL=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+      MEMORY=$(( ${TOTAL} / 1024 / 1024 + 1 ))
+
+#if memory <= 8 and swap < memory then error
+#if memory >= 8 and swap < 8 then error
+
+      if [[ ${MEMORY} -gt 8 ]] && [[ ${SIZE} -lt 8 ]]
+      then
+        printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> $LOG
+      else
+        if [[ ${MEMORY} -le 8 ]] && [[ ${SIZE} -lt ${MEMORY} ]]
+        then
+          printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+}
+
+
+######################
 ### Check the time sources
 ######################
 
@@ -1570,6 +1590,8 @@ check_jumpstart
 check_redhat_subscription
 
 check_interfaces
+
+check_swap
 
 check_logs
 
