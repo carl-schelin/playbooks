@@ -78,17 +78,32 @@
 # 2017-06-26 - Added chkserver script
 # 2017-07-07 - Added update.gecos script
 # 2017-09-07 - Added update.groups script
+# 2017-09-14 - Updated to check for centrify and change group ownerships to uxadmins vs sysadmin
 
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
 LOG=$INTRADO/var/intrado.log
 EXITCODE=0
 OS=`uname`
+GROUP=sysadmin
 DATE=`date +"%Y%m%d"`
 # Day of Week 1=Monday, 7=Sunday
 DOWEEK=`date +"%u"`
 # Day of Month, 01-31
 DOMONTH=`date +"%d"`
+
+if [[ -f /usr/sbin/adclient ]]
+then
+  CENTRIFY=`ps -e | grep adclient`
+  if [[ ! -z $CENTRIFY ]]
+  then
+    /usr/bin/adinfo > /dev/null
+    if [[ $? = 0 ]]
+    then
+      GROUP=uxadmins
+    fi
+  fi
+fi
 
 # Roll and compress the logs at the beginning of the month
 if [[ $DOMONTH = '01' ]]
@@ -102,20 +117,20 @@ fi
 if [[ ! -d $INTRADO/var ]]
 then
   mkdir -p $INTRADO/var
-  chown unixsvc:sysadmin $INTRADO/var
+  chown unixsvc:${GROUP} $INTRADO/var
   chmod 770 $INTRADO/var
 fi
 if [[ ! -d $INTRADO/etc ]]
 then
   mkdir -p $INTRADO/etc
-  chown unixsvc:sysadmin $INTRADO/etc
+  chown unixsvc:${GROUP} $INTRADO/etc
   chmod 770 $INTRADO/etc
 fi
 
 echo "`date` intrado script started" >> $LOG
 
 # First ensure the /opt/intrado directory structure is owned properly so data files can be written
-chown -R unixsvc:sysadmin $INTRADO
+chown -R unixsvc:${GROUP} $INTRADO
 chmod -R 770 $INTRADO
 
 # function to run the scripts and set a timeout. this ensures all scripts exit before the final cleanup
@@ -364,7 +379,7 @@ then
   fi
 
 # ensure log files are set up correctly
-  chown root:sysadmin /var/log/messages*
+  chown root:${GROUP} /var/log/messages*
   chmod 644 /var/log/messages*
 
 fi
@@ -380,7 +395,7 @@ then
   runscript chksudoers
 
 # ensure log files are set up correctly
-  chown root:sysadmin /var/adm/messages*
+  chown root:${GROUP} /var/adm/messages*
   chmod 644 /var/adm/messages*
 
 # picl: Platform Information and Control Library
@@ -439,7 +454,7 @@ then
 
 
 # ensure log files are set up correctly
-  chown root:sysadmin /var/adm/syslog/syslog.log
+  chown root:${GROUP} /var/adm/syslog/syslog.log
   chmod 644 /var/adm/syslog/syslog.log
 
   #Retrieve VX information
@@ -474,7 +489,7 @@ then
   fi
 
 # ensure log files are set up correctly
-  chown root:sysadmin /var/cluster/members/{memb]/adm/messages*
+  chown root:${GROUP} /var/cluster/members/{memb]/adm/messages*
   chmod 644 /var/cluster/members/{memb]/adm/messages*
 
 fi
@@ -490,7 +505,7 @@ then
     runscript chksudoers
 
 # ensure log files are set up correctly
-  chown root:sysadmin /var/log/messages*
+  chown root:${GROUP} /var/log/messages*
   chmod 644 /var/log/messages*
 
 fi
@@ -528,7 +543,7 @@ echo "`date` intrado script ended" >> $LOG
 echo "======================" >> $LOG
 
 # Ensure the /opt/intrado directory structure is owned properly so data files can be read
-chown -R unixsvc:sysadmin $INTRADO
+chown -R unixsvc:${GROUP} $INTRADO
 chmod -R 770 $INTRADO
 find $INTRADO/etc -type f -exec chmod 660 {} \;
 find $INTRADO/var -type f -exec chmod 660 {} \;
