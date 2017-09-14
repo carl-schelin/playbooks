@@ -99,8 +99,9 @@
 # 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
 # 2017/09/11 - CS - Updated netbackup to check hosts.allow but only on nb 6 clients (55 as of last count)
 # 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
+# 2017/09/14 - CS - fix metadb check to only check the first 20 characters due to drive names with caps
 
-echo "chkserver v1.124"
+echo "chkserver v1.125"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -473,7 +474,7 @@ check_disk_suite() {
   then
     printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> $LOG
 
-    OUTPUT=`metadb | egrep "(W|M|D|F|S|R)" | awk '{print $NF}' | head -1`
+    OUTPUT=`metadb | cut -c1-20 | egrep "(W|M|D|F|S|R)" | awk '{print $NF}' | head -1`
     if [[ ! -z $OUTPUT ]]
     then
       printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> $LOG
