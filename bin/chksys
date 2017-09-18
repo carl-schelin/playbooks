@@ -37,6 +37,7 @@
 # 2017-02-28 CS: Added system_uuid to pull the uuid from solaris systems (smbios).
 # 2017-04-13 CS: Don't log entry if data is missing for kernel dates. older systems won't have a date
 # 2017-04-13 CS: Fix IP6 report on some systems where the last item isn't the interface name.
+# 2017-09-18 CS: Updated to add Solaris check of SUNWcsl install date for the kernel date
 
 ## Search for 'main function' to get to the meat
 
@@ -86,6 +87,29 @@ function system {
     esac
 
     logit "system" "kernel" "${SWYEAR}-${MONC}-01"
+
+  elif [[ $OS = 'SunOS' ]]
+  then
+    INSTYEAR=`pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $4}'`
+    INSTMONTH=`pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $2}'`
+    INSTDAY=`pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $3}'`
+
+    case $INSTMONTH in
+      Jan)  MONC=01 ;;
+      Feb)  MONC=02 ;;
+      Mar)  MONC=03 ;;
+      Apr)  MONC=04 ;;
+      May)  MONC=05 ;;
+      Jun)  MONC=06 ;;
+      Jul)  MONC=07 ;;
+      Aug)  MONC=08 ;;
+      Sep)  MONC=09 ;;
+      Oct)  MONC=10 ;;
+      Nov)  MONC=11 ;;
+      Dec)  MONC=12 ;;
+    esac
+
+    logit "system" "kernel" "${INSTYEAR}-${MONC}-${INSTDAY}"
 
   fi
 }
