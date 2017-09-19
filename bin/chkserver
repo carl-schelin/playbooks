@@ -100,8 +100,9 @@
 # 2017/09/11 - CS - Updated netbackup to check hosts.allow but only on nb 6 clients (55 as of last count)
 # 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
 # 2017/09/14 - CS - fix metadb check to only check the first 20 characters due to drive names with caps
+# 2017/09/19 - CS - Updated to exclude checks due to them being acceptible
 
-echo "chkserver v1.125"
+echo "chkserver v1.126"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1056,30 +1057,27 @@ check_opnet() {
     fi
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.32.10.1 443 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}OpNet Server (10.32.10.1:443) is accessible${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${YELLOW}OpNet Server (10.32.10.1:443) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.63 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}OpNet Server (10.100.4.63:19090) is accessible${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${YELLOW}OpNet Server (10.100.4.63:19090) is not accessible${RESET}" >> $LOG
-      fi
-      echo "nc check of OpNet Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.4.64 19090 > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}OpNet Server (10.100.4.64:19090) is accessible${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${YELLOW}OpNet Server (10.100.4.64:19090) is not accessible${RESET}" >> $LOG
-      fi
+      for j in 10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090
+      do
+        OPNETIP=`echo $j | cut -f1 -d:`
+        OPNETPORT=`echo $j | cut -f2 -d:`
+
+# looking for a skip entry in the chkserver.exclude file
+        APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${INTRADO}/etc/chkserver.exclude`
+        if [[ "${APPROVED}" = "" ]]
+        then
+          echo "nc check of OpNet Server"
+          echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT} > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) is accessible${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${YELLOW}OpNet Server (${OPNETIP}:${OPNETPORT}) is not accessible${RESET}" >> $LOG
+          fi
+        else
+          printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) check was skipped.${RESET}" >> $LOG
+        fi
+      done
     fi
   fi 
 }
@@ -1343,6 +1341,11 @@ check_sudoers() {
 ######################
 
 check_swap() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_swap()"
+  fi
+  APPROVED=`grep -i "^${HOSTNAME}:Swap" ${INTRADO}/etc/chkserver.exclude | cut -f3 -d:`
   if [[ $OS = 'Linux' ]]
   then
     if [[ -f /usr/sbin/lvdisplay ]]
@@ -1355,13 +1358,18 @@ check_swap() {
 #if memory <= 8 and swap < memory then error
 #if memory >= 8 and swap < 8 then error
 
-      if [[ ${MEMORY} -gt 8 ]] && [[ ${SIZE} -lt 8 ]]
+      if [[ ! -z ${APPROVED} ]] && [[ ${SIZE} -eq ${APPROVED} ]]
       then
-        printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> $LOG
+        printf "%b\n" "  ${GREEN}Swap is correct at ${SIZE} Gig.${RESET}" >> $LOG
       else
-        if [[ ${MEMORY} -le 8 ]] && [[ ${SIZE} -lt ${MEMORY} ]]
+        if [[ ${MEMORY} -gt 8 ]] && [[ ${SIZE} -lt 8 ]]
         then
-          printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> $LOG
+        else
+          if [[ ${MEMORY} -le 8 ]] && [[ ${SIZE} -lt ${MEMORY} ]]
+          then
+            printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> $LOG
+          fi
         fi
       fi
     fi
