@@ -1681,13 +1681,22 @@ then
       then
         echo "Entering Memory check"
       fi
+
+# looking for a skip entry in the chkserver.exclude file
       MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
       COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
-      if [[ $COUNT -ne $FIELD3 ]]
+      APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${INTRADO}/etc/chkserver.exclude`
+# if blank, then we didn't find an approved value, continue with the check
+      if [[ "${APPROVED}" = "" ]]
       then
-        printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+        if [[ $COUNT -ne $FIELD3 ]]
+        then
+          printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+        else
+          printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+        fi
       else
-        printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+        printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> $LOG
       fi
     fi
     
