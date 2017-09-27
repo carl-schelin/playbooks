@@ -101,8 +101,10 @@
 # 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
 # 2017/09/14 - CS - fix metadb check to only check the first 20 characters due to drive names with caps
 # 2017/09/19 - CS - Updated to exclude checks due to them being acceptible
+# 2017/09/26 - CS - Added memory exclude check for servers with a large amount of ram.
+# 2017/09/27 - CS - Added nrpe (Nagios) check function
 
-echo "chkserver v1.126"
+echo "chkserver v1.128"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -849,6 +851,10 @@ check_logs() {
 ######################
 
 check_lsof() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_lsof()"
+  fi
   which lsof > /dev/null
   if [[ $? = 0 ]]
   then
@@ -955,6 +961,29 @@ check_netbackup() {
           printf "%b\n" "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
         fi
       fi
+    fi
+  fi
+}
+
+
+######################
+### Check the status of Nagios Remote Plugin Executor
+######################
+
+check_nrpe() {
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Entering check_nrpe()"
+  fi
+  if [[ -f /usr/sbin/nrpe ]]
+  then
+    printf "%b\n" "  ${GREEN}The NRPE agent is installed${RESET}" >> $LOG
+    NAGIOS=`ps -e | grep nrpe`
+    if [[ -z $NAGIOS ]]
+    then
+      printf "%b\n" "    ${RED}The NRPE agent is not running${RESET}" >> $LOG
+    else
+      printf "%b\n" "    ${GREEN}The NRPE agent is running${RESET}" >> $LOG
     fi
   fi
 }
@@ -1643,6 +1672,8 @@ check_netbackup
 check_data_palette
 
 check_opnet
+
+check_nrpe
 
 # these checks are pulled from the auto-generated chkserver.input file.
 if [[ -f /opt/intrado/etc/chkserver.input ]]
