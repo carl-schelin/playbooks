@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+# Carl Schelin
+# uninstalled nb7 netbackup
+# nb6 uses xinetd and hosts.allow; need to update
+
+DATE=`date +"%Y%m%d"`
+
+service netbackup stop
+chkconfig --del netbackup
+rm /etc/init.d/netbackup
+rm -rf /usr/openv
+cp -p /etc/services /etc/services.$DATE
+egrep -v "^(brpd|bpdbm|bpjava-msvc|vnetd|bpcd|vopied)" /etc/services.$DATE > /etc/services
+
