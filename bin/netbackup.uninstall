@@ -2,7 +2,7 @@
 
 # Carl Schelin
 # uninstalled nb7 netbackup
-# nb6 uses xinetd and hosts.allow; need to update
+# nb6 uses xinetd and hosts.allow; need to update later
 
 DATE=`date +"%Y%m%d"`
 
