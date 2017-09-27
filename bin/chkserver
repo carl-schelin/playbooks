@@ -103,8 +103,9 @@
 # 2017/09/19 - CS - Updated to exclude checks due to them being acceptible
 # 2017/09/26 - CS - Added memory exclude check for servers with a large amount of ram.
 # 2017/09/27 - CS - Added nrpe (Nagios) check function
+# 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
 
-echo "chkserver v1.128"
+echo "chkserver v1.129"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1462,11 +1463,30 @@ check_time() {
         else
           printf "%b\n" "      ${RED}GPS Server ${i} is not pingable.${RESET}" >> $LOG
         fi
-        OUTPUT=`${T_COMMAND} | grep ${i}`
+        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${i}`
         if [[ -z $OUTPUT ]]
         then
-          printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
         else
+          if [[ $T_MSG = 'chrony' ]]
+          then
+            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
+          fi
+          if [[ $T_MSG = 'ntp' ]]
+          then
+            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
+          fi
+          if [[ -z ${OUTPUT} ]]
+          then
+            printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
+          else
+            if [[ $OUTPUT = '377' ]]
+            then
+              printf "%b\n" "      ${RED}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
+            else
+              printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
+            fi
+          fi
           echo "time check of time server: ${i}"
           ntpdate -q ${i} > /dev/null 2>&1
           if [[ $? = 0 ]]
