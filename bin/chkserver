@@ -106,7 +106,7 @@
 # 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
 # 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
 
-echo "chkserver v1.131"
+echo "chkserver v1.132"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1504,7 +1504,7 @@ check_time() {
               printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
             fi
           fi
-          echo "time check of time server: ${i}"
+          echo "  time check of time server: ${i}"
           ntpdate -q ${i} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
