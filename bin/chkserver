@@ -104,8 +104,9 @@
 # 2017/09/26 - CS - Added memory exclude check for servers with a large amount of ram.
 # 2017/09/27 - CS - Added nrpe (Nagios) check function
 # 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
+# 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
 
-echo "chkserver v1.129"
+echo "chkserver v1.131"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -127,12 +128,12 @@ GPSSERVERS="10.100.228.31 192.168.200.20"
 MONSERVERS=""
 
 # enable debugging
-DEBUG='no'
+DEBUG='0'
 if [[ ! -z $1 ]]
 then
   if [[ $1 = 'debug' ]]
   then
-    DEBUG='yes'
+    DEBUG="$2"
   fi
 fi
 
@@ -245,9 +246,9 @@ check_active_employees() {
 # check intrado.email for email
 # report error if it doesn't exist.
 # found == 0
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_active_employees()"
+    echo "Entering check_active_employees(1)"
   fi
   if [[ -f $INTRADO/etc/chksudo.dat ]]
   then
@@ -315,9 +316,9 @@ check_active_employees() {
 ######################
 
 check_centrify() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_centrify()"
+    echo "Entering check_centrify(2)"
   fi
   if [[ -f /usr/sbin/adclient ]]
   then
@@ -383,9 +384,9 @@ check_cfg2html() {
 ######################
 
 check_data_palette() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_data_palette()"
+    echo "Entering check_data_palette(3)"
   fi
   if [[ -f /opt/datapalette/bin/datapal ]]
   then
@@ -397,14 +398,14 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    echo "ping check of data palette nerve center: 10.100.128.3"
+    echo "  ping check of data palette nerve center: 10.100.128.3"
     ping 10.100.128.3 ${PINGCT} > /dev/null 2>&1
     if [[ $? = 0 ]]
     then
       printf "%b\n" "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
       if [[ ! -z ${NETCAT} ]]
       then
-        echo "nc check of Data Palette Nerve Center Server"
+        echo "  nc check of Data Palette Nerve Center Server"
         echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
@@ -427,9 +428,9 @@ check_data_palette() {
 check_default_passwords() {
 # check the password against the kickstart default
 # leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_default_passwords()"
+    echo "Entering check_default_passwords(4)"
   fi
   printf "%b\n" "  ${GREEN}Account password verification${RESET}" >> $LOG
   for j in root cschelin kzupan jnoyes tcooper escott mchahud jschroet jmetz ppietras unixsvc
@@ -469,9 +470,9 @@ check_default_passwords() {
 ######################
 
 check_disk_suite() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_disk_suite()"
+    echo "Entering check_disk_suite(5)"
   fi
 
   if [[ -f /usr/sbin/metadb ]] && [[ -f /usr/sbin/metastat ]]
@@ -498,19 +499,19 @@ check_disk_suite() {
 ######################
 
 check_email() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_email()"
+    echo "Entering check_email(5)"
   fi
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
-  echo "ping check of mail server: 10.100.104.6"
+  echo "  ping check of mail server: 10.100.104.6"
   ping 10.100.104.6 ${PINGCT} > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Email server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "nc check of Mail Server"
+      echo "  nc check of Mail Server"
       echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -535,9 +536,9 @@ check_email() {
 # 
 
 check_group_membership() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_group_membership()"
+    echo "Entering check_group_membership(6)"
   fi
   printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
 
@@ -646,9 +647,9 @@ check_group_membership() {
 ######################
 
 check_hostname() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_hostname()"
+    echo "Entering check_hostname(7)"
   fi
   HOSTNAME=`hostname|cut -f1 -d.`
   grep -i ${HOSTNAME} /etc/hosts > /dev/null
@@ -666,9 +667,9 @@ check_hostname() {
 ######################
 
 check_interfaces() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_interfaces()"
+    echo "Entering check_interfaces(7)"
   fi
   printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> $LOG
   if [[ $OS = 'SunOS' ]]
@@ -704,9 +705,9 @@ check_interfaces() {
 ######################
 
 check_intrado() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_intrado()"
+    echo "Entering check_intrado(8)"
   fi
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
@@ -725,19 +726,19 @@ check_intrado() {
 ######################
 
 check_jumpstart() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_jumpstart()"
+    echo "Entering check_jumpstart(9)"
   fi
   printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
-  echo "ping check of jumpstart server: 10.100.78.143"
+  echo "  ping check of jumpstart server: 10.100.78.143"
   ping 10.100.78.143 ${PINGCT} > /dev/null 2>&1
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
-      echo "nc check of Jumpstart Server"
+      echo "  nc check of Jumpstart Server"
       echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
       if [[ $? = 0 ]]
       then
@@ -757,9 +758,9 @@ check_jumpstart() {
 ######################
 
 check_ksh() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_ksh()"
+    echo "Entering check_ksh(10)"
   fi
   if [[ $OS = 'Linux' ]]
   then
@@ -778,9 +779,9 @@ check_ksh() {
 check_kubernetes() {
 # enumerate namespaces to see what's running on the server.
 # then get the number of processes and report any containers that aren't fully running
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_kubernetes()"
+    echo "Entering check_kubernetes(11)"
   fi
   if [[ -f /bin/kubectl ]]
   then
@@ -816,9 +817,9 @@ check_kubernetes() {
 ######################
 
 check_logs() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_logs()"
+    echo "Entering check_logs(12)"
   fi
   CL_TODAY=`date +"%b %e"`
 
@@ -852,9 +853,9 @@ check_logs() {
 ######################
 
 check_lsof() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_lsof()"
+    echo "Entering check_lsof(13)"
   fi
   which lsof > /dev/null
   if [[ $? = 0 ]]
@@ -873,9 +874,9 @@ check_lsof() {
 ######################
 
 check_netbackup() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_netbackup()"
+    echo "Entering check_netbackup(14)"
   fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
@@ -972,9 +973,9 @@ check_netbackup() {
 ######################
 
 check_nrpe() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_nrpe()"
+    echo "Entering check_nrpe(15)"
   fi
   if [[ -f /usr/sbin/nrpe ]]
   then
@@ -996,9 +997,9 @@ check_nrpe() {
 
 check_openview() {
 # if Openview was found, check to see if it's running
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_openview()"
+    echo "Entering check_openview(16)"
   fi
   if [[ -d /opt/OV/bin ]]
   then
@@ -1017,7 +1018,7 @@ check_openview() {
         then
 # check for access to the vips; Longmont and Miami
 #10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
-          echo "nc check of Longmont Openview Server"
+          echo "  nc check of Longmont Openview Server"
           echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
@@ -1038,7 +1039,7 @@ check_openview() {
         then
 # check for access to the vips; Longmont and Miami
 #10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-          echo "nc check of Miami Openview Server"
+          echo "  nc check of Miami Openview Server"
           echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
@@ -1060,9 +1061,9 @@ check_openview() {
 ######################
 
 check_opnet() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_opnet()"
+    echo "Entering check_opnet(17)"
   fi
   if [[ -d /opt/Panorama ]]
   then
@@ -1096,7 +1097,7 @@ check_opnet() {
         APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${INTRADO}/etc/chkserver.exclude`
         if [[ "${APPROVED}" = "" ]]
         then
-          echo "nc check of OpNet Server"
+          echo "  nc check of OpNet Server"
           echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
@@ -1123,9 +1124,9 @@ check_privileged_access() {
 # error if the user is not in the chksudo.dat file.
 # error if the date is older than the expiration date.
 #lnmt1cuomrcs1:cschelin:Carl Schelin,carl.schelin@intrado.com:yes:Expired
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_privileged_access()"
+    echo "Entering check_privileged_access(18)"
   fi
   if [[ -f $INTRADO/etc/chksudo.dat ]]
   then
@@ -1178,35 +1179,51 @@ check_privileged_access() {
 ######################
 
 check_redhat_subscription() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_redhat_subscription()"
+    echo "Entering check_redhat_subscription(19)"
   fi
   if [[ -f /etc/redhat-release ]]
   then
+    if [[ ${DEBUG} = '19' ]]
+    then
+      echo "  Red Hat System"
+    fi
     if [[ ! -f /usr/bin/subscription-manager ]]
     then
       printf "%b\n" "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
     else
+      if [[ ${DEBUG} = '19' ]]
+      then
+        echo "  Subscription Manager is installed, query server"
+      fi
       printf "%b\n" "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
       STATUS=`/usr/bin/subscription-manager list | grep "^Status:" | awk '{print $2}'`
-      if [[ $STATUS = 'Unknown' ]]
+      if [[ ${DEBUG} = '19' ]]
+      then
+        echo "  Returned status: ${STATUS}"
+      fi
+      if [[ ${STATUS} = 'Unknown' ]]
       then
         printf "%b\n" "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
       fi
-      if [[ $STATUS = 'No' ]]
+      if [[ ${STATUS} = 'No' ]]
       then
         printf "%b\n" "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
       fi
-      if [[ $STATUS = 'Subscribed' ]]
+      if [[ ${STATUS} = 'Subscribed' ]]
       then
         printf "%b\n" "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
       fi
-      if [[ $STATUS = 'Expired' ]]
+      if [[ ${STATUS} = 'Expired' ]]
       then
         printf "%b\n" "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
       fi
     fi
+  fi
+  if [[ ${DEBUG} = '19' ]]
+  then
+    echo "Exiting check_redhat_subscription()"
   fi
 }
 
@@ -1216,9 +1233,9 @@ check_redhat_subscription() {
 ######################
 
 check_removeips() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_removeips()"
+    echo "Entering check_removeips(20)"
   fi
   if [[ -f /etc/redhat-release ]]
   then
@@ -1251,9 +1268,9 @@ check_removeips() {
 ######################
 
 check_resolver() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_resolver()"
+    echo "Entering check_resolver(21)"
   fi
   if [[ -f /etc/nsswitch.conf ]]
   then
@@ -1272,7 +1289,7 @@ check_resolver() {
           for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
-            echo "ping check of nameserver: ${i}"
+            echo "  ping check of nameserver: ${i}"
             ping ${i} ${PINGCT} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
@@ -1304,9 +1321,9 @@ check_resolver() {
 ######################
 
 check_routetable() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_routetable()"
+    echo "Entering check_routetable(22)"
   fi
   if [[ ! -f $INTRADO/etc/routetable.output ]]
   then
@@ -1326,9 +1343,9 @@ check_routetable() {
 ######################
 
 check_rrdtool() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_rrdtool()"
+    echo "Entering check_rrdtool(23)"
   fi
   if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
   then
@@ -1346,9 +1363,9 @@ check_rrdtool() {
 ######################
 
 check_sudoers() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_sudoers()"
+    echo "Entering check_sudoers(24)"
   fi
   if [[ -f ${SUDOERS} ]]
   then
@@ -1371,9 +1388,9 @@ check_sudoers() {
 ######################
 
 check_swap() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_swap()"
+    echo "Entering check_swap(25)"
   fi
   APPROVED=`grep -i "^${HOSTNAME}:Swap" ${INTRADO}/etc/chkserver.exclude | cut -f3 -d:`
   if [[ $OS = 'Linux' ]]
@@ -1412,9 +1429,9 @@ check_swap() {
 ######################
 
 check_time() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_time()"
+    echo "Entering check_time(26)"
   fi
   printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
   T_MSG=''
@@ -1455,7 +1472,7 @@ check_time() {
 
       for i in $GPSSERVERS
       do
-        echo "ping check of time server: ${i}"
+        echo "  ping check of time server: ${i}"
         ping ${i} ${PINGCT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
@@ -1528,9 +1545,9 @@ check_time() {
 # hpux would be 0x005056
 
 check_vmware_agent() {
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_vmware_agent()"
+    echo "Entering check_vmware_agent(27)"
   fi
   if [[ $OS = 'HP-UX' ]]
   then
@@ -1581,6 +1598,7 @@ echo "" >> $LOG
 echo "Note:"
 echo "  Ping checks have a count of 1"
 echo "  Netcat (nc) checks have a wait of 2"
+echo "  ./chkserver debug [number] displays more messages for that function"
 echo ""
 
 
@@ -1699,7 +1717,7 @@ check_nrpe
 if [[ -f /opt/intrado/etc/chkserver.input ]]
 then
 
-  if [[ ${DEBUG} = 'yes' ]]
+  if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering chkserver.input check"
   fi
@@ -1713,7 +1731,7 @@ then
 
     if [[ $FIELD2 = 'CPU' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering CPU check"
       fi
@@ -1728,7 +1746,7 @@ then
     
     if [[ $FIELD2 = 'Memory' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Memory check"
       fi
@@ -1753,7 +1771,7 @@ then
     
     if [[ $FIELD2 = 'IP' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering IP check"
       fi
@@ -1782,7 +1800,7 @@ then
         then
         printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
         else
-          echo "ping check of the gateway: ${FIELD4}"
+          echo "  ping check of the gateway: ${FIELD4}"
           ping ${FIELD4} ${PINGCT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
@@ -1813,7 +1831,7 @@ then
 
     if [[ $FIELD2 = 'Service' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Service check"
       fi
@@ -1931,7 +1949,7 @@ then
     
     if [[ $FIELD2 = 'Group' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Group check"
       fi
@@ -1951,7 +1969,7 @@ then
     
     if [[ $FIELD2 = 'Sudoers' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Sudoers check"
       fi
@@ -1972,7 +1990,7 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Openview' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Openview check"
       fi
@@ -1985,7 +2003,7 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Netbackup' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Netbackup check"
       fi
@@ -1998,7 +2016,7 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Datapalette' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Datapalette check"
       fi
@@ -2011,7 +2029,7 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'OpNet' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Opnet check"
       fi
@@ -2024,7 +2042,7 @@ then
 # it's supposed to be installed, let's check
     if [[ $FIELD2 = 'Centrify' ]]
     then
-      if [[ ${DEBUG} = 'yes' ]]
+      if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Centrify check"
       fi
