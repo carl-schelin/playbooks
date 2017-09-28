@@ -308,6 +308,10 @@ check_active_employees() {
       fi
     done
   fi
+  if [[ ${DEBUG} = '1' ]]
+  then
+    echo "Exiting check_active_employees()"
+  fi
 }
 
 
@@ -359,6 +363,10 @@ check_centrify() {
       printf "%b\n" "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
     fi
   fi
+  if [[ ${DEBUG} = '2' ]]
+  then
+    echo "Exiting check_centrify()"
+  fi
 }
 
 
@@ -367,6 +375,10 @@ check_centrify() {
 ######################
 
 check_cfg2html() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_cfg2html(28)"
+  fi
   if [[ ! -d /opt/intrado/cfghtml ]]
   then
     printf "%b\n" "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
@@ -375,6 +387,10 @@ check_cfg2html() {
     then
       printf "%b\n" "  ${RED}cfg2html has not been run${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '28' ]]
+  then
+    echo "Exiting check_cfg2html()"
   fi
 }
 
@@ -417,6 +433,10 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '3' ]]
+  then
+    echo "Exiting check_data_palette()"
   fi
 }
 
@@ -462,6 +482,10 @@ check_default_passwords() {
       printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
     fi
   done
+  if [[ ${DEBUG} = '4' ]]
+  then
+    echo "Exiting check_default_passwords()"
+  fi
 }
 
 
@@ -490,6 +514,10 @@ check_disk_suite() {
     then
       printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '5' ]]
+  then
+    echo "Exiting check_disk_suite()"
   fi
 }
 
@@ -522,6 +550,10 @@ check_email() {
     fi
   else
     printf "%b\n" "    ${RED}Email server is not pingable${RESET}" >> $LOG
+  fi
+  if [[ ${DEBUG} = '5' ]]
+  then
+    echo "Exiting check_email()"
   fi
 }
 
@@ -639,6 +671,10 @@ check_group_membership() {
       done
     fi
   done
+  if [[ ${DEBUG} = '6' ]]
+  then
+    echo "Exiting check_group_membership()"
+  fi
 }
 
 
