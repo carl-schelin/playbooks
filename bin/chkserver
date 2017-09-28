@@ -1482,7 +1482,7 @@ check_time() {
           else
             if [[ $OUTPUT = '377' ]]
             then
-              printf "%b\n" "      ${RED}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
+              printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
             else
               printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
             fi
