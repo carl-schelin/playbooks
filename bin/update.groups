@@ -66,26 +66,33 @@ do
 
 # update the group info with what's in the group.master file
       DONE=`grep "^${GROUP}:" /etc/group`
+      PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
       DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
-      if [[ ! ${DONE} = "${GROUP}:x:${GID}:${GROUPLIST}" ]]
+      if [[ ! ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
       then
 
         if [[ ${DEBUG} = 'yes' ]]
         then
           echo "Would Backup: cp /etc/group /etc/group-${DATE}" >> ${LOG}
-          echo "Would Update: sed -e \"s/${GROUP}:x:${GID}:.*/${GROUP}:x:${GID}:${GROUPLIST}/g\" /etc/group-${DATE} to /etc/group" >> ${LOG}
+          echo "Would Update: sed -e \"s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g\" /etc/group-${DATE} to /etc/group" >> ${LOG}
           echo "Would Send Changelog: Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" >> ${LOG}
-        else
-          if [[ -f /etc/group-${DATE} ]]
+        fi
+        if [[ ${DEBUG} = 'yes' ]]
+        then
+# update just the sysadmin group everywhere.
+          if [[ ${GROUP} = 'sysadmin' ]]
           then
-            sed -e "s/${GROUP}:x:${GID}:.*/${GROUP}:x:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
-            echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
-          else
-            cp -p /etc/group /etc/group-${DATE}
-            if [[ $? = 0 ]]
+            if [[ -f /etc/group-${DATE} ]]
             then
-              sed -e "s/${GROUP}:x:${GID}:.*/${GROUP}:x:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
+              sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
               echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+            else
+              cp -p /etc/group /etc/group-${DATE}
+              if [[ $? = 0 ]]
+              then
+                sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
+                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+              fi
             fi
           fi
         fi
