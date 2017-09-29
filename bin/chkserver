@@ -105,8 +105,9 @@
 # 2017/09/27 - CS - Added nrpe (Nagios) check function
 # 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
 # 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
+# 2017/09/29 - CS - Increased debugging info again
 
-echo "chkserver v1.132"
+echo "chkserver v1.134"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -733,6 +734,10 @@ check_interfaces() {
   then
     printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> $LOG
   fi
+  if [[ ${DEBUG} = '7' ]]
+  then
+    echo "Exiting check_interfaces()"
+  fi
 }
 
 
@@ -753,6 +758,10 @@ check_intrado() {
     then
       printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '8' ]]
+  then
+    echo "Exiting check_intrado()"
   fi
 }
 
@@ -786,6 +795,10 @@ check_jumpstart() {
   else
     printf "%b\n" "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
   fi
+  if [[ ${DEBUG} = '9' ]]
+  then
+    echo "Exiting check_jumpstart()"
+  fi
 }
 
 
@@ -804,6 +817,10 @@ check_ksh() {
     then
       printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '10' ]]
+  then
+    echo "Exiting check_ksh()"
   fi
 }
 
@@ -845,6 +862,10 @@ check_kubernetes() {
       done
     done
   fi
+  if [[ ${DEBUG} = '11' ]]
+  then
+    echo "Exiting check_kubernetes()"
+  fi
 }
 
 
@@ -881,6 +902,10 @@ check_logs() {
   then
     printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> $LOG
   fi
+  if [[ ${DEBUG} = '12' ]]
+  then
+    echo "Exiting check_logs()"
+  fi
 }
 
 
@@ -901,6 +926,10 @@ check_lsof() {
     then
       printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '13' ]]
+  then
+    echo "Exiting check_lsof()"
   fi
 }
 
@@ -1001,6 +1030,10 @@ check_netbackup() {
       fi
     fi
   fi
+  if [[ ${DEBUG} = '14' ]]
+  then
+    echo "Exiting check_netbackup()"
+  fi
 }
 
 
@@ -1024,6 +1057,10 @@ check_nrpe() {
       printf "%b\n" "    ${GREEN}The NRPE agent is running${RESET}" >> $LOG
     fi
   fi
+  if [[ ${DEBUG} = '15' ]]
+  then
+    echo "Exiting check_nrpe()"
+  fi
 }
 
 
@@ -1046,48 +1083,37 @@ check_openview() {
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> $LOG
     else
       printf "%b\n" "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
-      ping 10.109.243.19 ${PINGCT} > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}Longmont Openview VIP is pingable${RESET}" >> $LOG
-        if [[ ! -z ${NETCAT} ]]
-        then
-# check for access to the vips; Longmont and Miami
-#10.109.243.19	lnmtcodcom1vip.scc911.com	lnmtcodcom1vip
-          echo "  nc check of Longmont Openview Server"
-          echo "" | ${NETCAT} -w 2 -vn 10.109.243.19 383 > /dev/null 2>&1
-          if [[ $? = 0 ]]
-          then
-            printf "%b\n" "    ${GREEN}Longmont VIP is accessible${RESET}" >> $LOG
-          else
-            printf "%b\n" "    ${RED}Longmont VIP is not accessible${RESET}" >> $LOG
-          fi
-        fi
-      else
-        printf "%b\n" "    ${RED}Longmont Openview VIP is not pingable${RESET}" >> $LOG
-      fi
 
-      ping 10.109.226.19 ${PINGCT} > /dev/null 2>&1
-      if [[ $? = 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}Miami Openview VIP is pingable${RESET}" >> $LOG
-        if [[ ! -z ${NETCAT} ]]
+      for i in Longmont:10.109.243.19 Miami:10.109.226.19
+      do
+        OVNAME=`echo $i | cut -f1 -d:`
+        OVIP=`echo $i | cut -f2 -d:`
+
+        ping ${OVIP} ${PINGCT} > /dev/null 2>&1
+        if [[ $? = 0 ]]
         then
-# check for access to the vips; Longmont and Miami
-#10.109.226.19	miamfldcom1vip.scc911.com	miamfldcom1vip
-          echo "  nc check of Miami Openview Server"
-          echo "" | ${NETCAT} -w 2 -vn 10.109.226.19 383 > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          printf "%b\n" "    ${GREEN}${OVNAME} Openview VIP is pingable${RESET}" >> $LOG
+          if [[ ! -z ${NETCAT} ]]
           then
-            printf "%b\n" "    ${GREEN}Miami VIP is accessible${RESET}" >> $LOG
-          else
-            printf "%b\n" "    ${RED}Miami VIP is not accessible${RESET}" >> $LOG
+            echo "  nc check of ${OVNAME} Openview Server"
+            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
+            else
+              printf "%b\n" "    ${RED}${OVNAME} VIP is not accessible${RESET}" >> $LOG
+            fi
           fi
+        else
+          printf "%b\n" "    ${RED}${OVNAME} Openview VIP is not pingable${RESET}" >> $LOG
         fi
-      else
-        printf "%b\n" "    ${RED}Miami Openview VIP is not pingable${RESET}" >> $LOG
-      fi
+      done
+
     fi
+  fi
+  if [[ ${DEBUG} = '16' ]]
+  then
+    echo "Exiting check_openview()"
   fi
 }
 
@@ -1147,6 +1173,10 @@ check_opnet() {
       done
     fi
   fi 
+  if [[ ${DEBUG} = '17' ]]
+  then
+    echo "Exiting check_opnet()"
+  fi
 }
 
 
@@ -1206,6 +1236,10 @@ check_privileged_access() {
         fi
       fi
     done
+  fi
+  if [[ ${DEBUG} = '18' ]]
+  then
+    echo "Exiting check_privileged_access()"
   fi
 }
 
@@ -1296,6 +1330,10 @@ check_removeips() {
       fi
     fi
   fi
+  if [[ ${DEBUG} = '20' ]]
+  then
+    echo "Exiting check_removeips()"
+  fi
 }
 
 
@@ -1349,6 +1387,10 @@ check_resolver() {
       fi
     fi
   fi
+  if [[ ${DEBUG} = '21' ]]
+  then
+    echo "Exiting check_resolver()"
+  fi
 }
 
 
@@ -1371,6 +1413,10 @@ check_routetable() {
     cat $INTRADO/etc/routetable.output >> $LOG
     echo -en "${RESET}" >> $LOG
   fi
+  if [[ ${DEBUG} = '22' ]]
+  then
+    echo "Exiting check_routetable()"
+  fi
 }
 
 
@@ -1390,6 +1436,10 @@ check_rrdtool() {
     then
       printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '23' ]]
+  then
+    echo "Exiting check_rrdtool()"
   fi
 }
 
@@ -1412,6 +1462,10 @@ check_sudoers() {
     fi
   else
     printf "%b\n" "  ${RED}sudoers file not found${RESET}" >> $LOG
+  fi
+  if [[ ${DEBUG} = '24' ]]
+  then
+    echo "Exiting check_sudoers()"
   fi
 }
 
@@ -1456,6 +1510,10 @@ check_swap() {
         fi
       fi
     fi
+  fi
+  if [[ ${DEBUG} = '25' ]]
+  then
+    echo "Exiting check_swap()"
   fi
 }
 
@@ -1568,6 +1626,10 @@ check_time() {
   else
     printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> $LOG
   fi
+  if [[ ${DEBUG} = '26' ]]
+  then
+    echo "Exiting check_time()"
+  fi
 }
 
 
@@ -1611,6 +1673,10 @@ check_vmware_agent() {
     else
       printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
     fi
+  fi
+  if [[ ${DEBUG} = '27' ]]
+  then
+    echo "Exiting check_vmware_agent()"
   fi
 }
 
@@ -1719,7 +1785,8 @@ check_active_employees
 
 check_kubernetes
 
-check_lsof
+# disable as it's really not helping; lots of deleted files on all systems.
+#check_lsof
 
 check_disk_suite
 
