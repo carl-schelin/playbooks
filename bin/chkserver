@@ -106,8 +106,9 @@
 # 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
 # 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
 # 2017/09/29 - CS - Increased debugging info again
+# 2017/10/02 - CS - Updated check_sudoers to verify group entries in the sudoers file exist on the system
 
-echo "chkserver v1.134"
+echo "chkserver v1.135"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1455,14 +1456,53 @@ check_sudoers() {
   fi
   if [[ -f ${SUDOERS} ]]
   then
+    if [[ ${DEBUG} = '24' ]]
+    then
+      echo "  Found ${SUDOERS}"
+    fi
     grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
     if [[ $? = 1 ]]
     then
       printf "%b\n" "  ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
     fi
+
+# now check to make sure groups in sudoers are present.
+    if [[ ${DEBUG} = '24' ]]
+    then
+      echo "  Checking groups are a real group."
+    fi
+    for i in `grep -v "^#" ${SUDOERS} | grep "^%" | awk '{print $1}' | cut -f2 -d%`
+    do
+      if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
+      then
+        if [[ ${DEBUG} = '24' ]]
+        then
+          OUTPUT=`grep "^${i}:" /etc/group`
+          echo "    Checking ^${i}: in /etc/group. Found: ${OUTPUT}"
+        fi
+        grep "^${i}:" /etc/group > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist in /etc/group${RESET}" >> $LOG
+        fi
+      else
+        if [[ ${DEBUG} = '24' ]]
+        then
+          OUTPUT=`getent group ${i}`
+          echo "    Checking for ^${i}:. Found: ${OUTPUT}"
+        fi
+        getent group ${i} > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist${RESET}" >> $LOG
+        fi
+      fi
+    done
+
   else
     printf "%b\n" "  ${RED}sudoers file not found${RESET}" >> $LOG
   fi
+
   if [[ ${DEBUG} = '24' ]]
   then
     echo "Exiting check_sudoers()"
