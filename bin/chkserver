@@ -107,8 +107,9 @@
 # 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
 # 2017/09/29 - CS - Increased debugging info again
 # 2017/10/02 - CS - Updated check_sudoers to verify group entries in the sudoers file exist on the system
+# 2017/10/02 - CS - Updated check_group to check for a centrify group
 
-echo "chkserver v1.135"
+echo "chkserver v1.136"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -585,18 +586,27 @@ check_group_membership() {
 # check all system groups to see if they're in the group.master file
   for i in ${GROUPLIST}
   do
-# look for the hostname first then all servers if hostname not found
-    GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+# look for the centrify flag first then hostname, then all servers if hostname not found
+    GROUP=""
+    if [[ ${CENTRIFY} = 'yes' ]]
+    then
+      GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+    fi
+# add other IDM's here
     if [[ -z ${GROUP} ]]
     then
-      GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
-# check non-standard groups
+      GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
       if [[ -z ${GROUP} ]]
       then
-        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
-        if [[ ! -z ${GROUP} ]]
+        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+# check non-standard groups
+        if [[ -z ${GROUP} ]]
         then
-          printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> $LOG
+          GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+          if [[ ! -z ${GROUP} ]]
+          then
+            printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> $LOG
+          fi
         fi
       fi
     fi
@@ -643,25 +653,36 @@ check_group_membership() {
 
       for j in ${USERLIST}
       do
-# look for the hostname first, if not found, then check the * groups. if not found, check the ? groups
-        GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
+# look for the centrify flag first, if not found, then check the hostname, then * groups. if not found, check the ? groups
+        GRPFND=""
+        if [[ ${CENTRIFY} = 'yes' ]]
+        then
+          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^centrify:${i}:"`
+        fi
         if [[ -z ${GRPFND} ]]
         then
-          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:"`
+          GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
           if [[ -z ${GRPFND} ]]
           then
-            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:"`
-            if [[ ! -z ${GRPFND} ]]
+            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:"`
+            if [[ -z ${GRPFND} ]]
             then
-              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
-              FOUND="?:${i}"
+              GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:"`
+              if [[ ! -z ${GRPFND} ]]
+              then
+                PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+                FOUND="?:${i}"
+              fi
+            else
+              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              FOUND="*:${i}"
             fi
           else
-            PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
-            FOUND="*:${i}"
+            PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+            FOUND="${HOSTNAME}:${i}"
           fi
         else
-          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)"`
           FOUND="${HOSTNAME}:${i}"
         fi
 
