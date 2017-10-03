@@ -126,7 +126,7 @@ RESET="\033[0m"
 INTRADO=/opt/intrado
 LOG=$INTRADO/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
-PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin; export PATH
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
 MONSERVERS=""
 
@@ -948,6 +948,57 @@ check_lsof() {
   if [[ ${DEBUG} = '13' ]]
   then
     echo "Exiting check_lsof()"
+  fi
+}
+
+
+######################
+### Check the system memory
+######################
+
+check_memory() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering Memory check"
+  fi
+
+  if [[ ${OS} = 'Linux' ]]
+  then
+# in kb
+    MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+    COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
+  fi
+
+  if [[ ${OS} = 'SunOS' ]]
+  then
+# in mb
+    MEMORY=`prtconf | grep Memory | awk '{print $3}'`
+    COUNT=$(( $MEMORY / 1024 + 1 ))
+  fi
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+# in mb
+    MEMORY=`machinfo | grep Memory: | awk '{print $2}'`
+    if [[ -z ${MEMORY} ]]
+    then
+      MEMORY=`machinfo | grep "Memory =" | awk '{print $3}'`
+    fi
+    COUNT=$(( $MEMORY / 1024 + 1 ))
+  fi
+
+  APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${INTRADO}/etc/chkserver.exclude`
+# if blank, then we didn't find an approved value, continue with the check
+  if [[ "${APPROVED}" = "" ]]
+  then
+    if [[ $COUNT -ne $FIELD3 ]]
+    then
+      printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+    else
+      printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+    fi
+  else
+    printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> $LOG
   fi
 }
 
@@ -1921,27 +1972,7 @@ then
     
     if [[ $FIELD2 = 'Memory' ]]
     then
-      if [[ ! ${DEBUG} = 'no' ]]
-      then
-        echo "Entering Memory check"
-      fi
-
-# looking for a skip entry in the chkserver.exclude file
-      MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
-      COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
-      APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${INTRADO}/etc/chkserver.exclude`
-# if blank, then we didn't find an approved value, continue with the check
-      if [[ "${APPROVED}" = "" ]]
-      then
-        if [[ $COUNT -ne $FIELD3 ]]
-        then
-          printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
-        else
-          printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
-        fi
-      else
-        printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> $LOG
-      fi
+      check_memory();
     fi
     
     if [[ $FIELD2 = 'IP' ]]
