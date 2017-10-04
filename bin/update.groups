@@ -8,6 +8,7 @@
 # get the current id of the sysadmin group
 # get the centrify status
 # get the list of acceptable users in sysadmin from the group.master file
+# need to add a check for Centrify groups
 
 PATH="$PATH:/bin:/usr/bin:/sbin:/usr/sbin"; export PATH
 INTRADO=/opt/intrado
@@ -16,6 +17,15 @@ DATE=`date +"%Y%m%d"`
 LOG=${INTRADO}/log/update.groups.output
 DEBUG="no"
 DEBUG="yes"
+
+if [[ -f /usr/sbin/adclient ]]
+then
+  /usr/bin/adinfo > /dev/null
+  if [[ $? = 0 ]]
+  then
+    CENTRIFY='yes'
+  fi
+fi
 
 if [[ ! -f ${INTRADO}/etc/group.master ]]
 then
@@ -38,10 +48,19 @@ do
 
   GROUP=`grep "^${HOSTNAME}:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
   GROUPLIST=`grep "^${HOSTNAME}:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+
   if [[ -z ${GROUP} ]]
   then
-    GROUP=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-    GROUPLIST=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+    if [[ ${CENTRIFY} = 'yes' ]]
+    then
+      GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+      GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+    fi
+    if [[ -z ${GROUP} ]]
+    then
+      GROUP=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+      GROUPLIST=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+    fi
   fi
 
   if [[ ! -z ${GROUP} ]]
