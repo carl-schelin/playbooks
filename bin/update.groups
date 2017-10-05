@@ -19,6 +19,22 @@ LOG=${INTRADO}/log/update.groups.output
 DEBUG="no"
 DEBUG="yes"
 
+if [[ ! -f ${INTRADO}/etc/group.master ]]
+then
+  echo "No group.master file. Exiting."
+  exit 1
+fi
+
+if [[ -f ${LOG} ]]
+then
+  rm ${LOG}
+fi
+
+if [[ ${DEBUG} = 'yes' ]]
+then
+  echo "Date: ${DATE}" >> ${LOG}
+fi
+
 if [[ -f /usr/sbin/adclient ]]
 then
   /usr/bin/adinfo > /dev/null
@@ -26,17 +42,6 @@ then
   then
     CENTRIFY='yes'
   fi
-fi
-
-if [[ ! -f ${INTRADO}/etc/group.master ]]
-then
-  echo "No group.master file. Exiting."
-  exit 1
-fi
-
-if [[ ${DEBUG} = 'yes' ]]
-then
-  echo "Date: ${DATE}" >> ${LOG}
 fi
 
 for i in `cut -f1 -d: /etc/group`
