@@ -104,8 +104,9 @@ do
         fi
         if [[ ${DEBUG} = 'yes' ]]
         then
-# update just the sysadmin group everywhere.
-          if [[ ${GROUP} = 'sysadmin' ]]
+#  start updating groups one by one just to be cautious.
+#  webapps update was approved by Gerald and Ashley.
+          if [[ ${GROUP} = 'sysadmin' ]] || [[ ${GROUP} = 'uxadmins' ]] || [[ ${GROUP} = 'webapps' ]] || [[ ${GROUP} = 'webadmin' ]]
           then
             if [[ -f /etc/group-${DATE} ]]
             then
