@@ -1972,7 +1972,7 @@ then
     
     if [[ $FIELD2 = 'Memory' ]]
     then
-      check_memory();
+      check_memory()
     fi
     
     if [[ $FIELD2 = 'IP' ]]
