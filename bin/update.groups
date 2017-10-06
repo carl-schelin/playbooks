@@ -59,10 +59,18 @@ do
   then
     if [[ ${CENTRIFY} = 'yes' ]]
     then
-# see if the group exists before updating, otherwise use the standard
-      getent group ${i} > /dev/null
-      if [[ $? = 0 ]]
+# in some systems, uxadmins doesn't exist. if 'sysadmin' group is being checked, see if 'uxadmins' group exists.
+# if it doesn't, then update 'sysadmin' with the correct 'sysadmin' designation
+# add this for any other environment where centrify is installed but the co-group doesn't exist (webapps/webadmin?)
+      if [[ ${i} = 'sysadmin' ]]
       then
+        getent group uxadmins > /dev/null
+        if [[ $? = 0 ]]
+        then
+          GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+          GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+        fi
+      else
         GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
         GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
       fi
