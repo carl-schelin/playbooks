@@ -59,8 +59,13 @@ do
   then
     if [[ ${CENTRIFY} = 'yes' ]]
     then
-      GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-      GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+# see if the group exists before updating, otherwise use the standard
+      getent group ${i} > /dev/null
+      if [[ $? = 0 ]]
+      then
+        GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+        GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+      fi
     fi
     if [[ -z ${GROUP} ]]
     then
