@@ -69,22 +69,24 @@ do
           GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
           GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
         fi
-      fi
+      else
 # add this for any other environment where centrify is installed but the co-group doesn't exist (webapps/webadmin?)
-      if [[ ${i} = 'webapps' ]]
-      then
-        getent group webadmin > /dev/null
-        if [[ $? = 0 ]]
+        if [[ ${i} = 'webapps' ]]
         then
-          GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-          GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+          getent group webadmin > /dev/null
+          if [[ $? = 0 ]]
+          then
+            GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+            GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+          fi
+        else
+# if neither are being checked, then check as normal
+          if [[ -z ${GROUP} ]]
+          then
+            GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
+            GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+          fi
         fi
-      fi
-# if neither, then check as normal
-      if [[ -z ${GROUP} ]]
-      then
-        GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-        GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
       fi
     fi
     if [[ -z ${GROUP} ]]
