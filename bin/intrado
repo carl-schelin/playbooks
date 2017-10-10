@@ -93,20 +93,6 @@ DOWEEK=`date +"%u"`
 # Day of Month, 01-31
 DOMONTH=`date +"%d"`
 
-# set group info for the group ownership of the intrado directory.
-# the assumption is that unixsvc owns /opt/intrado but the
-# group can be sysadmin or uxadmins if the group exists (centrify).
-# we're not using centrify on hp or freebsd so it's safe to check just
-# linux systems using getent group
-if [[ $OS = 'SunOS' ]] || [[ $OS = 'Linux' ]]
-then
-  getent group uxadmins
-  if [[ $? = 0 ]]
-  then
-    GROUP=uxadmins
-  fi
-fi
-
 # Roll and compress the logs at the beginning of the month
 if [[ $DOMONTH = '01' ]]
 then
