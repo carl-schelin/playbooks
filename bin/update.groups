@@ -123,6 +123,8 @@ do
       if [[ ! ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
       then
 
+# this is just for testing. Ultimately the following block and the 'debug' that follows would be removed and just the block starting with the comments would remain.
+# mainly we don't want to willy-nilly update everyone at once. Lots and lots of testing.
         if [[ ${DEBUG} = 'yes' ]]
         then
           echo "Would Backup: cp /etc/group /etc/group-${DATE}" >> ${LOG}
@@ -135,16 +137,39 @@ do
 #  webapps update was approved by Gerald and Ashley.
           if [[ ${GROUP} = 'sysadmin' ]] || [[ ${GROUP} = 'uxadmins' ]] || [[ ${GROUP} = 'webapps' ]] || [[ ${GROUP} = 'webadmin' ]]
           then
+            if [[ ${PASSWD} = '*' ]]
+            then
+              PASSWD='\*';
+            fi
             if [[ -f /etc/group-${DATE} ]]
             then
               sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
-              echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+              DONE=`grep "^${GROUP}:" /etc/group`
+              PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
+              DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
+              if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
+              then
+                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+                grpconv
+              else
+                echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
+              fi
             else
               cp -p /etc/group /etc/group-${DATE}
               if [[ $? = 0 ]]
               then
                 sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
-                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+
+                DONE=`grep "^${GROUP}:" /etc/group`
+                PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
+                DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
+                if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
+                then
+                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+                  grpconv
+                else
+                  echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
+                fi
               fi
             fi
           fi
