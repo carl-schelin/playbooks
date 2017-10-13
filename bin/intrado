@@ -101,6 +101,15 @@ then
   gzip -9 $LOG.$DATE
 fi
 
+if [[ -f /etc/cron.allow ]]
+then
+  cp /etc/cron.allow ${INTRADO}/etc
+fi
+if [[ -f /etc/cron.deny ]]
+then
+  cp /etc/cron.deny ${INTRADO}/etc
+fi
+
 # ensure directories exist and are writeable
 if [[ ! -d $INTRADO/var ]]
 then
