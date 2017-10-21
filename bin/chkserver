@@ -108,8 +108,9 @@
 # 2017/09/29 - CS - Increased debugging info again
 # 2017/10/02 - CS - Updated check_sudoers to verify group entries in the sudoers file exist on the system
 # 2017/10/02 - CS - Updated check_group to check for a centrify group
+# 2017/10/21 - CS - Fix hosts.allow check to permit spaces
 
-echo "chkserver v1.136"
+echo "chkserver v1.140"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1042,7 +1043,7 @@ check_netbackup() {
             fi
             for nbip in ${NBLIST}
             do
-              grep "^${nb}:" /etc/hosts.allow | egrep "(:|,)${nbip}(,|$)" > /dev/null
+              grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)" > /dev/null
               if [[ ! $? = 0 ]]
               then
                 printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> $LOG
