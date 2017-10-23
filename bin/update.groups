@@ -19,6 +19,13 @@ LOG=${INTRADO}/log/update.groups.output
 DEBUG="no"
 DEBUG="yes"
 
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f $INTRADO/etc/changefreeze ]]
+then
+  echo "Changefreeze in effect" >> $LOG
+  exit 0
+fi
+
 if [[ ! -f ${INTRADO}/etc/group.master ]]
 then
   echo "No group.master file. Exiting."
