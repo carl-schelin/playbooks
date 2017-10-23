@@ -7,8 +7,15 @@
 
 HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
 OS=`uname`
-SUDOTMP=/opt/intrado/etc/sudoers.unixsvc
+ADMIN=/opt/intrado
+SUDOTMP=$ADMIN/etc/sudoers.unixsvc
 PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin; export PATH
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f $ADMIN/etc/changefreeze ]]
+then
+  exit 0
+fi
 
 # default bin
 BINSH=/bin/sh
