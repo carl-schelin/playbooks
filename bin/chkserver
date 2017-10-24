@@ -1800,21 +1800,28 @@ check_time() {
 
           if [[ $T_MSG = 'chrony' ]]
           then
-            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
+            REACH=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
+            STATUS=`${T_COMMAND} | grep ${i} | cut -c2`
           fi
           if [[ $T_MSG = 'ntp' ]]
           then
-            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
+            REACH=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
+            STATUS=`${T_COMMAND} | grep ${i} | cut -c1`
           fi
-          if [[ -z ${OUTPUT} ]]
+          if [[ -z ${REACH} ]]
           then
-            printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
+            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${i}.${RESET}" >> $LOG
           else
-            if [[ $OUTPUT = '377' ]]
+            if [[ $REACH = '377' ]]
             then
-              printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
+              if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
+              then
+                printf "%b\n" "      ${GREEN}GPS Server ${i} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
+              else
+                printf "%b\n" "      ${RED}GPS Server ${i} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
+              fi
             else
-              printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
+              printf "%b\n" "      ${RED}GPS Server ${i} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> $LOG
             fi
           fi
         fi
