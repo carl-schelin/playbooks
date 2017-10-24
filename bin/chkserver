@@ -111,8 +111,9 @@
 # 2017/10/21 - CS - Fix hosts.allow check to permit spaces
 # 2017/10/21 - CS - Added check_cpus
 # 2017/10/21 - CS - Added check_addresses
+# 2017/10/24 - CS - Reorder time check to avoid extra unnecessary errors
 
-echo "chkserver v1.141"
+echo "chkserver v1.142"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1787,30 +1788,31 @@ check_time() {
         then
           printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
         else
-          if [[ $T_MSG = 'chrony' ]]
-          then
-            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
-          fi
-          if [[ $T_MSG = 'ntp' ]]
-          then
-            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
-          fi
-          if [[ -z ${OUTPUT} ]]
-          then
-            printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
-          else
-            if [[ $OUTPUT = '377' ]]
-            then
-              printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
-            else
-              printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
-            fi
-          fi
           echo "  time check of time server: ${i}"
           ntpdate -q ${i} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
             printf "%b\n" "      ${GREEN}GPS Server ${i} is providing time.${RESET}" >> $LOG
+
+            if [[ $T_MSG = 'chrony' ]]
+            then
+              OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
+            fi
+            if [[ $T_MSG = 'ntp' ]]
+            then
+              OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
+            fi
+            if [[ -z ${OUTPUT} ]]
+            then
+              printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
+            else
+              if [[ $OUTPUT = '377' ]]
+              then
+                printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
+              else
+                printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
+              fi
+            fi
           else
             printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET}" >> $LOG
           fi
