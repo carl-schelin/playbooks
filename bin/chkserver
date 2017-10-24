@@ -1814,7 +1814,7 @@ check_time() {
               fi
             fi
           else
-            printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET}" >> $LOG
+            printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET} ntpdate -q ${i} failed" >> $LOG
           fi
         fi
       done
