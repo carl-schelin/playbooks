@@ -112,8 +112,9 @@
 # 2017/10/21 - CS - Added check_cpus
 # 2017/10/21 - CS - Added check_addresses
 # 2017/10/24 - CS - Reorder time check to avoid extra unnecessary errors
+# 2017/10/24 - CS - Some ntpdate checks fail even though ntp is working. Put the check back in but still in a reverse order
 
-echo "chkserver v1.142"
+echo "chkserver v1.144"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1793,28 +1794,28 @@ check_time() {
           if [[ $? = 0 ]]
           then
             printf "%b\n" "      ${GREEN}GPS Server ${i} is providing time.${RESET}" >> $LOG
-
-            if [[ $T_MSG = 'chrony' ]]
-            then
-              OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
-            fi
-            if [[ $T_MSG = 'ntp' ]]
-            then
-              OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
-            fi
-            if [[ -z ${OUTPUT} ]]
-            then
-              printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
-            else
-              if [[ $OUTPUT = '377' ]]
-              then
-                printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
-              else
-                printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
-              fi
-            fi
           else
             printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET} ntpdate -q ${i} failed" >> $LOG
+          fi
+
+          if [[ $T_MSG = 'chrony' ]]
+          then
+            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
+          fi
+          if [[ $T_MSG = 'ntp' ]]
+          then
+            OUTPUT=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
+          fi
+          if [[ -z ${OUTPUT} ]]
+          then
+            printf "%b\n" "      ${RED}Unable to determine Reach for GPS Server ${i}.${RESET}" >> $LOG
+          else
+            if [[ $OUTPUT = '377' ]]
+            then
+              printf "%b\n" "      ${GREEN}GPS Server ${i} Reach is good. (377)${RESET}" >> $LOG
+            else
+              printf "%b\n" "      ${RED}GPS Server ${i} Reach is ${OUTPUT} and should be 377.${RESET}" >> $LOG
+            fi
           fi
         fi
       done
