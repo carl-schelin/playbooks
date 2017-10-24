@@ -1,0 +1,51 @@
+#!/usr/bin/ksh
+
+# profile
+# Carl Schelin
+# usage: add to your .profile or .bash (/opt/intrado/bin/profile) so you see messages upon login
+# check the system to make sure the intrado script has run
+# check to see if the chkserver.output file exists
+# then check for errors in the chkserver.output file
+# then check for warnings in the chkserver.output file
+# 
+
+if [[ ! -d /opt/intrado ]]
+then
+  echo "Intrado scripts have not been installed."
+else
+  if [[ ! -f /opt/intrado/var/intrado.log ]]
+  then
+    echo "Intrado script has not been run yet."
+  else
+    RUNDATE=`ls -l /opt/intrado/var/intrado.log | awk '{print $7}'`
+    TODAY=`date +"%d"`
+    if [[ $RUNDATE -ne $TODAY ]]
+    then
+      echo "/opt/intrado/var/intrado.log didn't run today (last ran: ${RUNDATE})"
+    else
+      if [[ ! -f /opt/intrado/etc/chkserver.output ]]
+      then
+        echo "/opt/intrado/etc/chkserver.output doesn't exist"
+      else
+        echo "Errors:"
+        OUTPUT=`grep 31m /opt/intrado/etc/chkserver.output | grep -v Error`
+        if [[ ! -z $OUTPUT ]]
+        then
+          grep 31m /opt/intrado/etc/chkserver.output | grep -v Error
+        else
+          echo "No chkserver errors found"
+        fi
+        echo ""
+        echo "Warnings:"
+        OUTPUT=`grep 33m /opt/intrado/etc/chkserver.output | grep -v Warning`
+        if [[ ! -z $OUTPUT ]]
+        then
+          grep 33m /opt/intrado/etc/chkserver.output | grep -v Warning
+        else
+          echo "No chkserver warnings found"
+        fi
+      fi
+    fi
+  fi
+fi
+
