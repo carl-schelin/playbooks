@@ -1252,7 +1252,7 @@ check_openview() {
           if [[ ! -z ${NETCAT} ]]
           then
             echo "  nc check of ${OVNAME} Openview Server"
-            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
+            echo "\n\n" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
               printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
