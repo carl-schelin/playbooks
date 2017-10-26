@@ -1798,22 +1798,28 @@ check_time() {
             printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET} ntpdate -q ${i} failed" >> $LOG
           fi
 
+# Updated NTP check - validates ticker status as well as reachability
+# The modified T_COMMAND/awk pipelines now return a string with only "<status> <reachability>" for the provided IP
           if [[ $T_MSG = 'chrony' ]]
           then
-            REACH=`${T_COMMAND} | grep ${i} | awk '{print $5}'`
-            STATUS=`${T_COMMAND} | grep ${i} | cut -c2`
+            OUTPUT=`${T_COMMAND} | awk /${i}/'{print substr($1,2,1),$5}'`
           fi
           if [[ $T_MSG = 'ntp' ]]
           then
-            REACH=`${T_COMMAND} | grep ${i} | awk '{print $7}'`
-            STATUS=`${T_COMMAND} | grep ${i} | cut -c1`
+            OUTPUT=`${T_COMMAND} | awk /${i}/'{print substr($1,1,1),$7}'`
           fi
+# Then these ksh constructs split out the status and reachability values without a fork/exec subshell by
+# trimming a prefix/suffix from the combined string using built-in parameter expansion
+          REACH="${OUTPUT##* }"
+          STATUS="${OUTPUT%% *}"
           if [[ -z ${REACH} ]]
           then
             printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${i}.${RESET}" >> $LOG
           else
+# Reachability should always be 377 - anything else is a problem of some kind, regardless of status.
             if [[ $REACH = '377' ]]
             then
+# But even if reachability is 377, status must be '*' or '+' also or there's a different kind of problem.
               if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
               then
                 printf "%b\n" "      ${GREEN}GPS Server ${i} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
