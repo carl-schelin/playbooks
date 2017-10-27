@@ -417,7 +417,7 @@ check_centrify() {
 #Last password set: 2017-07-14 15:47:36 MDT
 #CentrifyDC mode:   connected
 #Licensed Features: Enabled
-        ADDOMAIN=`/usr/bin/adinfo | grep 'Joined to domain:' | awk '{print $4}'`
+        ADDOMAIN=`/usr/bin/adinfo | awk '/Joined to domain:/{print $4}'`
         printf "%b\n" "    ${GREEN}Centrify is connected to ${ADDOMAIN}${RESET}" >> $LOG
       fi
 #Linux:cschelin@infltx10$ adinfo
@@ -593,13 +593,13 @@ check_disk_suite() {
   then
     printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> $LOG
 
-    OUTPUT=`metadb | cut -c1-20 | egrep "(W|M|D|F|S|R)" | awk '{print $NF}' | head -1`
+    OUTPUT=`metadb | awk '/[WMDFSR]/{print $NF;exit}'`
     if [[ ! -z $OUTPUT ]]
     then
       printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> $LOG
     fi
 
-    OUTPUT=`metastat | grep metareplace | awk '{print $3" "$4}' | head -1`
+    OUTPUT=`metastat | awk '/metareplace/{print $3,$4;exit}'`
     if [[ ! -z $OUTPUT ]]
     then
       printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> $LOG
@@ -1052,25 +1052,25 @@ check_memory() {
   if [[ ${OS} = 'Linux' ]]
   then
 # in kb
-    MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+    MEMORY=`awk '/MemTotal/{print $2}' /proc/meminfo`
     COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
   fi
 
   if [[ ${OS} = 'SunOS' ]]
   then
 # in mb
-    MEMORY=`prtconf | grep Memory | awk '{print $3}'`
+    MEMORY=`prtconf | awk '/Memory/{print $3}'`
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
   if [[ ${OS} = 'HP-UX' ]]
   then
 # in mb
-    MEMORY=`machinfo | grep Memory: | awk '{print $2}'`
-    if [[ -z ${MEMORY} ]]
-    then
-      MEMORY=`machinfo | grep "Memory =" | awk '{print $3}'`
-    fi
+    MEMORY=`machinfo | awk '/Memory:/{print $2}/Memory =/{print $3}'`
+#    if [[ -z ${MEMORY} ]]
+#    then
+#      MEMORY=`machinfo | grep "Memory =" | awk '{print $3}'`
+#    fi
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
@@ -1166,7 +1166,7 @@ check_netbackup() {
       then
         printf "%b\n" "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
       else
-        OUTPUT=`egrep -v "(Backed Up|------------)" ${INTRADO}/etc/backups.output | head -1 | awk '{print $1}'`
+        OUTPUT=`awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${INTRADO}/etc/backups.output`
         if [[ $OS = 'Linux' ]]
         then
           BUDATE=`date --date=$OUTPUT +"%s"`
@@ -1424,7 +1424,7 @@ check_redhat_subscription() {
         echo "  Subscription Manager is installed, query server"
       fi
       printf "%b\n" "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
-      STATUS=`/usr/bin/subscription-manager list | grep "^Status:" | awk '{print $2}'`
+      STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
       if [[ ${DEBUG} = '19' ]]
       then
         echo "  Returned status: ${STATUS}"
@@ -1516,7 +1516,7 @@ check_resolver() {
         then
           printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
         else
-          for i in `grep -v "^#" /etc/resolv.conf | grep nameserver | awk '{print $2}'`
+          for i in `awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf`
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
             echo "  ping check of nameserver: ${i}"
@@ -1626,7 +1626,7 @@ check_sudoers() {
     then
       echo "  Checking groups are a real group."
     fi
-    for i in `grep -v "^#" ${SUDOERS} | grep "^%" | awk '{print $1}' | cut -f2 -d%`
+    for i in `awk '/^%/{sub(/%/,"",$1);print $1}' ${SUDOERS}`
     do
       if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
       then
@@ -1682,9 +1682,9 @@ check_swap() {
   then
     if [[ -f /usr/sbin/lvdisplay ]]
     then
-      SWAP=`grep swap /etc/fstab | awk '{print $1}'`
-      SIZE=`lvdisplay ${SWAP} | grep 'LV Size' | awk '{print $3}'`
-      TOTAL=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+      SWAP=`awk '/swap/{print $1}' /etc/fstab`
+      SIZE=`lvdisplay ${SWAP} | awk '/LV Size/{print $3}'`
+      TOTAL=`awk '/MemTotal/{print $2}' /proc/meminfo`
       MEMORY=$(( ${TOTAL} / 1024 / 1024 + 1 ))
 
       if [[ ${DEBUG} = '25' ]]
@@ -1693,7 +1693,7 @@ check_swap() {
       fi
 
 # try this with free instead
-      SWAP=`free | grep Swap | awk '{print $2}'`
+      SWAP=`free | awk '/Swap/{print $2}'`
       ADDED=`echo "${SWAP} / 1024 / 1024" | bc`
       SIZE=`echo "(${SWAP} / 1024 + ${ADDED}) / 1024" | bc`
 
@@ -1833,7 +1833,7 @@ check_time() {
         fi
       done
 
-      DRIFTFILE=`grep -v "^#" ${T_CONFIG} | grep driftfile | awk '{print $2}' | tail -1`
+      DRIFTFILE=`awk '/^[^#]?driftfile/{df=$2}END{print df}' ${T_CONFIG}`
       DRIFTPATH=`dirname $DRIFTFILE`
       if [[ -d ${DRIFTPATH} ]]
       then
