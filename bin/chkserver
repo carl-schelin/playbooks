@@ -825,9 +825,9 @@ check_interfaces() {
   if [[ $OS = 'HP-UX' ]]
   then
     OUTPUT=''
-    for i in `lanscan | grep lan | awk '{print $5}' > /dev/null`
+    for i in `lanscan | grep lan | awk '{print $5}'`
     do
-      OUTPUT="${OUTPU}`ifconfig $i | grep FAILED`"
+      OUTPUT="${OUTPUT}`ifconfig $i | grep FAILED`"
     done
   fi
   if [[ $OS = 'FreeBSD' ]]
