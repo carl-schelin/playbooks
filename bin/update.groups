@@ -169,7 +169,6 @@ do
 
                 DONE=`grep "^${GROUP}:" /etc/group`
                 PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
-                DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
                 if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
                 then
                   echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
