@@ -113,8 +113,9 @@
 # 2017/10/21 - CS - Added check_addresses
 # 2017/10/24 - CS - Reorder time check to avoid extra unnecessary errors
 # 2017/10/24 - CS - Some ntpdate checks fail even though ntp is working. Put the check back in but still in a reverse order
+# 2017/10/30 - CS - Added check_selinux to check selinux status
 
-echo "chkserver v1.144"
+echo "chkserver v1.151"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -1601,6 +1602,45 @@ check_rrdtool() {
 
 
 ######################
+### Check the status of selinux. Should be disabled. If enabled, permissive is warning, enforcing is error
+######################
+
+check_selinux() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_selinux(29)"
+  fi
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${DEBUG} = '29' ]]
+    then
+      echo ""
+    fi
+    printf "%b\n" "  ${GREEN}Checking selinux status${RESET}" >> $LOG
+    SESTATUS=`sestatus | awk '/status/ {print $3}'`
+    if [[ ${SESTATUS} = 'enabled' ]]
+    then
+      ENABLED=`sestatus | awk '/Current mode:/ {print $3}'`
+      if [[ ${ENABLED} = 'enforcing' ]]
+      then
+        printf "%b\n" "    ${RED}selinux is in Enforcing mode${RESET}" >> $LOG
+      fi
+      if [[ ${ENABLED} = 'permissive' ]]
+      then
+        printf "%b\n" "    ${YELLOW}selinux is in Permissive mode${RESET}" >> $LOG
+      fi
+    else
+      printf "%b\n" "    ${GREEN}selinux is Disabled${RESET}" >> $LOG
+    fi
+  fi
+  if [[ ${DEBUG} = '29' ]]
+  then
+    echo "Exiting check_selinux()"
+  fi
+}
+
+
+######################
 ### Check the sudoers file
 ######################
 
@@ -1978,6 +2018,8 @@ fi
 check_hostname
 
 check_sudoers
+
+check_selinux
 
 check_resolver
 
