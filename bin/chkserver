@@ -1290,7 +1290,7 @@ check_openview() {
         fi
       done
 
-      CERTS=`./ovcert -list | egrep -v "(Keystore Content|Certificates|\+)"`
+      CERTS=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore Content|Certificates|\+)"`
       if [[ -z ${CERTS} ]]
       then
         printf "%b\n" "    ${RED}No Certificates found. Is this server being monitored?${RESET} /opt/OV/bin/ovcert -list" >> $LOG
