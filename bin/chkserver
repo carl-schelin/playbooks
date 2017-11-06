@@ -114,8 +114,10 @@
 # 2017/10/24 - CS - Reorder time check to avoid extra unnecessary errors
 # 2017/10/24 - CS - Some ntpdate checks fail even though ntp is working. Put the check back in but still in a reverse order
 # 2017/10/30 - CS - Added check_selinux to check selinux status
+# 2017/11/06 - CS - Added check_techops to check to see if the directory exists.
+# 2017/11/06 - CS - Added a commented "number of checks" to be able to calculate totals.
 
-echo "chkserver v1.151"
+echo "chkserver v1.152"
 
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -244,6 +246,7 @@ EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
 
 ######################
 ### Check to make sure employees haven't departed (accounts need to be locked)
+### Number of Checks: [Number of users on the system]
 ######################
 
 check_active_employees() {
@@ -326,6 +329,7 @@ check_active_employees() {
 
 ######################
 ### Check assigned IP addresses
+### Number of Checks: 4 * [Number of interfaces] + 1
 ######################
 
 check_addresses() {
@@ -389,6 +393,7 @@ check_addresses() {
 
 ######################
 ### Check Centrify if installed
+### Number of Checks: 3
 ######################
 
 check_centrify() {
@@ -444,6 +449,7 @@ check_centrify() {
 
 ######################
 ### Check the status of cfg2html
+### Number of Checks: 2
 ######################
 
 check_cfg2html() {
@@ -469,6 +475,7 @@ check_cfg2html() {
 
 ######################
 ### Check the number of CPUs against what's requested
+### Number of Checks: 1
 ######################
 
 check_cpus() {
@@ -488,6 +495,7 @@ check_cpus() {
 
 ######################
 ### Check Data Palette if installed
+### Number of Checks: 3
 ######################
 
 check_data_palette() {
@@ -534,6 +542,7 @@ check_data_palette() {
 
 ######################
 ### Check default installation passwords
+### Number of Checks: 2 + [Number of Sysadmins]
 ######################
 
 check_default_passwords() {
@@ -582,6 +591,7 @@ check_default_passwords() {
 
 ######################
 ### Check the health of Solaris Disk Suite
+### Number of Checks: 2
 ######################
 
 check_disk_suite() {
@@ -615,6 +625,7 @@ check_disk_suite() {
 
 ######################
 ### Check access to the mail server
+### Number of Checks: 2
 ######################
 
 check_email() {
@@ -651,6 +662,7 @@ check_email() {
 
 ######################
 ### Check group memberships
+### Number of Checks: 5 * [Number of users on the system]
 ######################
 
 # todo: check for centrify to be installed
@@ -787,6 +799,7 @@ check_group_membership() {
 
 ######################
 ### Check the hostname
+### Number of Checks: 1
 ######################
 
 check_hostname() {
@@ -806,7 +819,8 @@ check_hostname() {
 
 
 ######################
-### Check to make sure intrado scripts have run
+### Check interfaces for status
+### Number of Checks: 1
 ######################
 
 check_interfaces() {
@@ -849,6 +863,7 @@ check_interfaces() {
 
 ######################
 ### Check to make sure intrado scripts have run
+### Number of Checks: 2
 ######################
 
 check_intrado() {
@@ -859,11 +874,11 @@ check_intrado() {
   if [[ ! -f /opt/intrado/var/intrado.log ]]
   then
     printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
-    CRON=`grep -v "^#" /var/spool/cron/root | grep "/opt/intrado/bin/intrado"`
-    if [[ -z $CRON ]]
-    then
-      printf "%b\n" "  ${RED}Need to update root's cron${RESET}" >> $LOG
-    fi
+  fi
+  CRON=`crontab -l | grep -v "^#" | grep "/opt/intrado/bin/intrado"`
+  if [[ -z $CRON ]]
+  then
+    printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> $LOG
   fi
   if [[ ${DEBUG} = '8' ]]
   then
@@ -874,6 +889,7 @@ check_intrado() {
 
 ######################
 ### Check access to the Jumpstart web site
+### Number of Checks: 2
 ######################
 
 check_jumpstart() {
@@ -910,6 +926,7 @@ check_jumpstart() {
 
 ######################
 ### Check to make sure ksh is linked. On RH7, ksh is in /bin vs /usr/bin as it is on every other system.
+### Number of Checks: 1
 ######################
 
 check_ksh() {
@@ -933,6 +950,7 @@ check_ksh() {
 
 ######################
 ### Check the status of running pods
+### Number of Checks: 2 * [Number of Containers to check]
 ######################
 
 check_kubernetes() {
@@ -976,7 +994,8 @@ check_kubernetes() {
 
 
 ######################
-### Check the status of Netbackup
+### Check to make sure logging is current (_something_ with today's date in the logs)
+### Number of Checks: 1
 ######################
 
 check_logs() {
@@ -1017,6 +1036,7 @@ check_logs() {
 
 ######################
 ### Check for deleted items indicating a lost log file typically
+### Number of Checks: 1
 ######################
 
 check_lsof() {
@@ -1042,6 +1062,7 @@ check_lsof() {
 
 ######################
 ### Check the system memory
+### Number of Checks: 2
 ######################
 
 check_memory() {
@@ -1093,6 +1114,7 @@ check_memory() {
 
 ######################
 ### Check the status of Netbackup
+### Number of Checks: 10
 ######################
 
 check_netbackup() {
@@ -1196,6 +1218,7 @@ check_netbackup() {
 
 ######################
 ### Check the status of Nagios Remote Plugin Executor
+### Number of Checks: 2
 ######################
 
 check_nrpe() {
@@ -1223,6 +1246,7 @@ check_nrpe() {
 
 ######################
 ### Check the status of Openview
+### Number of Checks: 5
 ######################
 
 check_openview() {
@@ -1266,6 +1290,12 @@ check_openview() {
         fi
       done
 
+      CERTS=`./ovcert -list | egrep -v "(Keystore Content|Certificates|\+)"`
+      if [[ -z ${CERTS} ]]
+      then
+        printf "%b\n" "    ${RED}No Certificates found. Is this server being monitored?${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+      fi
+
     fi
   fi
   if [[ ${DEBUG} = '16' ]]
@@ -1277,6 +1307,7 @@ check_openview() {
 
 ######################
 ### Check Opnet if found
+### Number of Checks: 6
 ######################
 
 check_opnet() {
@@ -1339,6 +1370,7 @@ check_opnet() {
 
 ######################
 ### Check to see if users who have privileged access have expired or shouldn't have it
+### Number of Checks: 2 * [Number of users on the system]
 ######################
 
 check_privileged_access() {
@@ -1403,6 +1435,7 @@ check_privileged_access() {
 
 ######################
 ### Check the status of subscriptions for Red Hat servers only (so not an OS check)
+### Number of Checks: 1
 ######################
 
 check_redhat_subscription() {
@@ -1457,6 +1490,7 @@ check_redhat_subscription() {
 
 ######################
 ### Check the status of RemoveIPS on Red Hat systems
+### Number of Checks: 2
 ######################
 
 check_removeips() {
@@ -1496,6 +1530,7 @@ check_removeips() {
 
 ######################
 ### Check the resolv.conf nameserver entries
+### Number of Checks: 2 * [Number of nameserver entries] + 1
 ######################
 
 check_resolver() {
@@ -1553,6 +1588,7 @@ check_resolver() {
 
 ######################
 ### Check the status of the routing tables
+### Number of Checks: 1
 ######################
 
 check_routetable() {
@@ -1579,6 +1615,7 @@ check_routetable() {
 
 ######################
 ### Check the status of rrdtool; should be running on Linux and Sun systems
+### Number of Checks: 1
 ######################
 
 check_rrdtool() {
@@ -1603,6 +1640,7 @@ check_rrdtool() {
 
 ######################
 ### Check the status of selinux. Should be disabled. If enabled, permissive is warning, enforcing is error
+### Number of Checks: 1
 ######################
 
 check_selinux() {
@@ -1642,6 +1680,7 @@ check_selinux() {
 
 ######################
 ### Check the sudoers file
+### Number of Checks: 3
 ######################
 
 check_sudoers() {
@@ -1707,6 +1746,7 @@ check_sudoers() {
 
 ######################
 ### Check to make sure swap is appropriatly sized
+### Number of Checks: 3
 ### For Red Hat:
 ### Swap >= Ram up to 8G
 ### Swap >= 8 Ram over 8G
@@ -1769,7 +1809,35 @@ check_swap() {
 
 
 ######################
+### Check to see if the /opt/techops[70] directory exists
+### Number of Checks: 2
+######################
+
+check_time() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_techops(30)"
+  fi
+  if [[ -d /opt/techops ]]
+  then
+    printf "%b\n" "  ${YELLOW}The /opt/techops directory still exists${RESET}" >> $LOG
+  fi
+
+  if [[ -d /opt/techops70 ]]
+  then
+    printf "%b\n" "  ${YELLOW}The /opt/techops70 directory still exists${RESET}" >> $LOG
+  fi
+
+  if [[ ${DEBUG} = '30' ]]
+  then
+    echo "Exiting check_techops()"
+  fi
+}
+
+
+######################
 ### Check the time sources
+### Number of Checks: 6
 ######################
 
 check_time() {
@@ -1899,6 +1967,7 @@ check_time() {
 
 ######################
 ### Check the vmware agent
+### Number of Checks: 2
 ######################
 
 # check ethernet addresses. if 00:50:56, then it's a VMWare vm
@@ -2036,6 +2105,8 @@ check_redhat_subscription
 check_interfaces
 
 check_swap
+
+check_techops
 
 check_logs
 
