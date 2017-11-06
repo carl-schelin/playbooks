@@ -1323,7 +1323,7 @@ check_opnet() {
   then
     printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> $LOG
 # Panorama starts as /bin/sh /opt/Panorama/....
-    APPI=`ps -ef | grep Panorama`
+    APPI=`ps -ef | grep "/opt/Panorama/"`
     if [[ ! -z $APPI ]]
     then
       printf "%b\n" "    ${GREEN}OpNet is running${RESET}" >> $LOG
