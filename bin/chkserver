@@ -1246,7 +1246,7 @@ check_nrpe() {
 
 ######################
 ### Check the status of Openview
-### Number of Checks: 5
+### Number of Checks: 7
 ######################
 
 check_openview() {
@@ -1290,10 +1290,14 @@ check_openview() {
         fi
       done
 
-      CERTS=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore Content|Certificates|\+)"`
+      CERTS=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)"`
       if [[ -z ${CERTS} ]]
       then
         printf "%b\n" "    ${RED}No Certificates found. Is this server being monitored?${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+      else
+        CACERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -c CA_`
+        STARCERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -vc CA_`
+        printf "%b\n" "    ${GREEN}There are ${STARCERT} Certificates and ${CACERT} Trusted Certificates${RESET}" >> $LOG
       fi
 
     fi
@@ -1813,7 +1817,7 @@ check_swap() {
 ### Number of Checks: 2
 ######################
 
-check_time() {
+check_techops() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_techops(30)"
