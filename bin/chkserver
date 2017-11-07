@@ -138,7 +138,7 @@ LOG=$INTRADO/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
-MONSERVERS=""
+MONSERVERS="Longmont:10.109.243.19 Miami:10.109.226.19"
 
 # enable debugging
 DEBUG='0'
@@ -1277,7 +1277,7 @@ check_openview() {
         printf "%b\n" "    ${RED}Openview agent is running: Aborted: ${ABORT} Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
       fi
 
-      for i in Longmont:10.109.243.19 Miami:10.109.226.19
+      for i in ${MONSERVERS}
       do
         OVNAME=`echo $i | cut -f1 -d:`
         OVIP=`echo $i | cut -f2 -d:`
