@@ -118,8 +118,9 @@
 # 2017/11/06 - CS - Added a commented "number of checks" to be able to calculate totals.
 # 2017/11/06 - CS - Updated openview check to add a certificate check
 # 2017/11/07 - CS - Updated openview check to add the number of running and aborted processes and to check for buffering
+# 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
 
-VERSION="chkserver v1.1555"
+VERSION="chkserver v1.156"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1247,7 +1248,7 @@ check_nrpe() {
 
 ######################
 ### Check the status of Openview
-### Number of Checks: 7
+### Number of Checks: 9
 ######################
 
 check_openview() {
@@ -1255,6 +1256,7 @@ check_openview() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_openview(16)"
+    set -x
   fi
   if [[ -d /opt/OV/bin ]]
   then
@@ -1266,11 +1268,13 @@ check_openview() {
     else
       ABORT=`/opt/OV/bin/opcagt -status | grep -ci abort`
       RUNNING=`/opt/OV/bin/opcagt -status | grep -ci running`
+      STOPPED=`/opt/OV/bin/opcagt -status | grep -ci stopped`
+      STARTING=`/opt/OV/bin/opcagt -status | grep -ci starting`
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Openview agent is running with ${RUNNING} processes${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
       else
-        printf "%b\n" "    ${RED}Openview agent is running but with ${ABORT} aborted processes and ${RUNNING} running processes${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Openview agent is running: Aborted: ${ABORT} Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
       fi
 
       for i in Longmont:10.109.243.19 Miami:10.109.226.19
@@ -1285,7 +1289,7 @@ check_openview() {
           if [[ ! -z ${NETCAT} ]]
           then
             echo "  nc check of ${OVNAME} Openview Server"
-            echo "\n\n" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
+            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
               printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
@@ -1319,6 +1323,7 @@ check_openview() {
   if [[ ${DEBUG} = '16' ]]
   then
     echo "Exiting check_openview()"
+    unset -x
   fi
 }
 
