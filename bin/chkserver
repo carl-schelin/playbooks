@@ -116,9 +116,10 @@
 # 2017/10/30 - CS - Added check_selinux to check selinux status
 # 2017/11/06 - CS - Added check_techops to check to see if the directory exists.
 # 2017/11/06 - CS - Added a commented "number of checks" to be able to calculate totals.
+# 2017/11/06 - CS - Updated openview check to add a certificate check
+# 2017/11/07 - CS - Updated openview check to add the number of running and aborted processes and to check for buffering
 
-echo "chkserver v1.152"
-
+VERSION="chkserver v1.1555"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1263,7 +1264,14 @@ check_openview() {
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> $LOG
     else
-      printf "%b\n" "    ${GREEN}OpenView agent is running${RESET}" >> $LOG
+      ABORT=`/opt/OV/bin/opcagt -status | grep -ci abort`
+      RUNNING=`/opt/OV/bin/opcagt -status | grep -ci running`
+      if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Openview agent is running with ${RUNNING} processes${RESET}" >> $LOG
+      else
+        printf "%b\n" "    ${RED}Openview agent is running but with ${ABORT} aborted processes and ${RUNNING} running processes${RESET}" >> $LOG
+      fi
 
       for i in Longmont:10.109.243.19 Miami:10.109.226.19
       do
@@ -1298,6 +1306,12 @@ check_openview() {
         CACERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -c CA_`
         STARCERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -vc CA_`
         printf "%b\n" "    ${GREEN}There are ${STARCERT} Certificates and ${CACERT} Trusted Certificates${RESET}" >> $LOG
+      fi
+
+      BUFFERING=`/opt/OV/bin/opcagt -status | grep -i buffering`
+      if [[ ${BUFFERING} = 'Message Agent is buffering.' ]]
+      then
+        printf "%b\n" "    ${RED}Openview agent is buffering${RESET}" >> $LOG
       fi
 
     fi
@@ -2026,6 +2040,7 @@ check_vmware_agent() {
 echo "" > $LOG
 echo "================================" >> $LOG
 echo "Running System Validation Script" >> $LOG
+echo $VERSION >> $LOG
 echo "================================" >> $LOG
 echo "" >> $LOG
 
@@ -2087,6 +2102,8 @@ fi
 ##########
 ### Start the check
 ##########
+
+echo ${VERSION}
 
 check_hostname
 
