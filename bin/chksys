@@ -591,37 +591,94 @@ function network_iface {
     done
   ;;
   'HP-UX')
-    lanscan | grep UP | while read MYLINE
+# interface configuration is /etc/rc.config.d/netconf
+# link aggregate (apa) is /etc/rc.config.d/hp_apaconf
+# and /etc/rc.config.d/hp_apaportconf
+# and /etc/lanmon/lanconfig.ascii
+
+# output is 'server,network,interface,IP,ip6?,netmask,mac,groupname,gateway,defaultgw?,parent'
+    GROUP=''
+    IP6=0
+    for i in `/usr/sbin/nwmgr | /usr/bin/awk '/ UP /{print $1":"$3":"$6}'`
     do
-      IFACE=`echo $MYLINE | awk '{print $5}'`
-      ISTATUS=`ifconfig $IFACE 2>&1 | grep -v 'no such interface'`
-      if [[ -n $ISTATUS ]]; then
-        IP=`/usr/sbin/ifconfig $IFACE 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
-        MASK=`/usr/sbin/ifconfig $IFACE 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
-        NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
-        # converting 0x123456789ABC to 12:34:56:78:9A:BC
-        MAC=`echo $MYLINE | awk '{ printf "%s:%s:%s:%s:%s:%s",
+      INTERFACE=`echo $i | cut -f1 -d:`
+      PARENT=`echo $i | cut -f3 -d:`
+      # converting 0x123456789ABC to 12:34:56:78:9A:BC
+      MAC=`echo $i | awk -F: '{ printf "%s:%s:%s:%s:%s:%s",
                                          substr($2,3,2),
                                          substr($2,5,2),
                                          substr($2,7,2),
                                          substr($2,9,2),
                                          substr($2,11,2),
                                          substr($2,13,2)}`
-      # found the default gateway information
-        if [[ $DEFDEV = $IFACE ]]; then
-          OUTGATE=${DEFGATE}
-          OUTROUTE=${DEFROUTE}
-        else
-          OUTGATE=''
-          OUTROUTE=0
-        fi
-        logit "network" "interface" "${INTERFACE},${IP},0,${NETMASK},${MAC},,${OUTGATE},${OUTROUTE}"
+# we have to get IP information from the netconf file if it returns 'no such interface'.
+# Otherewise it's an apa interface and we can get it from ifconfig (or hp_apaconf)
+      ISTATUS=`/usr/sbin/ifconfig $INTERFACE 2>&1 | grep -v 'no such interface'`
+      if [[ -n $ISTATUS ]]
+      then
+        IP=`ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}'`
+        MASK=`ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}'`
+      else
+# netconf file output
+#INTERFACE_NAME[2]="lan6"
+#IP_ADDRESS[2]="192.168.2.1"
+#SUBNET_MASK[2]="255.255.255.0"
+#BROADCAST_ADDRESS[2]=""
+#INTERFACE_STATE[2]="up"
+#DHCP_ENABLE[2]="0"
+#INTERFACE_MODULES[2]=""
+#INTERFACE_SKIP[2]=""
+
+#ROUTE_DESTINATION[0]="default"
+#ROUTE_MASK[0]=""
+#ROUTE_GATEWAY[0]="10.80.142.254"
+#ROUTE_COUNT[0]="1"
+#ROUTE_ARGS[0]=""
+#ROUTE_SOURCE[0]=""
+#ROUTE_SKIP[0]=""
+
+        INSTANCE=`egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
+        IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
+        MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
+        GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
       fi
+
+      NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
+
+      # found the default gateway information
+      if [[ $DEFDEV = $INTERFACE ]]; then
+        OUTGATE=${DEFGATE}
+        OUTROUTE=${DEFROUTE}
+      else
+# where to get route information for apa interfaces? from the interface returned above?
+        OUTGATE=${GATEWAY}
+        OUTROUTE=0
+      fi
+      logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
     done
     IP=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
     MASK=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
     NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
     logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0"
+
+
+
+#    lanscan | grep UP | while read MYLINE
+#    do
+#      INTERFACE=`echo $MYLINE | awk '{print $5}'`
+#      ISTATUS=`ifconfig $INTERFACE 2>&1 | grep -v 'no such interface'`
+#      if [[ -n $ISTATUS ]]; then
+#        IP=`/usr/sbin/ifconfig $INTERFACE 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
+#        MASK=`/usr/sbin/ifconfig $INTERFACE 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
+#        NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
+#        # converting 0x123456789ABC to 12:34:56:78:9A:BC
+#        MAC=`echo $MYLINE | awk '{ printf "%s:%s:%s:%s:%s:%s",
+#                                         substr($2,3,2),
+#                                         substr($2,5,2),
+#                                         substr($2,7,2),
+#                                         substr($2,9,2),
+#                                         substr($2,11,2),
+#                                         substr($2,13,2)}`
   ;;
   esac
 }
