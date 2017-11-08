@@ -618,6 +618,7 @@ function network_iface {
       then
         IP=`ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}'`
         MASK=`ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}'`
+        NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
       else
 # netconf file output
 #INTERFACE_NAME[2]="lan6"
@@ -639,11 +640,9 @@ function network_iface {
 
         INSTANCE=`egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
         IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
-        MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
+        NETMASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
         GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
       fi
-
-      NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
 
       # found the default gateway information
       if [[ $DEFDEV = $INTERFACE ]]; then
