@@ -583,7 +583,7 @@ function network_iface {
         OUTGATE=''
         OUTROUTE=0
       fi
-      logit "network" "interface" "${INTERFACE},${IP},0,${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE}"
+      logit "network" "interface" "${INTERFACE},${IP},0,${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},"
 
       if [[ ! -z $IP6 ]];then
         logit "network" "interface" "${INTERFACE},${IP6},1,${NETMASK6},${MAC},${GROUP}"
@@ -659,7 +659,7 @@ function network_iface {
     IP=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
     MASK=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
     NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
-    logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0"
+    logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0,"
 
 
 
