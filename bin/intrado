@@ -80,6 +80,7 @@
 # 2017-09-07 - Added update.groups script
 # 2017-09-14 - Updated to check for centrify and change group ownerships to uxadmins vs sysadmin
 # 2017-09-25 - Fixed to use a better method of figuring out groups
+# 2017-11-10 - added getovconf to get the openview configuration
 
 INTRADO=/opt/intrado
 HOSTNAME=`hostname|cut -f1 -d.`
@@ -284,6 +285,9 @@ runscript update.gecos
 
 # Update /etc/groups based on the group.master file
 runscript update.groups
+
+# get the openview configuration
+runscript getovconf
 
 # clean up on aisle three
 runscript cleanup
