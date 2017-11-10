@@ -1286,17 +1286,18 @@ check_openview() {
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${GREEN}${OVNAME} Openview VIP is pingable${RESET}" >> $LOG
-          if [[ ! -z ${NETCAT} ]]
-          then
-            echo "  nc check of ${OVNAME} Openview Server"
-            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383
-            if [[ $? = 0 ]]
-            then
-              printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
-            else
-              printf "%b\n" "    ${RED}${OVNAME} VIP is not accessible${RESET}" >> $LOG
-            fi
-          fi
+#          if [[ ! -z ${NETCAT} ]]
+#          then
+# netcat isn't working correctly everywhere so comment out for now
+#            echo "  nc check of ${OVNAME} Openview Server"
+#            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383
+#            if [[ $? = 0 ]]
+#            then
+#              printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
+#            else
+#              printf "%b\n" "    ${RED}${OVNAME} VIP is not accessible${RESET}" >> $LOG
+#            fi
+#          fi
 # since we're here, check the Openview Ping tool too
           /opt/OV/bin/bbcutil -ping ${OVIP}
           if [[ $? = 0 ]]
