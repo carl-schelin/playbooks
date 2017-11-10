@@ -1310,7 +1310,7 @@ check_openview() {
         fi
       done
 
-      CERTLIST=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)"`
+      CERTLIST=`/opt/OV/bin/ovcert -list | egrep -vc "(Keystore|Certificates|\+|^$)"`
       CERTS=`/opt/OV/bin/ovcert -status`
       if [[ ${CERTS} = 'Status: Certificate is installed.' ]]
       then
