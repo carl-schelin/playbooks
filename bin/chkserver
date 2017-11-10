@@ -1320,7 +1320,12 @@ check_openview() {
         then
           printf "%b\n" "    ${RED}Unable to contact Certificate Client. ${CERTLIST} Certificates installed${RESET} /opt/OV/bin/ovcert -list" >> $LOG
         else
-          printf "%b\n" "    ${RED}Uncaught error: ${CERTS} (pending or denied are possible)${RESET}" >> $LOG
+          if [[ ${CERTS} = 'Status: Certificate request is pending.' ]]
+          then
+            printf "%b\n" "    ${YELLOW}Certificate request is pending.${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+          else
+            printf "%b\n" "    ${RED}Uncaught error: ${CERTS} (denied is the only possibility)${RESET}" >> $LOG
+          fi
         fi
       fi
 
