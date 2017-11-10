@@ -121,7 +121,7 @@
 # 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
 # 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
 
-VERSION="chkserver v1.160"
+VERSION="chkserver v1.161"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1310,14 +1310,17 @@ check_openview() {
         fi
       done
 
-      CERTS=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)"`
-      if [[ -z ${CERTS} ]]
+      CERTLIST=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)"`
+      CERTS=`/opt/OV/bin/ovcert -status`
+      if [[ ${CERTS} = 'Status: Certificate is installed.' ]]
       then
-        printf "%b\n" "    ${RED}No Certificates found. Is this server being monitored?${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+        printf "%b\n" "    ${GREEN}Certificates (${CERTLIST}) are installed${RESET}" >> $LOG
       else
-        CACERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -c CA_`
-        STARCERT=`/opt/OV/bin/ovcert -list | egrep -v "(Keystore|Certificates|\+|^$)" | grep -vc CA_`
-        printf "%b\n" "    ${GREEN}There are ${STARCERT} Certificates and ${CACERT} Trusted Certificates${RESET}" >> $LOG
+        if [[ ${CERTS} = 'Status: Undefined (Certificate Client could not be contacted).' ]]
+          printf "%b\n" "    ${RED}Unable to contact Certificate Client. ${CERTLIST} Certificates installed${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+        else
+          printf "%b\n" "    ${RED}Uncaught error: ${CERTS} (pending or denied are possible)${RESET}" >> $LOG
+        fi
       fi
 
       BUFFERING=`/opt/OV/bin/opcagt -status | grep -i buffering`
