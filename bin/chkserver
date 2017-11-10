@@ -119,8 +119,9 @@
 # 2017/11/06 - CS - Updated openview check to add a certificate check
 # 2017/11/07 - CS - Updated openview check to add the number of running and aborted processes and to check for buffering
 # 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
+# 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
 
-VERSION="chkserver v1.156"
+VERSION="chkserver v1.160"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -269,7 +270,7 @@ check_active_employees() {
     printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> $LOG
     for j in `cut -f1 -d: /etc/passwd`
     do
-      grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
+      grep -i "^${j}$" $INTRADO/etc/users.exclude
       if [[ $? = 1 ]]
       then
 
@@ -312,7 +313,7 @@ check_active_employees() {
           EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
           if [[ ! -z $EMAIL ]]
           then
-            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
+            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email
             if [[ $? = 1 ]]
             then
               printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the account isn't locked.${RESET}" >> $LOG
@@ -347,14 +348,14 @@ check_addresses() {
   then
     INTERFACE=`egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
     printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
-    egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+    egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
     if [[ $? = 0 ]]
     then
       printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
     else
       printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
     fi
-    grep -i ${FIELD3} /etc/hosts > /dev/null
+    grep -i ${FIELD3} /etc/hosts
     if [[ $? = 1 ]]
     then
       printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> $LOG
@@ -365,7 +366,7 @@ check_addresses() {
     printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
     else
       echo "  ping check of the gateway: ${FIELD4}"
-      ping ${FIELD4} ${PINGCT} > /dev/null 2>&1
+      ping ${FIELD4} ${PINGCT}
       if [[ $? = 0 ]]
       then
         printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
@@ -374,14 +375,14 @@ check_addresses() {
       fi
     fi
     GATEWAY="${GATEWAY} ${FIELD4}"
-    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network > /dev/null
+    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network
     if [[ $? = 0 ]]
     then
       GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
       GWFLAG='yes'
     fi
 # check the interface file too
-    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE}
     if [[ $? = 0 ]]
     then
       GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
@@ -410,7 +411,7 @@ check_centrify() {
     if [[ ! -z $CENTRIFY ]]
     then
       printf "%b\n" "    ${GREEN}Centrify is running${RESET}" >> $LOG
-      /usr/bin/adinfo > /dev/null
+      /usr/bin/adinfo
       if [[ $? = 0 ]]
       then
         CENTRIFY='yes'
@@ -433,7 +434,7 @@ check_centrify() {
 #Licensed Features: Enabled
 #Linux:cschelin@infltx10$ echo $?
 #10
-      /usr/bin/adinfo > /dev/null
+      /usr/bin/adinfo
       if [[ $? = 10 ]]
       then
         printf "%b\n" "    ${RED}Centrify is not connected${RESET}" >> $LOG
@@ -516,14 +517,14 @@ check_data_palette() {
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
     echo "  ping check of data palette nerve center: 10.100.128.3"
-    ping 10.100.128.3 ${PINGCT} > /dev/null 2>&1
+    ping 10.100.128.3 ${PINGCT}
     if [[ $? = 0 ]]
     then
       printf "%b\n" "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
       if [[ ! -z ${NETCAT} ]]
       then
         echo "  nc check of Data Palette Nerve Center Server"
-        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
+        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
@@ -637,14 +638,14 @@ check_email() {
   fi
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
   echo "  ping check of mail server: 10.100.104.6"
-  ping 10.100.104.6 ${PINGCT} > /dev/null 2>&1
+  ping 10.100.104.6 ${PINGCT}
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Email server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
       echo "  nc check of Mail Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
+      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25
       if [[ $? = 0 ]]
       then
         printf "%b\n" "    ${GREEN}Email server (10.100.104.6:25) is accessible${RESET}" >> $LOG
@@ -716,24 +717,24 @@ check_group_membership() {
       do
         if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
         then
-          grep -i "^${j}:" /etc/passwd > /dev/null
+          grep -i "^${j}:" /etc/passwd
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
           fi
-          egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group > /dev/null
+          egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
           fi
         else
 # getent will pull from whatever database is in place; on board, idm, or centrify
-          getent passwd ${j} > /dev/null
+          getent passwd ${j}
           if [[ $? = 2 ]]
           then
             printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
           fi
-          getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
+          getent group ${i} | egrep "(:|,)${j}(,|$)"
           if [[ $? = 1 ]]
           then
             printf "%b\n" "    ${RED}${j} was not found in the ${i} group${RESET}" >> $LOG
@@ -810,7 +811,7 @@ check_hostname() {
     echo "Entering check_hostname(7)"
   fi
   HOSTNAME=`hostname|cut -f1 -d.`
-  grep -i ${HOSTNAME} /etc/hosts > /dev/null
+  grep -i ${HOSTNAME} /etc/hosts
   if [[ $? = 0 ]]
   then
     printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
@@ -901,14 +902,14 @@ check_jumpstart() {
   fi
   printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
   echo "  ping check of jumpstart server: 10.100.78.143"
-  ping 10.100.78.143 ${PINGCT} > /dev/null 2>&1
+  ping 10.100.78.143 ${PINGCT}
   if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
     if [[ ! -z ${NETCAT} ]]
     then
       echo "  nc check of Jumpstart Server"
-      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
+      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80
       if [[ $? = 0 ]]
       then
         printf "%b\n" "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
@@ -1046,7 +1047,7 @@ check_lsof() {
   then
     echo "Entering check_lsof(13)"
   fi
-  which lsof > /dev/null
+  which lsof
   if [[ $? = 0 ]]
   then
     OUTPUT=`lsof | grep "(deleted)" | wc -l`
@@ -1142,7 +1143,7 @@ check_netbackup() {
 # look for bpcd, bpjava-msvc, vnetd, and vopied.
           for nb in bpcd bpjava-msvc vnetd vopied
           do
-            grep "^${nb}:" /etc/hosts.allow > /dev/null
+            grep "^${nb}:" /etc/hosts.allow
             if [[ ! $? = 0 ]]
             then
               printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> $LOG
@@ -1154,7 +1155,7 @@ check_netbackup() {
             fi
             for nbip in ${NBLIST}
             do
-              grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)" > /dev/null
+              grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)"
               if [[ ! $? = 0 ]]
               then
                 printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> $LOG
@@ -1281,14 +1282,14 @@ check_openview() {
         OVNAME=`echo $i | cut -f1 -d:`
         OVIP=`echo $i | cut -f2 -d:`
 
-        ping ${OVIP} ${PINGCT} > /dev/null 2>&1
+        ping ${OVIP} ${PINGCT}
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${GREEN}${OVNAME} Openview VIP is pingable${RESET}" >> $LOG
           if [[ ! -z ${NETCAT} ]]
           then
             echo "  nc check of ${OVNAME} Openview Server"
-            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
+            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383
             if [[ $? = 0 ]]
             then
               printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
@@ -1297,12 +1298,12 @@ check_openview() {
             fi
           fi
 # since we're here, check the Openview Ping tool too
-          /opt/OV/bin/bbcutil -ping ${OVNAME}
+          /opt/OV/bin/bbcutil -ping ${OVIP}
           if [[ $? = 0 ]]
           then
             printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVNAME}${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVNAME}${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVNAME}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> $LOG
           fi
         else
           printf "%b\n" "    ${RED}${OVNAME} Openview VIP is not pingable${RESET}" >> $LOG
@@ -1378,7 +1379,7 @@ check_opnet() {
         if [[ "${APPROVED}" = "" ]]
         then
           echo "  nc check of OpNet Server"
-          echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT} > /dev/null 2>&1
+          echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT}
           if [[ $? = 0 ]]
           then
             printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) is accessible${RESET}" >> $LOG
@@ -1586,7 +1587,7 @@ check_resolver() {
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
             echo "  ping check of nameserver: ${i}"
-            ping ${i} ${PINGCT} > /dev/null 2>&1
+            ping ${i} ${PINGCT}
             if [[ $? = 0 ]]
             then
               printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
@@ -1724,7 +1725,7 @@ check_sudoers() {
     then
       echo "  Found ${SUDOERS}"
     fi
-    grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
+    grep -i ${HOSTNAME} ${SUDOERS}
     if [[ $? = 1 ]]
     then
       printf "%b\n" "  ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
@@ -1744,7 +1745,7 @@ check_sudoers() {
           OUTPUT=`grep "^${i}:" /etc/group`
           echo "    Checking ^${i}: in /etc/group. Found: ${OUTPUT}"
         fi
-        grep "^${i}:" /etc/group > /dev/null
+        grep "^${i}:" /etc/group
         if [[ $? -eq 1 ]]
         then
           printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist in /etc/group${RESET}" >> $LOG
@@ -1755,7 +1756,7 @@ check_sudoers() {
           OUTPUT=`getent group ${i}`
           echo "    Checking for ^${i}:. Found: ${OUTPUT}"
         fi
-        getent group ${i} > /dev/null
+        getent group ${i}
         if [[ $? -eq 1 ]]
         then
           printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist${RESET}" >> $LOG
@@ -1915,7 +1916,7 @@ check_time() {
       for i in $GPSSERVERS
       do
         echo "  ping check of time server: ${i}"
-        ping ${i} ${PINGCT} > /dev/null 2>&1
+        ping ${i} ${PINGCT}
         if [[ $? = 0 ]]
         then
           printf "%b\n" "      ${GREEN}GPS Server ${i} is pingable.${RESET}" >> $LOG
@@ -1928,7 +1929,7 @@ check_time() {
           printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
         else
           echo "  time check of time server: ${i}"
-          ntpdate -q ${i} > /dev/null 2>&1
+          ntpdate -q ${i}
           if [[ $? = 0 ]]
           then
             printf "%b\n" "      ${GREEN}GPS Server ${i} is providing time.${RESET}" >> $LOG
@@ -2223,7 +2224,7 @@ then
       then
         echo "Entering Service check"
       fi
-      grep "^${FIELD3}:" /etc/passwd > /dev/null
+      grep "^${FIELD3}:" /etc/passwd
       if [[ $? = 0 ]]
       then
         printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
@@ -2317,17 +2318,17 @@ then
 # special checks for special accounts.
       if [[ ${FIELD3} = 'nginx' ]]
       then
-        grep -i 640 /etc/logrotate.d/nginx > /dev/null
+        grep -i 640 /etc/logrotate.d/nginx
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
         fi
-        grep -i nginx ${SUDOERS} > /dev/null
+        grep -i nginx ${SUDOERS}
         if [[ $? = 1 ]]
         then
           printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
         fi
-        ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
+        ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----"
         if [[ $? = 0 ]]
         then
           printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
@@ -2343,9 +2344,9 @@ then
       fi
       if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
       then
-        grep "^${FIELD3}:" /etc/group > /dev/null
+        grep "^${FIELD3}:" /etc/group
       else
-        getent group ${FIELD3} > /dev/null
+        getent group ${FIELD3}
       fi
       if [[ $? = 0 ]]
       then
@@ -2363,7 +2364,7 @@ then
       fi
       if [[ ! -z ${SUDOERS} ]]
       then
-        grep "^%${FIELD3}" ${SUDOERS} > /dev/null
+        grep "^%${FIELD3}" ${SUDOERS}
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
@@ -2446,7 +2447,7 @@ then
 # if cron.allow exists, cron.deny is ignored
       if [[ -f ${CRONALLOW} ]]
       then
-        grep -i ${FIELD3} ${CRONALLOW} > /dev/null
+        grep -i ${FIELD3} ${CRONALLOW}
         if [[ $? = 1 ]]
         then
           printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> $LOG
@@ -2454,7 +2455,7 @@ then
       else
         if [[ -f ${CRONDENY} ]]
         then
-          grep -i ${FIELD3} ${CRONDENY} > /dev/null
+          grep -i ${FIELD3} ${CRONDENY}
           if [[ $? = 0 ]]
           then
             printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> $LOG
