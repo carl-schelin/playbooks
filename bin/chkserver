@@ -1297,6 +1297,14 @@ check_openview() {
               printf "%b\n" "    ${RED}${OVNAME} VIP is not accessible${RESET}" >> $LOG
             fi
           fi
+# since we're here, check the Openview Ping tool too
+          /opt/OV/bin/bbcutil -ping ${OVNAME}
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVNAME}${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVNAME}${RESET}" >> $LOG
+          fi
         else
           printf "%b\n" "    ${RED}${OVNAME} Openview VIP is not pingable${RESET}" >> $LOG
         fi
