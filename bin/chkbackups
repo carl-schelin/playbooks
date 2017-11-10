@@ -8,6 +8,7 @@
 
 PROGNAME="chkbackups"
 OS=`uname`
+CHKDATE=`perl -MPOSIX -le 'print strftime "%m/%d/%Y", (localtime(time-604800));'`
 
 if [[ -f /opt/intrado/etc/backups.output ]]
 then
@@ -16,7 +17,11 @@ fi
 
 if [[ -f /usr/openv/netbackup/bin/bpclimagelist ]]
 then
-  /usr/openv/netbackup/bin/bpclimagelist > /opt/intrado/etc/backups.output
+  if [[ -n $CHKDATE ]]; then
+    /usr/openv/netbackup/bin/bpclimagelist -s $CHKDATE  > /opt/intrado/etc/backups.output
+  else
+    /usr/openv/netbackup/bin/bpclimagelist > /opt/intrado/etc/backups.output
+  fi
 else
   echo "Netbackup not installed" /opt/intrado/etc/backups.output
 fi
