@@ -121,7 +121,7 @@
 # 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
 # 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
 
-VERSION="chkserver v1.161"
+VERSION="chkserver v1.166"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
