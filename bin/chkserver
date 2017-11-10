@@ -1256,7 +1256,6 @@ check_openview() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_openview(16)"
-    set -x
   fi
   if [[ -d /opt/OV/bin ]]
   then
