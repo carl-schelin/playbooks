@@ -120,8 +120,9 @@
 # 2017/11/07 - CS - Updated openview check to add the number of running and aborted processes and to check for buffering
 # 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
 # 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
+# 2017/11/13 - CS - Added openview configuration check
 
-VERSION="chkserver v1.166"
+VERSION="chkserver v1.168"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1334,6 +1335,59 @@ check_openview() {
       if [[ ${BUFFERING} = 'Message Agent is buffering.' ]]
       then
         printf "%b\n" "    ${RED}Openview agent is buffering${RESET}" >> $LOG
+      fi
+
+# check the configuration for Openview.
+# the chkserver.input file should have entries identifying 
+# the ip and management bits
+      EXPECTED_IP=`grep "^${HOSTNAME}:IPAddressMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_MONITOR=`grep "^${HOSTNAME}:MonitoringServer:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+
+      if [[ ${EXPECTED_IP} = '' ]]
+      then
+        printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
+      else
+        RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
+        if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: bbc.cb SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget bbc.http SERVER_BIND_ADDR`
+        if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: bbc.http SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget bbc.http CLIENT_BIND_ADDR`
+        if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: bbc.http CLIENT_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_IP_ADDRESS`
+        if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_IP_ADDRESS=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_MGMT_SERVER`
+        if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR`
+        if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER`
+        if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+        fi
+        RESULT=`/opt/OV/bin/ovconfget sec.core.auth MANAGER`
+        if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
+        then
+          printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+        fi
       fi
 
     fi
