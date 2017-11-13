@@ -13,6 +13,6 @@ fi
 
 if [[ -f /opt/OV/bin/ovconfget ]]
 then
-  /opt/OV/bin/ovconfget
+  /opt/OV/bin/ovconfget > /opt/intrado/etc/getovconf.output
 fi
 
