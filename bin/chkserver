@@ -1348,6 +1348,23 @@ check_openview() {
       then
         printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
       else
+# check routes
+# need to refine. If a single interface system, the route would go out the default interface.
+        if [[ ${OS} = "Linux" ]]
+        then
+          ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
+          if [[ -z ${ROUTE} ]]
+          then
+            printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
+          fi
+          ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
+          if [[ -z ${ROUTE} ]]
+          then
+            printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
+          fi
+        fi
+
+# now check the configuration
         RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
