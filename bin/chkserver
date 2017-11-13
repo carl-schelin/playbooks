@@ -1352,15 +1352,30 @@ check_openview() {
 # need to refine. If a single interface system, the route would go out the default interface.
         if [[ ${OS} = "Linux" ]]
         then
-          ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
-          if [[ -z ${ROUTE} ]]
+          if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
           then
-            printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
-          fi
-          ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
-          if [[ -z ${ROUTE} ]]
-          then
-            printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
+            ROUTE=`ip route get 10.109.226.19 | awk '{print $5}'`
+            if [[ ! ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+            then
+              printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
+            else
+              ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
+              if [[ -z ${ROUTE} ]]
+              then
+                printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
+              fi
+            fi
+            ROUTE=`ip route get 10.109.243.19 | awk '{print $5}'`
+            if [[ ! ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+            then
+              printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
+            else
+              ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
+              if [[ -z ${ROUTE} ]]
+              then
+                printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
+              fi
+            fi
           fi
         fi
 
