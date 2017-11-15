@@ -121,8 +121,9 @@
 # 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
 # 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
 # 2017/11/13 - CS - Added openview configuration check
+# 2017/11/15 - CS - Added disk space check
 
-VERSION="chkserver v1.168"
+VERSION="chkserver v1.171"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -589,6 +590,59 @@ check_default_passwords() {
   if [[ ${DEBUG} = '4' ]]
   then
     echo "Exiting check_default_passwords()"
+  fi
+}
+
+
+######################
+### Check disk space
+### Number of Checks: 2
+######################
+
+check_disk_space() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_disk_space(31)"
+  fi
+
+  DISKSPACE=${INTRADO}/etc/diskspace.output
+  if [[ $OS = "HP-UX" ]]
+  then
+    bdf -l > ${DISKSPACE}
+  fi
+  if [[ $OS = "Linux" ]]
+  then
+    df -klP > ${DISKSPACE}
+  fi
+  if [[ $OS = "SunOS" ]]
+  then
+    df -kl > ${DISKSPACE}
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+    df -kl > ${DISKSPACE}
+  fi
+
+  for j in `egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | awk '{print $NF":"$5}'`
+  do
+    FILESYSTEM=`echo $j | cut -f1 -d:`
+    SPACE=`echo $j | cut -f2 -d: | cut -f1 -d%`
+    WARNING=85
+    ERROR=95
+
+    if [[ $SPACE -ge $ERROR ]]
+    then
+      printf "%b\n" "    ${RED}${FILESYSTEM} has reached ${SPACE}%${RESET}" >> $LOG
+    else
+      if [[ $SPACE -ge $WARNING ]]
+      then
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached ${SPACE}%${RESET}" >> $LOG
+      fi
+    fi
+  done
+  if [[ ${DEBUG} = '31' ]]
+  then
+    echo "Exiting check_disk_space()"
   fi
 }
 
@@ -2256,6 +2310,8 @@ check_kubernetes
 #check_lsof
 
 check_disk_suite
+
+check_disk_space
 
 check_vmware_agent
 
