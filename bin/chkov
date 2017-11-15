@@ -28,6 +28,15 @@ then
   exit 0
 fi
 
+# if the kill flag is in place, kill the agent and then let it restart in 5 minutes
+# gives us time to update configurations if necessary
+if [[ -f /opt/intrado/var/openview.kill ]]
+then
+  /opt/OV/bin/ovc -kill
+  rm /opt/intrado/var/openview.kill
+  exit 0
+fi
+
 # check to see if Openview monitoring is disabled
 if [[ -f /opt/intrado/var/openview.stop ]]
 then
