@@ -605,6 +605,7 @@ check_disk_space() {
     echo "Entering check_disk_space(31)"
   fi
 
+  printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> $LOG
   DISKSPACE=${INTRADO}/etc/diskspace.output
   if [[ $OS = "HP-UX" ]]
   then
