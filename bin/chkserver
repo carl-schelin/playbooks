@@ -634,11 +634,11 @@ check_disk_space() {
 
     if [[ $SPACE -ge $ERROR ]]
     then
-      printf "%b\n" "    ${RED}${FILESYSTEM} has reached ${SPACE}%${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}${FILESYSTEM} has reached or exceeded 95% (${SPACE})%${RESET}" >> $LOG
     else
       if [[ $SPACE -ge $WARNING ]]
       then
-        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached ${SPACE}%${RESET}" >> $LOG
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached or exceeded 85% (${SPACE})%${RESET}" >> $LOG
       fi
     fi
   done
