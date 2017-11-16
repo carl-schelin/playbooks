@@ -123,8 +123,10 @@
 # 2017/11/13 - CS - Added openview configuration check
 # 2017/11/15 - CS - Added disk space check
 # 2017/11/16 - CS - Updated check_openview route check to accurately identify route information
+# 2017/11/16 - CS - Added a check_management_route function and added it to all the functions where we're looking for access
+# 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
 
-VERSION="chkserver v1.174"
+VERSION="chkserver v1.175"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -242,6 +244,51 @@ EPYEAR=`date +"%Y"`
 EPMONTH=`date +"%m"`
 EPDAY=`date +"%d"`
 EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
+
+
+######################
+### Check the Management Interface for the passed Destination IP Address
+### Management traffic, openview, opnet, data palette, netbackup, etc goes out the management interface.
+### This function checks that.
+######################
+
+check_management_route() {
+  IPADDRESS=$1
+
+  MANAGEMENT_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+
+  if [[ ${MANAGEMENT_INTERFACE} = '' ]]
+  then
+    printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Route Configuration${RESET}" >> $LOG
+  else
+# just checking for Linux now
+    if [[ ${OS} = "Linux" ]]
+    then
+      if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
+      then
+
+        ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $5}'`
+        if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
+        then
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+        fi
+
+      else
+
+        ROUTE=`netstat -rn | egrep "^${IPADDRESS}.*${EXPECTED_INTERFACE}"`
+        if [[ -z ${ROUTE} ]]
+        then
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+        fi
+      fi
+    fi
+  fi
+}
+
 
 
 ###################################
@@ -519,6 +566,7 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
+    check_management_route 10.100.128.3
     echo "  ping check of data palette nerve center: 10.100.128.3"
     ping 10.100.128.3 ${PINGCT}
     if [[ $? = 0 ]]
@@ -694,6 +742,7 @@ check_email() {
     echo "Entering check_email(5)"
   fi
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
+  check_management_route 10.100.104.6
   echo "  ping check of mail server: 10.100.104.6"
   ping 10.100.104.6 ${PINGCT}
   if [[ $? = 0 ]]
@@ -958,6 +1007,7 @@ check_jumpstart() {
     echo "Entering check_jumpstart(9)"
   fi
   printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
+  check_management_route 10.100.78.143
   echo "  ping check of jumpstart server: 10.100.78.143"
   ping 10.100.78.143 ${PINGCT}
   if [[ $? = 0 ]]
@@ -1409,69 +1459,14 @@ check_openview() {
       then
         echo "IP:${EXPECTED_IP}, Interface:${EXPECTED_INTERFACE}, Monitor:${EXPECTED_MONITOR}"
       fi
+
       if [[ ${EXPECTED_IP} = '' ]]
       then
         printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
       else
-# check routes
-# need to refine. If a single interface system, the route would go out the default interface.
-# ip route get finds that but netstat -rn wouldn't
-        if [[ ${OS} = "Linux" ]]
-        then
-          if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
-          then
 
-            ROUTE=`ip route get 10.109.226.19 | head -1 | awk '{print $5}'`
-            if [[ ${DEBUG} = 16 ]]
-            then
-              echo "IP Route: ${ROUTE} = Interface: ${EXPECTED_INTERFACE}"
-            fi
-            if [[ ${ROUTE} = ${EXPECTED_INTERFACE} ]]
-            then
-              printf "%b\n" "    ${GREEN}Route to 10.109.226.19 is correct.${RESET}" >> $LOG
-            else
-              printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
-            fi
-
-            ROUTE=`ip route get 10.109.243.19 | head -1 | awk '{print $5}'`
-            if [[ ${DEBUG} = 16 ]]
-            then
-              echo "IP Route: ${ROUTE} = Interface: ${EXPECTED_INTERFACE}"
-            fi
-            if [[ ${ROUTE} = ${EXPECTED_INTERFACE} ]]
-            then
-              printf "%b\n" "    ${GREEN}Route to 10.109.243.19 is correct.${RESET}" >> $LOG
-            else
-              printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
-            fi
-
-          else
-            ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
-            if [[ ${DEBUG} = 16 ]]
-            then
-              echo "Netstat Route: ${ROUTE}"
-            fi
-            if [[ -z ${ROUTE} ]]
-            then
-              printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
-            else
-              printf "%b\n" "    ${GREEN}Route to 10.109.226.19 is correct.${RESET}" >> $LOG
-            fi
-
-            ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
-            if [[ ${DEBUG} = 16 ]]
-            then
-              echo "Netstat Route: ${ROUTE}"
-            fi
-            if [[ -z ${ROUTE} ]]
-            then
-              printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
-            else
-              printf "%b\n" "    ${GREEN}Route to 10.109.243.19 is correct.${RESET}" >> $LOG
-            fi
-
-          fi
-        fi
+        check_management_route 10.109.226.19
+        check_management_route 10.109.243.19
 
 # now check the configuration
         RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
@@ -1670,6 +1665,30 @@ check_redhat_subscription() {
     then
       echo "  Red Hat System"
     fi
+    printf "%b\n" "  ${GREEN}Checking access to Satellite Server${RESET}" >> $LOG
+    SATELLITE=10.100.143.51
+    check_management_route ${SATELLITE}
+    echo "  ping check of Red Hat Satellite Server: ${SATELLITE}"
+    ping ${SATELLITE} ${PINGCT}
+    if [[ $? = 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}Satellite Server is pingable${RESET}" >> $LOG
+    else
+      printf "%b\n" "    ${RED}Satellite Server is not pingable${RESET}" >> $LOG
+    fi
+
+    echo "  nc check of Satellite Server"
+    for i in 80 443 5646 5647 5671 5672 8140 9090 
+    do
+      echo "quit" | ${NETCAT} -w 2 -vn ${SATELLITE} ${i}
+      if [[ $? = 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Satellite Server (${SATELLITE}:${i}) is accessible${RESET}" >> $LOG
+      else
+        printf "%b\n" "    ${RED}Satellite Server (${SATELLITE}:${i}) is not accessible${RESET}" >> $LOG
+      fi
+    done
+
     if [[ ! -f /usr/bin/subscription-manager ]]
     then
       printf "%b\n" "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
@@ -1678,7 +1697,8 @@ check_redhat_subscription() {
       then
         echo "  Subscription Manager is installed, query server"
       fi
-      printf "%b\n" "  ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
+
+      printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
       STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
       if [[ ${DEBUG} = '19' ]]
       then
@@ -1686,19 +1706,19 @@ check_redhat_subscription() {
       fi
       if [[ ${STATUS} = 'Unknown' ]]
       then
-        printf "%b\n" "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
       fi
       if [[ ${STATUS} = 'No' ]]
       then
-        printf "%b\n" "    ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
       fi
       if [[ ${STATUS} = 'Subscribed' ]]
       then
-        printf "%b\n" "    ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
       fi
       if [[ ${STATUS} = 'Expired' ]]
       then
-        printf "%b\n" "    ${YELLOW}System subscription has expired${RESET}" >> $LOG
+        printf "%b\n" "      ${YELLOW}System subscription has expired${RESET}" >> $LOG
       fi
     fi
   fi
@@ -1775,6 +1795,7 @@ check_resolver() {
         else
           for i in `awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf`
           do
+            check_management_route ${i}
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
             echo "  ping check of nameserver: ${i}"
             ping ${i} ${PINGCT}
@@ -2105,6 +2126,7 @@ check_time() {
 
       for i in $GPSSERVERS
       do
+        check_management_route ${i}
         echo "  ping check of time server: ${i}"
         ping ${i} ${PINGCT}
         if [[ $? = 0 ]]
