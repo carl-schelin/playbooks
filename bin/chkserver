@@ -122,8 +122,9 @@
 # 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
 # 2017/11/13 - CS - Added openview configuration check
 # 2017/11/15 - CS - Added disk space check
+# 2017/11/16 - CS - Updated check_openview route check to accurately identify route information
 
-VERSION="chkserver v1.171"
+VERSION="chkserver v1.174"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1313,6 +1314,11 @@ check_openview() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_openview(16)"
+  else
+    if [[ ${DEBUG} = 16 ]]
+    then
+      set -x
+    fi
   fi
   if [[ -d /opt/OV/bin ]]
   then
@@ -1399,38 +1405,71 @@ check_openview() {
       EXPECTED_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
       EXPECTED_MONITOR=`grep "^${HOSTNAME}:MonitoringServer:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
 
+      if [[ ${DEBUG} = 16 ]]
+      then
+        echo "IP:${EXPECTED_IP}, Interface:${EXPECTED_INTERFACE}, Monitor:${EXPECTED_MONITOR}"
+      fi
       if [[ ${EXPECTED_IP} = '' ]]
       then
         printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
       else
 # check routes
 # need to refine. If a single interface system, the route would go out the default interface.
+# ip route get finds that but netstat -rn wouldn't
         if [[ ${OS} = "Linux" ]]
         then
           if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
           then
+
             ROUTE=`ip route get 10.109.226.19 | head -1 | awk '{print $5}'`
-            if [[ ! ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+            if [[ ${DEBUG} = 16 ]]
+            then
+              echo "IP Route: ${ROUTE} = Interface: ${EXPECTED_INTERFACE}"
+            fi
+            if [[ ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+            then
+              printf "%b\n" "    ${GREEN}Route to 10.109.226.19 is correct.${RESET}" >> $LOG
+            else
+              printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
+            fi
+
+            ROUTE=`ip route get 10.109.243.19 | head -1 | awk '{print $5}'`
+            if [[ ${DEBUG} = 16 ]]
+            then
+              echo "IP Route: ${ROUTE} = Interface: ${EXPECTED_INTERFACE}"
+            fi
+            if [[ ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+            then
+              printf "%b\n" "    ${GREEN}Route to 10.109.243.19 is correct.${RESET}" >> $LOG
+            else
+              printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
+            fi
+
+          else
+            ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
+            if [[ ${DEBUG} = 16 ]]
+            then
+              echo "Netstat Route: ${ROUTE}"
+            fi
+            if [[ -z ${ROUTE} ]]
             then
               printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
             else
-              ROUTE=`netstat -rn | egrep "^10.109.226.19.*${EXPECTED_INTERFACE}"`
-              if [[ -z ${ROUTE} ]]
-              then
-                printf "%b\n" "    ${YELLOW}Route to 10.109.226.19 missing.${RESET}" >> $LOG
-              fi
+              printf "%b\n" "    ${GREEN}Route to 10.109.226.19 is correct.${RESET}" >> $LOG
             fi
-            ROUTE=`ip route get 10.109.243.19 | head -1 | awk '{print $5}'`
-            if [[ ! ${ROUTE} = ${EXPECTED_INTERFACE} ]]
+
+            ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
+            if [[ ${DEBUG} = 16 ]]
+            then
+              echo "Netstat Route: ${ROUTE}"
+            fi
+            if [[ -z ${ROUTE} ]]
             then
               printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
             else
-              ROUTE=`netstat -rn | egrep "^10.109.243.19.*${EXPECTED_INTERFACE}"`
-              if [[ -z ${ROUTE} ]]
-              then
-                printf "%b\n" "    ${YELLOW}Route to 10.109.243.19 missing.${RESET}" >> $LOG
-              fi
+              printf "%b\n" "    ${GREEN}Route to 10.109.243.19 is correct.${RESET}" >> $LOG
             fi
+
           fi
         fi
 
