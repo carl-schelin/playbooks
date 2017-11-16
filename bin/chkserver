@@ -625,7 +625,7 @@ check_disk_space() {
     df -kl > ${DISKSPACE}
   fi
 
-  for j in `egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | awk '{print $NF":"$5}'`
+  for j in `egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}'`
   do
     FILESYSTEM=`echo $j | cut -f1 -d:`
     SPACE=`echo $j | cut -f2 -d: | cut -f1 -d%`
