@@ -126,8 +126,9 @@
 # 2017/11/16 - CS - Added a check_management_route function and added it to all the functions where we're looking for access
 # 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
 # 2017/12/02 - CS - Added a check for oom-killer messages
+# 2017/12/02 - CS - check for katello-ca certificate rpm and katello-agent agent rpm installations
 
-VERSION="chkserver v1.178"
+VERSION="chkserver v1.179"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1723,6 +1724,18 @@ check_redhat_subscription() {
       fi
 
       printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
+
+      RPM=`rpm -qa | grep 'katello-ca-consumer-lnmtcodcstl10'`
+      if [[ -z ${RPM} ]]
+      then
+        printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> $LOG
+      fi
+      RPM=`rpm -qa | grep 'katello-agent'`
+      if [[ -z ${RPM} ]]
+      then
+        printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> $LOG
+      fi
+
       STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
       if [[ ${DEBUG} = '19' ]]
       then
