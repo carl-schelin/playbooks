@@ -125,8 +125,9 @@
 # 2017/11/16 - CS - Updated check_openview route check to accurately identify route information
 # 2017/11/16 - CS - Added a check_management_route function and added it to all the functions where we're looking for access
 # 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
+# 2017/12/02 - CS - Added a check for oom-killer messages
 
-VERSION="chkserver v1.175"
+VERSION="chkserver v1.178"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1355,6 +1356,29 @@ check_nrpe() {
 
 
 ######################
+### Check to see if there are any out of memory killer messages (oom-killer)
+### Number of Checks: 1
+######################
+
+check_oomkiller() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_oomkiller()"
+  fi
+  printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> $LOG
+  grep "invoked oom-killer" ${PLOG}
+  if [[ $? = 1 ]]
+  then
+    printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> $LOG
+  fi
+  if [[ ${DEBUG} = '15' ]]
+  then
+    echo "Exiting check_oomkiller()"
+  fi
+}
+
+
+######################
 ### Check the status of Openview
 ### Number of Checks: 9
 ######################
@@ -2374,6 +2398,8 @@ check_kubernetes
 check_disk_suite
 
 check_disk_space
+
+check_oomkiller
 
 check_vmware_agent
 
