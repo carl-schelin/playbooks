@@ -129,8 +129,9 @@
 # 2017/12/02 - CS - check for katello-ca certificate rpm and katello-agent agent rpm installations
 # 2017/12/02 - CS - Update to check management routes for netbackup
 # 2017/12/02 - CS - Update to check access to specific netbackup ports
+# 2017/12/03 - CS - Only check for Katello if system is or was subscribed
 
-VERSION="chkserver v1.180"
+VERSION="chkserver v1.181"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1756,17 +1757,6 @@ check_redhat_subscription() {
 
       printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
 
-      RPM=`rpm -qa | grep 'katello-ca-consumer-lnmtcodcstl10'`
-      if [[ -z ${RPM} ]]
-      then
-        printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> $LOG
-      fi
-      RPM=`rpm -qa | grep 'katello-agent'`
-      if [[ -z ${RPM} ]]
-      then
-        printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> $LOG
-      fi
-
       STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
       if [[ ${DEBUG} = '19' ]]
       then
@@ -1788,6 +1778,21 @@ check_redhat_subscription() {
       then
         printf "%b\n" "      ${YELLOW}System subscription has expired${RESET}" >> $LOG
       fi
+
+      if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
+      then
+        RPM=`rpm -qa | grep 'katello-ca-consumer-lnmtcodcstl10'`
+        if [[ -z ${RPM} ]]
+        then
+          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> $LOG
+        fi
+        RPM=`rpm -qa | grep 'katello-agent'`
+        if [[ -z ${RPM} ]]
+        then
+          printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> $LOG
+        fi
+      fi
+
     fi
   fi
   if [[ ${DEBUG} = '19' ]]
