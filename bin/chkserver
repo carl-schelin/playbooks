@@ -127,8 +127,10 @@
 # 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
 # 2017/12/02 - CS - Added a check for oom-killer messages
 # 2017/12/02 - CS - check for katello-ca certificate rpm and katello-agent agent rpm installations
+# 2017/12/02 - CS - Update to check management routes for netbackup
+# 2017/12/02 - CS - Update to check access to specific netbackup ports
 
-VERSION="chkserver v1.179"
+VERSION="chkserver v1.180"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -741,7 +743,7 @@ check_disk_suite() {
 check_email() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_email(5)"
+    echo "Entering check_email(32)"
   fi
   printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
   check_management_route 10.100.104.6
@@ -764,7 +766,7 @@ check_email() {
   else
     printf "%b\n" "    ${RED}Email server is not pingable${RESET}" >> $LOG
   fi
-  if [[ ${DEBUG} = '5' ]]
+  if [[ ${DEBUG} = '32' ]]
   then
     echo "Exiting check_email()"
   fi
@@ -937,7 +939,7 @@ check_hostname() {
 check_interfaces() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_interfaces(7)"
+    echo "Entering check_interfaces(33)"
   fi
   printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> $LOG
   if [[ $OS = 'SunOS' ]]
@@ -965,7 +967,7 @@ check_interfaces() {
   then
     printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> $LOG
   fi
-  if [[ ${DEBUG} = '7' ]]
+  if [[ ${DEBUG} = '33' ]]
   then
     echo "Exiting check_interfaces()"
   fi
@@ -1273,7 +1275,13 @@ check_netbackup() {
           done
         fi
       fi
-    fi
+    fi  
+
+    for NBLIST in 10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22
+    do
+      check_management_route ${NBLIST}
+    done
+
 # 13724 is vnetd
     NBLIST=`netstat -an | grep LISTEN | grep 13724`
     if [[ -z $NBLIST ]]
@@ -1290,6 +1298,29 @@ check_netbackup() {
     else
       printf "%b\n" "    ${GREEN}NetBackup bpcd is running${RESET}" >> $LOG
     fi
+
+# check for access to the two backup servers
+    for NBLIST in 10.100.6.25 10.32.138.14
+    do
+      if [[ ! -z ${NETCAT} ]]
+      then
+        echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 1556
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}${NBLIST}:1556 is accessible${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${RED}${NBLIST}:1556 is not accessible${RESET}" >> $LOG
+        fi
+        echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 13724
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}${NBLIST}:13724 is accessible${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${RED}${NBLIST}:13724 is not accessible${RESET}" >> $LOG
+        fi
+      fi
+    done
+
 # check for last backup
 #Backed Up         Expires       Files      KB     C Sched Type      Policy
 #----------------  ---------- -------- ----------- - --------------- ------------
@@ -1364,15 +1395,15 @@ check_nrpe() {
 check_oomkiller() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_oomkiller()"
+    echo "Entering check_oomkiller(34)"
   fi
   printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> $LOG
   grep "invoked oom-killer" ${PLOG}
-  if [[ $? = 1 ]]
+  if [[ $? = 0 ]]
   then
     printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> $LOG
   fi
-  if [[ ${DEBUG} = '15' ]]
+  if [[ ${DEBUG} = '34' ]]
   then
     echo "Exiting check_oomkiller()"
   fi
