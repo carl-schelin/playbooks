@@ -130,8 +130,9 @@
 # 2017/12/02 - CS - Update to check management routes for netbackup
 # 2017/12/02 - CS - Update to check access to specific netbackup ports
 # 2017/12/03 - CS - Only check for Katello if system is or was subscribed
+# 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
 
-VERSION="chkserver v1.181"
+VERSION="chkserver v1.182"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1494,7 +1495,12 @@ check_openview() {
           then
             printf "%b\n" "    ${YELLOW}Certificate request is pending.${RESET} /opt/OV/bin/ovcert -list" >> $LOG
           else
-            printf "%b\n" "    ${RED}Uncaught error: ${CERTS} (denied is the only possibility)${RESET}" >> $LOG
+            if [[ ${CERTS} = 'Status: Certificate request was denied.' ]]
+            then
+              printf "%b\n" "    ${RED}Certificate request was denied.${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+            else
+              printf "%b\n" "    ${RED}Uncaught error: ${CERTS}${RESET}" >> $LOG
+            fi
           fi
         fi
       fi
