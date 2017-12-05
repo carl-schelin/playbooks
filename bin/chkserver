@@ -132,7 +132,7 @@
 # 2017/12/03 - CS - Only check for Katello if system is or was subscribed
 # 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
 
-VERSION="chkserver v1.182"
+VERSION="chkserver v1.183"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -1452,6 +1452,8 @@ check_openview() {
         OVNAME=`echo $i | cut -f1 -d:`
         OVIP=`echo $i | cut -f2 -d:`
 
+        check_management_route ${OVIP}
+
         ping ${OVIP} ${PINGCT}
         if [[ $? = 0 ]]
         then
@@ -1528,10 +1530,6 @@ check_openview() {
       then
         printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
       else
-
-        check_management_route 10.109.226.19
-        check_management_route 10.109.243.19
-
 # now check the configuration
         RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
