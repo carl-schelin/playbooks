@@ -131,8 +131,9 @@
 # 2017/12/02 - CS - Update to check access to specific netbackup ports
 # 2017/12/03 - CS - Only check for Katello if system is or was subscribed
 # 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
+# 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
 
-VERSION="chkserver v1.184"
+VERSION="chkserver v1.185"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -151,6 +152,26 @@ SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
 MONSERVERS="Longmont:10.109.243.19 Miami:10.109.226.19"
+
+OSMAJOR=0
+if [[ -f /etc/redhat-release ]]
+then
+  OUTPUT=`grep 'release 7' /etc/redhat-release`
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=7
+  fi
+  OUTPUT=`grep 'release 6' /etc/redhat-release`
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=6
+  fi
+  OUTPUT=`grep 'release 5' /etc/redhat-release`
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=5
+  fi
+fi
 
 # enable debugging
 DEBUG='0'
@@ -2326,6 +2347,34 @@ check_vmware_agent() {
       fi
     else
       printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+    fi
+# check the status of ctrl-alt-del service
+    if [[ $OS = 'Linux' ]]
+    then
+      if [[ $OSMAJOR = '7' ]]
+      then
+        OUTPUT=`systemctl status ctrl-alt-del.target | grep "Loaded: masked"`
+        if [[ -z $OUTPUT ]]
+        then
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> $LOG
+        fi
+      fi
+      if [[ $OSMAJOR = '6' ]]
+      then
+        OUTPUT=`egrep "^(start|exec)" /etc/init/control-alt-delete.conf`
+        if [[ ! -z $OUTPUT ]]
+        then
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> $LOG
+        fi
+      fi
+      if [[ $OSMAJOR = '5' ]]
+      then
+        OUTPUT=`grep "^ca::ctrlaltdel" /etc/inittab"`
+        if [[ ! -z $OUTPUT ]]
+        then
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> $LOG
+        fi
+      fi
     fi
   fi
   if [[ ${DEBUG} = '27' ]]
