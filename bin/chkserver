@@ -132,6 +132,7 @@
 # 2017/12/03 - CS - Only check for Katello if system is or was subscribed
 # 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
 # 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
+# 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
 
 VERSION="chkserver v1.185"
 PROGNAME="chkserver"
@@ -1980,6 +1981,31 @@ check_rrdtool() {
 
 
 ######################
+### Check remote root access via ssh
+### Number of Checks: 1
+######################
+
+check_security() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_security()"
+  fi
+  if [[ -f ${INTRADO}/etc/chksecurity.output ]]
+  then
+    SECURITY=`awk '{print $NF} /${INTRADO}/etc/chksecurity.output`
+    if [[ ${SECURITY} = 'yes' ]]
+    then
+      printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> $LOG
+    fi
+  fi
+  if [[ ${DEBUG} = '23' ]]
+  then
+    echo "Exiting check_security()"
+  fi
+}
+
+
+######################
 ### Check the status of selinux. Should be disabled. If enabled, permissive is warning, enforcing is error
 ### Number of Checks: 1
 ######################
@@ -2349,28 +2375,28 @@ check_vmware_agent() {
       printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
     fi
 # check the status of ctrl-alt-del service
-    if [[ $OS = 'Linux' ]]
+    if [[ ${OS} = 'Linux' ]]
     then
-      if [[ $OSMAJOR = '7' ]]
+      if [[ ${OSMAJOR} = '7' ]]
       then
         OUTPUT=`systemctl status ctrl-alt-del.target | grep "Loaded: masked"`
-        if [[ -z $OUTPUT ]]
+        if [[ -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> $LOG
         fi
       fi
-      if [[ $OSMAJOR = '6' ]]
+      if [[ ${OSMAJOR} = '6' ]]
       then
         OUTPUT=`egrep "^(start|exec)" /etc/init/control-alt-delete.conf`
-        if [[ ! -z $OUTPUT ]]
+        if [[ ! -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> $LOG
         fi
       fi
-      if [[ $OSMAJOR = '5' ]]
+      if [[ ${OSMAJOR} = '5' ]]
       then
         OUTPUT=`grep "^ca::ctrlaltdel" /etc/inittab"`
-        if [[ ! -z $OUTPUT ]]
+        if [[ ! -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> $LOG
         fi
@@ -2488,6 +2514,8 @@ check_centrify
 check_group_membership
 
 check_default_passwords
+
+check_security
 
 check_privileged_access
 
