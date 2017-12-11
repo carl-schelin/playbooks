@@ -1992,7 +1992,7 @@ check_security() {
   fi
   if [[ -f ${INTRADO}/etc/chksecurity.output ]]
   then
-    SECURITY=`awk '{print $NF} /${INTRADO}/etc/chksecurity.output`
+    SECURITY=`cat ${INTRADO}/etc/chksecurity.output | awk '{print $NF}'`
     if [[ ${SECURITY} = 'yes' ]]
     then
       printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> $LOG
