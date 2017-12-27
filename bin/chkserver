@@ -133,8 +133,9 @@
 # 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
 # 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
 # 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
+# 2017/12/27 - CS - Updated management interface check; if on the same network it fails
 
-VERSION="chkserver v1.185"
+VERSION="chkserver v1.188"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -300,7 +301,14 @@ check_management_route() {
         then
           printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
         else
-          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+# if on the same network; the 'via' is missing so only get the 3rd item which is the device
+          ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $3}'`
+          if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
+          then
+            printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+          fi
         fi
 
       else
