@@ -134,8 +134,9 @@
 # 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
 # 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
 # 2017/12/27 - CS - Updated management interface check; if on the same network it fails
+# 2017/12/27 - CS - Brought IPs and servers to the top to make managing listing easier; added loops in case more than one is added
 
-VERSION="chkserver v1.188"
+VERSION="chkserver v1.190"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -154,6 +155,16 @@ SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
 MONSERVERS="Longmont:10.109.243.19 Miami:10.109.226.19"
+NBSERVERS="10.100.6.25 10.32.138.14"
+BUSERVERS="inveri01-gig0 10.100.6.25 inveri02 10.32.138.14 incobu01 10.100.77.77 incobu02 10.100.5.89"
+BUEXTRA="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
+BUIPLIST="10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
+DPSERVERS="10.100.128.3"
+EMAILSERVERS="10.100.104.6"
+MGTSERVERS="10.100.78.143 10.100.128.149 192.168.208.86"
+MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86"
+OPNETSERVERS="10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090"
+SATELLITESERVERS="10.100.143.51"
 
 OSMAJOR=0
 if [[ -f /etc/redhat-release ]]
@@ -602,26 +613,29 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    check_management_route 10.100.128.3
-    echo "  ping check of data palette nerve center: 10.100.128.3"
-    ping 10.100.128.3 ${PINGCT} > /dev/null
-    if [[ $? = 0 ]]
-    then
-      printf "%b\n" "    ${GREEN}Data Palette Nerve Center is pingable${RESET}" >> $LOG
-      if [[ ! -z ${NETCAT} ]]
+    for i in $DPSERVERS
+    do
+      check_management_route ${i}
+      echo "  ping check of data palette nerve center: ${i}"
+      ping ${i} ${PINGCT} > /dev/null
+      if [[ $? = 0 ]]
       then
-        echo "  nc check of Data Palette Nerve Center Server"
-        echo "quit" | ${NETCAT} -w 2 -vn 10.100.128.3 8080 > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${i} is pingable${RESET}" >> $LOG
+        if [[ ! -z ${NETCAT} ]]
         then
-          printf "%b\n" "    ${GREEN}Data Palette Nerve Center (10.100.128.3:8080) is accessible${RESET}" >> $LOG
-        else
-          printf "%b\n" "    ${RED}Data Palette Nerve Center (10.100.128.3:8080) is not accessible${RESET}" >> $LOG
+          echo "  nc check of Data Palette Nerve Center ${i}"
+          echo "quit" | ${NETCAT} -w 2 -vn ${i} 8080 > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${i}:8080) is accessible${RESET}" >> $LOG
+          else
+            printf "%b\n" "    ${RED}Data Palette Nerve Center (${i}:8080) is not accessible${RESET}" >> $LOG
+          fi
         fi
+      else
+        printf "%b\n" "    ${RED}Data Palette Nerve Center ${i} is not pingable${RESET}" >> $LOG
       fi
-    else
-      printf "%b\n" "    ${RED}Data Palette Nerve Center is not pingable${RESET}" >> $LOG
-    fi
+    done
   fi
   if [[ ${DEBUG} = '3' ]]
   then
@@ -777,27 +791,30 @@ check_email() {
   then
     echo "Entering check_email(32)"
   fi
-  printf "%b\n" "  ${GREEN}Checking mail server (10.100.104.6:25)${RESET}" >> $LOG
-  check_management_route 10.100.104.6
-  echo "  ping check of mail server: 10.100.104.6"
-  ping 10.100.104.6 ${PINGCT} > /dev/null
-  if [[ $? = 0 ]]
-  then
-    printf "%b\n" "    ${GREEN}Email server is pingable${RESET}" >> $LOG
-    if [[ ! -z ${NETCAT} ]]
+  for i in ${EMAILSERVERS}
+  do
+    printf "%b\n" "  ${GREEN}Checking mail server (${i}:25)${RESET}" >> $LOG
+    check_management_route ${i}
+    echo "  ping check of mail server: ${i}"
+    ping ${i} ${PINGCT} > /dev/null
+    if [[ $? = 0 ]]
     then
-      echo "  nc check of Mail Server"
-      echo "quit" | ${NETCAT} -w 2 -vn 10.100.104.6 25 > /dev/null 2>&1
-      if [[ $? = 0 ]]
+      printf "%b\n" "    ${GREEN}Email server ${i} is pingable${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
       then
-        printf "%b\n" "    ${GREEN}Email server (10.100.104.6:25) is accessible${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${RED}Email server (10.100.104.6:25) is not accessible${RESET}" >> $LOG
+        echo "  nc check of Mail Server ${i}"
+        echo "quit" | ${NETCAT} -w 2 -vn ${i} 25 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}Email server (${i}:25) is accessible${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${RED}Email server (${i}:25) is not accessible${RESET}" >> $LOG
+        fi
       fi
+    else
+      printf "%b\n" "    ${RED}Email server {$i} is not pingable${RESET}" >> $LOG
     fi
-  else
-    printf "%b\n" "    ${RED}Email server is not pingable${RESET}" >> $LOG
-  fi
+  done
   if [[ ${DEBUG} = '32' ]]
   then
     echo "Exiting check_email()"
@@ -1042,27 +1059,30 @@ check_jumpstart() {
   then
     echo "Entering check_jumpstart(9)"
   fi
-  printf "%b\n" "  ${GREEN}Checking jumpstart server (10.100.78.143:80)${RESET}" >> $LOG
-  check_management_route 10.100.78.143
-  echo "  ping check of jumpstart server: 10.100.78.143"
-  ping 10.100.78.143 ${PINGCT} > /dev/null
-  if [[ $? = 0 ]]
-  then
-    printf "%b\n" "    ${GREEN}Jumpstart server is pingable${RESET}" >> $LOG
-    if [[ ! -z ${NETCAT} ]]
+  for i in ${MGTSERVERS}
+  do
+    printf "%b\n" "  ${GREEN}Checking management server (${i}:80)${RESET}" >> $LOG
+    check_management_route ${i}
+    echo "  ping check of management server: ${i}"
+    ping ${i} ${PINGCT} > /dev/null
+    if [[ $? = 0 ]]
     then
-      echo "  nc check of Jumpstart Server"
-      echo "\n\n" | ${NETCAT} -w 2 -vn 10.100.78.143 80 > /dev/null 2>&1
-      if [[ $? = 0 ]]
+      printf "%b\n" "    ${GREEN}Management server ${i} is pingable${RESET}" >> $LOG
+      if [[ ! -z ${NETCAT} ]]
       then
-        printf "%b\n" "    ${GREEN}Jumpstart web server is accessible${RESET}" >> $LOG
-      else
-        printf "%b\n" "    ${RED}Jumpstart web server is not accessible${RESET}" >> $LOG
+        echo "  nc check of Management Server ${i}"
+        echo "\n\n" | ${NETCAT} -w 2 -vn ${i} 80 > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}Management server ${i} is accessible${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${RED}Management server ${i} is not accessible${RESET}" >> $LOG
+        fi
       fi
+    else
+      printf "%b\n" "    ${RED}Management server ${i} is not pingable${RESET}" >> $LOG
     fi
-  else
-    printf "%b\n" "    ${RED}Jumpstart server is not pingable${RESET}" >> $LOG
-  fi
+  done
   if [[ ${DEBUG} = '9' ]]
   then
     echo "Exiting check_jumpstart()"
@@ -1291,12 +1311,11 @@ check_netbackup() {
             then
               printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> $LOG
             fi
-            NBLIST="inveri01-gig0 10.100.6.25 inveri02 10.32.138.14 incobu01 10.100.77.77 incobu02 10.100.5.89"
             if [[ ${nb} = "vnetd" ]]
             then
-              NBLIST="$NBLIST incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
+              BUSERVERS="${BUSERVERS} ${BUEXTRA}"
             fi
-            for nbip in ${NBLIST}
+            for nbip in ${BUSERVERS}
             do
               grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)" > /dev/null
               if [[ ! $? = 0 ]]
@@ -1309,7 +1328,7 @@ check_netbackup() {
       fi
     fi  
 
-    for NBLIST in 10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22
+    for NBLIST in ${BUIPLIST}
     do
       check_management_route ${NBLIST}
     done
@@ -1332,7 +1351,7 @@ check_netbackup() {
     fi
 
 # check for access to the two backup servers
-    for NBLIST in 10.100.6.25 10.32.138.14
+    for NBLIST in ${NBSERVERS}
     do
       if [[ ! -z ${NETCAT} ]]
       then
@@ -1646,7 +1665,7 @@ check_opnet() {
     fi
     if [[ ! -z ${NETCAT} ]]
     then
-      for j in 10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090
+      for j in ${OPNETSERVERS}
       do
         OPNETIP=`echo $j | cut -f1 -d:`
         OPNETPORT=`echo $j | cut -f2 -d:`
@@ -1757,28 +1776,30 @@ check_redhat_subscription() {
     then
       echo "  Red Hat System"
     fi
-    printf "%b\n" "  ${GREEN}Checking access to Satellite Server${RESET}" >> $LOG
-    SATELLITE=10.100.143.51
-    check_management_route ${SATELLITE}
-    echo "  ping check of Red Hat Satellite Server: ${SATELLITE}"
-    ping ${SATELLITE} ${PINGCT} > /dev/null
-    if [[ $? = 0 ]]
-    then
-      printf "%b\n" "    ${GREEN}Satellite Server is pingable${RESET}" >> $LOG
-    else
-      printf "%b\n" "    ${RED}Satellite Server is not pingable${RESET}" >> $LOG
-    fi
-
-    echo "  nc check of Satellite Server"
-    for i in 80 443 5646 5647 5671 5672 8140 9090 
+    for i in ${SATELLITESERVERS}
     do
-      echo "quit" | ${NETCAT} -w 2 -vn ${SATELLITE} ${i} > /dev/null 2>&1
+      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${i}${RESET}" >> $LOG
+      check_management_route ${i}
+      echo "  ping check of Red Hat Satellite Server: ${i}"
+      ping ${i} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Satellite Server (${SATELLITE}:${i}) is accessible${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Satellite Server ${i} is pingable${RESET}" >> $LOG
       else
-        printf "%b\n" "    ${RED}Satellite Server (${SATELLITE}:${i}) is not accessible${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Satellite Server ${i} is not pingable${RESET}" >> $LOG
       fi
+
+      echo "  nc check of Satellite Server ports"
+      for j in 80 443 5646 5647 5671 5672 8140 9090 
+      do
+        echo "quit" | ${NETCAT} -w 2 -vn ${i} ${j} > /dev/null 2>&1
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}Satellite Server (${i}:${j}) is accessible${RESET}" >> $LOG
+        else
+          printf "%b\n" "    ${RED}Satellite Server (${i}:${j}) is not accessible${RESET}" >> $LOG
+        fi
+      done
     done
 
     if [[ ! -f /usr/bin/subscription-manager ]]
@@ -1913,13 +1934,19 @@ check_resolver() {
             else
               printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
             fi
-            OUTPUT=`dig @${i} +time=1 incojs01.scc911.com | grep -v "^;" | grep "10.100.78.143"`
-            if [[ -z $OUTPUT ]]
-            then
-              printf "%b\n" "    ${RED}Unable to resolve incojs01${RESET}" >> $LOG
-            else
-            printf "%b\n" "    ${GREEN}Resolved incojs01${RESET}" >> $LOG
-            fi
+            for j in ${MGTLISTING}
+            do
+              MGTSVR=`echo $j | cut -f1 -d:`
+              MGTIP=`echo $j | cut -f2 -d:`
+
+              OUTPUT=`dig @${i} +time=1 ${MGTSVR} | grep -v "^;" | grep "${MGTIP}"`
+              if [[ -z $OUTPUT ]]
+              then
+                printf "%b\n" "    ${RED}Unable to resolve ${MGTSVR}${RESET}" >> $LOG
+              else
+              printf "%b\n" "    ${GREEN}Resolved ${MGTSVR}${RESET}" >> $LOG
+              fi
+            done
           done
         fi
         if [[ $COUNT -gt 3 ]]
