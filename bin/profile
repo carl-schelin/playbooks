@@ -27,6 +27,7 @@ else
       then
         echo "/opt/intrado/etc/chkserver.output doesn't exist"
       else
+        grep "chkserver v1" /opt/intrado/etc/chkserver.output
         echo "Errors:"
         OUTPUT=`grep 31m /opt/intrado/etc/chkserver.output | grep -v Error`
         if [[ ! -z $OUTPUT ]]
