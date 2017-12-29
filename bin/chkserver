@@ -136,7 +136,7 @@
 # 2017/12/27 - CS - Updated management interface check; if on the same network it fails
 # 2017/12/27 - CS - Brought IPs and servers to the top to make managing listing easier; added loops in case more than one is added
 
-VERSION="chkserver v1.190"
+VERSION="chkserver v1.191"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -161,8 +161,8 @@ BUEXTRA="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
 BUIPLIST="10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
 DPSERVERS="10.100.128.3"
 EMAILSERVERS="10.100.104.6"
-MGTSERVERS="10.100.78.143 10.100.128.149 192.168.208.86"
-MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86"
+MGTSERVERS="10.100.78.143 10.100.128.149 192.168.208.86 10.100.128.201"
+MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86 inventory.scc911.com:10.100.128.201"
 OPNETSERVERS="10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090"
 SATELLITESERVERS="10.100.143.51"
 
