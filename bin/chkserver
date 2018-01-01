@@ -1068,9 +1068,9 @@ check_jumpstart() {
     MGTPORT=`echo $i | cut -f2 -d:`
 
     printf "%b\n" "  ${GREEN}Checking management server (${MGTSVR}:${MGTPORT})${RESET}" >> $LOG
-    check_management_route ${i}
+    check_management_route ${MGTSVR}
     echo "  ping check of management server: ${MGTSVR}"
-    ping ${i} ${PINGCT} > /dev/null
+    ping ${MGTSVR} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
       printf "%b\n" "    ${GREEN}Management server ${MGTSVR} is pingable${RESET}" >> $LOG
