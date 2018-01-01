@@ -135,8 +135,10 @@
 # 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
 # 2017/12/27 - CS - Updated management interface check; if on the same network it fails
 # 2017/12/27 - CS - Brought IPs and servers to the top to make managing listing easier; added loops in case more than one is added
+# 2018/01/01 - CS - Add check for kubernetes/docker issue
+# 2018/01/01 - CS - Change ports being monitored for inventory and kickstart
 
-VERSION="chkserver v1.191"
+VERSION="chkserver v1.192"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -161,7 +163,8 @@ BUEXTRA="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
 BUIPLIST="10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
 DPSERVERS="10.100.128.3"
 EMAILSERVERS="10.100.104.6"
-MGTSERVERS="10.100.78.143 10.100.128.149 192.168.208.86 10.100.128.201"
+# for kickstart but only jumpstart but for inventory access ssl for all
+MGTSERVERS="10.100.78.143:80 10.100.78.143:443 10.100.128.149:443 192.168.208.86:443 10.100.128.201:443"
 MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86 inventory.scc911.com:10.100.128.201"
 OPNETSERVERS="10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090"
 SATELLITESERVERS="10.100.143.51"
@@ -1061,26 +1064,29 @@ check_jumpstart() {
   fi
   for i in ${MGTSERVERS}
   do
-    printf "%b\n" "  ${GREEN}Checking management server (${i}:80)${RESET}" >> $LOG
+    MGTSVR=`echo  $i | cut -f1 -d:`
+    MGTPORT=`echo $i | cut -f2 -d:`
+
+    printf "%b\n" "  ${GREEN}Checking management server (${MGTSVR}:${MGTPORT})${RESET}" >> $LOG
     check_management_route ${i}
-    echo "  ping check of management server: ${i}"
+    echo "  ping check of management server: ${MGTSVR}"
     ping ${i} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}Management server ${i} is pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Management server ${MGTSVR} is pingable${RESET}" >> $LOG
       if [[ ! -z ${NETCAT} ]]
       then
-        echo "  nc check of Management Server ${i}"
-        echo "\n\n" | ${NETCAT} -w 2 -vn ${i} 80 > /dev/null 2>&1
+        echo "  nc check of Management Server ${MGTSVR}:${MGTPORT}"
+        echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTSVR} ${MGTPORT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Management server ${i} is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Management server ${MGTSVR}:${MGTPORT} is accessible${RESET}" >> $LOG
         else
-          printf "%b\n" "    ${RED}Management server ${i} is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Management server ${MGTSVR}:${MGTPORT} is not accessible${RESET}" >> $LOG
         fi
       fi
     else
-      printf "%b\n" "    ${RED}Management server ${i} is not pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Management server ${MGTSVR} is not pingable${RESET}" >> $LOG
     fi
   done
   if [[ ${DEBUG} = '9' ]]
@@ -1128,6 +1134,19 @@ check_kubernetes() {
   fi
   if [[ -f /bin/kubectl ]]
   then
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> $LOG
+    for i in `kubectl get nodes | grep -v NAME | awk '{print $1":"$2}'`
+    do
+      NODE=`echo $i | cut -f1 -d:`
+# management nodes are 'Ready,SchedulingDisabled'; just looking for 'Ready' or not.
+      STATUS=`echo $i | cut -f2 -d: | cut -f1 -d,`
+
+      if [[ ! ${STATUS} = 'Ready' ]]
+      then
+        printf "%b\n" "    ${RED}Node ${NODE} is currently not in Ready state (${STATUS})${RESET} kubectl describe node ${NODE}" >> $LOG
+      fi
+    done
+
     printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> $LOG
     for i in `kubectl get namespaces | grep Active | egrep -v "(NAME|default)"`
     do
