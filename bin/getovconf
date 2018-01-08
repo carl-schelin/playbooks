@@ -11,6 +11,11 @@ then
   exit 0
 fi
 
+if [[ -f /opt/intrado/etc/getovconf.output ]]
+then
+  rm /opt/intrado/etc/getovconf.output
+fi
+
 if [[ -f /opt/OV/bin/ovconfget ]]
 then
   /opt/OV/bin/ovconfget > /opt/intrado/etc/getovconf.output
