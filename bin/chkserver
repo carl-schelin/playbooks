@@ -137,8 +137,9 @@
 # 2017/12/27 - CS - Brought IPs and servers to the top to make managing listing easier; added loops in case more than one is added
 # 2018/01/01 - CS - Add check for kubernetes/docker issue
 # 2018/01/01 - CS - Change ports being monitored for inventory and kickstart
+# 2018/01/09 - CS - Added a check for the floppy device on VMs.
 
-VERSION="chkserver v1.192"
+VERSION="chkserver v1.193"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -255,6 +256,26 @@ then
   SUDOERS='/opt/iexpress/sudo/etc/sudoers'
 fi
 
+# check if a virtual machine
+# if virtual, first 6 will be 00:50:56
+if [[ $OS = 'HP-UX' ]]
+then
+  OUTPUT=`lanscan | grep " 0x005056"`
+else
+  if [[ $OS = 'Linux' ]]
+  then
+    OUTPUT=`ip addr | grep ether | grep " 00:50:56"`
+  else
+    OUTPUT=`ifconfig -a | grep ether | grep " 0:50:56"`
+  fi
+fi
+# if a vmware interface mac was found
+if [[ ! -z ${OUTPUT} ]]
+then
+  VMWARE='Yes'
+else
+  VMWARE='No'
+fi
 
 ######################
 ### Return the epoch
@@ -821,6 +842,34 @@ check_email() {
   if [[ ${DEBUG} = '32' ]]
   then
     echo "Exiting check_email()"
+  fi
+}
+
+
+######################
+### Check virtual machines for a floppy drive; shouldn't be there
+### Number of Checks: 1
+######################
+
+check_floppy() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_floppy()"
+  fi
+  if [[ ${VMWARE} = 'Yes']]
+  then
+    printf "%b\n" "  ${GREEN}Checking for a floppy device${RESET}" >> $LOG
+    if [[ ${OS} = 'Linux' ]]
+    then
+      if [[ -d /dev/fd ]]
+      then
+        printf "%b\n" "    ${RED}Floppy device directory /dev/fd exists${RESET}" >> $LOG
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '32' ]]
+  then
+    echo "Exiting check_floppy()"
   fi
 }
 
@@ -2402,24 +2451,13 @@ check_vmware_agent() {
   then
     echo "Entering check_vmware_agent(27)"
   fi
-  if [[ $OS = 'HP-UX' ]]
-  then
-    OUTPUT=`lanscan | grep " 0x005056"`
-  else
-    if [[ $OS = 'Linux' ]]
-    then
-      OUTPUT=`ip addr | grep ether | grep " 00:50:56"`
-    else
-      OUTPUT=`ifconfig -a | grep ether | grep " 0:50:56"`
-    fi
-  fi
-  if [[ ! -z $OUTPUT ]]
+  if [[ ${VMWARE} = 'Yes' ]]
   then
     if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
     then
       printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
-      VMWARE=`ps -e | grep vmtoolsd`
-      if [[ -z $VMWARE ]]
+      VMTOOLS=`ps -e | grep vmtoolsd`
+      if [[ -z $VMTOOLS ]]
       then
         printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
       else
@@ -2428,7 +2466,7 @@ check_vmware_agent() {
     else
       printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
     fi
-# check the status of ctrl-alt-del service
+# check the status of ctrl-alt-del service but only on virtual machines (hence why it's here)
     if [[ ${OS} = 'Linux' ]]
     then
       if [[ ${OSMAJOR} = '7' ]]
