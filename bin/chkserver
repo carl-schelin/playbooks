@@ -856,7 +856,7 @@ check_floppy() {
   then
     echo "Entering check_floppy()"
   fi
-  if [[ ${VMWARE} = 'Yes']]
+  if [[ ${VMWARE} = 'Yes' ]]
   then
     printf "%b\n" "  ${GREEN}Checking for a floppy device${RESET}" >> $LOG
     if [[ ${OS} = 'Linux' ]]
