@@ -8,6 +8,7 @@
 # then check for errors in the chkserver.output file
 # then check for warnings in the chkserver.output file
 
+ADMIN=/usr/local/admin
 INTRADO=/opt/intrado
 VAR=${INTRADO}/var
 ETC=${INTRADO}/etc
