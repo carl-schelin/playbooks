@@ -289,6 +289,9 @@ runscript update.groups
 # get the openview configuration
 runscript getovconf
 
+# see if users are looking at the profile or chkserver.output file
+runscript chkprofile
+
 # clean up on aisle three
 runscript cleanup
 
