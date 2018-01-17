@@ -1,0 +1,46 @@
+#!/bin/ksh
+
+# chkprofile by Carl Schelin
+
+OS=`uname`
+INTRADO="/opt/intrado"
+LOG=$INTRADO/etc/chkprofile.output
+
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+for i in `awk -F: '{print $1":"$6}' /etc/passwd`
+do
+  USERNAME=`echo $i | cut -f1 -d:`
+  DIRECTORY=`echo $i | cut -f2 -d:`
+
+  if [[ -f $DIRECTORY/.profile ]]
+  then
+    OUTPUT=`grep chkserver.output $DIRECTORY/.profile`
+    if [[ ! -z $OUTPUT ]]
+    then
+      echo "Found chkserver.output check in .profile: $USERNAME" >> $LOG
+    fi
+    OUTPUT=`grep 'bin/profile' $DIRECTORY/.profile`
+    if [[ ! -z $OUTPUT ]]
+    then
+      echo "Found bin/profile check in .profile: $USERNAME" >> $LOG
+    fi
+  fi
+  if [[ -f $DIRECTORY/.bashrc ]]
+  then
+    OUTPUT=`grep chkserver.output $DIRECTORY/.bashrc`
+    if [[ ! -z $OUTPUT ]]
+    then
+      echo "Found chkserver.output check in .bashrc: $USERNAME" >> $LOG
+    fi
+    OUTPUT=`grep 'bin/profile' $DIRECTORY/.bashrc`
+    if [[ ! -z $OUTPUT ]]
+    then
+      echo "Found bin/profile check in .bashrc: $USERNAME" >> $LOG
+    fi
+  fi
+done
+
