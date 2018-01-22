@@ -35,32 +35,32 @@ else
     TODAY=`date +"%d"`
     if [[ $RUNDATE -ne $TODAY ]]
     then
-      echo "${LOGS} didn't run today (last ran: `date +\"%Y/${RUNDATE}/$m\"`)"
-    else
-      if [[ ! -f ${CHKSERVER} ]]
-      then
-        echo "${CHKSERVER} doesn't exist"
-      else
-        grep "chkserver v1" ${CHKSERVER}
-        echo "Errors:"
-        OUTPUT=`grep 31m ${CHKSERVER} | grep -v Error`
-        if [[ ! -z $OUTPUT ]]
-        then
-          grep 31m ${CHKSERVER} | grep -v Error
-        else
-          echo "No chkserver errors found"
-        fi
-        echo ""
-        echo "Warnings:"
-        OUTPUT=`grep 33m ${CHKSERVER} | grep -v Warning`
-        if [[ ! -z $OUTPUT ]]
-        then
-          grep 33m ${CHKSERVER} | grep -v Warning
-        else
-          echo "No chkserver warnings found"
-        fi
-      fi
+      echo "${LOGS} didn't run today (last ran: `date +\"%Y/%m/${RUNDATE}\"`)"
     fi
+  fi
+fi
+
+if [[ ! -f ${CHKSERVER} ]]
+then
+  echo "${CHKSERVER} doesn't exist"
+else
+  grep "chkserver v1" ${CHKSERVER}
+  echo "Errors:"
+  OUTPUT=`grep 31m ${CHKSERVER} | grep -v Error`
+  if [[ ! -z $OUTPUT ]]
+  then
+    grep 31m ${CHKSERVER} | grep -v Error
+  else
+    echo "No chkserver errors found"
+  fi
+  echo ""
+  echo "Warnings:"
+  OUTPUT=`grep 33m ${CHKSERVER} | grep -v Warning`
+  if [[ ! -z $OUTPUT ]]
+  then
+    grep 33m ${CHKSERVER} | grep -v Warning
+  else
+    echo "No chkserver warnings found"
   fi
 fi
 
