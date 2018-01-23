@@ -11,7 +11,14 @@ then
   rm $LOG
 fi
 
-for i in `awk -F: '{print $1":"$6}' /etc/passwd`
+# checking for centrify
+ADQUERY=""
+if [[ -f /usr/bin/adquery ]]
+then
+  ADQUERY=`/usr/bin/adquery user | awk -F: {'print $1":"$6}'`
+fi
+
+for i in `awk -F: '{print $1":"$6}' /etc/passwd` $ADQUERY
 do
   USERNAME=`echo $i | cut -f1 -d:`
   DIRECTORY=`echo $i | cut -f2 -d:`
