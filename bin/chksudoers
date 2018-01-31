@@ -14,11 +14,14 @@
 #        (TMPSU, DPLSU caused this fix), also added (,|$) to prevent DALL from succeeding
 # 10/12/11 - changed path for group and passwd file due to centrify being installed on some servers.
 # 02/01/13 - Updated all GECOS= entries to pull from chkusers.dat file to get centrify information. - KSZ
-# 1/20/16 - added sfw sudoers check - TCS
+# 01/20/16 - added sfw sudoers check - TCS
+# 01/31/18 - Added debugging code to better identify where account issues pop up
 
 HOSTNAME=`hostname|cut -f1 -d.`
 OUTPUT="/opt/intrado/etc/chksudoers.output"
 CHKSUDOERS="/opt/intrado/etc/chksudoers.dat"
+DEBUG="yes"
+DEBUG="no"
 
 # locate the sudoers file on the system
 
@@ -58,6 +61,10 @@ then
   rm $OUTPUT
 fi
 
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking $SUDOERS: User_Alias:"
+fi
 # there shouldn't be anyone using the User_Alias entry but this checks just in case
 for i in `grep -v "^#" $SUDOERS | grep "User_Alias" | cut -f2 -d= | sed -e "s/,/ /g"`
 do
@@ -72,8 +79,16 @@ do
   STATUS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
   GECOS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
   echo "$HOSTNAME:$i:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+  if [[ $DEBUG = 'yes' ]]
+  then
+    echo "$HOSTNAME:$i:$GECOS:$TMPROOT:$STATUS"
+  fi
 done
 
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking $SUDOERS: Cmnd_Alias:"
+fi
 # this section builds a list of the Cmnd_Aliases that have root access. Generally TMPSU but others such as BEASU have it as well.
 for i in `grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | cut -f2 -d= | sed -e "s/ /_/g" | sed -e "s/,/ /g"`
 do
@@ -90,12 +105,22 @@ done
 # replace the spaces (if any) with a pipe for the egrep command
 CMND_ALIAS=`echo $CMND_ALIAS | sed -e "s/ /|/g"`
 
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking $SUDOERS:"
+  grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'
+fi
 # ok, run through the %groups and see who has what. check for space or tabs
 for i in `grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'`
 do
 # get the group info from /opt/intrado/etc/group
   GID=`grep "^$i:" /opt/intrado/etc/group | cut -f3 -d:`
 
+  if [[ $DEBUG = 'yes' ]]
+  then
+    grep "^$i:" /opt/intrado/etc/group | cut -f3 -d:
+    echo "Checking group id $GID:"
+  fi
   for j in `grep "^$i:" /opt/intrado/etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
   do
 
@@ -111,8 +136,16 @@ do
     STATUS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
     GECOS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
     echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
   done
 
+  if [[ $DEBUG = 'yes' ]]
+  then
+    echo "Checking group membership for users in passwd:"
+  fi
 # parse the passwd file and see if anyone is a member of a root accessible GID
   for j in `awk -F: '{print $1":"$4}' /opt/intrado/etc/passwd`
   do
@@ -122,6 +155,11 @@ do
     if [[ $GID = $UGID ]]
     then
       ROOT=`grep -v "^#" $SUDOERS | grep "^%$i" | awk '{print $NF}'`
+      if [[ $DEBUG = 'yes' ]]
+      then
+        echo "$SUDOERS - $i"
+        grep -v "^#" $SUDOERS | grep "^%$i" | awk '{print $NF}'
+      fi
       if [[ -z $ROOT ]]
       then
         TMPROOT="no"
@@ -132,6 +170,10 @@ do
       STATUS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
       GECOS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
       echo "$HOSTNAME:$USER:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+      if [[ $DEBUG = 'yes' ]]
+      then
+        echo "$HOSTNAME:$USER:$GECOS:$TMPROOT:$STATUS"
+      fi
     fi
   done
 done
