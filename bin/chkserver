@@ -138,8 +138,9 @@
 # 2018/01/01 - CS - Add check for kubernetes/docker issue
 # 2018/01/01 - CS - Change ports being monitored for inventory and kickstart
 # 2018/01/09 - CS - Added a check for the floppy device on VMs.
+# 2018/02/01 - CS - Further refined the management route check to report correct when we're on the server we're checking for.
 
-VERSION="chkserver v1.193"
+VERSION="chkserver v1.195"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -342,7 +343,14 @@ check_management_route() {
           then
             printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+# and of course, if the IP is the system we're on (1 out of how many so last on the check), we're good.
+            ip addr | grep " ${IPADDRESS}/" > /dev/null
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}We're on ${IPADDRESS} so we're good.${RESET}" >> $LOG
+            else
+              printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+            fi
           fi
         fi
 
