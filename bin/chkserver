@@ -139,8 +139,9 @@
 # 2018/01/01 - CS - Change ports being monitored for inventory and kickstart
 # 2018/01/09 - CS - Added a check for the floppy device on VMs.
 # 2018/02/01 - CS - Further refined the management route check to report correct when we're on the server we're checking for.
+# 2018/02/02 - CS - Better define what backup servers are where and checking only the correct ones.
 
-VERSION="chkserver v1.195"
+VERSION="chkserver v1.196"
 PROGNAME="chkserver"
 HOSTNAME=`hostname|cut -f1 -d.`
 COUNT=0
@@ -159,10 +160,6 @@ SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 GPSSERVERS="10.100.228.31 192.168.200.20"
 MONSERVERS="Longmont:10.109.243.19 Miami:10.109.226.19"
-NBSERVERS="10.100.6.25 10.32.138.14"
-BUSERVERS="inveri01-gig0 10.100.6.25 inveri02 10.32.138.14 incobu01 10.100.77.77 incobu02 10.100.5.89"
-BUEXTRA="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
-BUIPLIST="10.100.6.25 10.32.138.14 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
 DPSERVERS="10.100.128.3"
 EMAILSERVERS="10.100.104.6"
 # for kickstart but only jumpstart but for inventory access ssl for all
@@ -170,6 +167,103 @@ MGTSERVERS="10.100.78.143:80 10.100.78.143:443 10.100.128.149:443 192.168.208.86
 MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86 inventory.scc911.com:10.100.128.201"
 OPNETSERVERS="10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090"
 SATELLITESERVERS="10.100.143.51"
+
+# figure out the correct servers and IPs for netbackup
+NBSERVERS=""
+BUSERVERS=""
+BUEXTRAS=""
+BUIPLIST=""
+
+# get the server settings
+LOCATION=`grep "^${HOSTNAME}:Location:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+NETZONE=`grep "^${HOSTNAME}:NetworkZone:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+
+case ${LOCATION} in
+   "DEN03" ) NBSERVERS="10.100.6.25"
+             BUSERVERS="inveri01-gig0 10.100.6.25 incobu01 10.100.77.77 incobu02 10.100.5.89"
+             BUEXTRAS="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
+             BUIPLIST="10.100.6.25 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
+             ;;
+   "MIA04" ) NBSERVERS="10.32.138.14"
+             BUSERVERS="inveri02 10.32.138.14"
+             BUIPLIST=${NBSERVERS}
+             ;;
+   "CAL02" | "TOR11" ) NBSERVERS="10.109.193.27"
+                       BUSERVERS="calgbuma01 10.109.193.27 cgv08-bu01 10.109.193.56"
+                       BUIPLIST="10.109.193.27 10.109.193.56"
+             ;;
+   "HNL01" ) NBSERVERS="10.109.79.19"
+             BUSERVERS="hnllhiecnbu11 10.109.79.19"
+             BUIPLIST=${NBSERVERS}
+             ;;
+   "BHM02" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.131.100"
+                        BUSERVERS="brhm2aabue911p01 10.80.131.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.131.100"
+                       BUSERVERS="brhm2aabudmzp01 10.81.131.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+   "CLT01" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.163.100"
+                        BUSERVERS="chrl2aabue911p01 10.80.163.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.163.100"
+                       BUSERVERS="chrl2aabudmzp01 10.81.163.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+   "DFW10" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.67.100"
+                        BUSERVERS="dlls2aabue911p01 10.80.67.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.67.100"
+                       BUSERVERS="dlls2aabudmzp01 10.81.67.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+   "OAK02" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.35.100"
+                        BUSERVERS="frfd2aabue911p01 10.80.35.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.35.100"
+                       BUSERVERS="frfd2aabudmzp01 10.81.35.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+   "DTW01" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.99.100"
+                        BUSERVERS="sfld2aabue911p01 10.80.99.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.99.100"
+                       BUSERVERS="sfld2aabudmzp01 10.81.99.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+   "SAN01" ) case ${NETZONE} in
+               "E911" ) NBSERVERS="10.80.3.100"
+                        BUSERVERS="sndg2aabue911p01 10.80.3.100"
+                        BUIPLIST=${NBSERVERS}
+                        ;;
+               "DMZ" ) NBSERVERS="10.81.3.100"
+                       BUSERVERS="sndg2aabudmzp01 10.81.3.100"
+                       BUIPLIST=${NBSERVERS}
+                       ;;
+             esac
+             ;;
+esac
+
 
 OSMAJOR=0
 if [[ -f /etc/redhat-release ]]
@@ -638,7 +732,7 @@ check_data_palette() {
   if [[ -f /opt/datapalette/bin/datapal ]]
   then
     printf "%b\n" "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-    DPPS=`ps -e | grep datapal`
+    DPPS=`ps -ef | grep "/opt/datapalette/java/bin/java" | grep -v grep`
     if [[ ! -z $DPPS ]]
     then
       printf "%b\n" "    ${GREEN}Data Palette is running${RESET}" >> $LOG
@@ -1367,7 +1461,7 @@ check_netbackup() {
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
     printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
-# netbackup versino 7 doesn't use hosts.allow any more.
+# netbackup version 7 doesn't use hosts.allow any more.
     if [[ -f /usr/openv/netbackup/bin/version ]]
     then
       VERSION=`awk '{print $2}' /usr/openv/netbackup/bin/version | cut -f1 -d.`
