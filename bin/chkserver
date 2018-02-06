@@ -2475,8 +2475,9 @@ check_time() {
               if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
               then
                 printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
-              else
-                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
+# commenting out for now as this depends on network; converting to rrdtool graph
+#              else
+#                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
               fi
             else
               printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> $LOG
