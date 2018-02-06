@@ -154,7 +154,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.197"
+VERSION="${BASENAME} v1.198"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -635,6 +635,7 @@ check_data_palette() {
   fi
   if [[ ! ${CHECK_DATA_PALETTE} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Data Palette Check${RESET}" >> $LOG
     return
   fi
   if [[ -f /opt/datapalette/bin/datapal ]]
@@ -832,6 +833,7 @@ check_email() {
   fi
   if [[ ! ${CHECK_EMAIL} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping EMail Check${RESET}" >> $LOG
     return
   fi
   for i in ${EMAIL_SERVERS}
@@ -1137,6 +1139,7 @@ check_jumpstart() {
   fi
   if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> $LOG
     return
   fi
   for i in ${MANAGEMENT_SERVERS}
@@ -1388,6 +1391,7 @@ check_netbackup() {
   fi
   if [[ ! ${CHECK_NETBACKUP} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Netbackup Check${RESET}" >> $LOG
     return
   fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
@@ -1581,6 +1585,7 @@ check_openview() {
   fi
   if [[ ! ${CHECK_MONITORING} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Monitoring Check${RESET}" >> $LOG
     return
   fi
   if [[ -d /opt/OV/bin ]]
@@ -1752,6 +1757,7 @@ check_opnet() {
   fi
   if [[ ! ${CHECK_OPNET} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Opnet Check${RESET}" >> $LOG
     return
   fi
   if [[ -d /opt/Panorama ]]
@@ -1886,6 +1892,7 @@ check_redhat_subscription() {
   fi
   if [[ ! ${CHECK_SATELLITE} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Satellite Check${RESET}" >> $LOG
     return
   fi
   if [[ -f /etc/redhat-release ]]
@@ -2077,6 +2084,8 @@ check_resolver() {
                 printf "%b\n" "    ${GREEN}Resolved ${MGTSITE}${RESET}" >> $LOG
                 fi
               done
+            else
+              printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> $LOG
             fi
           done
         fi
@@ -2381,6 +2390,7 @@ check_time() {
 # exit if not checking
   if [[ ! ${CHECK_TIME} = 'Yes' ]]
   then
+    printf "%b\n" "    ${GREEN}Skipping Time Server Check${RESET}" >> $LOG
     return
   fi
   printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
