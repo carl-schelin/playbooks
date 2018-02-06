@@ -140,129 +140,33 @@
 # 2018/01/09 - CS - Added a check for the floppy device on VMs.
 # 2018/02/01 - CS - Further refined the management route check to report correct when we're on the server we're checking for.
 # 2018/02/02 - CS - Better define what backup servers are where and checking only the correct ones.
+# 2018/02/06 - CS - Incorporate a .config file to isolate site specific locations.
 
-VERSION="chkserver v1.196"
-PROGNAME="chkserver"
-HOSTNAME=`hostname|cut -f1 -d.`
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
+VERSION="${BASENAME} v1.197"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
 GWMSG=''
-OS=`uname`
 CENTRIFY='no'
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
-INTRADO=/opt/intrado
-LOG=$INTRADO/etc/chkserver.output
+LOG=${SCRIPTS}/etc/chkserver.output
 SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
-GPSSERVERS="10.100.228.31 192.168.200.20"
-MONSERVERS="Longmont:10.109.243.19 Miami:10.109.226.19"
-DPSERVERS="10.100.128.3"
-EMAILSERVERS="10.100.104.6"
-# for kickstart but only jumpstart but for inventory access ssl for all
-MGTSERVERS="10.100.78.143:80 10.100.78.143:443 10.100.128.149:443 192.168.208.86:443 10.100.128.201:443"
-MGTLISTING="incojs01.scc911.com:10.100.78.143 lnmt1cuomtool11.scc911.com:10.100.128.149 miam1cuomtool11.scc911.com:192.168.208.86 inventory.scc911.com:10.100.128.201"
-OPNETSERVERS="10.32.10.1:443 10.100.4.63:19090 10.100.4.64:19090"
-SATELLITESERVERS="10.100.143.51"
-
-# figure out the correct servers and IPs for netbackup
-NBSERVERS=""
-BUSERVERS=""
-BUEXTRAS=""
-BUIPLIST=""
-
-# get the server settings
-LOCATION=`grep "^${HOSTNAME}:Location:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
-NETZONE=`grep "^${HOSTNAME}:NetworkZone:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
-
-case ${LOCATION} in
-   "DEN03" ) NBSERVERS="10.100.6.25"
-             BUSERVERS="inveri01-gig0 10.100.6.25 incobu01 10.100.77.77 incobu02 10.100.5.89"
-             BUEXTRAS="incobu03 10.100.128.141 lmntcoecmma10 10.109.30.22"
-             BUIPLIST="10.100.6.25 10.100.77.77 10.100.5.89 10.100.128.141 10.109.30.22"
-             ;;
-   "MIA04" ) NBSERVERS="10.32.138.14"
-             BUSERVERS="inveri02 10.32.138.14"
-             BUIPLIST=${NBSERVERS}
-             ;;
-   "CAL02" | "TOR11" ) NBSERVERS="10.109.193.27"
-                       BUSERVERS="calgbuma01 10.109.193.27 cgv08-bu01 10.109.193.56"
-                       BUIPLIST="10.109.193.27 10.109.193.56"
-             ;;
-   "HNL01" ) NBSERVERS="10.109.79.19"
-             BUSERVERS="hnllhiecnbu11 10.109.79.19"
-             BUIPLIST=${NBSERVERS}
-             ;;
-   "BHM02" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.131.100"
-                        BUSERVERS="brhm2aabue911p01 10.80.131.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.131.100"
-                       BUSERVERS="brhm2aabudmzp01 10.81.131.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-   "CLT01" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.163.100"
-                        BUSERVERS="chrl2aabue911p01 10.80.163.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.163.100"
-                       BUSERVERS="chrl2aabudmzp01 10.81.163.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-   "DFW10" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.67.100"
-                        BUSERVERS="dlls2aabue911p01 10.80.67.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.67.100"
-                       BUSERVERS="dlls2aabudmzp01 10.81.67.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-   "OAK02" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.35.100"
-                        BUSERVERS="frfd2aabue911p01 10.80.35.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.35.100"
-                       BUSERVERS="frfd2aabudmzp01 10.81.35.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-   "DTW01" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.99.100"
-                        BUSERVERS="sfld2aabue911p01 10.80.99.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.99.100"
-                       BUSERVERS="sfld2aabudmzp01 10.81.99.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-   "SAN01" ) case ${NETZONE} in
-               "E911" ) NBSERVERS="10.80.3.100"
-                        BUSERVERS="sndg2aabue911p01 10.80.3.100"
-                        BUIPLIST=${NBSERVERS}
-                        ;;
-               "DMZ" ) NBSERVERS="10.81.3.100"
-                       BUSERVERS="sndg2aabudmzp01 10.81.3.100"
-                       BUIPLIST=${NBSERVERS}
-                       ;;
-             esac
-             ;;
-esac
 
 
 OSMAJOR=0
@@ -339,7 +243,7 @@ then
   SUDOERS='/etc/sudoers'
 fi
 
-# intrado custom install
+# sudoers custom install
 if [[ -f /usr/local/etc/sudoers ]]
 then
   SUDOERS='/usr/local/etc/sudoers'
@@ -414,7 +318,7 @@ EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
 check_management_route() {
   IPADDRESS=$1
 
-  MANAGEMENT_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+  MANAGEMENT_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
   then
@@ -488,12 +392,12 @@ check_active_employees() {
   then
     echo "Entering check_active_employees(1)"
   fi
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> $LOG
     for j in `cut -f1 -d: /etc/passwd`
     do
-      grep -i "^${j}$" $INTRADO/etc/users.exclude > /dev/null
+      grep -i "^${j}$" ${SCRIPTS}/etc/users.exclude > /dev/null
       if [[ $? = 1 ]]
       then
 
@@ -536,10 +440,10 @@ check_active_employees() {
           EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
           if [[ ! -z $EMAIL ]]
           then
-            grep -i "^${EMAIL}$" $INTRADO/etc/intrado.email > /dev/null
+            grep -i "^${EMAIL}$" ${SCRIPTS}/etc/intrado.email > /dev/null
             if [[ $? = 1 ]]
             then
-              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the /opt/intrado/etc/intrado.email file and the account isn't locked.${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS}/etc/intrado.email file and the account isn't locked.${RESET}" >> $LOG
             fi
           fi
         fi
@@ -683,11 +587,11 @@ check_cfg2html() {
   then
     echo "Entering check_cfg2html(28)"
   fi
-  if [[ ! -d /opt/intrado/cfghtml ]]
+  if [[ ! -d ${SCRIPTS}/cfghtml ]]
   then
     printf "%b\n" "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
   else
-    if [[ ! -f /opt/intrado/cfghtml/$HOSTNAME.html ]]
+    if [[ ! -f ${SCRIPTS}/cfghtml/$HOSTNAME.html ]]
     then
       printf "%b\n" "  ${RED}cfg2html has not been run${RESET}" >> $LOG
     fi
@@ -729,6 +633,10 @@ check_data_palette() {
   then
     echo "Entering check_data_palette(3)"
   fi
+  if [[ ! ${CHECK_DATA_PALETTE} = 'Yes' ]]
+  then
+    return
+  fi
   if [[ -f /opt/datapalette/bin/datapal ]]
   then
     printf "%b\n" "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
@@ -739,27 +647,32 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
     fi
-    for i in $DPSERVERS
+    for i in ${DATA_PALETTE_SERVERS}
     do
-      check_management_route ${i}
-      echo "  ping check of data palette nerve center: ${i}"
-      ping ${i} ${PINGCT} > /dev/null
+      DPSITE=`echo $i | cut -f1 -d:`
+      DPIP=`echo $i | cut -f2 -d:`
+      DPPROTOCOL=`echo $i | cut -f3 -d:`
+      DPPORT=`echo $i | cut -f4 -d:`
+
+      check_management_route ${DPIP}
+      echo "  ping check of data palette nerve center: ${DPIP}"
+      ping ${DPIP} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${i} is pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPIP} is pingable${RESET}" >> $LOG
         if [[ ! -z ${NETCAT} ]]
         then
-          echo "  nc check of Data Palette Nerve Center ${i}"
-          echo "quit" | ${NETCAT} -w 2 -vn ${i} 8080 > /dev/null 2>&1
+          echo "  nc check of Data Palette Nerve Center ${DPIP}"
+          echo "quit" | ${NETCAT} -w 2 -vn ${DPIP} ${DPPORT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${i}:8080) is accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${DPIP}:${DPPORT}) is accessible${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${RED}Data Palette Nerve Center (${i}:8080) is not accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}Data Palette Nerve Center (${DPIP}:${DPPORT}) is not accessible${RESET}" >> $LOG
           fi
         fi
       else
-        printf "%b\n" "    ${RED}Data Palette Nerve Center ${i} is not pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPIP} is not pingable${RESET}" >> $LOG
       fi
     done
   fi
@@ -831,7 +744,7 @@ check_disk_space() {
   fi
 
   printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> $LOG
-  DISKSPACE=${INTRADO}/etc/diskspace.output
+  DISKSPACE=${SCRIPTS}/etc/diskspace.output
   if [[ $OS = "HP-UX" ]]
   then
     bdf -l > ${DISKSPACE}
@@ -917,28 +830,37 @@ check_email() {
   then
     echo "Entering check_email(32)"
   fi
-  for i in ${EMAILSERVERS}
+  if [[ ! ${CHECK_EMAIL} = 'Yes' ]]
+  then
+    return
+  fi
+  for i in ${EMAIL_SERVERS}
   do
-    printf "%b\n" "  ${GREEN}Checking mail server (${i}:25)${RESET}" >> $LOG
-    check_management_route ${i}
-    echo "  ping check of mail server: ${i}"
-    ping ${i} ${PINGCT} > /dev/null
+    EMAILSITE=`echo $i | cut -f1 -d:`
+    EMAILIP=`echo $i | cut -f2 -d:`
+    EMAILPROTOCOL=`echo $i | cut -f3 -d:`
+    EMAILPORT=`echo $i | cut -f4 -d:`
+
+    printf "%b\n" "  ${GREEN}Checking mail server (${EMAILIP}:${EMAILPORT})${RESET}" >> $LOG
+    check_management_route ${EMAILIP}
+    echo "  ping check of mail server: ${EMAILIP}"
+    ping ${EMAILIP} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}Email server ${i} is pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Email server ${EMAILIP} is pingable${RESET}" >> $LOG
       if [[ ! -z ${NETCAT} ]]
       then
-        echo "  nc check of Mail Server ${i}"
-        echo "quit" | ${NETCAT} -w 2 -vn ${i} 25 > /dev/null 2>&1
+        echo "  nc check of Mail Server ${EMAILIP}"
+        echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${EMAILPORT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Email server (${i}:25) is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Email server (${EMAILIP}:${EMAILPORT}) is accessible${RESET}" >> $LOG
         else
-          printf "%b\n" "    ${RED}Email server (${i}:25) is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Email server (${EMAILIP}:${EMAILPORT}) is not accessible${RESET}" >> $LOG
         fi
       fi
     else
-      printf "%b\n" "    ${RED}Email server {$i} is not pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Email server {$EMAILIP} is not pingable${RESET}" >> $LOG
     fi
   done
   if [[ ${DEBUG} = '32' ]]
@@ -1003,19 +925,19 @@ check_group_membership() {
   for i in ${GROUPLIST}
   do
 # look for the hostname first then see if the system is centrified, otherwise check all servers
-    GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+    GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
     if [[ -z ${GROUP} ]]
     then
       if [[ ${CENTRIFY} = 'yes' ]]
       then
-        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
       else
-        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
       fi
 # check non-standard groups if not found
       if [[ -z ${GROUP} ]]
       then
-        GROUP=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
         if [[ ! -z ${GROUP} ]]
         then
           printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> $LOG
@@ -1066,35 +988,35 @@ check_group_membership() {
       for j in ${USERLIST}
       do
 # look for the hostname first, if not found, then check the centrify flag and * if not centrified, then check the questionable groups
-        GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
+        GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
         if [[ -z ${GRPFND} ]]
         then
           if [[ ${CENTRIFY} = 'yes' ]]
           then
-            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^centrify:${i}:"`
+            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:"`
           else
-            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\*:${i}:"`
+            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:"`
           fi
           if [[ -z ${GRPFND} ]]
           then
-            GRPFND=`grep -v "^#" ${INTRADO}/etc/group.master | grep -i "^\?:${i}:"`
+            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:"`
             if [[ ! -z ${GRPFND} ]]
             then
-              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
               FOUND="?:${i}"
             fi
           else
             if [[ ${CENTRIFY} = 'yes' ]]
             then
-              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)"`
               FOUND="centrify:${i}"
             else
-              PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
               FOUND="*:${i}"
             fi
           fi
         else
-          PRESENT=`grep -v "^#" ${INTRADO}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+          PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
           FOUND="${HOSTNAME}:${i}"
         fi
 
@@ -1178,7 +1100,7 @@ check_interfaces() {
 
 
 ######################
-### Check to make sure intrado scripts have run
+### Check to make sure scripts have run
 ### Number of Checks: 2
 ######################
 
@@ -1187,11 +1109,11 @@ check_intrado() {
   then
     echo "Entering check_intrado(8)"
   fi
-  if [[ ! -f /opt/intrado/var/intrado.log ]]
+  if [[ ! -f ${SCRIPTS}/var/intrado.log ]]
   then
-    printf "%b\n" "  ${YELLOW}The /opt/intrado/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> $LOG
   fi
-  CRON=`crontab -l | grep -v "^#" | grep "/opt/intrado/bin/intrado"`
+  CRON=`crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/intrado"`
   if [[ -z $CRON ]]
   then
     printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> $LOG
@@ -1213,31 +1135,37 @@ check_jumpstart() {
   then
     echo "Entering check_jumpstart(9)"
   fi
-  for i in ${MGTSERVERS}
+  if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
+  then
+    return
+  fi
+  for i in ${MANAGEMENT_SERVERS}
   do
-    MGTSVR=`echo  $i | cut -f1 -d:`
-    MGTPORT=`echo $i | cut -f2 -d:`
+    MGTSITE=`echo  $i | cut -f1 -d:`
+    MGTIP=`echo  $i | cut -f2 -d:`
+    MGTPROTOCOL=`echo $i | cut -f3 -d:`
+    MGTPORT=`echo $i | cut -f4 -d:`
 
-    printf "%b\n" "  ${GREEN}Checking management server (${MGTSVR}:${MGTPORT})${RESET}" >> $LOG
-    check_management_route ${MGTSVR}
-    echo "  ping check of management server: ${MGTSVR}"
-    ping ${MGTSVR} ${PINGCT} > /dev/null
+    printf "%b\n" "  ${GREEN}Checking management server (${MGTIP}:${MGTPORT})${RESET}" >> $LOG
+    check_management_route ${MGTIP}
+    echo "  ping check of management server: ${MGTIP}"
+    ping ${MGTIP} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}Management server ${MGTSVR} is pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Management server ${MGTIP} is pingable${RESET}" >> $LOG
       if [[ ! -z ${NETCAT} ]]
       then
-        echo "  nc check of Management Server ${MGTSVR}:${MGTPORT}"
-        echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTSVR} ${MGTPORT} > /dev/null 2>&1
+        echo "  nc check of Management Server ${MGTIP}:${MGTPORT}"
+        echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${MGTPORT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Management server ${MGTSVR}:${MGTPORT} is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Management server ${MGTIP}:${MGTPORT} is accessible${RESET}" >> $LOG
         else
-          printf "%b\n" "    ${RED}Management server ${MGTSVR}:${MGTPORT} is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Management server ${MGTIP}:${MGTPORT} is not accessible${RESET}" >> $LOG
         fi
       fi
     else
-      printf "%b\n" "    ${RED}Management server ${MGTSVR} is not pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Management server ${MGTIP} is not pingable${RESET}" >> $LOG
     fi
   done
   if [[ ${DEBUG} = '9' ]]
@@ -1432,7 +1360,7 @@ check_memory() {
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
-  APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${INTRADO}/etc/chkserver.exclude`
+  APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS}/etc/chkserver.exclude`
 # if blank, then we didn't find an approved value, continue with the check
   if [[ "${APPROVED}" = "" ]]
   then
@@ -1457,6 +1385,10 @@ check_netbackup() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_netbackup(14)"
+  fi
+  if [[ ! ${CHECK_NETBACKUP} = 'Yes' ]]
+  then
+    return
   fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
@@ -1547,13 +1479,13 @@ check_netbackup() {
 #----------------  ---------- -------- ----------- - --------------- ------------
 #07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
 
-    if [[ -f  $INTRADO/etc/backups.output ]]
+    if [[ -f  ${SCRIPTS}/etc/backups.output ]]
     then
-      if [[ ! -s $INTRADO/etc/backups.output ]]
+      if [[ ! -s ${SCRIPTS}/etc/backups.output ]]
       then
-        printf "%b\n" "    ${RED}${INTRADO}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+        printf "%b\n" "    ${RED}${SCRIPTS}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
       else
-        OUTPUT=`awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${INTRADO}/etc/backups.output`
+        OUTPUT=`awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS}/etc/backups.output`
         if [[ $OS = 'Linux' ]]
         then
           BUDATE=`date --date=$OUTPUT +"%s"`
@@ -1647,6 +1579,10 @@ check_openview() {
       set -x
     fi
   fi
+  if [[ ! ${CHECK_MONITORING} = 'Yes' ]]
+  then
+    return
+  fi
   if [[ -d /opt/OV/bin ]]
   then
     printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
@@ -1666,27 +1602,29 @@ check_openview() {
         printf "%b\n" "    ${RED}Openview agent is running: Aborted: ${ABORT} Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
       fi
 
-      for i in ${MONSERVERS}
+      for i in ${MONITORING_SERVERS}
       do
-        OVNAME=`echo $i | cut -f1 -d:`
+        OVSITE=`echo $i | cut -f1 -d:`
         OVIP=`echo $i | cut -f2 -d:`
+        OVPROTOCOL=`echo $i | cut -f3 -d:`
+        OVPORT=`echo $i | cut -f4 -d:`
 
         check_management_route ${OVIP}
 
         ping ${OVIP} ${PINGCT} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}${OVNAME} Openview VIP is pingable${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}${OVSITE} Openview VIP is pingable${RESET}" >> $LOG
           if [[ ! -z ${NETCAT} ]]
           then
 # netcat isn't working correctly everywhere but it is working in some places...
-            echo "  nc check of ${OVNAME} Openview Server"
-            echo "" | ${NETCAT} -w 2 -vn ${OVIP} 383 > /dev/null 2>&1
+            echo "  nc check of ${OVSITE} Openview Server"
+            echo "" | ${NETCAT} -w 2 -vn ${OVIP} ${OVPORT} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
-              printf "%b\n" "    ${GREEN}${OVNAME} VIP is accessible${RESET}" >> $LOG
+              printf "%b\n" "    ${GREEN}${OVSITE} VIP is accessible${RESET}" >> $LOG
             else
-              printf "%b\n" "    ${RED}${OVNAME} VIP is not accessible${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${OVSITE} VIP is not accessible${RESET}" >> $LOG
             fi
           fi
 
@@ -1694,12 +1632,12 @@ check_openview() {
           /opt/OV/bin/bbcutil -ping ${OVIP} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVNAME}${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVSITE}${RESET}" >> $LOG
           else
-            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVNAME}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> $LOG
+            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVSITE}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> $LOG
           fi
         else
-          printf "%b\n" "    ${RED}${OVNAME} Openview VIP is not pingable${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${OVSITE} Openview VIP is not pingable${RESET}" >> $LOG
         fi
       done
 
@@ -1736,9 +1674,9 @@ check_openview() {
 # check the configuration for Openview.
 # the chkserver.input file should have entries identifying 
 # the ip and management bits
-      EXPECTED_IP=`grep "^${HOSTNAME}:IPAddressMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
-      EXPECTED_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
-      EXPECTED_MONITOR=`grep "^${HOSTNAME}:MonitoringServer:" ${INTRADO}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_IP=`grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_MONITOR=`grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
 
       if [[ ${DEBUG} = 16 ]]
       then
@@ -1812,6 +1750,10 @@ check_opnet() {
   then
     echo "Entering check_opnet(17)"
   fi
+  if [[ ! ${CHECK_OPNET} = 'Yes' ]]
+  then
+    return
+  fi
   if [[ -d /opt/Panorama ]]
   then
     printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> $LOG
@@ -1835,13 +1777,15 @@ check_opnet() {
     fi
     if [[ ! -z ${NETCAT} ]]
     then
-      for j in ${OPNETSERVERS}
+      for j in ${OPNET_SERVERS}
       do
-        OPNETIP=`echo $j | cut -f1 -d:`
-        OPNETPORT=`echo $j | cut -f2 -d:`
+        OPNETSITE=`echo $j | cut -f1 -d:`
+        OPNETIP=`echo $j | cut -f2 -d:`
+        OPNETPROTOCOL=`echo $j | cut -f3 -d:`
+        OPNETPORT=`echo $j | cut -f4 -d:`
 
 # looking for a skip entry in the chkserver.exclude file
-        APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${INTRADO}/etc/chkserver.exclude`
+        APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude`
         if [[ "${APPROVED}" = "" ]]
         then
           echo "  nc check of OpNet Server"
@@ -1880,10 +1824,10 @@ check_privileged_access() {
   then
     echo "Entering check_privileged_access(18)"
   fi
-  if [[ -f $INTRADO/etc/chksudo.dat ]]
+  if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> $LOG
-    for j in `awk -F: '{print $1":"$2":"$4}' $INTRADO/etc/chksudoers.output`
+    for j in `awk -F: '{print $1":"$2":"$4}' ${SCRIPTS}/etc/chksudoers.output`
     do
       SERVER=`echo $j | cut -f1 -d:`
       USER=`echo $j | cut -f2 -d:`
@@ -1891,10 +1835,10 @@ check_privileged_access() {
 
       if [[ ${ROOT} = 'yes' ]]
       then
-        OUTPUT=`grep "^\*:${USER}:" $INTRADO/etc/chksudo.dat`
+        OUTPUT=`grep "^\*:${USER}:" ${SCRIPTS}/etc/chksudo.dat`
         if [[ -z $OUTPUT ]]
         then
-          OUTPUT=`grep "^${SERVER}:${USER}:" $INTRADO/etc/chksudo.dat`
+          OUTPUT=`grep "^${SERVER}:${USER}:" ${SCRIPTS}/etc/chksudo.dat`
           if [[ -z $OUTPUT ]]
           then
             printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
@@ -1940,36 +1884,48 @@ check_redhat_subscription() {
   then
     echo "Entering check_redhat_subscription(19)"
   fi
+  if [[ ! ${CHECK_SATELLITE} = 'Yes' ]]
+  then
+    return
+  fi
   if [[ -f /etc/redhat-release ]]
   then
     if [[ ${DEBUG} = '19' ]]
     then
       echo "  Red Hat System"
     fi
-    for i in ${SATELLITESERVERS}
+    for i in ${SATELLITE_SERVERS}
     do
-      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${i}${RESET}" >> $LOG
-      check_management_route ${i}
-      echo "  ping check of Red Hat Satellite Server: ${i}"
-      ping ${i} ${PINGCT} > /dev/null
+      SATSITE=`echo $i | cut -f1 -d:`
+      SATIP=`echo $i | cut -f2 -d:`
+      SATPROTOCOL=`echo $i | cut -f3 -d:`
+      SATPORT=`echo $i | cut -f4 -d:`
+
+      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATIP}${RESET}" >> $LOG
+      check_management_route ${SATIP}
+      echo "  ping check of Red Hat Satellite Server: ${SATIP}"
+      ping ${SATIP} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Satellite Server ${i} is pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Satellite Server ${SATIP} is pingable${RESET}" >> $LOG
       else
-        printf "%b\n" "    ${RED}Satellite Server ${i} is not pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Satellite Server ${SATIP} is not pingable${RESET}" >> $LOG
       fi
 
-      echo "  nc check of Satellite Server ports"
+# since it's a block of ports; easier to check outside the normal variable setup.
+      printf "  nc check of Satellite Server ports:"
       for j in 80 443 5646 5647 5671 5672 8140 9090 
       do
-        echo "quit" | ${NETCAT} -w 2 -vn ${i} ${j} > /dev/null 2>&1
+        printf " $j"
+        echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Satellite Server (${i}:${j}) is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Satellite Server (${SATIP}:${j}) is accessible${RESET}" >> $LOG
         else
-          printf "%b\n" "    ${RED}Satellite Server (${i}:${j}) is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Satellite Server (${SATIP}:${j}) is not accessible${RESET}" >> $LOG
         fi
       done
+      printf "\n"
     done
 
     if [[ ! -f /usr/bin/subscription-manager ]]
@@ -2104,19 +2060,24 @@ check_resolver() {
             else
               printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
             fi
-            for j in ${MGTLISTING}
-            do
-              MGTSVR=`echo $j | cut -f1 -d:`
-              MGTIP=`echo $j | cut -f2 -d:`
+            if [[ ${CHECK_MANAGEMENT} = 'Yes' ]]
+            then
+              for j in ${MANAGEMENT_SERVERS}
+              do
+                MGTSITE=`echo $j | cut -f1 -d:`
+                MGTIP=`echo $j | cut -f2 -d:`
+                MGTPROTOCOL=`echo $j | cut -f3 -d:`
+                MGTPORT=`echo $j | cut -f4 -d:`
 
-              OUTPUT=`dig @${i} +time=1 ${MGTSVR} | grep -v "^;" | grep "${MGTIP}"`
-              if [[ -z $OUTPUT ]]
-              then
-                printf "%b\n" "    ${RED}Unable to resolve ${MGTSVR}${RESET}" >> $LOG
-              else
-              printf "%b\n" "    ${GREEN}Resolved ${MGTSVR}${RESET}" >> $LOG
-              fi
-            done
+                OUTPUT=`dig @${i} +time=1 ${MGTSITE} | grep -v "^;" | grep "${MGTIP}"`
+                if [[ -z $OUTPUT ]]
+                then
+                  printf "%b\n" "    ${RED}Unable to resolve ${MGTSITE}${RESET}" >> $LOG
+                else
+                printf "%b\n" "    ${GREEN}Resolved ${MGTSITE}${RESET}" >> $LOG
+                fi
+              done
+            fi
           done
         fi
         if [[ $COUNT -gt 3 ]]
@@ -2143,14 +2104,14 @@ check_routetable() {
   then
     echo "Entering check_routetable(22)"
   fi
-  if [[ ! -f $INTRADO/etc/routetable.output ]]
+  if [[ ! -f ${SCRIPTS}/etc/routetable.output ]]
   then
-    $INTRADO/bin/chkroutetable
+    ${SCRIPTS}/bin/chkroutetable
   fi
-  if [[ -s $INTRADO/etc/routetable.output ]]
+  if [[ -s ${SCRIPTS}/etc/routetable.output ]]
   then
     printf "%b\n" "  ${RED}Route table mismatch.${RESET}" >> $LOG
-    cat $INTRADO/etc/routetable.output >> $LOG
+    cat ${SCRIPTS}/etc/routetable.output >> $LOG
     echo -en "${RESET}" >> $LOG
   fi
   if [[ ${DEBUG} = '22' ]]
@@ -2195,9 +2156,9 @@ check_security() {
   then
     echo "Entering check_security()"
   fi
-  if [[ -f ${INTRADO}/etc/chksecurity.output ]]
+  if [[ -f ${SCRIPTS}/etc/chksecurity.output ]]
   then
-    SECURITY=`cat ${INTRADO}/etc/chksecurity.output | awk '{print $NF}'`
+    SECURITY=`cat ${SCRIPTS}/etc/chksecurity.output | awk '{print $NF}'`
     if [[ ${SECURITY} = 'yes' ]]
     then
       printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> $LOG
@@ -2329,7 +2290,7 @@ check_swap() {
   then
     echo "Entering check_swap(25)"
   fi
-  APPROVED=`grep -i "^${HOSTNAME}:Swap" ${INTRADO}/etc/chkserver.exclude | cut -f3 -d:`
+  APPROVED=`grep -i "^${HOSTNAME}:Swap" ${SCRIPTS}/etc/chkserver.exclude | cut -f3 -d:`
   if [[ $OS = 'Linux' ]]
   then
     if [[ -f /usr/sbin/lvdisplay ]]
@@ -2417,6 +2378,11 @@ check_time() {
   then
     echo "Entering check_time(26)"
   fi
+# exit if not checking
+  if [[ ! ${CHECK_TIME} = 'Yes' ]]
+  then
+    return
+  fi
   printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
   T_MSG=''
   T_COMMAND=''
@@ -2454,40 +2420,45 @@ check_time() {
       printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> $LOG
       printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
 
-      for i in $GPSSERVERS
+      for i in ${TIME_SERVERS}
       do
-        check_management_route ${i}
-        echo "  ping check of time server: ${i}"
-        ping ${i} ${PINGCT} > /dev/null
+        TIMESITE=`echo $i | cut -f1 -d:`
+        TIMEIP=`echo $i | cut -f2 -d:`
+        TIMEPROTOCOL=`echo $i | cut -f2 -d:`
+        TIMEPORT=`echo $i | cut -f2 -d:`
+
+        check_management_route ${TIMEIP}
+        echo "  ping check of time server: ${TIMEIP}"
+        ping ${TIMEIP} ${PINGCT} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "      ${GREEN}GPS Server ${i} is pingable.${RESET}" >> $LOG
+          printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is pingable.${RESET}" >> $LOG
         else
-          printf "%b\n" "      ${RED}GPS Server ${i} is not pingable.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not pingable.${RESET}" >> $LOG
         fi
-        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${i}`
+        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${TIMEIP}`
         if [[ -z $OUTPUT ]]
         then
-          printf "%b\n" "      ${RED}GPS Server ${i} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
         else
-          echo "  time check of time server: ${i}"
-          ntpdate -q ${i} > /dev/null
+          echo "  time check of time server: ${TIMEIP}"
+          ntpdate -q ${TIMEIP} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "      ${GREEN}GPS Server ${i} is providing time.${RESET}" >> $LOG
+            printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is providing time.${RESET}" >> $LOG
           else
-            printf "%b\n" "      ${RED}GPS Server ${i}:UDP/123 is not reachable.${RESET} ntpdate -q ${i} failed" >> $LOG
+            printf "%b\n" "      ${RED}GPS Server ${TIMEIP}:${TIMEPROTOCOL}/${TIMEPORT} is not reachable.${RESET} ntpdate -q ${TIMEIP} failed" >> $LOG
           fi
 
 # Updated NTP check - validates ticker status as well as reachability
 # The modified T_COMMAND/awk pipelines now return a string with only "<status> <reachability>" for the provided IP
           if [[ $T_MSG = 'chrony' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${i}/'{print substr($1,2,1),$5}'`
+            OUTPUT=`${T_COMMAND} | awk /${TIMEIP}/'{print substr($1,2,1),$5}'`
           fi
           if [[ $T_MSG = 'ntp' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${i}/'{print substr($1,1,1),$7}'`
+            OUTPUT=`${T_COMMAND} | awk /${TIMEIP}/'{print substr($1,1,1),$7}'`
           fi
 # Then these ksh constructs split out the status and reachability values without a fork/exec subshell by
 # trimming a prefix/suffix from the combined string using built-in parameter expansion
@@ -2495,27 +2466,27 @@ check_time() {
           STATUS="${OUTPUT%% *}"
           if [[ -z ${REACH} ]]
           then
-            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${i}.${RESET}" >> $LOG
+            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIMEIP}.${RESET}" >> $LOG
           else
-# Reachability should always be 377 - anything else is a problem of some kind, regardless of status.
+# Reachability should always be 377 - anything else is a problem of some kind, regardless of status or a recent reboot and rerun
             if [[ $REACH = '377' ]]
             then
 # But even if reachability is 377, status must be '*' or '+' also or there's a different kind of problem.
               if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
               then
-                printf "%b\n" "      ${GREEN}GPS Server ${i} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
+                printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
               else
-                printf "%b\n" "      ${RED}GPS Server ${i} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
+                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
               fi
             else
-              printf "%b\n" "      ${RED}GPS Server ${i} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> $LOG
+              printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> $LOG
             fi
           fi
         fi
       done
 
       DRIFTFILE=`awk '/^[^#]?driftfile/{df=$2}END{print df}' ${T_CONFIG}`
-      DRIFTPATH=`dirname $DRIFTFILE`
+      DRIFTPATH=`dirname ${DRIFTFILE}`
       if [[ -d ${DRIFTPATH} ]]
       then
         if [[ ! -f ${DRIFTFILE} ]]
@@ -2526,7 +2497,7 @@ check_time() {
         printf "%b\n" "      ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
       fi
     else
-      printf "%b\n" "    ${RED}Time servers is not running.${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Time service is not running.${RESET}" >> $LOG
     fi
   else
     printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> $LOG
@@ -2753,7 +2724,7 @@ check_opnet
 check_nrpe
 
 # these checks are pulled from the auto-generated chkserver.input file.
-if [[ -f /opt/intrado/etc/chkserver.input ]]
+if [[ -f ${SCRIPTS}/etc/chkserver.input ]]
 then
 
   if [[ ! ${DEBUG} = 'no' ]]
@@ -2761,7 +2732,7 @@ then
     echo "Entering chkserver.input check"
   fi
 
-  for j in `egrep "^(${HOSTNAME}|\*):" /opt/intrado/etc/chkserver.input`
+  for j in `egrep "^(${HOSTNAME}|\*):" ${SCRIPTS}/etc/chkserver.input`
   do
 
     FIELD2=`echo $j | cut -f2 -d:`
