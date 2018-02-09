@@ -141,6 +141,7 @@
 # 2018/02/01 - CS - Further refined the management route check to report correct when we're on the server we're checking for.
 # 2018/02/02 - CS - Better define what backup servers are where and checking only the correct ones.
 # 2018/02/06 - CS - Incorporate a .config file to isolate site specific locations.
+# 2018/02/09 - CS - add a /var/crash check
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -154,7 +155,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.198"
+VERSION="${BASENAME} v1.200"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -619,6 +620,27 @@ check_cpus() {
     printf "%b\n" "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> $LOG
   else
     printf "%b\n" "  ${GREEN}$COUNT CPUs as expected${RESET}" >> $LOG
+  fi
+}
+
+
+######################
+### Check the to see if there are any crash dump files
+### Number of Checks: 1
+######################
+
+check_crash() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering Crash Dump check"
+  fi
+  OUTPUT=`find /var/crash -type f -print`
+  if [[ ! -z $OUTPUT ]]
+  then
+    printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
+    echo $OUTPUT
+  else
+    printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
   fi
 }
 
@@ -2680,6 +2702,8 @@ check_redhat_subscription
 check_interfaces
 
 check_swap
+
+check_crash
 
 check_techops
 
