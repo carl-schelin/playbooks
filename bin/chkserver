@@ -638,7 +638,7 @@ check_crash() {
   if [[ ! -z $OUTPUT ]]
   then
     printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
-    echo $OUTPUT
+    find /var/crash -type f -print >> $LOG
   else
     printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
   fi
