@@ -156,7 +156,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.203"
+VERSION="${BASENAME} v1.204"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -852,7 +852,7 @@ check_disk_suite() {
 check_eeprom() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_eeprom(0)"
+    echo "Entering check_eeprom(37)"
   fi
 
   if [[ -f /usr/sbin/eeprom ]] 
@@ -866,7 +866,7 @@ check_eeprom() {
     fi
 
   fi
-  if [[ ${DEBUG} = '5' ]]
+  if [[ ${DEBUG} = '37' ]]
   then
     echo "Exiting check_eeprom()"
   fi
@@ -932,7 +932,7 @@ check_email() {
 check_floppy() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_floppy()"
+    echo "Entering check_floppy(35)"
   fi
   if [[ ${VMWARE} = 'Yes' ]]
   then
@@ -945,7 +945,7 @@ check_floppy() {
       fi
     fi
   fi
-  if [[ ${DEBUG} = '32' ]]
+  if [[ ${DEBUG} = '35' ]]
   then
     echo "Exiting check_floppy()"
   fi
@@ -1268,9 +1268,17 @@ check_kubernetes() {
   fi
   if [[ -f /bin/kubectl ]]
   then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "/bin/kubectl found; kubectl get nodes"
+    fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> $LOG
     for i in `kubectl get nodes | grep -v NAME | awk '{print $1":"$2}'`
     do
+      if [[ ${DEBUG} = '11' ]]
+      then
+        echo $i
+      fi
       NODE=`echo $i | cut -f1 -d:`
 # management nodes are 'Ready,SchedulingDisabled'; just looking for 'Ready' or not.
       STATUS=`echo $i | cut -f2 -d: | cut -f1 -d,`
@@ -1281,6 +1289,10 @@ check_kubernetes() {
       fi
     done
 
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "kubectl get namespaces"
+    fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> $LOG
     for i in `kubectl get namespaces | grep Active | egrep -v "(NAME|default)"`
     do
@@ -1292,6 +1304,10 @@ check_kubernetes() {
         EXPECTED=`echo ${j} | cut -f2 -d: | cut -f2 -d/`
         ERROR=`echo ${j} | cut -f3 -d:`
         DAYS=`echo ${j} | cut -f4 -d:`
+        if [[ ${DEBUG} = '11' ]]
+        then
+          echo ${j}
+        fi
 
         if [[ ${ACTIVE} -ne ${EXPECTED} ]]
         then
@@ -2215,7 +2231,7 @@ check_rrdtool() {
 check_security() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_security()"
+    echo "Entering check_security(36)"
   fi
   if [[ -f ${SCRIPTS}/etc/chksecurity.output ]]
   then
@@ -2225,7 +2241,7 @@ check_security() {
       printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> $LOG
     fi
   fi
-  if [[ ${DEBUG} = '23' ]]
+  if [[ ${DEBUG} = '36' ]]
   then
     echo "Exiting check_security()"
   fi
