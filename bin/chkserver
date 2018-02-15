@@ -142,6 +142,7 @@
 # 2018/02/02 - CS - Better define what backup servers are where and checking only the correct ones.
 # 2018/02/06 - CS - Incorporate a .config file to isolate site specific locations.
 # 2018/02/09 - CS - add a /var/crash check
+# 2018/02/15 - CS - Added chk_eeprom for the Sun systems
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -155,7 +156,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.200"
+VERSION="${BASENAME} v1.203"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -839,6 +840,35 @@ check_disk_suite() {
   if [[ ${DEBUG} = '5' ]]
   then
     echo "Exiting check_disk_suite()"
+  fi
+}
+
+
+######################
+### Make sure Sun box can auto start on boot
+### Number of Checks: 2
+######################
+
+check_eeprom() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_eeprom(0)"
+  fi
+
+  if [[ -f /usr/sbin/eeprom ]] 
+  then
+    printf "%b\n" "  ${GREEN}Checking Solaris auto-boot setting.${RESET}" >> $LOG
+
+    OUTPUT=`eeprom | grep "auto-boot?=false"`
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Sun system is not configured to automatically start on boot.${RESET} /usr/sbin/eeprom" >> $LOG
+    fi
+
+  fi
+  if [[ ${DEBUG} = '5' ]]
+  then
+    echo "Exiting check_eeprom()"
   fi
 }
 
@@ -2727,6 +2757,8 @@ check_kubernetes
 #check_lsof
 
 check_disk_suite
+
+check_eeprom
 
 check_disk_space
 
