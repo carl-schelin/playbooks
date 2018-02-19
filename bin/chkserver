@@ -143,6 +143,7 @@
 # 2018/02/06 - CS - Incorporate a .config file to isolate site specific locations.
 # 2018/02/09 - CS - add a /var/crash check
 # 2018/02/15 - CS - Added chk_eeprom for the Sun systems
+# 2018/02/19 - CS - Updated the check_route function to check HP-UX route configurations.
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -2185,11 +2186,37 @@ check_routetable() {
   then
     ${SCRIPTS}/bin/chkroutetable
   fi
+  printf "%b\n" "  ${GREEN}Checking routing.${RESET}" >> $LOG
   if [[ -s ${SCRIPTS}/etc/routetable.output ]]
   then
-    printf "%b\n" "  ${RED}Route table mismatch.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Route table mismatch.${RESET}" >> $LOG
     cat ${SCRIPTS}/etc/routetable.output >> $LOG
     echo -en "${RESET}" >> $LOG
+  fi
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+# checking the HP configuration. Per the docs, there should be incremented changes
+# for each route. The ROUTE_NUMBER command should also equal the number of routes
+    echo "  Checking HP-UX Route Configuration"
+    COUNT=`grep -v "^#" /etc/rc.config.d/netconf | grep -c ROUTE_DESTINATION`
+# doing a sort in case there are more than one ROUTE_COUNT entries and then just grabbing the last one
+    ACTUAL=`grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_COUNT | sort | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+
+    if [[ ! ${COUNT} = ${ACTUAL} ]]
+    then
+      printf "%b\n" "    ${RED}/etc/rc.config.d/netconf indicates there are ${ACTUAL} route(s) but the configuration defines ${COUNT}.${RESET}" >> $LOG
+    fi
+
+# each ROUTE_DESTINATION line should have unique [x] values
+    for j in `grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_DESTINATION | cut -f2 -d\[ | cut -f1 -d\] | sort -n | uniq`
+    do
+      COUNT=`grep -v "^#" /etc/rc.config.d/netconf | grep -c "ROUTE_DESTINATION\[${j}\]"`
+      if [[ ${COUNT} -gt 1 ]]
+      then
+        printf "%b\n" "    ${RED}/etc/rc.config.d/netconf has defined ROUTE_DESTINATION[$j] ${COUNT} times.${RESET}" >> $LOG
+      fi
+    done
+
   fi
   if [[ ${DEBUG} = '22' ]]
   then
