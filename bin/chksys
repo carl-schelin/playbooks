@@ -639,9 +639,9 @@ function network_iface {
 #ROUTE_SKIP[0]=""
 
         INSTANCE=`egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
-        IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
-        NETMASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
-        GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | cut -f2 -d= | sed -e "s/\"//g"`
+        IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+        NETMASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+        GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
       fi
 
       # found the default gateway information
