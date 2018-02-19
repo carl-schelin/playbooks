@@ -634,15 +634,31 @@ check_cpus() {
 check_crash() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering Crash Dump check"
+    echo "Entering check_crash(0)"
   fi
-  OUTPUT=`find /var/crash -type f -print`
-  if [[ ! -z $OUTPUT ]]
+  if [[ ${OS} = 'HP-UX' ]]
   then
-    printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
-    find /var/crash -type f -print >> $LOG
+    OUTPUT=`find /var/adm/crash -type f -print`
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
+      find /var/adm/crash -type f -print >> $LOG
+    else
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
+    fi
   else
-    printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
+    OUTPUT=`find /var/crash -type f -print`
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
+      find /var/crash -type f -print >> $LOG
+    else
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
+    fi
+  fi
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_crash()"
   fi
 }
 
