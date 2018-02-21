@@ -3126,6 +3126,21 @@ then
       fi
     fi
 
+# check for services that should be enabled.
+    if [[ $FIELD2 = 'Enabled' ]]
+    then
+      if [[ $OS = 'Linux' ]] && [[ $OSMAJOR = '7' ]]
+      then
+        systemctl is-enabled $FIELD3 > /dev/null
+        if [[ $? = 0 ]]
+        then
+          printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+        else
+          printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+        fi
+      fi
+    fi
+
   done
 
 # if gateway has been found (eg there are IP entries)
