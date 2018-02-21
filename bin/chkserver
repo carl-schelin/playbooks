@@ -144,6 +144,7 @@
 # 2018/02/09 - CS - add a /var/crash check
 # 2018/02/15 - CS - Added chk_eeprom for the Sun systems
 # 2018/02/19 - CS - Updated the check_route function to check HP-UX route configurations.
+# 2018/02/21 - CS - Added check of 'Enabled' services
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -157,7 +158,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.204"
+VERSION="${BASENAME} v1.205"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3129,14 +3130,25 @@ then
 # check for services that should be enabled.
     if [[ $FIELD2 = 'Enabled' ]]
     then
-      if [[ $OS = 'Linux' ]] && [[ $OSMAJOR = '7' ]]
+      if [[ $OS = 'Linux' ]]
       then
-        systemctl is-enabled $FIELD3 > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $OSMAJOR = '7' ]]
         then
-          printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+          systemctl is-enabled $FIELD3 > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+          fi
         else
-          printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+          chkconfig $FIELD3 --level=`who -r | awk '{print $2}'` > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+          fi
         fi
       fi
     fi
