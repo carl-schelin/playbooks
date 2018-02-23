@@ -2184,15 +2184,15 @@ check_resolver() {
             printf "%b\n" "    ${RED}${FQDN} unable to be found in DNS.${RESET} dig ${FQDN}" >> $LOG
           else
 # dig isn't working
-            HOSTPTR=`nslookup ${HOSTA} | grep "in-addr.arpa" | awk '{print $NF}'`
+            HOSTPTR=`dig -x ${HOSTA} | grep -v ";" | erep "in-addr.arpa" | awk '{print $NF}'`
             if [[ -z ${HOSTPTR} ]]
             then
-              printf "%b\n" "    ${RED}${HOSTA} unable to be found in DNS.${RESET} nslookup ${HOSTA}" >> $LOG
+              printf "%b\n" "    ${RED}${HOSTA} unable to be found in DNS.${RESET} dig -x ${HOSTA}" >> $LOG
             else
 # result ends with a period
               if [[ ! "${FQDN}." = ${HOSTPTR} ]]
               then
-                printf "%b\n" "    ${RED}${FQDN} doesn't match the dns entry of ${HOSTPTR}.${RESET} nslookup ${HOSTA}" >> $LOG
+                printf "%b\n" "    ${RED}${FQDN} doesn't match the dns entry of ${HOSTPTR}.${RESET} dig -x ${HOSTA}" >> $LOG
               fi
             fi
           fi
