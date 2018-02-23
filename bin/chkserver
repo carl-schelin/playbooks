@@ -145,6 +145,7 @@
 # 2018/02/15 - CS - Added chk_eeprom for the Sun systems
 # 2018/02/19 - CS - Updated the check_route function to check HP-UX route configurations.
 # 2018/02/21 - CS - Added check of 'Enabled' services
+# 2018/02/23 - CS - Updated the check_resolv function to try and resolve this hostname and IP
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -158,7 +159,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.205"
+VERSION="${BASENAME} v1.206"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2174,6 +2175,21 @@ check_resolver() {
               printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> $LOG
             fi
           done
+
+# see if FQDN is in DNS
+# see if PTR for FQDN is in DNS
+          HOSTA=`dig ${FQDN} | grep "^${FQDN}" | awk '{print $NF}'`
+          if [[ -z ${HOSTA} ]]
+          then
+            printf "%b\n" "    ${RED}${FQDN} unable to be found in DNS.${RESET} dig ${FQDN}" >> $LOG
+          else
+            HOSTPTR=`dig ${HOSTA} | grep "^{HOSTA}" | awk '{print $NF}'`
+            if [[ -z ${HOSTPTR} ]]
+            then
+              printf "%b\n" "    ${RED}${HOSTA} unable to be found in DNS.${RESET} dig ${HOSTA}" >> $LOG
+            fi
+          fi
+
         fi
         if [[ $COUNT -gt 3 ]]
         then
