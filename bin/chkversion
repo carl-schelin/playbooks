@@ -145,3 +145,8 @@ then
   echo "Installed" > $ADMIN/etc/opnet.version
 fi
 
+if [[ -f /usr/sbin/vmtoolsd ]]
+then
+  /usr/sbin/vmtoolsd -v > $ADMIN/etc/vmtoolsd.version
+fi
+
