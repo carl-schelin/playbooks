@@ -1,7 +1,19 @@
 #!/bin/ksh
 
 # Get the Openview configuration
-OS=`uname`
+
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
 
 # need to be root:
 RUNBY=`/usr/bin/id -u`
@@ -11,13 +23,13 @@ then
   exit 0
 fi
 
-if [[ -f /opt/intrado/etc/getovconf.output ]]
+if [[ -f ${SCRIPTS}/etc/getovconf.output ]]
 then
-  rm /opt/intrado/etc/getovconf.output
+  rm ${SCRIPTS}/etc/getovconf.output
 fi
 
 if [[ -f /opt/OV/bin/ovconfget ]]
 then
-  /opt/OV/bin/ovconfget > /opt/intrado/etc/getovconf.output
+  /opt/OV/bin/ovconfget > ${SCRIPTS}/etc/getovconf.output
 fi
 
