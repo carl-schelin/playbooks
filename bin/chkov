@@ -3,20 +3,43 @@
 # chkov - Check the status of OpenView and restart if it's down
 # Carl Schelin - 2/20/2008
 # Added verification that openview is installed and is enabled
-# changed path to /opt/intrado/var to keep files in one directory structure
+# changed path to ${SCRIPTS}/var to keep files in one directory structure
 # add the ability to stop and start the script monitoring by passing stop or start to the chkov script
 
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
+# permit immediate running of scripts (within 5 minutes) if needed
+# always delete it after one run
+if [[ -f ${SCRIPTS}/bin/runnow ]]
+then
+  ${SCRIPTS}/bin/runnow
+  rm ${SCRIPTS}/bin/runnow
+fi
+
+# check the Openview status
 if [[ ! -z $1 ]]
 then
   if [[ $1 = "stop" ]]
   then
-    touch /opt/intrado/var/openview.stop
+    touch ${SCRIPTS}/var/openview.stop
+# kills the agent then exits; don't need to remove the kill here as the kill process will remove it when killed
+    touch ${SCRIPTS}/var/openview.kill
   fi
   if [[ $1 = "start" ]]
   then
-    if [[ -f /opt/intrado/var/openview.stop ]]
+    if [[ -f ${SCRIPTS}/var/openview.stop ]]
     then
-      rm /opt/intrado/var/openview.stop
+      rm ${SCRIPTS}/var/openview.stop
     fi
   fi
 fi
@@ -24,36 +47,36 @@ fi
 # check to see if Openview is installed
 if [[ ! -d /opt/OV ]]
 then
-  echo "Openview not installed" > /opt/intrado/etc/ovc.version
+  echo "Openview not installed" > ${SCRIPTS}/etc/ovc.version
   exit 0
 fi
 
 # if the kill flag is in place, kill the agent and then let it restart in 5 minutes
 # gives us time to update configurations if necessary
-if [[ -f /opt/intrado/var/openview.kill ]]
+if [[ -f ${SCRIPTS}/var/openview.kill ]]
 then
   /opt/OV/bin/ovc -kill
-  rm /opt/intrado/var/openview.kill
+  rm ${SCRIPTS}/var/openview.kill
   exit 0
 fi
 
 # check to see if Openview monitoring is disabled
-if [[ -f /opt/intrado/var/openview.stop ]]
+if [[ -f ${SCRIPTS}/var/openview.stop ]]
 then
   echo "Openview configured to not auto-start"
   exit 0
 fi
 
 # now run through checks to see if OpenView is working.
-OVC=`/opt/OV/bin/ovc -status | grep -v ovcs | grep "Aborted"`
+OVC=`/opt/OV/bin/ovc -status | grep -v ovcs | egrep -i "(Aborted|Stopped|Isn't Running)"`
 DATE=`date`
-LOG=/opt/intrado/var/openview.failed
+LOG=${SCRIPTS}/var/openview.failed
 
 if [[ ! -z "$OVC" ]]
 then
 
   echo "OpenView failed and is not communicating - killing"
-  /usr/bin/logger -p err -t "OpenView" "An OpenView process has aborted. Killing OpenView."
+  /usr/bin/logger -p err -t "OpenView" "An OpenView process has failed (Aborted|Stopped|Isn't Running). Killing OpenView."
 
   echo "" >> $LOG
   echo $DATE >> $LOG
