@@ -3,10 +3,21 @@
 # KevinZupan
 # Check certain centrify settings or file options and change them to what we want
 
-OS=`uname`
-INTRADO='/opt/intrado'
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
+# uncommon settings
 ID=`id | cut -f1 -d\( | cut -f2 -d=`
-OUTPUT=$INTRADO/etc/setcentrify.output
+OUTPUT=${SCRIPTS}/etc/setcentrify.output
 
 if [[ ! $ID = 0 ]]
 then
