@@ -4,24 +4,34 @@
 # Carl Schelin
 # Update the GECOS field for users with accurate information.
 
-INTRADO=/opt/intrado
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
 PATH=$PATH:/bin:/usr/bin:/sbin:/usr/sbin
-OS=`uname`
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f $INTRADO/etc/changefreeze ]]
+if [[ -f ${SCRIPTS}/etc/changefreeze ]]
 then
   exit 0
 fi
 
 CHANGELOG=""
 COMMA=""
-for i in `grep -v "^#" ${INTRADO}/etc/valid.email | cut -f1 -d:`
+for i in `grep -v "^#" ${SCRIPTS}/etc/valid.email | cut -f1 -d:`
 do
   ORIGINAL=`egrep "^${i}:" /etc/passwd`
   if [[ ! -z ${ORIGINAL} ]]
   then
-    EMAIL=`egrep "^${i}:" ${INTRADO}/etc/valid.email | cut -f2 -d:`
+    EMAIL=`egrep "^${i}:" ${SCRIPTS}/etc/valid.email | cut -f2 -d:`
     usermod -c "${EMAIL}" ${i}
     UPDATED=`egrep "^${i}:" /etc/passwd`
     if [[ ! ${ORIGINAL} = ${UPDATED} ]]
