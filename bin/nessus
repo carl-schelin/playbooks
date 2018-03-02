@@ -4,20 +4,33 @@
 # Update the nessus key pair
 #
 
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
+
 NESSUS=`grep nessus /etc/passwd | cut -f6 -d:`
 
-if [[ -d $NESSUS ]]
+if [[ -d ${NESSUS} ]]
 then
-  if [[ ! -d $NESSUS/.ssh ]]
+  if [[ ! -d ${NESSUS}/.ssh ]]
   then
-    mkdir $NESSUS/.ssh
-    chown nessus $NESSUS/.ssh
-    chmod 700 $NESSUS/.ssh
+    mkdir ${NESSUS}/.ssh
+    chown nessus ${NESSUS}/.ssh
+    chmod 700 ${NESSUS}/.ssh
   fi
 
-  if [[ -f /opt/intrado/etc/nessus.id_rsa.pub ]]
+  if [[ -f ${SCRIPTS}/etc/nessus.id_rsa.pub ]]
   then
-    cp /opt/intrado/etc/nessus.id_rsa.pub $NESSUS/.ssh/authorized_keys
+    cp ${SCRIPTS}/etc/nessus.id_rsa.pub ${NESSUS}/.ssh/authorized_keys
   fi
 fi
 
