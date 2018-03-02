@@ -8,10 +8,21 @@
 # then check for errors in the chkserver.output file
 # then check for warnings in the chkserver.output file
 
+BASENAME=`basename $0`
+DIRNAME=`dirname $0`
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. ${DIRNAME}/../.config
+
 ADMIN=/usr/local/admin
-INTRADO=/opt/intrado
-VAR=${INTRADO}/var
-ETC=${INTRADO}/etc
+VAR=${SCRIPTS}/var
+ETC=${SCRIPTS}/etc
 LOGS=${VAR}/intrado.log
 CHKSERVER=${ETC}/chkserver.output
 
@@ -23,13 +34,13 @@ then
   CHKSERVER=$ADMIN/servers/$1/chkserver.output
 fi
 
-if [[ ! -d ${INTRADO} ]]
+if [[ ! -d ${SCRIPTS} ]]
 then
-  echo "Intrado scripts have not been installed."
+  echo "Core scripts have not been installed."
 else
   if [[ ! -f ${LOGS} ]]
   then
-    echo "Intrado script has not been run yet."
+    echo "Primary script has not been run yet."
   else
     RUNDATE=`ls -l ${LOGS} | awk '{print $7}'`
     TODAY=`date +"%d"`
