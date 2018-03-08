@@ -147,6 +147,7 @@
 # 2018/02/21 - CS - Added check of 'Enabled' services
 # 2018/02/23 - CS - Updated the check_resolv function to try and resolve this hostname and IP
 # 2018/02/26 - CS - Added doc information to functions.
+# 2018/03/08 - CS - Updated the check_resolv dns check of the server IPs to return better answers. the hostname isn't always a FQDN and isn't always resolvable.
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -160,7 +161,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.207"
+VERSION="${BASENAME} v1.212"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2206,27 +2207,47 @@ check_resolver() {
             fi
           done
 
-# see if FQDN is in DNS
-# see if PTR for FQDN is in DNS
-          HOSTA=`dig ${FQDN} | grep -v ";" | grep "^${FQDN}" | awk '{print $NF}'`
-          if [[ -z ${HOSTA} ]]
-          then
-            printf "%b\n" "    ${RED}${FQDN} unable to be found in DNS.${RESET} dig ${FQDN}" >> $LOG
-          else
-# dig isn't working
-            HOSTPTR=`dig -x ${HOSTA} | grep -v ";" | grep "in-addr.arpa" | awk '{print $NF}'`
-            if [[ -z ${HOSTPTR} ]]
+# check all the IPs on the system; exclude loopback and private IPs
+          for HOSTIP in `ip addr | grep inet | grep -v '127.0.0.1' | grep -v '192.168.0.' | awk '{print $2}' | cut -f1 -d/`
+          do
+            if [[ ${DEBUG} = 21 ]]
             then
-              printf "%b\n" "    ${RED}${HOSTA} unable to be found in DNS.${RESET} dig -x ${HOSTA}" >> $LOG
+              echo "IP to be checked: ${HOSTIP}"
+            fi
+# lookup the IP address in DNS; response is the hostname
+            HOSTA=`dig -x ${HOSTIP} | egrep -v "^(;|$)" | awk '{print $NF}'`
+            if [[ ${DEBUG} = 21 ]]
+            then
+              echo "---------------------"
+              dig -x ${HOSTIP} | egrep -v "^(;|$)" | awk '{print $NF}'
+              echo "Found IP, Hostname is: ${HOSTA}"
+              echo "---------------------"
+            fi
+            if [[ -z ${HOSTA} ]]
+            then
+              printf "%b\n" "    ${RED}${HOSTIP} unable to be found in DNS.${RESET} dig -x ${HOSTA}" >> $LOG
             else
-# result ends with a period
-              if [[ ! "${FQDN}." = ${HOSTPTR} ]]
+# got a hostname back, check both that there's a response (not blank)
+              HOSTPTR=`dig ${HOSTA} | egrep -v "^(;|$)" | awk '{print $NF}'`
+              if [[ ${DEBUG} = 21 ]]
               then
-                printf "%b\n" "    ${RED}${FQDN} doesn't match the dns entry of ${HOSTPTR}.${RESET} dig -x ${HOSTA}" >> $LOG
+                echo "---------------------"
+                dig ${HOSTA} | egrep -v "^(;|$)" | awk '{print $NF}'
+                echo "Found Hostname, IP is: ${HOSTPTR}"
+                echo "---------------------"
+              fi
+              if [[ -z ${HOSTPTR} ]]
+              then
+                printf "%b\n" "    ${RED}${HOSTA} unable to be found in DNS.${RESET} dig -x ${HOSTA}" >> $LOG
+              else
+# and that the returned IP matches the found one
+                if [[ ! ${HOSTPTR} = ${HOSTIP} ]]
+                then
+                  printf "%b\n" "    ${RED}${HOSTA} doesn't resolve to ${HOSTIP} in DNS.${RESET} dig -x ${HOSTA}" >> $LOG
+                fi
               fi
             fi
-          fi
-
+          done
         fi
         if [[ $COUNT -gt 3 ]]
         then
