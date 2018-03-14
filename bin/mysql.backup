@@ -91,7 +91,7 @@ else
 fi
 
 # finally, remove all old backups, pick 30 days as a start and let's see how long that works WRT available space.
-find $ROOT -name mysql.\*.gz -prune -atime +15 -exec rm {} \;
+find $ROOT -name mysql.\*.gz -prune -atime +3 -exec rm {} \;
 
 exit 0
 
