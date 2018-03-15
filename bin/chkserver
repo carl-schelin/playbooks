@@ -656,7 +656,7 @@ check_cpus() {
 check_crash() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_crash(0)"
+    echo "Entering check_crash(39)"
   fi
   if [[ ${OS} = 'HP-UX' ]]
   then
@@ -678,7 +678,7 @@ check_crash() {
       printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
     fi
   fi
-  if [[ ${DEBUG} = '0' ]]
+  if [[ ${DEBUG} = '39' ]]
   then
     echo "Exiting check_crash()"
   fi
@@ -2354,10 +2354,11 @@ check_rrdtool() {
 check_scanners() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_scanners(0)"
+    echo "Entering check_scanners(38)"
   fi
   if [[ ${CHECK_SECURITY} = 'Yes' ]]
   then
+    printf "%b\n" "  ${GREEN}Checking security scanner routes${RESET}" >> $LOG
     for j in ${SECURITY_SERVERS}
     do
       SECSITE=`echo $j | cut -f1 -d:`
@@ -2373,7 +2374,7 @@ check_scanners() {
       fi
     done
   fi
-  if [[ ${DEBUG} = '0' ]]
+  if [[ ${DEBUG} = '38' ]]
   then
     echo "Exiting check_scanners()"
   fi
