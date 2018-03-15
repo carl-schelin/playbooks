@@ -150,6 +150,7 @@
 # 2018/03/08 - CS - Updated the check_resolv dns check of the server IPs to return better answers. the hostname isn't always a FQDN and isn't always resolvable.
 # 2018/03/09 - CS - Fixed dig to only grep PTR records when doing an IP lookup
 # 2018/03/09 - CS - Changed dig -x into a loop due to multiple PTR records for an IP.
+# 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -163,7 +164,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.215"
+VERSION="${BASENAME} v1.216"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2346,6 +2347,40 @@ check_rrdtool() {
 
 
 ######################
+### Doc: Function: check_scanners() - 
+### Check the routes to the vulnerability scanners
+######################
+
+check_scanners() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_scanners(0)"
+  fi
+  if [[ ${CHECK_SECURITY} = 'Yes' ]]
+  then
+    for j in ${SECURITY_SERVERS}
+    do
+      SECSITE=`echo $j | cut -f1 -d:`
+      SECZONE=`echo $j | cut -f2 -d:`
+      SECIP=`echo $j | cut -f3 -d:`
+
+      if [[ ${SERVER_SITE} = ${SECSITE} ]]
+      then
+        if [[ ${SERVER_ZONE} = ${SECZONE} ]]
+        then
+          check_management_route ${SECIP}
+        fi
+      fi
+    done
+  fi
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_scanners()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_security() - 
 ### Number of Checks: 1
 ######################
@@ -2887,6 +2922,8 @@ check_centrify
 check_group_membership
 
 check_default_passwords
+
+check_scanners
 
 check_security
 
