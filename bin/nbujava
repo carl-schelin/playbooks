@@ -15,7 +15,11 @@ then
   then
     yum erase -y ${JAVA}
 
-    echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s `hostname | cut -f1 -d.` changelog@incojs01.scc911.com
+    VERIFY=`rpm -qa | grep -i VRTSnbjava`
+    if [[ -z $VERIFY ]]
+    then
+      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s `hostname | cut -f1 -d.` changelog@incojs01.scc911.com
+    fi
 
     service vxpbx_exchanged status > /dev/null
     if [[ $? = 0 ]]
