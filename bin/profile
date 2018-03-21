@@ -46,7 +46,9 @@ else
     TODAY=`date +"%d"`
     if [[ $RUNDATE -ne $TODAY ]]
     then
-      echo "${LOGS} didn't run today (last ran: `date +\"%Y/%m/${RUNDATE}\"`)"
+      DATE=`date +"%Y/%m/${RUNDATE}"`
+      TODAY=`date +"%Y/%m/%d"`
+      echo "${LOGS} didn't run today (last ran: ${DATE}, Today: ${TODAY})"
     fi
   fi
 fi
