@@ -18,42 +18,47 @@
 # 20150816 - Change mysql check as ./mysqld was found on several servers
 # 20151006 - Check for data palette and Panorama (opnet) installation
 # 20170331 - remove ovc.version file if it exists
+# 20180322 - Updated it to fully clean and added wildfly and newrelic
 
 ADMIN=/opt/intrado
 
-if [[ -f $ADMIN/etc/ovc.version ]]
-then
-  rm $ADMIN/etc/ovc.version
-fi
+# clean up
+for i in datapal httpd informix mysqld netbackup newrelic opnet oracle ovc postgres sudo vmtoolsd wildfly
+do
+  if [[ -f $ADMIN/etc/$i.version ]]
+  then
+    rm $ADMIN/etc/$i.version
+  fi
+done
 
+# checking installed software
+# for the chksys script, at least one line needs to be added even if it's just "Installed"
+
+# check for the Openview version
 if [[ -f /opt/OV/bin/opcagt ]]
 then
-  rm $ADMIN/etc/ovc.version
   /opt/OV/bin/opcagt -version > $ADMIN/etc/ovc.version
 else
   if [[ -f /opt/OV/bin/OpC/opcagt ]]
   then
-    rm $ADMIN/etc/ovc.version
     /opt/OV/bin/OpC/opcagt -version > $ADMIN/etc/ovc.version
   else
     if [[ -f /opt/OV/bin/ovc ]]
     then
-      rm $ADMIN/etc/ovc.version
       /opt/OV/bin/ovc -version > $ADMIN/etc/ovc.version
     fi
   fi
 fi
 
+# checking for netbackup
 if [[ -f /usr/openv/netbackup/bin/version ]]
 then
-  rm $ADMIN/etc/netbackup.version
   cp /usr/openv/netbackup/bin/version $ADMIN/etc/netbackup.version
 fi
 
 OUTPUT=`ps -e | grep httpd`
 if [[ ! -z $OUTPUT ]]
 then
-  rm $ADMIN/etc/httpd.version
 # if started in the last 24 hours, it'll be hh:mm:ss
   OUTPUT=`ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $8}'`
   if [[ ! -x $OUTPUT ]]
@@ -67,7 +72,6 @@ fi
 OUTPUT=`ps -e | grep mysqld`
 if [[ ! -z $OUTPUT ]]
 then
-  rm $ADMIN/etc/mysqld.version
 # if started in the last 24 hours, it'll be hh:mm:ss
   OUTPUT=`ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $8}'`
   if [[ ! -x $OUTPUT ]]
@@ -92,18 +96,12 @@ fi
 
 if [[ -f /usr/local/bin/sudo ]]
 then
-  rm $ADMIN/etc/sudo.version
   /usr/local/bin/sudo -V | head -1 > $ADMIN/etc/sudo.version
 fi
 
 OUTPUT=`ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_`
 if [[ ! -z $OUTPUT ]]
 then
-  if [[ -f $ADMIN/etc/oracle.version ]]
-  then
-    rm $ADMIN/etc/oracle.version
-  fi
-
   for i in $OUTPUT
   do
     echo $i >> $ADMIN/etc/oracle.version
@@ -113,7 +111,6 @@ fi
 OUTPUT=`ps -ef | grep pgsql | grep -v grep`
 if [[ ! -z $OUTPUT ]]
 then
-  rm $ADMIN/etc/postgres.version
 # if started in the last 24 hours, it'll be hh:mm:ss
   OUTPUT=`ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $8}'`
   if [[ ! -x $OUTPUT ]]
@@ -128,7 +125,6 @@ fi
 OUTPUT=`ps -ef | grep oninit | grep -v grep`
 if [[ ! -z $OUTPUT ]]
 then
-  rm $ADMIN/etc/informix.version
   if [[ -f /usr/informix/bin/onstat ]]
   then
     /usr/informix/bin/onstat - | grep -v "^$" | head -1 > $ADMIN/etc/informix.version
@@ -148,5 +144,17 @@ fi
 if [[ -f /usr/sbin/vmtoolsd ]]
 then
   /usr/sbin/vmtoolsd -v > $ADMIN/etc/vmtoolsd.version
+fi
+
+OUTPUT=`ps -ef | grep wildfly | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  echo "Installed" > $ADMIN/etc/wildfly.version
+fi
+
+OUTPUT=`ps -ef | grep newrelic | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  echo "Installed" > $ADMIN/etc/newrelic.version
 fi
 
