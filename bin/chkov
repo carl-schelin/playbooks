@@ -44,13 +44,6 @@ then
   fi
 fi
 
-# check to see if Openview is installed
-if [[ ! -d /opt/OV ]]
-then
-  echo "Openview not installed" > ${SCRIPTS}/etc/ovc.version
-  exit 0
-fi
-
 # if the kill flag is in place, kill the agent and then let it restart in 5 minutes
 # gives us time to update configurations if necessary
 if [[ -f ${SCRIPTS}/var/openview.kill ]]
