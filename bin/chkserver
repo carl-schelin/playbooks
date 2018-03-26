@@ -151,6 +151,7 @@
 # 2018/03/09 - CS - Fixed dig to only grep PTR records when doing an IP lookup
 # 2018/03/09 - CS - Changed dig -x into a loop due to multiple PTR records for an IP.
 # 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
+# 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -164,7 +165,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.216"
+VERSION="${BASENAME} v1.217"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -205,7 +206,12 @@ if [[ ! -z $1 ]]
 then
   if [[ $1 = 'debug' ]]
   then
-    DEBUG="$2"
+    if [[ ! -z $2 ]]
+    then
+      DEBUG="$2"
+    else
+      DEBUG='Yes'
+    fi
   fi
 fi
 
@@ -340,18 +346,39 @@ check_management_route() {
       if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
       then
 
+        if [[ ${DEBUG} = 'Yes' ]]
+        then
+          echo "ip route get ${IPADDRESS} | head -1 | awk '{print $5}'"
+        fi
         ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $5}'`
+        if [[ ${DEBUG} = 'Yes' ]]
+        then
+          echo "ROUTE: ${ROUTE}"
+        fi
         if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
         then
           printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
         else
 # if on the same network; the 'via' is missing so only get the 3rd item which is the device
+          if [[ ${DEBUG} = 'Yes' ]]
+          then
+            echo "ip route get ${IPADDRESS} | head -1 | awk '{print $3}'"
+          fi
           ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $3}'`
+          if [[ ${DEBUG} = 'Yes' ]]
+          then
+            echo "ROUTE: ${ROUTE}"
+          fi
           if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
           then
             printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
           else
 # and of course, if the IP is the system we're on (1 out of how many so last on the check), we're good.
+            if [[ ${DEBUG} = 'Yes' ]]
+            then
+              echo "ip addr | grep \" ${IPADDRESS}/\""
+              ip addr | grep " ${IPADDRESS}/"
+            fi
             ip addr | grep " ${IPADDRESS}/" > /dev/null
             if [[ $? = 0 ]]
             then
@@ -2210,8 +2237,8 @@ check_resolver() {
             fi
           done
 
-# check all the IPs on the system; exclude loopback and private IPs
-          for HOSTIP in `ip addr | grep inet | grep -v '127.0.0.1' | grep -v '192.168.0.' | awk '{print $2}' | cut -f1 -d/`
+# check all the IPv4 IPs on the system; exclude loopback and private IPs
+          for HOSTIP in `ip addr | grep inet | egrep -v "(inet6|127.0.0.1|192.168.0.)" | awk '{print $2}' | cut -f1 -d/`
           do
             if [[ ${DEBUG} = 21 ]]
             then
