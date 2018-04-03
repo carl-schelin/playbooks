@@ -295,6 +295,12 @@ runscript getovconf
 # see if users are looking at the profile or chkserver.output file
 runscript chkprofile
 
+# Check to see if openview is working
+if [[ $DOMONTH = '04' ]] || [[ $DOMONTH = '05' ]]
+then
+  runscript chkopenview
+fi
+
 # clean up on aisle three
 runscript cleanup
 
