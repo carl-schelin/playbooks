@@ -6,6 +6,6 @@
 
 if [[ -f /opt/OV/bin/opcmsg ]]
 then
-  /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore'
+  /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > /opt/intrado/etc/chkopenview.output 2>&1
 fi
 
