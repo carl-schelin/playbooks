@@ -300,6 +300,11 @@ if [[ $DOMONTH = '01' ]] || [[ $DOMONTH = '02' ]] || [[ $DOMONTH = '03' ]] || [[
 then
   runscript chkopenview
 fi
+# remove the chkopenview.completed file
+if [[ $DOMONTH = '15' ]] && [[ -f $ADMIN/var/chkopenview.completed ]]
+then
+  rm $ADMIN/var/chkopenview.completed
+fi
 
 # clean up on aisle three
 runscript cleanup
