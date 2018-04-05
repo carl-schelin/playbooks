@@ -296,7 +296,7 @@ runscript getovconf
 runscript chkprofile
 
 # Check to see if openview is working
-if [[ $DOMONTH = '04' ]] || [[ $DOMONTH = '05' ]]
+if [[ $DOMONTH = '01' ]] || [[ $DOMONTH = '02' ]] || [[ $DOMONTH = '03' ]] || [[ $DOMONTH = '04' ]] || [[ $DOMONTH = '05' ]]
 then
   runscript chkopenview
 fi
