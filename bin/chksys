@@ -468,6 +468,7 @@ function network_iface {
               ADDR=`     echo $j | cut -f1 -d#`
               INTERFACE=`echo $j | cut -f2 -d#`
               IP=`       echo $ADDR | cut -f1 -d/`
+              IPV6=0
               NETMASK=`  echo $ADDR | cut -f2 -d/`
 
               OUTGATE=''
@@ -481,7 +482,7 @@ function network_iface {
                 OUTGATE=${GATEWAY}
                 OUTROUTE=0
               fi
-              logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+              logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
             done
 
 # now process ipv6 addresses
@@ -489,6 +490,7 @@ function network_iface {
             do
               ADDR=`     echo $j | cut -f1 -d#`
               IFACE=`echo $j | cut -f2 -d#`
+              IPV6=1
               if [[ $IFACE != 'link' ]] && [[ $IFACE != 'host' ]]
               then
                 INTERFACE=$IFACE
@@ -496,7 +498,7 @@ function network_iface {
               IP=`       echo $ADDR | cut -f1 -d/`
               NETMASK=`  echo $ADDR | cut -f2 -d/`
 
-              logit "network" "interface" "$INTERFACE,$IP,1,$NETMASK,$MAC"
+              logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC"
             done
           fi
         else
