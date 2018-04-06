@@ -152,6 +152,7 @@
 # 2018/03/09 - CS - Changed dig -x into a loop due to multiple PTR records for an IP.
 # 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
 # 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
+# 2018/04/06 - CS - Added the ability for the script to send a test message through the openview system.
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
@@ -165,7 +166,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.217"
+VERSION="${BASENAME} v1.219"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1736,6 +1737,11 @@ check_openview() {
     printf "%b\n" "    ${GREEN}Skipping Monitoring Check${RESET}" >> $LOG
     return
   fi
+# delete the check openview output file in case it exists and shouldn't
+  if [[ -f $ADMIN/etc/chkopenview.output ]]
+  then
+    rm $ADMIN/etc/chkopenview.output
+  fi
   if [[ -d /opt/OV/bin ]]
   then
     printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
@@ -1880,6 +1886,16 @@ check_openview() {
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+        fi
+      fi
+
+# system checked to see if openview is installed and running before sending a message
+      if [[ ! -f ${SCRIPTS}/var/chkopenview.completed ]] && [[ ! -f ${SCRIPTS}/var/chkopenview.block ]]
+      then
+        if [[ -f /opt/OV/bin/opcmsg ]]
+        then
+          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS}/etc/chkopenview.output 2>&1
+          touch ${SCRIPTS}/var/chkopenview.completed
         fi
       fi
 
