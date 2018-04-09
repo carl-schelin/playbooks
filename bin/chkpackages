@@ -3,9 +3,9 @@
 # Carl Schelin
 # Generate a list of packages for import into the inventory
 
-OS=`uname`
+OS=$(uname)
 INTRADO='/opt/intrado'
-ID=`id | cut -f1 -d\( | cut -f2 -d=`
+ID=$(id | cut -f1 -d\( | cut -f2 -d=)
 OUTPUT=$INTRADO/etc/chkpackages.output
 
 if [[ ! $ID = 0 ]]
