@@ -154,8 +154,8 @@
 # 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
 # 2018/04/06 - CS - Added the ability for the script to send a test message through the openview system.
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+BASENAME=$(basename $0)
+DIRNAME=$(dirname $0)
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -184,17 +184,17 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 OSMAJOR=0
 if [[ -f /etc/redhat-release ]]
 then
-  OUTPUT=`grep 'release 7' /etc/redhat-release`
+  OUTPUT=$(grep 'release 7' /etc/redhat-release)
   if [[ ! -z $OUTPUT ]]
   then
     OSMAJOR=7
   fi
-  OUTPUT=`grep 'release 6' /etc/redhat-release`
+  OUTPUT=$(grep 'release 6' /etc/redhat-release)
   if [[ ! -z $OUTPUT ]]
   then
     OSMAJOR=6
   fi
-  OUTPUT=`grep 'release 5' /etc/redhat-release`
+  OUTPUT=$(grep 'release 5' /etc/redhat-release)
   if [[ ! -z $OUTPUT ]]
   then
     OSMAJOR=5
@@ -216,9 +216,9 @@ then
   fi
 fi
 
-if [[ -f $LOG ]]
+if [[ -f "${LOG}" ]]
 then
-  rm $LOG
+  rm "${LOG}"
 fi
 
 # the sun nc doesn't handle -w wait flag well so we'll blank it if something's passed on the command line
@@ -276,13 +276,13 @@ fi
 # if virtual, first 6 will be 00:50:56
 if [[ $OS = 'HP-UX' ]]
 then
-  OUTPUT=`lanscan | grep " 0x005056"`
+  OUTPUT=$(lanscan | grep " 0x005056")
 else
   if [[ $OS = 'Linux' ]]
   then
-    OUTPUT=`ip addr | grep ether | grep " 00:50:56"`
+    OUTPUT=$(ip addr | grep ether | grep " 00:50:56")
   else
-    OUTPUT=`ifconfig -a | grep ether | grep " 0:50:56"`
+    OUTPUT=$(ifconfig -a | grep ether | grep " 0:50:56")
   fi
 fi
 # if a vmware interface mac was found
@@ -320,10 +320,10 @@ epoch() {
   echo $EXPIRE
 }
 
-EPYEAR=`date +"%Y"`
-EPMONTH=`date +"%m"`
-EPDAY=`date +"%d"`
-EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
+EPYEAR=$(date +"%Y")
+EPMONTH=$(date +"%m")
+EPDAY=$(date +"%d")
+EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
 
 
 ######################
@@ -335,11 +335,11 @@ EPOCH=`epoch $EPYEAR $EPMONTH $EPDAY`
 check_management_route() {
   IPADDRESS=$1
 
-  MANAGEMENT_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
+  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
   then
-    printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Route Configuration${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Route Configuration${RESET}" >> "${LOG}"
   else
 # just checking for Linux now
     if [[ ${OS} = "Linux" ]]
@@ -351,28 +351,28 @@ check_management_route() {
         then
           echo "ip route get ${IPADDRESS} | head -1 | awk '{print $5}'"
         fi
-        ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $5}'`
+        ROUTE=$(ip route get ${IPADDRESS} | head -1 | awk '{print $5}')
         if [[ ${DEBUG} = 'Yes' ]]
         then
           echo "ROUTE: ${ROUTE}"
         fi
         if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
         then
-          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
         else
 # if on the same network; the 'via' is missing so only get the 3rd item which is the device
           if [[ ${DEBUG} = 'Yes' ]]
           then
             echo "ip route get ${IPADDRESS} | head -1 | awk '{print $3}'"
           fi
-          ROUTE=`ip route get ${IPADDRESS} | head -1 | awk '{print $3}'`
+          ROUTE=$(ip route get ${IPADDRESS} | head -1 | awk '{print $3}')
           if [[ ${DEBUG} = 'Yes' ]]
           then
             echo "ROUTE: ${ROUTE}"
           fi
           if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
           then
-            printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
           else
 # and of course, if the IP is the system we're on (1 out of how many so last on the check), we're good.
             if [[ ${DEBUG} = 'Yes' ]]
@@ -383,21 +383,21 @@ check_management_route() {
             ip addr | grep " ${IPADDRESS}/" > /dev/null
             if [[ $? = 0 ]]
             then
-              printf "%b\n" "    ${GREEN}We're on ${IPADDRESS} so we're good.${RESET}" >> $LOG
+              printf "%b\n" "    ${GREEN}We're on ${IPADDRESS} so we're good.${RESET}" >> "${LOG}"
             else
-              printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+              printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> "${LOG}"
             fi
           fi
         fi
 
       else
 
-        ROUTE=`netstat -rn | egrep "^${IPADDRESS}.*${EXPECTED_INTERFACE}"`
+        ROUTE=$(netstat -rn | egrep "^${IPADDRESS}.*${EXPECTED_INTERFACE}")
         if [[ -z ${ROUTE} ]]
         then
-          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> $LOG
+          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> "${LOG}"
         fi
       fi
     fi
@@ -437,8 +437,8 @@ check_active_employees() {
   fi
   if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
   then
-    printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> $LOG
-    for j in `cut -f1 -d: /etc/passwd`
+    printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> "${LOG}"
+    for j in $(cut -f1 -d: /etc/passwd)
     do
       grep -i "^${j}$" ${SCRIPTS}/etc/users.exclude > /dev/null
       if [[ $? = 1 ]]
@@ -447,7 +447,7 @@ check_active_employees() {
         LOCKED=''
         if [[ ${OS} = 'Linux' ]]
         then
-          LOCKED=`passwd -S ${j} | awk '{print $2}'`
+          LOCKED=$(passwd -S ${j} | awk '{print $2}')
           if [[ ${LOCKED} = "L" ]] || [[ ${LOCKED} = 'locked.' ]]
           then
             LOCKED="LK"
@@ -458,7 +458,7 @@ check_active_employees() {
 # is the system "TRUSTED"?
             if [[ -f "/tcb/files/auth/system/default" ]]
             then
-              LOCKED=`/usr/lbin/getprpw -m alock ${j}`
+              LOCKED=$(/usr/lbin/getprpw -m alock ${j})
               if [[ ${LOCKED} = "alock=YES" ]]
               then
                 LOCKED="LK"
@@ -467,26 +467,26 @@ check_active_employees() {
           else
             if [[ ${OS} = 'FreeBSD' ]]
             then
-              LOCKED=`grep ${j} /etc/master.passwd | grep "*LOCKED*"`
+              LOCKED=$(grep ${j} /etc/master.passwd | grep "*LOCKED*")
               if [[ ! -z ${LOCKED} ]]
               then
                 LOCKED="LK"
               fi
             else
-              LOCKED=`passwd -s ${j} | awk '{print $2}'`
+              LOCKED=$(passwd -s ${j} | awk '{print $2}')
             fi
           fi
         fi
 
         if [[ ! $LOCKED = 'LK' ]]
         then
-          EMAIL=`grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,`
+          EMAIL=$(grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,)
           if [[ ! -z $EMAIL ]]
           then
             grep -i "^${EMAIL}$" ${SCRIPTS}/etc/intrado.email > /dev/null
             if [[ $? = 1 ]]
             then
-              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS}/etc/intrado.email file and the account isn't locked.${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS}/etc/intrado.email file and the account isn't locked.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -519,36 +519,36 @@ check_addresses() {
   fi
   if [[ $OS = 'Linux' ]]
   then
-    OUTPUT=`ip addr | grep " ${FIELD3}/"`
+    OUTPUT=$(ip addr | grep " ${FIELD3}/")
   fi
   if [[ ! -z $OUTPUT ]]
   then
-    INTERFACE=`egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-`
-    printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> $LOG
+    INTERFACE=$(egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-)
+    printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> "${LOG}"
     egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> "${LOG}"
     fi
     grep -i ${FIELD3} /etc/hosts > /dev/null
     if [[ $? = 1 ]]
     then
-      printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> $LOG
+      printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> "${LOG}"
     fi
-    PRIVATE=`ipcalc -n ${FIELD4}/24 | cut -f2 -d=`
+    PRIVATE=$(ipcalc -n ${FIELD4}/24 | cut -f2 -d=)
     if [[ ${PRIVATE} = '192.168.0.0' ]]
     then
-      printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> "${LOG}"
     else
       echo "  ping check of the gateway: ${FIELD4}"
       ping ${FIELD4} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> "${LOG}"
       fi
     fi
     GATEWAY="${GATEWAY} ${FIELD4}"
@@ -566,7 +566,7 @@ check_addresses() {
       GWFLAG='yes'
     fi
   else
-    printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> $LOG
+    printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> "${LOG}"
   fi
 }
 
@@ -585,11 +585,11 @@ check_centrify() {
   fi
   if [[ -f /usr/sbin/adclient ]]
   then
-    printf "%b\n" "  ${GREEN}Centrify is installed${RESET}" >> $LOG
-    CENTRIFY=`ps -e | grep adclient`
+    printf "%b\n" "  ${GREEN}Centrify is installed${RESET}" >> "${LOG}"
+    CENTRIFY=$(ps -e | grep adclient)
     if [[ ! -z $CENTRIFY ]]
     then
-      printf "%b\n" "    ${GREEN}Centrify is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Centrify is running${RESET}" >> "${LOG}"
       /usr/bin/adinfo
       if [[ $? = 0 ]]
       then
@@ -605,8 +605,8 @@ check_centrify() {
 #Last password set: 2017-07-14 15:47:36 MDT
 #CentrifyDC mode:   connected
 #Licensed Features: Enabled
-        ADDOMAIN=`/usr/bin/adinfo | awk '/Joined to domain:/{print $4}'`
-        printf "%b\n" "    ${GREEN}Centrify is connected to ${ADDOMAIN}${RESET}" >> $LOG
+        ADDOMAIN=$(/usr/bin/adinfo | awk '/Joined to domain:/{print $4}')
+        printf "%b\n" "    ${GREEN}Centrify is connected to ${ADDOMAIN}${RESET}" >> "${LOG}"
       fi
 #Linux:cschelin@infltx10$ adinfo
 #Not joined to any domain
@@ -616,10 +616,10 @@ check_centrify() {
       /usr/bin/adinfo
       if [[ $? = 10 ]]
       then
-        printf "%b\n" "    ${RED}Centrify is not connected${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Centrify is not connected${RESET}" >> "${LOG}"
       fi
     else
-      printf "%b\n" "    ${YELLOW}Centrify is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${YELLOW}Centrify is not running${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '2' ]]
@@ -642,11 +642,11 @@ check_cfg2html() {
   fi
   if [[ ! -d ${SCRIPTS}/cfghtml ]]
   then
-    printf "%b\n" "  ${YELLOW}cfg2html not installed${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}cfg2html not installed${RESET}" >> "${LOG}"
   else
     if [[ ! -f ${SCRIPTS}/cfghtml/$HOSTNAME.html ]]
     then
-      printf "%b\n" "  ${RED}cfg2html has not been run${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}cfg2html has not been run${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '28' ]]
@@ -666,12 +666,12 @@ check_cpus() {
   then
     echo "Entering CPU check"
   fi
-  COUNT=`grep -c processor /proc/cpuinfo`
+  COUNT=$(grep -c processor /proc/cpuinfo)
   if [[ $COUNT -ne $FIELD3 ]]
   then
-    printf "%b\n" "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> $LOG
+    printf "%b\n" "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> "${LOG}"
   else
-    printf "%b\n" "  ${GREEN}$COUNT CPUs as expected${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}$COUNT CPUs as expected${RESET}" >> "${LOG}"
   fi
 }
 
@@ -688,22 +688,22 @@ check_crash() {
   fi
   if [[ ${OS} = 'HP-UX' ]]
   then
-    OUTPUT=`find /var/adm/crash -type f -print`
+    OUTPUT=$(find /var/adm/crash -type f -print)
     if [[ ! -z $OUTPUT ]]
     then
-      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
-      find /var/adm/crash -type f -print >> $LOG
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> "${LOG}"
+      find /var/adm/crash -type f -print >> "${LOG}"
     else
-      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> "${LOG}"
     fi
   else
-    OUTPUT=`find /var/crash -type f -print`
+    OUTPUT=$(find /var/crash -type f -print)
     if [[ ! -z $OUTPUT ]]
     then
-      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> $LOG
-      find /var/crash -type f -print >> $LOG
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> "${LOG}"
+      find /var/crash -type f -print >> "${LOG}"
     else
-      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '39' ]]
@@ -728,45 +728,45 @@ check_data_palette() {
   fi
   if [[ ! ${CHECK_DATA_PALETTE} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Data Palette Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Data Palette Check${RESET}" >> "${LOG}"
     return
   fi
   if [[ -f /opt/datapalette/bin/datapal ]]
   then
-    printf "%b\n" "  ${GREEN}Data Palette is installed${RESET}" >> $LOG
-    DPPS=`ps -ef | grep "/opt/datapalette/java/bin/java" | grep -v grep`
+    printf "%b\n" "  ${GREEN}Data Palette is installed${RESET}" >> "${LOG}"
+    DPPS=$(ps -ef | grep "/opt/datapalette/java/bin/java" | grep -v grep)
     if [[ ! -z $DPPS ]]
     then
-      printf "%b\n" "    ${GREEN}Data Palette is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Data Palette is running${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> "${LOG}"
     fi
     for i in ${DATA_PALETTE_SERVERS}
     do
-      DPSITE=`echo $i | cut -f1 -d:`
-      DPIP=`echo $i | cut -f2 -d:`
-      DPPROTOCOL=`echo $i | cut -f3 -d:`
-      DPPORT=`echo $i | cut -f4 -d:`
+      DPSITE=$(echo $i | cut -f1 -d:)
+      DPIP=$(echo $i | cut -f2 -d:)
+      DPPROTOCOL=$(echo $i | cut -f3 -d:)
+      DPPORT=$(echo $i | cut -f4 -d:)
 
       check_management_route ${DPIP}
       echo "  ping check of data palette nerve center: ${DPIP}"
       ping ${DPIP} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPIP} is pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPIP} is pingable${RESET}" >> "${LOG}"
         if [[ ! -z ${NETCAT} ]]
         then
           echo "  nc check of Data Palette Nerve Center ${DPIP}"
           echo "quit" | ${NETCAT} -w 2 -vn ${DPIP} ${DPPORT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${DPIP}:${DPPORT}) is accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${DPIP}:${DPPORT}) is accessible${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "    ${RED}Data Palette Nerve Center (${DPIP}:${DPPORT}) is not accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}Data Palette Nerve Center (${DPIP}:${DPPORT}) is not accessible${RESET}" >> "${LOG}"
           fi
         fi
       else
-        printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPIP} is not pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPIP} is not pingable${RESET}" >> "${LOG}"
       fi
     done
   fi
@@ -789,7 +789,7 @@ check_default_passwords() {
   then
     echo "Entering check_default_passwords(4)"
   fi
-  printf "%b\n" "  ${GREEN}Account password verification${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Account password verification${RESET}" >> "${LOG}"
   for j in root ${SYSADMINS}
   do
     UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
@@ -801,22 +801,22 @@ check_default_passwords() {
     UNIXPW=""
     if [[ $OS = 'HP-UX' ]]
     then
-      FIRSTCHAR=`echo $j | cut -c1`
+      FIRSTCHAR=$(echo $j | cut -c1)
       if [[ -f /tcb/files/auth/${FIRSTCHAR}/${j} ]]
       then
-        UNIXPW=`grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j}`
+        UNIXPW=$(grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j})
       fi
     else
       if [[ $OS = 'FreeBSD' ]]
       then
-        UNIXPW=`grep "^${j}:" /etc/master.passwd | grep ":${UNIXDEF}:"`
+        UNIXPW=$(grep "^${j}:" /etc/master.passwd | grep ":${UNIXDEF}:")
       else
-        UNIXPW=`grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:"`
+        UNIXPW=$(grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:")
       fi
     fi
     if [[ ! -z $UNIXPW ]]
     then
-      printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> "${LOG}"
     fi
   done
   if [[ ${DEBUG} = '4' ]]
@@ -839,7 +839,7 @@ check_disk_space() {
     echo "Entering check_disk_space(31)"
   fi
 
-  printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> "${LOG}"
   DISKSPACE=${SCRIPTS}/etc/diskspace.output
   if [[ $OS = "HP-UX" ]]
   then
@@ -858,20 +858,20 @@ check_disk_space() {
     df -kl > ${DISKSPACE}
   fi
 
-  for j in `egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}'`
+  for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}')
   do
-    FILESYSTEM=`echo $j | cut -f1 -d:`
-    SPACE=`echo $j | cut -f2 -d: | cut -f1 -d%`
+    FILESYSTEM=$(echo $j | cut -f1 -d:)
+    SPACE=$(echo $j | cut -f2 -d: | cut -f1 -d%)
     WARNING=85
     ERROR=95
 
     if [[ $SPACE -ge $ERROR ]]
     then
-      printf "%b\n" "    ${RED}${FILESYSTEM} has reached or exceeded 95% (${SPACE})%${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}${FILESYSTEM} has reached or exceeded 95% (${SPACE})%${RESET}" >> "${LOG}"
     else
       if [[ $SPACE -ge $WARNING ]]
       then
-        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached or exceeded 85% (${SPACE})%${RESET}" >> $LOG
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached or exceeded 85% (${SPACE})%${RESET}" >> "${LOG}"
       fi
     fi
   done
@@ -896,18 +896,18 @@ check_disk_suite() {
 
   if [[ -f /usr/sbin/metadb ]] && [[ -f /usr/sbin/metastat ]]
   then
-    printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> "${LOG}"
 
-    OUTPUT=`metadb | awk '/[WMDFSR]/{print $NF;exit}'`
+    OUTPUT=$(metadb | awk '/[WMDFSR]/{print $NF;exit}')
     if [[ ! -z $OUTPUT ]]
     then
-      printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> $LOG
+      printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> "${LOG}"
     fi
 
-    OUTPUT=`metastat | awk '/metareplace/{print $3,$4;exit}'`
+    OUTPUT=$(metastat | awk '/metareplace/{print $3,$4;exit}')
     if [[ ! -z $OUTPUT ]]
     then
-      printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> $LOG
+      printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '5' ]]
@@ -930,12 +930,12 @@ check_eeprom() {
 
   if [[ -f /usr/sbin/eeprom ]] 
   then
-    printf "%b\n" "  ${GREEN}Checking Solaris auto-boot setting.${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking Solaris auto-boot setting.${RESET}" >> "${LOG}"
 
-    OUTPUT=`eeprom | grep "auto-boot?=false"`
+    OUTPUT=$(eeprom | grep "auto-boot?=false")
     if [[ ! -z $OUTPUT ]]
     then
-      printf "%b\n" "    ${RED}Sun system is not configured to automatically start on boot.${RESET} /usr/sbin/eeprom" >> $LOG
+      printf "%b\n" "    ${RED}Sun system is not configured to automatically start on boot.${RESET} /usr/sbin/eeprom" >> "${LOG}"
     fi
 
   fi
@@ -959,36 +959,36 @@ check_email() {
   fi
   if [[ ! ${CHECK_EMAIL} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping EMail Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping EMail Check${RESET}" >> "${LOG}"
     return
   fi
   for i in ${EMAIL_SERVERS}
   do
-    EMAILSITE=`echo $i | cut -f1 -d:`
-    EMAILIP=`echo $i | cut -f2 -d:`
-    EMAILPROTOCOL=`echo $i | cut -f3 -d:`
-    EMAILPORT=`echo $i | cut -f4 -d:`
+    EMAILSITE=$(echo $i | cut -f1 -d:)
+    EMAILIP=$(echo $i | cut -f2 -d:)
+    EMAILPROTOCOL=$(echo $i | cut -f3 -d:)
+    EMAILPORT=$(echo $i | cut -f4 -d:)
 
-    printf "%b\n" "  ${GREEN}Checking mail server (${EMAILIP}:${EMAILPORT})${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking mail server (${EMAILIP}:${EMAILPORT})${RESET}" >> "${LOG}"
     check_management_route ${EMAILIP}
     echo "  ping check of mail server: ${EMAILIP}"
     ping ${EMAILIP} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}Email server ${EMAILIP} is pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Email server ${EMAILIP} is pingable${RESET}" >> "${LOG}"
       if [[ ! -z ${NETCAT} ]]
       then
         echo "  nc check of Mail Server ${EMAILIP}"
         echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${EMAILPORT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Email server (${EMAILIP}:${EMAILPORT}) is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Email server (${EMAILIP}:${EMAILPORT}) is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}Email server (${EMAILIP}:${EMAILPORT}) is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Email server (${EMAILIP}:${EMAILPORT}) is not accessible${RESET}" >> "${LOG}"
         fi
       fi
     else
-      printf "%b\n" "    ${RED}Email server {$EMAILIP} is not pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Email server {$EMAILIP} is not pingable${RESET}" >> "${LOG}"
     fi
   done
   if [[ ${DEBUG} = '32' ]]
@@ -1010,12 +1010,12 @@ check_floppy() {
   fi
   if [[ ${VMWARE} = 'Yes' ]]
   then
-    printf "%b\n" "  ${GREEN}Checking for a floppy device${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking for a floppy device${RESET}" >> "${LOG}"
     if [[ ${OS} = 'Linux' ]]
     then
       if [[ -d /dev/fd ]]
       then
-        printf "%b\n" "    ${RED}Floppy device directory /dev/fd exists${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Floppy device directory /dev/fd exists${RESET}" >> "${LOG}"
       fi
     fi
   fi
@@ -1047,34 +1047,34 @@ check_group_membership() {
   then
     echo "Entering check_group_membership(6)"
   fi
-  printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> "${LOG}"
 
-  GROUPLIST=`cut -f1 -d: /etc/group`
+  GROUPLIST=$(cut -f1 -d: /etc/group)
   if [[ ${CENTRIFY} = 'yes' ]]
   then
-    GROUPLIST="${GROUPLIST} `adquery group | cut -f1 -d:`"
+    GROUPLIST="${GROUPLIST} $(adquery group | cut -f1 -d:)"
   fi
 
 # check all system groups to see if they're in the group.master file
   for i in ${GROUPLIST}
   do
 # look for the hostname first then see if the system is centrified, otherwise check all servers
-    GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+    GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
     if [[ -z ${GROUP} ]]
     then
       if [[ ${CENTRIFY} = 'yes' ]]
       then
-        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
       else
-        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
       fi
 # check non-standard groups if not found
       if [[ -z ${GROUP} ]]
       then
-        GROUP=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g"`
+        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
         if [[ ! -z ${GROUP} ]]
         then
-          printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> "${LOG}"
         fi
       fi
     fi
@@ -1089,24 +1089,24 @@ check_group_membership() {
           grep -i "^${j}:" /etc/passwd > /dev/null
           if [[ $? = 1 ]]
           then
-            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> "${LOG}"
           fi
           egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group > /dev/null
           if [[ $? = 1 ]]
           then
-            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> "${LOG}"
           fi
         else
 # getent will pull from whatever database is in place; on board, idm, or centrify
           getent passwd ${j} > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> "${LOG}"
           fi
           getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${RED}${j} was not found in the ${i} group${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group${RESET}" >> "${LOG}"
           fi
         fi
       done
@@ -1114,22 +1114,22 @@ check_group_membership() {
 # now check all users in /etc/group against group.master and throw an error if found
       if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
       then
-        USERLIST=`grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+        USERLIST=$(grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g")
       else
-        USERLIST=`getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g"` > /dev/null
+        USERLIST=$(getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g") > /dev/null
       fi
 
       for j in ${USERLIST}
       do
 # look for the hostname first, if not found, then check the centrify flag and * if not centrified, then check the questionable groups
-        GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:"`
+        GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:")
         if [[ -z ${GRPFND} ]]
         then
           if [[ ${CENTRIFY} = 'yes' ]]
           then
-            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:"`
+            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:")
           else
-            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:"`
+            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:")
           fi
           if [[ -z ${GRPFND} ]]
           then
@@ -1157,7 +1157,7 @@ check_group_membership() {
 # if the user wasn't found in the group.master list for the host, * or ? config, call it out.
         if [[ -z ${PRESENT} ]]
         then
-          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in ${FOUND} in group.master${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in ${FOUND} in group.master${RESET}" >> "${LOG}"
         fi
       done
     fi
@@ -1183,9 +1183,9 @@ check_hostname() {
   grep -i ${HOSTNAME} /etc/hosts > /dev/null
   if [[ $? = 0 ]]
   then
-    printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> "${LOG}"
   else
-    printf "%b\n" "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> "${LOG}"
   fi
 }
 
@@ -1200,7 +1200,7 @@ check_interfaces() {
   then
     echo "Entering check_interfaces(33)"
   fi
-  printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> "${LOG}"
   if [[ $OS = 'SunOS' ]]
   then
     OUTPUT=`ifconfig -a | grep FAILED`
@@ -1224,7 +1224,7 @@ check_interfaces() {
 
   if [[ ! -z ${OUTPUT} ]]
   then
-    printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '33' ]]
   then
@@ -1245,12 +1245,12 @@ check_intrado() {
   fi
   if [[ ! -f ${SCRIPTS}/var/intrado.log ]]
   then
-    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> "${LOG}"
   fi
   CRON=`crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/intrado"`
   if [[ -z $CRON ]]
   then
-    printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> $LOG
+    printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '8' ]]
   then
@@ -1271,7 +1271,7 @@ check_jumpstart() {
   fi
   if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
     return
   fi
   for i in ${MANAGEMENT_SERVERS}
@@ -1281,26 +1281,26 @@ check_jumpstart() {
     MGTPROTOCOL=`echo $i | cut -f3 -d:`
     MGTPORT=`echo $i | cut -f4 -d:`
 
-    printf "%b\n" "  ${GREEN}Checking management server (${MGTIP}:${MGTPORT})${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking management server (${MGTIP}:${MGTPORT})${RESET}" >> "${LOG}"
     check_management_route ${MGTIP}
     echo "  ping check of management server: ${MGTIP}"
     ping ${MGTIP} ${PINGCT} > /dev/null
     if [[ $? = 0 ]]
     then
-      printf "%b\n" "    ${GREEN}Management server ${MGTIP} is pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Management server ${MGTIP} is pingable${RESET}" >> "${LOG}"
       if [[ ! -z ${NETCAT} ]]
       then
         echo "  nc check of Management Server ${MGTIP}:${MGTPORT}"
         echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${MGTPORT} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Management server ${MGTIP}:${MGTPORT} is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Management server ${MGTIP}:${MGTPORT} is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}Management server ${MGTIP}:${MGTPORT} is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Management server ${MGTIP}:${MGTPORT} is not accessible${RESET}" >> "${LOG}"
         fi
       fi
     else
-      printf "%b\n" "    ${RED}Management server ${MGTIP} is not pingable${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Management server ${MGTIP} is not pingable${RESET}" >> "${LOG}"
     fi
   done
   if [[ ${DEBUG} = '9' ]]
@@ -1324,7 +1324,7 @@ check_ksh() {
   then
     if [[ ! -f /usr/bin/ksh ]]
     then
-      printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '10' ]]
@@ -1352,7 +1352,7 @@ check_kubernetes() {
     then
       echo "/bin/kubectl found; kubectl get nodes"
     fi
-    printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> "${LOG}"
     for i in `kubectl get nodes | grep -v NAME | awk '{print $1":"$2}'`
     do
       if [[ ${DEBUG} = '11' ]]
@@ -1365,7 +1365,7 @@ check_kubernetes() {
 
       if [[ ! ${STATUS} = 'Ready' ]]
       then
-        printf "%b\n" "    ${RED}Node ${NODE} is currently not in Ready state (${STATUS})${RESET} kubectl describe node ${NODE}" >> $LOG
+        printf "%b\n" "    ${RED}Node ${NODE} is currently not in Ready state (${STATUS})${RESET} kubectl describe node ${NODE}" >> "${LOG}"
       fi
     done
 
@@ -1373,7 +1373,7 @@ check_kubernetes() {
     then
       echo "kubectl get namespaces"
     fi
-    printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> "${LOG}"
     for i in `kubectl get namespaces | grep Active | egrep -v "(NAME|default)"`
     do
       FLAG=0
@@ -1393,10 +1393,10 @@ check_kubernetes() {
         then
           if [[ ${FLAG} -eq 0 ]]
           then
-            printf "%b\n" "    ${RED}Namespace ${i} is reporting errors:${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}Namespace ${i} is reporting errors:${RESET}" >> "${LOG}"
             FLAG=1
           fi
-          printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> "${LOG}"
         fi
       done
     done
@@ -1435,12 +1435,12 @@ check_logs() {
     PLOG="/var/adm/syslog/syslog.log"
   fi
 
-  printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> "${LOG}"
 
   OUTPUT=`tail -1 ${PLOG} | grep "^${CL_TODAY}"`
   if [[ -z $OUTPUT ]]
   then
-    printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '12' ]]
   then
@@ -1465,7 +1465,7 @@ check_lsof() {
     OUTPUT=`lsof | grep "(deleted)" | wc -l`
     if [[ $OUTPUT -gt 0 ]]
     then
-      printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '13' ]]
@@ -1517,12 +1517,12 @@ check_memory() {
   then
     if [[ $COUNT -ne $FIELD3 ]]
     then
-      printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> "${LOG}"
     fi
   else
-    printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> "${LOG}"
   fi
 }
 
@@ -1539,12 +1539,12 @@ check_netbackup() {
   fi
   if [[ ! ${CHECK_NETBACKUP} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Netbackup Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Netbackup Check${RESET}" >> "${LOG}"
     return
   fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
-    printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> "${LOG}"
 # netbackup version 7 doesn't use hosts.allow any more.
     if [[ -f /usr/openv/netbackup/bin/version ]]
     then
@@ -1555,7 +1555,7 @@ check_netbackup() {
       then
         if [[ ! -f /etc/hosts.allow ]]
         then
-          printf "%b\n" "    ${RED}/etc/hosts.allow is missing${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}/etc/hosts.allow is missing${RESET}" >> "${LOG}"
         else
 # look for bpcd, bpjava-msvc, vnetd, and vopied.
           for nb in bpcd bpjava-msvc vnetd vopied
@@ -1563,7 +1563,7 @@ check_netbackup() {
             grep "^${nb}:" /etc/hosts.allow > /dev/null
             if [[ ! $? = 0 ]]
             then
-              printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> "${LOG}"
             fi
             if [[ ${nb} = "vnetd" ]]
             then
@@ -1574,7 +1574,7 @@ check_netbackup() {
               grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)" > /dev/null
               if [[ ! $? = 0 ]]
               then
-                printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> $LOG
+                printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> "${LOG}"
               fi
             done
           done
@@ -1591,17 +1591,17 @@ check_netbackup() {
     NBLIST=`netstat -an | grep LISTEN | grep 13724`
     if [[ -z $NBLIST ]]
     then
-      printf "%b\n" "    ${RED}NetBackup vnetd is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}NetBackup vnetd is not running${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${GREEN}NetBackup vnetd is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}NetBackup vnetd is running${RESET}" >> "${LOG}"
     fi
 # 13782 is bpcd
     NBLIST=`netstat -an | grep LISTEN | egrep 13782`
     if [[ -z $NBLIST ]]
     then
-      printf "%b\n" "    ${RED}NetBackup bpcd is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}NetBackup bpcd is not running${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${GREEN}NetBackup bpcd is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}NetBackup bpcd is running${RESET}" >> "${LOG}"
     fi
 
 # check for access to the two backup servers
@@ -1612,16 +1612,16 @@ check_netbackup() {
         echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 1556 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}${NBLIST}:1556 is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}${NBLIST}:1556 is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}${NBLIST}:1556 is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${NBLIST}:1556 is not accessible${RESET}" >> "${LOG}"
         fi
         echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 13724 > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}${NBLIST}:13724 is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}${NBLIST}:13724 is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}${NBLIST}:13724 is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${NBLIST}:13724 is not accessible${RESET}" >> "${LOG}"
         fi
       fi
     done
@@ -1635,7 +1635,7 @@ check_netbackup() {
     then
       if [[ ! -s ${SCRIPTS}/etc/backups.output ]]
       then
-        printf "%b\n" "    ${RED}${SCRIPTS}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> $LOG
+        printf "%b\n" "    ${RED}${SCRIPTS}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> "${LOG}"
       else
         OUTPUT=`awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS}/etc/backups.output`
         if [[ $OS = 'Linux' ]]
@@ -1650,9 +1650,9 @@ check_netbackup() {
         EXPIRED=$(( $BUDATE + $SEVEN ))
         if [[ ${EPOCH} -gt ${EXPIRED} ]]
         then
-          printf "%b\n" "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Last backup was more than 7 days ago (${OUTPUT})${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Last backup was ${OUTPUT}${RESET}" >> "${LOG}"
         fi
       fi
     fi
@@ -1677,13 +1677,13 @@ check_nrpe() {
   fi
   if [[ -f /usr/sbin/nrpe ]]
   then
-    printf "%b\n" "  ${GREEN}The NRPE agent is installed${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}The NRPE agent is installed${RESET}" >> "${LOG}"
     NAGIOS=`ps -e | grep nrpe`
     if [[ -z $NAGIOS ]]
     then
-      printf "%b\n" "    ${RED}The NRPE agent is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}The NRPE agent is not running${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${GREEN}The NRPE agent is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}The NRPE agent is running${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '15' ]]
@@ -1703,11 +1703,11 @@ check_oomkiller() {
   then
     echo "Entering check_oomkiller(34)"
   fi
-  printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> "${LOG}"
   grep "invoked oom-killer" ${PLOG} > /dev/null
   if [[ $? = 0 ]]
   then
-    printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '34' ]]
   then
@@ -1734,7 +1734,7 @@ check_openview() {
   fi
   if [[ ! ${CHECK_MONITORING} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Monitoring Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Monitoring Check${RESET}" >> "${LOG}"
     return
   fi
 # delete the check openview output file in case it exists and shouldn't
@@ -1744,11 +1744,11 @@ check_openview() {
   fi
   if [[ -d /opt/OV/bin ]]
   then
-    printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> "${LOG}"
     OPENVIEW=`ps -e | grep ovcd`
     if [[ -z $OPENVIEW ]]
     then
-      printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
       ABORT=`/opt/OV/bin/opcagt -status | grep -ci abort`
       RUNNING=`/opt/OV/bin/opcagt -status | grep -ci running`
@@ -1756,9 +1756,9 @@ check_openview() {
       STARTING=`/opt/OV/bin/opcagt -status | grep -ci starting`
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}Openview agent is running: Aborted: ${ABORT} Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Openview agent is running: Aborted: ${ABORT} Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
       fi
 
       for i in ${MONITORING_SERVERS}
@@ -1773,7 +1773,7 @@ check_openview() {
         ping ${OVIP} ${PINGCT} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}${OVSITE} Openview VIP is pingable${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}${OVSITE} Openview VIP is pingable${RESET}" >> "${LOG}"
           if [[ ! -z ${NETCAT} ]]
           then
 # netcat isn't working correctly everywhere but it is working in some places...
@@ -1781,9 +1781,9 @@ check_openview() {
             echo "" | ${NETCAT} -w 2 -vn ${OVIP} ${OVPORT} > /dev/null 2>&1
             if [[ $? = 0 ]]
             then
-              printf "%b\n" "    ${GREEN}${OVSITE} VIP is accessible${RESET}" >> $LOG
+              printf "%b\n" "    ${GREEN}${OVSITE} VIP is accessible${RESET}" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}${OVSITE} VIP is not accessible${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}${OVSITE} VIP is not accessible${RESET}" >> "${LOG}"
             fi
           fi
 
@@ -1791,12 +1791,12 @@ check_openview() {
           /opt/OV/bin/bbcutil -ping ${OVIP} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVSITE}${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVSITE}${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVSITE}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> $LOG
+            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVSITE}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> "${LOG}"
           fi
         else
-          printf "%b\n" "    ${RED}${OVSITE} Openview VIP is not pingable${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}${OVSITE} Openview VIP is not pingable${RESET}" >> "${LOG}"
         fi
       done
 
@@ -1804,21 +1804,21 @@ check_openview() {
       CERTS=`/opt/OV/bin/ovcert -status`
       if [[ ${CERTS} = 'Status: Certificate is installed.' ]]
       then
-        printf "%b\n" "    ${GREEN}Certificates (${CERTLIST}) are installed${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Certificates (${CERTLIST}) are installed${RESET}" >> "${LOG}"
       else
         if [[ ${CERTS} = 'Status: Undefined (Certificate Client could not be contacted).' ]]
         then
-          printf "%b\n" "    ${RED}Unable to contact Certificate Client. ${CERTLIST} Certificates installed${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+          printf "%b\n" "    ${RED}Unable to contact Certificate Client. ${CERTLIST} Certificates installed${RESET} /opt/OV/bin/ovcert -list" >> "${LOG}"
         else
           if [[ ${CERTS} = 'Status: Certificate request is pending.' ]]
           then
-            printf "%b\n" "    ${YELLOW}Certificate request is pending.${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+            printf "%b\n" "    ${YELLOW}Certificate request is pending.${RESET} /opt/OV/bin/ovcert -list" >> "${LOG}"
           else
             if [[ ${CERTS} = 'Status: Certificate request was denied.' ]]
             then
-              printf "%b\n" "    ${RED}Certificate request was denied.${RESET} /opt/OV/bin/ovcert -list" >> $LOG
+              printf "%b\n" "    ${RED}Certificate request was denied.${RESET} /opt/OV/bin/ovcert -list" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}Uncaught error: ${CERTS}${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}Uncaught error: ${CERTS}${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -1827,7 +1827,7 @@ check_openview() {
       BUFFERING=`/opt/OV/bin/opcagt -status | grep -i buffering`
       if [[ ${BUFFERING} = 'Message Agent is buffering.' ]]
       then
-        printf "%b\n" "    ${RED}Openview agent is buffering${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Openview agent is buffering${RESET}" >> "${LOG}"
       fi
 
 # check the configuration for Openview.
@@ -1844,48 +1844,48 @@ check_openview() {
 
       if [[ ${EXPECTED_IP} = '' ]]
       then
-        printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> "${LOG}"
       else
 # now check the configuration
         RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: bbc.cb SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: bbc.cb SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget bbc.http SERVER_BIND_ADDR`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: bbc.http SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: bbc.http SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget bbc.http CLIENT_BIND_ADDR`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: bbc.http CLIENT_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: bbc.http CLIENT_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget eaagt OPC_IP_ADDRESS`
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: eaagt OPC_IP_ADDRESS=${RESULT} is not ${EXPECTED_IP}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_IP_ADDRESS=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget eaagt OPC_MGMT_SERVER`
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR`
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER`
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
         RESULT=`/opt/OV/bin/ovconfget sec.core.auth MANAGER`
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
       fi
 
@@ -1921,28 +1921,28 @@ check_opnet() {
   fi
   if [[ ! ${CHECK_OPNET} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Opnet Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Opnet Check${RESET}" >> "${LOG}"
     return
   fi
   if [[ -d /opt/Panorama ]]
   then
-    printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> "${LOG}"
 # Panorama starts as /bin/sh /opt/Panorama/....
     APPI=`ps -ef | grep "/opt/Panorama/"`
     if [[ ! -z $APPI ]]
     then
-      printf "%b\n" "    ${GREEN}OpNet is running${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}OpNet is running${RESET}" >> "${LOG}"
     else
-      printf "%b\n" "    ${YELLOW}OpNet is not running${RESET}" >> $LOG
+      printf "%b\n" "    ${YELLOW}OpNet is not running${RESET}" >> "${LOG}"
     fi
     if [[ $OS = 'Linux' ]]
     then
       OUTPUT=`chkconfig --list appinternals | grep ":on"`
       if [[ -z $OUTPUT ]]
       then
-        printf "%b\n" "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> $LOG
+        printf "%b\n" "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${GREEN}OpNet is configured to start on boot${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}OpNet is configured to start on boot${RESET}" >> "${LOG}"
       fi
     fi
     if [[ ! -z ${NETCAT} ]]
@@ -1962,12 +1962,12 @@ check_opnet() {
           echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT} > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) is accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) is accessible${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "    ${YELLOW}OpNet Server (${OPNETIP}:${OPNETPORT}) is not accessible${RESET}" >> $LOG
+            printf "%b\n" "    ${YELLOW}OpNet Server (${OPNETIP}:${OPNETPORT}) is not accessible${RESET}" >> "${LOG}"
           fi
         else
-          printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) check was skipped.${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) check was skipped.${RESET}" >> "${LOG}"
         fi
       done
     fi
@@ -1996,7 +1996,7 @@ check_privileged_access() {
   fi
   if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
   then
-    printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> "${LOG}"
     for j in `awk -F: '{print $1":"$2":"$4}' ${SCRIPTS}/etc/chksudoers.output`
     do
       SERVER=`echo $j | cut -f1 -d:`
@@ -2011,7 +2011,7 @@ check_privileged_access() {
           OUTPUT=`grep "^${SERVER}:${USER}:" ${SCRIPTS}/etc/chksudo.dat`
           if [[ -z $OUTPUT ]]
           then
-            printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -2031,7 +2031,7 @@ check_privileged_access() {
           fi
           if [[ ${EPOCH} -gt ${EXPIRE} ]]
           then
-            printf "%b\n" "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> $LOG
+            printf "%b\n" "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> "${LOG}"
           fi
         fi
       fi
@@ -2056,7 +2056,7 @@ check_redhat_subscription() {
   fi
   if [[ ! ${CHECK_SATELLITE} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Satellite Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Satellite Check${RESET}" >> "${LOG}"
     return
   fi
   if [[ -f /etc/redhat-release ]]
@@ -2072,15 +2072,15 @@ check_redhat_subscription() {
       SATPROTOCOL=`echo $i | cut -f3 -d:`
       SATPORT=`echo $i | cut -f4 -d:`
 
-      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATIP}${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATIP}${RESET}" >> "${LOG}"
       check_management_route ${SATIP}
       echo "  ping check of Red Hat Satellite Server: ${SATIP}"
       ping ${SATIP} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Satellite Server ${SATIP} is pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}Satellite Server ${SATIP} is pingable${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}Satellite Server ${SATIP} is not pingable${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}Satellite Server ${SATIP} is not pingable${RESET}" >> "${LOG}"
       fi
 
 # since it's a block of ports; easier to check outside the normal variable setup.
@@ -2091,9 +2091,9 @@ check_redhat_subscription() {
         echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Satellite Server (${SATIP}:${j}) is accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${GREEN}Satellite Server (${SATIP}:${j}) is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}Satellite Server (${SATIP}:${j}) is not accessible${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Satellite Server (${SATIP}:${j}) is not accessible${RESET}" >> "${LOG}"
         fi
       done
       printf "\n"
@@ -2101,14 +2101,14 @@ check_redhat_subscription() {
 
     if [[ ! -f /usr/bin/subscription-manager ]]
     then
-      printf "%b\n" "  ${RED}Subscription-Manager not installed${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}Subscription-Manager not installed${RESET}" >> "${LOG}"
     else
       if [[ ${DEBUG} = '19' ]]
       then
         echo "  Subscription Manager is installed, query server"
       fi
 
-      printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> "${LOG}"
 
       STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
       if [[ ${DEBUG} = '19' ]]
@@ -2117,19 +2117,19 @@ check_redhat_subscription() {
       fi
       if [[ ${STATUS} = 'Unknown' ]]
       then
-        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
       fi
       if [[ ${STATUS} = 'No' ]]
       then
-        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
       fi
       if [[ ${STATUS} = 'Subscribed' ]]
       then
-        printf "%b\n" "      ${GREEN}System is subscribed to Satellite${RESET}" >> $LOG
+        printf "%b\n" "      ${GREEN}System is subscribed to Satellite${RESET}" >> "${LOG}"
       fi
       if [[ ${STATUS} = 'Expired' ]]
       then
-        printf "%b\n" "      ${YELLOW}System subscription has expired${RESET}" >> $LOG
+        printf "%b\n" "      ${YELLOW}System subscription has expired${RESET}" >> "${LOG}"
       fi
 
       if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
@@ -2137,12 +2137,12 @@ check_redhat_subscription() {
         RPM=`rpm -qa | grep 'katello-ca-consumer-lnmtcodcstl10'`
         if [[ -z ${RPM} ]]
         then
-          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> $LOG
+          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> "${LOG}"
         fi
         RPM=`rpm -qa | grep 'katello-agent'`
         if [[ -z ${RPM} ]]
         then
-          printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> $LOG
+          printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> "${LOG}"
         fi
       fi
 
@@ -2176,14 +2176,14 @@ check_removeips() {
       OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
       if [[ $OUTPUT = 'yes' ]]
       then
-        printf "%b\n" "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+        printf "%b\n" "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
       fi
       if [[ -z $OUTPUT ]]
       then
         OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
         if [[ $OUTPUT = 'yes' ]]
         then
-          printf "%b\n" "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> $LOG
+          printf "%b\n" "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
         fi
       fi
     fi
@@ -2210,26 +2210,26 @@ check_resolver() {
     OUTPUT=`grep -i ^hosts: /etc/nsswitch.conf | grep -i dns`
     if [[ -z $OUTPUT ]]
     then
-      printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> "${LOG}"
     else
       if [[ -f /etc/resolv.conf ]]
       then
         COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
         if [[ $COUNT = 0 ]]
         then
-          printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+          printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> "${LOG}"
         else
           for i in `awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf`
           do
-            printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> $LOG
+            printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> "${LOG}"
             check_management_route ${i}
             echo "  ping check of nameserver: ${i}"
             ping ${i} ${PINGCT} > /dev/null
             if [[ $? = 0 ]]
             then
-              printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> $LOG
+              printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> "${LOG}"
             fi
             if [[ ${CHECK_MANAGEMENT} = 'Yes' ]]
             then
@@ -2243,13 +2243,13 @@ check_resolver() {
                 OUTPUT=`dig @${i} +time=1 ${MGTSITE} | grep -v "^;" | grep "${MGTIP}"`
                 if [[ -z $OUTPUT ]]
                 then
-                  printf "%b\n" "    ${RED}Unable to resolve ${MGTSITE}${RESET}" >> $LOG
+                  printf "%b\n" "    ${RED}Unable to resolve ${MGTSITE}${RESET}" >> "${LOG}"
                 else
-                printf "%b\n" "    ${GREEN}Resolved ${MGTSITE}${RESET}" >> $LOG
+                printf "%b\n" "    ${GREEN}Resolved ${MGTSITE}${RESET}" >> "${LOG}"
                 fi
               done
             else
-              printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> $LOG
+              printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
             fi
           done
 
@@ -2272,7 +2272,7 @@ check_resolver() {
               fi
               if [[ -z ${HOSTNM} ]]
               then
-                printf "%b\n" "    ${RED}${HOSTIP} unable to be found in DNS.${RESET} dig -x ${HOSTIP}" >> $LOG
+                printf "%b\n" "    ${RED}${HOSTIP} unable to be found in DNS.${RESET} dig -x ${HOSTIP}" >> "${LOG}"
               else
 # got a hostname back, check both that there's a response (not blank)
                 HOSTPTR=`dig ${HOSTNM} | egrep -v "^(;|$)" | grep ${HOSTIP} | awk '{print $NF}'`
@@ -2285,12 +2285,12 @@ check_resolver() {
                 fi
                 if [[ -z ${HOSTPTR} ]]
                 then
-                  printf "%b\n" "    ${RED}${HOSTNM} unable to be found in DNS.${RESET} dig ${HOSTNM}" >> $LOG
+                  printf "%b\n" "    ${RED}${HOSTNM} unable to be found in DNS.${RESET} dig ${HOSTNM}" >> "${LOG}"
                 else
 # and that the returned IP matches the found one
                   if [[ ! ${HOSTPTR} = ${HOSTIP} ]]
                   then
-                    printf "%b\n" "    ${RED}${HOSTNM} doesn't resolve to ${HOSTIP} in DNS.${RESET} dig ${HOSTNM}" >> $LOG
+                    printf "%b\n" "    ${RED}${HOSTNM} doesn't resolve to ${HOSTIP} in DNS.${RESET} dig ${HOSTNM}" >> "${LOG}"
                   fi
                 fi
               fi
@@ -2299,7 +2299,7 @@ check_resolver() {
         fi
         if [[ $COUNT -gt 3 ]]
         then
-          printf "%b\n" "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> $LOG
+          printf "%b\n" "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> "${LOG}"
         fi
       fi
     fi
@@ -2325,12 +2325,12 @@ check_routetable() {
   then
     ${SCRIPTS}/bin/chkroutetable
   fi
-  printf "%b\n" "  ${GREEN}Checking routing.${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking routing.${RESET}" >> "${LOG}"
   if [[ -s ${SCRIPTS}/etc/routetable.output ]]
   then
-    printf "%b\n" "    ${RED}Route table mismatch.${RESET}" >> $LOG
-    cat ${SCRIPTS}/etc/routetable.output >> $LOG
-    echo -en "${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}Route table mismatch.${RESET}" >> "${LOG}"
+    cat ${SCRIPTS}/etc/routetable.output >> "${LOG}"
+    echo -en "${RESET}" >> "${LOG}"
   fi
   if [[ ${OS} = 'HP-UX' ]]
   then
@@ -2343,7 +2343,7 @@ check_routetable() {
 
     if [[ ! ${COUNT} = ${ACTUAL} ]]
     then
-      printf "%b\n" "    ${RED}/etc/rc.config.d/netconf indicates there are ${ACTUAL} route(s) but the configuration defines ${COUNT}.${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}/etc/rc.config.d/netconf indicates there are ${ACTUAL} route(s) but the configuration defines ${COUNT}.${RESET}" >> "${LOG}"
     fi
 
 # each ROUTE_DESTINATION line should have unique [x] values
@@ -2352,7 +2352,7 @@ check_routetable() {
       COUNT=`grep -v "^#" /etc/rc.config.d/netconf | grep -c "ROUTE_DESTINATION\[${j}\]"`
       if [[ ${COUNT} -gt 1 ]]
       then
-        printf "%b\n" "    ${RED}/etc/rc.config.d/netconf has defined ROUTE_DESTINATION[$j] ${COUNT} times.${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}/etc/rc.config.d/netconf has defined ROUTE_DESTINATION[$j] ${COUNT} times.${RESET}" >> "${LOG}"
       fi
     done
 
@@ -2379,7 +2379,7 @@ check_rrdtool() {
     UPDATERRD=`ps -ef | grep updaterrd`
     if [[ -z $UPDATERRD ]]
     then
-      printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> $LOG
+      printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '23' ]]
@@ -2401,7 +2401,7 @@ check_scanners() {
   fi
   if [[ ${CHECK_SECURITY} = 'Yes' ]]
   then
-    printf "%b\n" "  ${GREEN}Checking security scanner routes${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking security scanner routes${RESET}" >> "${LOG}"
     for j in ${SECURITY_SERVERS}
     do
       SECSITE=`echo $j | cut -f1 -d:`
@@ -2439,7 +2439,7 @@ check_security() {
     SECURITY=`cat ${SCRIPTS}/etc/chksecurity.output | awk '{print $NF}'`
     if [[ ${SECURITY} = 'yes' ]]
     then
-      printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> $LOG
+      printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '36' ]]
@@ -2465,21 +2465,21 @@ check_selinux() {
     then
       echo ""
     fi
-    printf "%b\n" "  ${GREEN}Checking selinux status${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Checking selinux status${RESET}" >> "${LOG}"
     SESTATUS=`sestatus | awk '/status/ {print $3}'`
     if [[ ${SESTATUS} = 'enabled' ]]
     then
       ENABLED=`sestatus | awk '/Current mode:/ {print $3}'`
       if [[ ${ENABLED} = 'enforcing' ]]
       then
-        printf "%b\n" "    ${RED}selinux is in Enforcing mode${RESET}" >> $LOG
+        printf "%b\n" "    ${RED}selinux is in Enforcing mode${RESET}" >> "${LOG}"
       fi
       if [[ ${ENABLED} = 'permissive' ]]
       then
-        printf "%b\n" "    ${YELLOW}selinux is in Permissive mode${RESET}" >> $LOG
+        printf "%b\n" "    ${YELLOW}selinux is in Permissive mode${RESET}" >> "${LOG}"
       fi
     else
-      printf "%b\n" "    ${GREEN}selinux is Disabled${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}selinux is Disabled${RESET}" >> "${LOG}"
     fi
   fi
   if [[ ${DEBUG} = '29' ]]
@@ -2508,7 +2508,7 @@ check_sudoers() {
     grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
     if [[ $? = 1 ]]
     then
-      printf "%b\n" "  ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> $LOG
+      printf "%b\n" "  ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> "${LOG}"
     fi
 
 # now check to make sure groups in sudoers are present.
@@ -2528,7 +2528,7 @@ check_sudoers() {
         grep "^${i}:" /etc/group > /dev/null
         if [[ $? -eq 1 ]]
         then
-          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist in /etc/group${RESET}" >> $LOG
+          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist in /etc/group${RESET}" >> "${LOG}"
         fi
       else
         if [[ ${DEBUG} = '24' ]]
@@ -2539,13 +2539,13 @@ check_sudoers() {
         getent group ${i} > /dev/null
         if [[ $? -ne 0 ]]
         then
-          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist${RESET}" >> $LOG
+          printf "%b\n" "  ${RED}sudoers group ${i} doesn't exist${RESET}" >> "${LOG}"
         fi
       fi
     done
 
   else
-    printf "%b\n" "  ${RED}sudoers file not found${RESET}" >> $LOG
+    printf "%b\n" "  ${RED}sudoers file not found${RESET}" >> "${LOG}"
   fi
 
   if [[ ${DEBUG} = '24' ]]
@@ -2598,15 +2598,15 @@ check_swap() {
 
       if [[ ! -z ${APPROVED} ]] && [[ ${SIZE} -eq ${APPROVED} ]]
       then
-        printf "%b\n" "  ${GREEN}Swap is correct at ${SIZE} Gig.${RESET}" >> $LOG
+        printf "%b\n" "  ${GREEN}Swap is correct at ${SIZE} Gig.${RESET}" >> "${LOG}"
       else
         if [[ ${MEMORY} -gt 8 ]] && [[ ${SIZE} -lt 8 ]]
         then
-          printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> "${LOG}"
         else
           if [[ ${MEMORY} -le 8 ]] && [[ ${SIZE} -lt ${MEMORY} ]]
           then
-            printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> $LOG
+            printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> "${LOG}"
           fi
         fi
       fi
@@ -2631,12 +2631,12 @@ check_techops() {
   fi
   if [[ -d /opt/techops ]]
   then
-    printf "%b\n" "  ${YELLOW}The /opt/techops directory still exists${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}The /opt/techops directory still exists${RESET}" >> "${LOG}"
   fi
 
   if [[ -d /opt/techops70 ]]
   then
-    printf "%b\n" "  ${YELLOW}The /opt/techops70 directory still exists${RESET}" >> $LOG
+    printf "%b\n" "  ${YELLOW}The /opt/techops70 directory still exists${RESET}" >> "${LOG}"
   fi
 
   if [[ ${DEBUG} = '30' ]]
@@ -2659,10 +2659,10 @@ check_time() {
 # exit if not checking
   if [[ ! ${CHECK_TIME} = 'Yes' ]]
   then
-    printf "%b\n" "    ${GREEN}Skipping Time Server Check${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Skipping Time Server Check${RESET}" >> "${LOG}"
     return
   fi
-  printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> $LOG
+  printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> "${LOG}"
   T_MSG=''
   T_COMMAND=''
   T_CONFIG=''
@@ -2693,11 +2693,11 @@ check_time() {
 # is it installed?
   if [[ ! -z ${T_MSG} ]]
   then
-    printf "%b\n" "    ${GREEN}Checking ${T_MSG} time server.${RESET}" >> $LOG
+    printf "%b\n" "    ${GREEN}Checking ${T_MSG} time server.${RESET}" >> "${LOG}"
     if [[ ! -z ${T_RUNNING} ]]
     then
-      printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> $LOG
-      printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> $LOG
+      printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> "${LOG}"
+      printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> "${LOG}"
 
       for i in ${TIME_SERVERS}
       do
@@ -2711,22 +2711,22 @@ check_time() {
         ping ${TIMEIP} ${PINGCT} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is pingable.${RESET}" >> $LOG
+          printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is pingable.${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not pingable.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not pingable.${RESET}" >> "${LOG}"
         fi
         OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${TIMEIP}`
         if [[ -z $OUTPUT ]]
         then
-          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not in the ${T_CONFIG} configuration file.${RESET}" >> $LOG
+          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
         else
           echo "  time check of time server: ${TIMEIP}"
           ntpdate -q ${TIMEIP} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is providing time.${RESET}" >> $LOG
+            printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is providing time.${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "      ${RED}GPS Server ${TIMEIP}:${TIMEPROTOCOL}/${TIMEPORT} is not reachable.${RESET} ntpdate -q ${TIMEIP} failed" >> $LOG
+            printf "%b\n" "      ${RED}GPS Server ${TIMEIP}:${TIMEPROTOCOL}/${TIMEPORT} is not reachable.${RESET} ntpdate -q ${TIMEIP} failed" >> "${LOG}"
           fi
 
 # Updated NTP check - validates ticker status as well as reachability
@@ -2745,7 +2745,7 @@ check_time() {
           STATUS="${OUTPUT%% *}"
           if [[ -z ${REACH} ]]
           then
-            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIMEIP}.${RESET}" >> $LOG
+            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIMEIP}.${RESET}" >> "${LOG}"
           else
 # Reachability should always be 377 - anything else is a problem of some kind, regardless of status or a recent reboot and rerun
             if [[ $REACH = '377' ]]
@@ -2753,13 +2753,13 @@ check_time() {
 # But even if reachability is 377, status must be '*' or '+' also or there's a different kind of problem.
               if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
               then
-                printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> $LOG
+                printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> "${LOG}"
 # commenting out for now as this depends on network; converting to rrdtool graph
 #              else
-#                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> $LOG
+#                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> "${LOG}"
               fi
             else
-              printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> $LOG
+              printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -2771,16 +2771,16 @@ check_time() {
       then
         if [[ ! -f ${DRIFTFILE} ]]
         then
-          printf "%b\n" "      ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> $LOG
+          printf "%b\n" "      ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> "${LOG}"
         fi
       else
-        printf "%b\n" "      ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> $LOG
+        printf "%b\n" "      ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> "${LOG}"
       fi
     else
-      printf "%b\n" "    ${RED}Time service is not running.${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}Time service is not running.${RESET}" >> "${LOG}"
     fi
   else
-    printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> $LOG
+    printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '26' ]]
   then
@@ -2808,16 +2808,16 @@ check_vmware_agent() {
   then
     if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
     then
-      printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> $LOG
+      printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> "${LOG}"
       VMTOOLS=`ps -e | grep vmtoolsd`
       if [[ -z $VMTOOLS ]]
       then
-        printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> $LOG
+        printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${GREEN}VMWare Agent is running${RESET}" >> $LOG
+        printf "%b\n" "    ${GREEN}VMWare Agent is running${RESET}" >> "${LOG}"
       fi
     else
-      printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> $LOG
+      printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> "${LOG}"
     fi
 # check the status of ctrl-alt-del service but only on virtual machines (hence why it's here)
     if [[ ${OS} = 'Linux' ]]
@@ -2827,7 +2827,7 @@ check_vmware_agent() {
         OUTPUT=`systemctl status ctrl-alt-del.target | grep "Loaded: masked"`
         if [[ -z ${OUTPUT} ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> $LOG
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
         fi
       fi
       if [[ ${OSMAJOR} = '6' ]]
@@ -2835,15 +2835,15 @@ check_vmware_agent() {
         OUTPUT=`egrep "^(start|exec)" /etc/init/control-alt-delete.conf`
         if [[ ! -z ${OUTPUT} ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> $LOG
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> "${LOG}"
         fi
       fi
       if [[ ${OSMAJOR} = '5' ]]
       then
-        OUTPUT=`grep "^ca::ctrlaltdel" /etc/inittab"`
+        OUTPUT=`grep "^ca::ctrlaltdel" /etc/inittab`
         if [[ ! -z ${OUTPUT} ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> $LOG
+          printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
         fi
       fi
     fi
@@ -2865,17 +2865,17 @@ fi
 ### End of Functions
 ######################
 
-echo "" > $LOG
-echo "================================" >> $LOG
-echo "Running System Validation Script" >> $LOG
-echo $VERSION >> $LOG
-echo "================================" >> $LOG
-echo "" >> $LOG
+echo "" > "${LOG}"
+echo "================================" >> "${LOG}"
+echo "Running System Validation Script" >> "${LOG}"
+echo $VERSION >> "${LOG}"
+echo "================================" >> "${LOG}"
+echo "" >> "${LOG}"
 
-printf "%b\n" "${GREEN}Passed${RESET} - Test or value was successful" >> $LOG
-printf "%b\n" "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> $LOG
-printf "%b\n" "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> $LOG
-echo "" >> $LOG
+printf "%b\n" "${GREEN}Passed${RESET} - Test or value was successful" >> "${LOG}"
+printf "%b\n" "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> "${LOG}"
+printf "%b\n" "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> "${LOG}"
+echo "" >> "${LOG}"
 
 echo "Note:"
 echo "  Ping checks have a count of 1"
@@ -3054,7 +3054,7 @@ then
       grep "^${FIELD3}:" /etc/passwd > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> $LOG
+        printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> "${LOG}"
 
 
         if [[ $OS = 'Linux' ]]
@@ -3062,43 +3062,43 @@ then
           PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*never"`
           if [[ ! -z ${PASSWORD} ]]
           then
-            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
             PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*changed"`
             if [[ ! -z ${PASSWORD} ]]
             then
-              printf "%b\n" "    ${RED}Password must be changed${RESET}" >> $LOG
+              printf "%b\n" "    ${RED}Password must be changed${RESET}" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
             fi
           fi
-          ACCOUNT=`chage -l ${FIELD3} | egrep -i "account expires.*never"`
+          ACCOUNT=$(chage -l ${FIELD3} | egrep -i "account expires.*never")
           if [[ ! -z $ACCOUNT ]]
           then
-            printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> $LOG
+            printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
           fi
         fi
 
         if [[ $OS = 'HP-UX' ]]
         then
-          PASSWORD=`passwd -s ${FIELD3} | awk '{print $5}'`
+          PASSWORD=$(passwd -s ${FIELD3} | awk '{print $5}')
           if [[ $PASSWORD = '0' ]] || [[ -z $PASSWORD ]]
           then
-            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
             if [[ $PASSWORD = 'password must be changed' ]]
             then
-              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> "${LOG}"
             else
 # if a trusted system:
 # /usr/lbin/modprpw -l -m mintm=0,exptm=0 username
               if [[ -f "/tcb/files/auth/system/default" ]]
               then
-                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> $LOG
+                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> "${LOG}"
               else
-                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+                printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
               fi
             fi
           fi
@@ -3106,40 +3106,40 @@ then
 
         if [[ $OS = 'SunOS' ]]
         then
-          PASSWORD=`grep "^${FIELD3}:" /etc/shadow | cut -f5 -d:`
+          PASSWORD=$(grep "^${FIELD3}:" /etc/shadow | cut -f5 -d:)
           if [[ $PASSWORD = '' ]]
           then
-            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
-            PASSWORD=`passwd -s | awk '{print $3}'`
+            PASSWORD=$(passwd -s | awk '{print $3}')
             if [[ $PASSWORD = '00/00/00' ]]
             then
-              printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             fi
           fi
         fi
 
         if [[ $OS = 'FreeBSD' ]]
         then
-          PASSWORD=`grep "^${FIELD3}:" /etc/master.passwd | cut -f5 -d:`
+          PASSWORD=$(grep "^${FIELD3}:" /etc/master.passwd | cut -f5 -d:)
           if [[ $PASSWORD = '' ]]
           then
-            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> $LOG
+            printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
-            PASSWORD=`passwd -s | awk '{print $3}'`
+            PASSWORD=$(passwd -s | awk '{print $3}')
             if [[ $PASSWORD = '00/00/00' ]]
             then
-              printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             else
-              printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> $LOG
+              printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             fi
           fi
         fi
 
       else
-        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> "${LOG}"
       fi
 
 # special checks for special accounts.
@@ -3148,17 +3148,17 @@ then
         grep -i 640 /etc/logrotate.d/nginx > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> $LOG
+          printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> "${LOG}"
         fi
         grep -i nginx ${SUDOERS} > /dev/null
         if [[ $? = 1 ]]
         then
-          printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> $LOG
+          printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> "${LOG}"
         fi
         ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> $LOG
+          printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> "${LOG}"
         fi
       fi
     fi
@@ -3177,9 +3177,9 @@ then
       fi
       if [[ $? -eq 0 ]]
       then
-        printf "%b\n" "  ${GREEN}Group ${FIELD3} exists${RESET}" >> $LOG
+        printf "%b\n" "  ${GREEN}Group ${FIELD3} exists${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} group${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}Unable to locate ${FIELD3} group${RESET}" >> "${LOG}"
       fi
     fi
     
@@ -3194,12 +3194,12 @@ then
         grep "^%${FIELD3}" ${SUDOERS} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> $LOG
+          printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> $LOG
+          printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> "${LOG}"
         fi
       else
-        printf "%b\n" "  ${YELLOW}Unable to locate sudoers file.${RESET}" >> $LOG
+        printf "%b\n" "  ${YELLOW}Unable to locate sudoers file.${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3212,7 +3212,7 @@ then
       fi
       if [[ ! -d /opt/OV/bin ]]
       then
-        printf "%b\n" "  ${RED}OpenView is not installed${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}OpenView is not installed${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3225,7 +3225,7 @@ then
       fi
       if [[ ! -f /usr/openv/netbackup/bp.conf ]]
       then
-        printf "%b\n" "  ${RED}NetBackup is not installed${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}NetBackup is not installed${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3238,7 +3238,7 @@ then
       fi
       if [[ ! -f /opt/datapalette/bin/datapal ]]
       then
-        printf "%b\n" "  ${RED}Data Palette is not installed${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}Data Palette is not installed${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3251,7 +3251,7 @@ then
       fi
       if [[ ! -d /opt/Panorama ]]
       then
-        printf "%b\n" "  ${RED}OpNet is not installed${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}OpNet is not installed${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3264,7 +3264,7 @@ then
       fi
       if [[ ! -f /usr/sbin/adclient ]]
       then
-        printf "%b\n" "  ${RED}Centrify is not installed${RESET}" >> $LOG
+        printf "%b\n" "  ${RED}Centrify is not installed${RESET}" >> "${LOG}"
       fi
     fi
 
@@ -3277,7 +3277,7 @@ then
         grep -i ${FIELD3} ${CRONALLOW} > /dev/null
         if [[ $? = 1 ]]
         then
-          printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> $LOG
+          printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
         fi
       else
         if [[ -f ${CRONDENY} ]]
@@ -3285,7 +3285,7 @@ then
           grep -i ${FIELD3} ${CRONDENY} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> $LOG
+            printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
           fi
         fi
       fi
@@ -3301,17 +3301,17 @@ then
           systemctl is-enabled $FIELD3 > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
           fi
         else
-          chkconfig $FIELD3 --level=`who -r | awk '{print $2}'` > /dev/null 2>&1
+          chkconfig $FIELD3 --level=$(who -r | awk '{print $2}') > /dev/null 2>&1
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> $LOG
+            printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> $LOG
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
           fi
         fi
       fi
@@ -3322,32 +3322,32 @@ then
 # if gateway has been found (eg there are IP entries)
   if [[ ! -z ${GATEWAY} ]]
   then
-    printf "%b\n" "  ${GREEN}Default gateway entry found${RESET}" >> $LOG
+    printf "%b\n" "  ${GREEN}Default gateway entry found${RESET}" >> "${LOG}"
     if [[ ${GWFLAG} = 'yes' ]]
     then
       if [[ ! -z ${GWMSG} ]]
       then
-        printf "%b\n" "$GWMSG" >> $LOG
+        printf "%b\n" "$GWMSG" >> "${LOG}"
       fi
     else
-      printf "%b\n" "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> $LOG
+      printf "%b\n" "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> "${LOG}"
     fi
   fi
 
 else 
-  printf "%b\n" "${RED}chkserver.input file not found${RESET}" >> $LOG
+  printf "%b\n" "${RED}chkserver.input file not found${RESET}" >> "${LOG}"
 fi
 
 
-echo "" >> $LOG
-echo "External steps to be performed:" >> $LOG
-echo "" >> $LOG
-echo "1. Check service processor password" >> $LOG
-echo "2. Have the unixsvc account ssh to this system to make sure it all works." >> $LOG
-echo "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server" >> $LOG
+echo "" >> "${LOG}"
+echo "External steps to be performed:" >> "${LOG}"
+echo "" >> "${LOG}"
+echo "1. Check service processor password" >> "${LOG}"
+echo "2. Have the unixsvc account ssh to this system to make sure it all works." >> "${LOG}"
+echo "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server" >> "${LOG}"
 
 if [[ ! -z $1 ]]
 then
-  cat $LOG
+  cat "${LOG}"
 fi
 
