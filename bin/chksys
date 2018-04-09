@@ -611,7 +611,7 @@ function network_iface {
                                          substr($2,7,2),
                                          substr($2,9,2),
                                          substr($2,11,2),
-                                         substr($2,13,2)}`
+                                         substr($2,13,2)}'`
 # we have to get IP information from the netconf file if it returns 'no such interface'.
 # Otherewise it's an apa interface and we can get it from ifconfig (or hp_apaconf)
       ISTATUS=`/usr/sbin/ifconfig $INTERFACE 2>&1 | grep -v 'no such interface'`
