@@ -80,11 +80,11 @@ then
 fi
 
 # change ownership of unixsvc authorized_keys file
-UNIXSVC=`grep "^unixsvc:" /etc/passwd | cut -f6 -d:`
+UNIXSVC=$(grep "^unixsvc:" /etc/passwd | cut -f6 -d:)
 if [[ ! -z $UNIXSVC ]]
 then
-  chown unixsvc:unixsvc $UNIXSVC/.ssh/*
-  chmod 600 $UNIXSVC/.ssh/*
-  chmod 700 $UNIXSVC/.ssh
+  chown unixsvc:unixsvc "${UNIXSVC}"/.ssh/*
+  chmod 600 "${UNIXSVC}"/.ssh/*
+  chmod 700 "${UNIXSVC}"/.ssh
 fi
 
