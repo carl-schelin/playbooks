@@ -18,6 +18,9 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
+DATE=`date`
+LOG=${SCRIPTS}/var/openview.failed
+
 # permit immediate running of scripts (within 5 minutes) if needed
 # always delete it after one run
 if [[ -f ${SCRIPTS}/bin/runnow ]]
@@ -61,21 +64,15 @@ then
 fi
 
 # now run through checks to see if OpenView is working.
-OVC=`/opt/OV/bin/ovc -status | grep -v ovcs | egrep -i "(Aborted|Stopped|Isn't Running)"`
-DATE=`date`
-LOG=${SCRIPTS}/var/openview.failed
+for i in `/opt/OV/bin/opcagt -status | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}'`
 
-if [[ ! -z "$OVC" ]]
-then
-
-  echo "OpenView failed and is not communicating - killing"
-  /usr/bin/logger -p err -t "OpenView" "An OpenView process has failed (Aborted|Stopped|Isn't Running). Killing OpenView."
+  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
+  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
 
   echo "" >> $LOG
   echo $DATE >> $LOG
-  /opt/OV/bin/ovc -status >> $LOG
-
-  /opt/OV/bin/ovc -kill
+  /opt/OV/bin/opcagt -start ${i} >> $LOG
+  /opt/OV/bin/opcagt -status >> $LOG
 
 fi
 
