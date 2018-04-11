@@ -6,8 +6,7 @@
 # changed path to ${SCRIPTS}/var to keep files in one directory structure
 # add the ability to stop and start the script monitoring by passing stop or start to the chkov script
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+DIRNAME=$(dirname "$0")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -16,17 +15,17 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
+. "${DIRNAME}"/../.config
 
-DATE=`date`
+DATE=$(date)
 LOG=${SCRIPTS}/var/openview.failed
 
 # permit immediate running of scripts (within 5 minutes) if needed
 # always delete it after one run
 if [[ -f ${SCRIPTS}/bin/runnow ]]
 then
-  ${SCRIPTS}/bin/runnow
-  rm ${SCRIPTS}/bin/runnow
+  "${SCRIPTS}"/bin/runnow
+  rm "${SCRIPTS}"/bin/runnow
 fi
 
 # check the Openview status
@@ -34,15 +33,15 @@ if [[ ! -z $1 ]]
 then
   if [[ $1 = "stop" ]]
   then
-    touch ${SCRIPTS}/var/openview.stop
+    touch "${SCRIPTS}"/var/openview.stop
 # kills the agent then exits; don't need to remove the kill here as the kill process will remove it when killed
-    touch ${SCRIPTS}/var/openview.kill
+    touch "${SCRIPTS}"/var/openview.kill
   fi
   if [[ $1 = "start" ]]
   then
-    if [[ -f ${SCRIPTS}/var/openview.stop ]]
+    if [[ -f "${SCRIPTS}"/var/openview.stop ]]
     then
-      rm ${SCRIPTS}/var/openview.stop
+      rm "${SCRIPTS}"/var/openview.stop
     fi
   fi
 fi
@@ -52,7 +51,7 @@ fi
 if [[ -f ${SCRIPTS}/var/openview.kill ]]
 then
   /opt/OV/bin/ovc -kill
-  rm ${SCRIPTS}/var/openview.kill
+  rm "${SCRIPTS}"/var/openview.kill
   exit 0
 fi
 
@@ -64,21 +63,21 @@ then
 fi
 
 # now run through checks to see if OpenView is working.
-for i in `/opt/OV/bin/opcagt -status | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}'`
-
+for i in $(/opt/OV/bin/opcagt -status | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}')
+do
   echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
   /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
 
-  echo "" >> $LOG
-  echo $DATE >> $LOG
-  /opt/OV/bin/opcagt -start ${i} >> $LOG
-  /opt/OV/bin/opcagt -status >> $LOG
+  echo "" >> "${LOG}"
+  echo "${DATE}" >> "${LOG}"
+  /opt/OV/bin/opcagt -start "${i}" >> "${LOG}"
+  /opt/OV/bin/opcagt -status >> "${LOG}"
 
-fi
+done
 
 # this takes about 15 seconds and restarts
 
-ERROR=`/opt/OV/bin/ovc -status 2>&1`
+ERROR=$(/opt/OV/bin/ovc -status 2>&1)
 if [[ $ERROR = "(ctrl-111) Ovcd is not yet started." ]]
 then
   echo "OpenView is not running - restarting"
