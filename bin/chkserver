@@ -1742,6 +1742,14 @@ check_openview() {
   then
     rm $ADMIN/etc/chkopenview.output
   fi
+# check to see if chkov is uncommented
+  grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
+  if [[ $? = 1 ]]
+  then
+    printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
+  fi
+
+# now check openview itself.
   if [[ -d /opt/OV/bin ]]
   then
     printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> "${LOG}"
@@ -1897,13 +1905,6 @@ check_openview() {
           /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS}/etc/chkopenview.output 2>&1
           touch ${SCRIPTS}/var/chkopenview.completed
         fi
-      fi
-
-# check to see if chkov is uncommented
-      grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
-      if [[ $? = 1 ]]
-      then
-        printf "%b\n" "    ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
       fi
 
     fi
