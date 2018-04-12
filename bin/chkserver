@@ -1899,6 +1899,13 @@ check_openview() {
         fi
       fi
 
+# check to see if chkov is uncommented
+      grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
+      if [[ $? = 1 ]]
+      then
+        printf "%b\n" "    ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
+      fi
+
     fi
   fi
   if [[ ${DEBUG} = '16' ]]
