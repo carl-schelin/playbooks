@@ -6,17 +6,8 @@
 
 ADMIN=/opt/intrado/
 
-if [[ -f $ADMIN/etc/chkopenview.output ]]
+if [[ -f /opt/OV/bin/opcmsg ]]
 then
-  rm $ADMIN/etc/chkopenview.output
-fi
-
-if [[ ! -f $ADMIN/var/chkopenview.completed ]] && [[ ! -f $ADMIN/var/chkopenview.block ]]
-then
-  if [[ -f /opt/OV/bin/opcmsg ]]
-  then
-    /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > /opt/intrado/etc/chkopenview.output 2>&1
-    touch $ADMIN/var/chkopenview.completed
-  fi
+  /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > /opt/intrado/etc/chkopenview.output 2>&1
 fi
 
