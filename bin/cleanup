@@ -88,3 +88,9 @@ then
   chmod 700 "${UNIXSVC}"/.ssh
 fi
 
+# remove log files older than 10 days
+find /opt/intrado/var -name logfile.* -atime +10 -exec rm {} \;
+
+# and remove old log files than 90 days (3 files)
+find /opt/intrado/var -name intrado.log.* -atime +92 -exec rm {} \;
+
