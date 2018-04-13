@@ -90,8 +90,8 @@ fi
 
 # this takes about 15 seconds and restarts
 
-ERROR=$(/opt/OV/bin/opcagt -status 2>&1)
-if [[ $ERROR = "(ctrl-111) Ovcd is not yet started." ]]
+/opt/OV/bin/opcagt -status > /dev/null 2>&1
+if [[ $? = 1 ]]
 then
   echo "OpenView is not running - restarting"
   /usr/bin/logger -p err -t "OpenView" "OpenView is not running. Restarting OpenView."
