@@ -74,26 +74,26 @@ then
 fi
 
 # now run through checks to see if OpenView is working.
-#for i in $(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}')
-#do
-#  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
-#  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
-#
-#  echo "" >> "${LOG}"
-#  echo "${DATE}" >> "${LOG}"
-#  /opt/OV/bin/opcagt -start "${i}" >> "${LOG}"
-#  /opt/OV/bin/opcagt -status >> "${LOG}"
-#
-#done
+for i in $(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running)" | awk '{print $1}')
+do
+  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
+  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
 
-OUTPUT=$(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Isn't Running|Agent Health Status: Critical)" | awk '{print $1}')
-if [[ ! -z ${OUTPUT} ]]
-then
   echo "" >> "${LOG}"
   echo "${DATE}" >> "${LOG}"
+  /opt/OV/bin/ovc -restart "${i}" >> "${LOG}"
   /opt/OV/bin/opcagt -status >> "${LOG}"
-  /opt/OV/bin/opcagt -kill >> "${LOG}"
-fi
+
+done
+
+#OUTPUT=$(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running|Agent Health Status: Critical)" | awk '{print $1}')
+#if [[ ! -z ${OUTPUT} ]]
+#then
+#  echo "" >> "${LOG}"
+#  echo "${DATE}" >> "${LOG}"
+#  /opt/OV/bin/opcagt -status >> "${LOG}"
+#  /opt/OV/bin/opcagt -kill >> "${LOG}"
+#fi
 
 # this takes about 15 seconds and restarts
 
