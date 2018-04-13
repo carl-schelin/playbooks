@@ -28,6 +28,13 @@ then
   rm "${SCRIPTS}"/bin/runnow
 fi
 
+# only continue if openview is installed
+if [[ ! -f /opt/OV/bin/opcagt ]]
+then
+  echo 'Openview not installed'
+  exit 0
+fi
+
 # check the Openview status
 if [[ ! -z $1 ]]
 then
