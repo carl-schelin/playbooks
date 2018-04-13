@@ -153,6 +153,8 @@
 # 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
 # 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
 # 2018/04/06 - CS - Added the ability for the script to send a test message through the openview system.
+# 2018/04/13 - CS - Updated the openview check to see if the chkov script is not in root's cron
+# 2018/04/13 - CS - Updated the openview check to see if the agent has been set to not start if stopped.
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -166,7 +168,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.219"
+VERSION="${BASENAME} v1.223"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1747,6 +1749,11 @@ check_openview() {
   if [[ $? = 1 ]]
   then
     printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
+  fi
+# see if openview is configured to just not start
+  if [[ -f ${SCRIPTS}/var/openview.stop ]]
+  then
+    printf "%b\n" "  ${YELLOW}The Openview agent is configured to not start if stopped (script exits without checking)${RESET}" >> "${LOG}"
   fi
 
 # now check openview itself.
