@@ -37,6 +37,10 @@ then
 # kills the agent then exits; don't need to remove the kill here as the kill process will remove it when killed
     touch "${SCRIPTS}"/var/openview.kill
   fi
+  if [[ $1 = "kill" ]]
+  then
+    touch "${SCRIPTS}"/var/openview.kill
+  fi
   if [[ $1 = "start" ]]
   then
     if [[ -f "${SCRIPTS}"/var/openview.stop ]]
@@ -63,25 +67,34 @@ then
 fi
 
 # now run through checks to see if OpenView is working.
-for i in $(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}')
-do
-  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
-  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
+#for i in $(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Isn't Running)" | awk '{print $1}')
+#do
+#  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
+#  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Isn't Running). Restarting ${i}."
+#
+#  echo "" >> "${LOG}"
+#  echo "${DATE}" >> "${LOG}"
+#  /opt/OV/bin/opcagt -start "${i}" >> "${LOG}"
+#  /opt/OV/bin/opcagt -status >> "${LOG}"
+#
+#done
 
+OUTPUT=$(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Isn't Running|Agent Health Status: Critical)" | awk '{print $1}')
+if [[ ! -z ${OUTPUT} ]]
+then
   echo "" >> "${LOG}"
   echo "${DATE}" >> "${LOG}"
-  /opt/OV/bin/opcagt -start "${i}" >> "${LOG}"
   /opt/OV/bin/opcagt -status >> "${LOG}"
-
-done
+  /opt/OV/bin/opcagt -kill >> "${LOG}"
+fi
 
 # this takes about 15 seconds and restarts
 
-ERROR=$(/opt/OV/bin/ovc -status 2>&1)
+ERROR=$(/opt/OV/bin/opcagt -status 2>&1)
 if [[ $ERROR = "(ctrl-111) Ovcd is not yet started." ]]
 then
   echo "OpenView is not running - restarting"
   /usr/bin/logger -p err -t "OpenView" "OpenView is not running. Restarting OpenView."
-  /opt/OV/bin/ovc -start
+  /opt/OV/bin/opcagt -start
 fi
 
