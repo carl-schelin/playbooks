@@ -155,6 +155,7 @@
 # 2018/04/06 - CS - Added the ability for the script to send a test message through the openview system.
 # 2018/04/13 - CS - Updated the openview check to see if the chkov script is not in root's cron
 # 2018/04/13 - CS - Updated the openview check to see if the agent has been set to not start if stopped.
+# 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -168,7 +169,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.223"
+VERSION="${BASENAME} v1.224"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1901,6 +1902,16 @@ check_openview() {
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
+        fi
+      fi
+
+# see if any policies are loaded; making sure of linux for sure.
+      if [[ -f /opt/OV/bin/ovpolicy ]]
+      then
+        POLICIES=`/opt/OV/bin/ovpolicy -list | egrep -v "(List installed policies|^$|^ Type|^----------)"`
+        if [[ -z ${POLICIES} ]]
+        then
+          printf "%b\n" "    ${RED}Openview reports no installed policies${RESET} /opt/OV/bin/ovpolicy -list" >> "${LOG}"
         fi
       fi
 
