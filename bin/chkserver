@@ -1766,10 +1766,10 @@ check_openview() {
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
-      ABORT=`/opt/OV/bin/opcagt -status | grep -ci abort`
-      RUNNING=`/opt/OV/bin/opcagt -status | grep -ci running`
-      STOPPED=`/opt/OV/bin/opcagt -status | grep -ci stopped`
-      STARTING=`/opt/OV/bin/opcagt -status | grep -ci starting`
+      ABORT=`/opt/OV/bin/ovstatus | grep -ci abort`
+      RUNNING=`/opt/OV/bin/ovstatus | grep -ci running`
+      STOPPED=`/opt/OV/bin/ovstatus | grep -ci stopped`
+      STARTING=`/opt/OV/bin/ovstatus | grep -ci starting`
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
         printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
