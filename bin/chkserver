@@ -169,7 +169,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.224"
+VERSION="${BASENAME} v1.226"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1909,7 +1909,7 @@ check_openview() {
       if [[ -f /opt/OV/bin/ovpolicy ]]
       then
         POLICIES=`/opt/OV/bin/ovpolicy -list | grep "No policies are installed"`
-        if [[ -z ${POLICIES} ]]
+        if [[ ! -z ${POLICIES} ]]
         then
           printf "%b\n" "    ${RED}Openview reports no installed policies${RESET} /opt/OV/bin/ovpolicy -list" >> "${LOG}"
         fi
