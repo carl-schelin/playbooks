@@ -11,8 +11,8 @@ then
   rm $ADMIN/etc/chkpolicy.output
 fi
 
-if [[ -f /opt/OV/bin/opcpolicy ]]
+if [[ -f /opt/OV/bin/ovpolicy ]]
 then
-  /opt/OV/bin/opcpolicy -list > $ADMIN/etc/chkpolicy.output
+  /opt/OV/bin/ovpolicy -list > $ADMIN/etc/chkpolicy.output
 fi
 
