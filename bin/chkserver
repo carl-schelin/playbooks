@@ -1908,7 +1908,7 @@ check_openview() {
 # see if any policies are loaded; making sure of linux for sure.
       if [[ -f /opt/OV/bin/ovpolicy ]]
       then
-        POLICIES=`/opt/OV/bin/ovpolicy -list | egrep -v "(List installed policies|^$|^ Type|^----------)"`
+        POLICIES=`/opt/OV/bin/ovpolicy -list | grep "No policies are installed"`
         if [[ -z ${POLICIES} ]]
         then
           printf "%b\n" "    ${RED}Openview reports no installed policies${RESET} /opt/OV/bin/ovpolicy -list" >> "${LOG}"
