@@ -1,0 +1,18 @@
+#!/bin/ksh
+
+# chkpolicy
+# Carl Schelin
+# Checks the openview installed policies
+
+ADMIN=/opt/intrado/
+
+if [[ -f $ADMIN/etc/opcpolicy.output ]]
+then
+  rm $ADMIN/etc/chkpolicy.output
+fi
+
+if [[ -f /opt/OV/bin/opcpolicy ]]
+then
+  /opt/OV/bin/opcpolicy -list > $ADMIN/etc/chkpolicy.output
+fi
+
