@@ -295,6 +295,9 @@ runscript getovconf
 # see if users are looking at the profile or chkserver.output file
 runscript chkprofile
 
+# show the policies
+runscript chkpolicy
+
 # clean up on aisle three
 runscript cleanup
 
