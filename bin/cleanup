@@ -94,3 +94,9 @@ find /opt/intrado/var -name logfile.* -atime +10 -exec rm {} \;
 # and remove old log files than 90 days (3 files)
 find /opt/intrado/var -name intrado.log.* -atime +92 -exec rm {} \;
 
+# remove runnow script if it exists. the chkov script deletes it after running but if chkov isn't enabled, it won't run or be removed. This auto-removes it.
+if [[ -f /opt/intrado/bin/runnow ]]
+then
+  rm /opt/intrado/bin/runnow
+fi
+
