@@ -22,10 +22,10 @@ LOG=${SCRIPTS}/var/openview.failed
 
 # permit immediate running of scripts (within 5 minutes) if needed
 # always delete it after one run
-if [[ -f ${SCRIPTS}/bin/runnow ]]
+if [[ -f ${SCRIPTS}/bin/runonce ]]
 then
-  "${SCRIPTS}"/bin/runnow
-  rm "${SCRIPTS}"/bin/runnow
+  "${SCRIPTS}"/bin/runonce
+  rm "${SCRIPTS}"/bin/runonce
 fi
 
 # only continue if openview is installed
