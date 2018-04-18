@@ -4,8 +4,7 @@
 # Carl Schelin
 # Update the GECOS field for users with accurate information.
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+DIRNAME=$(dirname "$0")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -14,7 +13,7 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
+source "${DIRNAME}"/../.config
 
 PATH=$PATH:/bin:/usr/bin:/sbin:/usr/sbin
 
@@ -26,15 +25,15 @@ fi
 
 CHANGELOG=""
 COMMA=""
-for i in `grep -v "^#" ${SCRIPTS}/etc/valid.email | cut -f1 -d:`
+for i in $(grep -v "^#" ${SCRIPTS}/etc/valid.email | cut -f1 -d:)
 do
-  ORIGINAL=`egrep "^${i}:" /etc/passwd`
-  if [[ ! -z ${ORIGINAL} ]]
+  ORIGINAL=$(egrep "^${i}:" /etc/passwd)
+  if [[ ! -z "${ORIGINAL}" ]]
   then
-    EMAIL=`egrep "^${i}:" ${SCRIPTS}/etc/valid.email | cut -f2 -d:`
-    usermod -c "${EMAIL}" ${i}
-    UPDATED=`egrep "^${i}:" /etc/passwd`
-    if [[ ! ${ORIGINAL} = ${UPDATED} ]]
+    EMAIL=$(egrep "^${i}:" "${SCRIPTS}"/etc/valid.email | cut -f2 -d:)
+    usermod -c "${EMAIL}" "${i}"
+    UPDATED=$(egrep "^${i}:" /etc/passwd)
+    if [[ ! "${ORIGINAL}" = "${UPDATED}" ]]
     then
       CHANGELOG="${CHANGELOG}${COMMA}${i}"
       COMMA=","
@@ -44,6 +43,6 @@ done
 
 if [[ ! -z ${CHANGELOG} ]]
 then
-  echo "Updated ${CHANGELOG} to correct their GECOS field" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+  echo "Updated ${CHANGELOG} to correct their GECOS field" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
 fi
 
