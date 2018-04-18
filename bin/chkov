@@ -74,7 +74,7 @@ then
 fi
 
 # now run through checks to see if OpenView is working.
-for i in $(/opt/OV/bin/ovstatus | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running)" | awk '{print $1}')
+for i in $(/opt/OV/bin/ovcstatus | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running)" | awk '{print $1}')
 do
   echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
   /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Starting|Isn't Running). Restarting ${i}."
