@@ -99,4 +99,8 @@ if [[ -f /opt/intrado/bin/runnow ]]
 then
   rm /opt/intrado/bin/runnow
 fi
+if [[ -f /opt/intrado/bin/runonce ]]
+then
+  rm /opt/intrado/bin/runonce
+fi
 
