@@ -82,14 +82,18 @@ then
   then
 # back it up
     cp ${SUDOERS} ${SUDOTMP}
+# verify a clean copy
+    diff ${SUDOERS} ${SUDOTMP} > /dev/null
+    if [[ $? = 0 ]]
+    then
 # remove old unixsvc info if it exists
-    egrep -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
+      egrep -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
 
 # add new info
-    echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
-    echo "" >> ${SUDOERS}
-    echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
-
+      echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
+      echo "" >> ${SUDOERS}
+      echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    fi
   fi
 
 # add the same for towersvc if the account exists
