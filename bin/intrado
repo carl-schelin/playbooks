@@ -301,6 +301,9 @@ runscript chkpolicy
 # clean up on aisle three
 runscript cleanup
 
+# run spectre-meltdown
+/opt/intrado/bin/spectre-meltdown.sh > /opt/intrado/etc/spectre-meltdown.output 2>&1
+
 # testing
 #runscript mailcarl
 
