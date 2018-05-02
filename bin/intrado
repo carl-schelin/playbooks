@@ -302,7 +302,7 @@ runscript chkpolicy
 runscript cleanup
 
 # run spectre-meltdown
-/opt/intrado/bin/spectre-meltdown.sh > /opt/intrado/etc/spectre-meltdown.output 2>&1
+/opt/intrado/bin/spectre_meltdown.sh > /opt/intrado/etc/spectre_meltdown.output 2>&1
 
 # testing
 #runscript mailcarl
