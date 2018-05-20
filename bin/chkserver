@@ -157,6 +157,7 @@
 # 2018/04/13 - CS - Updated the openview check to see if the agent has been set to not start if stopped.
 # 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
 # 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
+# 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -170,7 +171,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.227"
+VERSION="${BASENAME} v1.230"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1631,12 +1632,26 @@ check_netbackup() {
     done
 
 # verify bp.conf file configuration. CLIENT_NAME should be the shortname
+# except for ESINet systems when the shortname should end with 'bu' for the backup interface
     if [[ -f /usr/openv/netbackup/bp.conf ]]
     then
-      BPCONF=`grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}'`
-      if [[ ! ${BPCONF} = ${HOSTNAME} ]]
+      BPHOSTNAME=${HOSTNAME}
+      if [[ -f ${SCRIPTS}/etc/fingerprint ]]
       then
-        printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${HOSTNAME}${RESET}" >> "${LOG}"
+        grep -i esinet ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          BPHOSTNAME="${HOSTNAME}bu"
+        fi
+      fi
+      BPCONF=`grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}'`
+      if [[ ! ${BPCONF} = ${BPHOSTNAME} ]]
+      then
+        if [[ ${BPCONF} = '' ]]
+        then
+          BPCONF="Blank"
+        fi
+        printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}${RESET}" >> "${LOG}"
       fi
     fi
 
