@@ -158,6 +158,7 @@
 # 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
 # 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
 # 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
+# 2018/05/21 - CS - Updated bp.conf check for servers in Miami and Longmont
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -171,7 +172,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.230"
+VERSION="${BASENAME} v1.231"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1635,6 +1636,38 @@ check_netbackup() {
 # except for ESINet systems when the shortname should end with 'bu' for the backup interface
     if [[ -f /usr/openv/netbackup/bp.conf ]]
     then
+# if MIA04 then should only have inveri02.scc911.com
+# if DEN03 then should have:
+# SERVER = inveri01-gig0.scc911.com
+# SERVER = incobu01.corp.intrado.pri
+# SERVER = incobu02.corp.intrado.pri
+# SERVER = incobu03.corp.intrado.pri
+      if [[ -f ${SCRIPTS}/etc/fingerprint ]]
+      then
+        grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i inveri02.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+        grep DEN03 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
+          do
+            grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
+            if [[ $? -ne 0 ]]
+            then
+              printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      fi
+
       BPHOSTNAME=${HOSTNAME}
       if [[ -f ${SCRIPTS}/etc/fingerprint ]]
       then
