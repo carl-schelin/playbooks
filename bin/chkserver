@@ -1647,16 +1647,18 @@ check_netbackup() {
 # plus E911 has:
 # SERVER = lmntcoecmma10.corp.intrado.pri
 # if MIA04 then should only have inveri02.scc911.com
+# englewood
+# SERVER = enwdcoecmma10.corp.intrado.pri
       if [[ -f ${SCRIPTS}/etc/fingerprint ]]
       then
 # Birmingham
         grep BHM02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i brhm2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i brhm2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = brhm2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = brhm2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -1664,10 +1666,10 @@ check_netbackup() {
         grep CLT01 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i chrl2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i chrl2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = chrl2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = chrl2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -1675,7 +1677,7 @@ check_netbackup() {
         grep DEN03 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          for chksvr in inveri01-gig0 incobu01 incobu02 incobu03
+          for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
           do
             grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
             if [[ $? -ne 0 ]]
@@ -1686,10 +1688,10 @@ check_netbackup() {
           grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
-            grep -i lmntcoecmma10 /usr/openv/netbackup/bp.conf > /dev/null
+            grep -i lmntcoecmma10.corp.intrado.pri /usr/openv/netbackup/bp.conf > /dev/null
             if [[ $? -eq 0 ]]
             then
-              printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10.corp.intrado.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -1698,7 +1700,7 @@ check_netbackup() {
         grep DEN13 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          for chksvr in inveri01-gig0 incobu02
+          for chksvr in inveri01-gig0.scc911.com incobu02.corp.intrado.pri
           do
             grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
             if [[ $? -ne 0 ]]
@@ -1709,7 +1711,7 @@ check_netbackup() {
           grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
-            for chksvr in enwdcoecmma10 lmntcoecmma10
+            for chksvr in enwdcoecmma10.corp.intrado.pri lmntcoecmma10.corp.intrado.pri
             do
               grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
               if [[ $? -ne 0 ]]
@@ -1724,15 +1726,15 @@ check_netbackup() {
         grep DEN15 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i inveri01-gig0 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -eq 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
           grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
-            for chksvr in enwdcoecmma10 lmntcoecmma10
+            for chksvr in enwdcoecmma10.corp.intrado.pri lmntcoecmma10.corp.intrado.pri
             do
               grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
               if [[ $? -ne 0 ]]
@@ -1747,10 +1749,10 @@ check_netbackup() {
         grep DFW10 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i dlls2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i dlls2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = dlls2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = dlls2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -1758,10 +1760,10 @@ check_netbackup() {
         grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i frfd2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i frfd2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = frfd2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = frfd2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -1769,10 +1771,10 @@ check_netbackup() {
         grep HNL02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i hnllhiecnbu11 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i hnllhiecnbu11.ienv.a911net.net /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = hnllhiecnbu11\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = hnllhiecnbu11.ienv.a911net.net\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
@@ -1780,10 +1782,10 @@ check_netbackup() {
         grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i inveri02 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i inveri02.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
