@@ -173,7 +173,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.232"
+VERSION="${BASENAME} v1.233"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1637,7 +1637,8 @@ check_netbackup() {
 # except for ESINet systems when the shortname should end with 'bu' for the backup interface
     if [[ -f /usr/openv/netbackup/bp.conf ]]
     then
-# if MIA04 then should only have inveri02.scc911.com
+# if BHM02 then should only have brhm2aabue911p01.we911.esinet.pri
+# if CLT01 then should only have brhm2aabue911p01.we911.esinet.pri
 # if DEN03 then should have:
 # SERVER = inveri01-gig0.scc911.com
 # SERVER = incobu01.corp.intrado.pri
@@ -1645,18 +1646,32 @@ check_netbackup() {
 # SERVER = incobu03.corp.intrado.pri
 # plus E911 has:
 # SERVER = lmntcoecmma10.corp.intrado.pri
+# if MIA04 then should only have inveri02.scc911.com
       if [[ -f ${SCRIPTS}/etc/fingerprint ]]
       then
-        grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
+# Birmingham
+        grep BHM02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i inveri02 /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i brhm2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = brhm2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
+# Charlotte
+        grep CLT01 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i chrl2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = chrl2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+# Longmont
         grep DEN03 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
@@ -1678,6 +1693,100 @@ check_netbackup() {
             fi
           fi
         fi
+
+# Old Englewood
+        grep DEN13 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          for chksvr in inveri01-gig0 incobu02
+          do
+            grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
+            if [[ $? -ne 0 ]]
+            then
+              printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            fi
+          done
+          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            for chksvr in enwdcoecmma10 lmntcoecmma10
+            do
+              grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            done
+          fi
+        fi
+
+# New Englewood
+        grep DEN15 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i inveri01-gig0 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            for chksvr in enwdcoecmma10 lmntcoecmma10
+            do
+              grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            done
+          fi
+        fi
+
+# Dallas-Fort Worth
+        grep DFW10 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i dlls2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = dlls2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+# Fairfield
+        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i frfd2aabue911p01 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = frfd2aabue911p01\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+# Honolulu and Waikiki
+        grep HNL02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i hnllhiecnbu11 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = hnllhiecnbu11\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+# Miami - Nap of the Americas
+        grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          grep -i inveri02 /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
       fi
 
       BPHOSTNAME=${HOSTNAME}
