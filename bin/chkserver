@@ -159,6 +159,7 @@
 # 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
 # 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
 # 2018/05/21 - CS - Updated bp.conf check for servers in Miami and Longmont
+# 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -172,7 +173,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.231"
+VERSION="${BASENAME} v1.232"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1642,22 +1643,24 @@ check_netbackup() {
 # SERVER = incobu01.corp.intrado.pri
 # SERVER = incobu02.corp.intrado.pri
 # SERVER = incobu03.corp.intrado.pri
+# plus E911 has:
+# SERVER = lmntcoecmma10.corp.intrado.pri
       if [[ -f ${SCRIPTS}/etc/fingerprint ]]
       then
         grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          grep -i inveri02.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
+          grep -i inveri02 /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
         grep DEN03 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
+          for chksvr in inveri01-gig0 incobu01 incobu02 incobu03
           do
             grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
             if [[ $? -ne 0 ]]
@@ -1665,6 +1668,15 @@ check_netbackup() {
               printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
             fi
           done
+          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            grep -i lmntcoecmma10 /usr/openv/netbackup/bp.conf > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            fi
+          fi
         fi
       fi
 
