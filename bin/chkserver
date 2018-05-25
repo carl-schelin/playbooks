@@ -1655,6 +1655,11 @@ check_netbackup() {
         grep BHM02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i brhm2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server brhm2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i brhm2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -1666,6 +1671,11 @@ check_netbackup() {
         grep CLT01 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i chrl2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server chrl2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i chrl2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -1673,25 +1683,84 @@ check_netbackup() {
           fi
         fi
 
-# Longmont
-        grep DEN03 ${SCRIPTS}/etc/fingerprint > /dev/null
+# most systems work fine with the location however the ESINet servers in Longmont labs have a local backup server that's not the main inveri01 server.
+# Moab Lab machine
+        grep "DEN03" ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-          for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
-          do
-            grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
-            if [[ $? -ne 0 ]]
-            then
-              printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
-            fi
-          done
-          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+
+          grep "ESINet" ${SCRIPTS}/etc/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
-            grep -i lmntcoecmma10.corp.intrado.pri /usr/openv/netbackup/bp.conf > /dev/null
+            grep "moab0" ${SCRIPTS}/etc/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
-              printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10.corp.intrado.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i moab0aabue911q01.we911lab.esinet.pri > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${RED}The Master server moab0aabue911q01.we911lab.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+              grep -i moab0aabue911q01.we911lab.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = moab0aabue911q01.we911lab.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            fi
+
+# Peru Lab machine
+            grep "peru0" ${SCRIPTS}/etc/fingerprint > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i peru0aabue911q01.we911lab.esinet.pri > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${RED}The Master server peru0aabue911q01.we911lab.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+              grep -i peru0aabue911q01.we911lab.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = peru0aabue911q01.we911lab.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            fi
+
+# Yodo Lab machine
+            grep "yodo0" ${SCRIPTS}/etc/fingerprint > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i yodo0aabue911q01.we911lab.esinet.pri > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${RED}The Master server yodo0aabue911q01.we911lab.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+              grep -i yodo0aabue911q01.we911lab.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = yodo0aabue911q01.we911lab.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            fi
+          else
+# Longmont
+            egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
+            if [[ $? -ne 0 ]]
+            then
+              printf "%b\n" "    ${RED}The Master server inveri01-gig0.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            fi
+            for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
+            do
+              grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -ne 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
+            done
+            grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              grep -i lmntcoecmma10.corp.intrado.pri /usr/openv/netbackup/bp.conf > /dev/null
+              if [[ $? -eq 0 ]]
+              then
+                printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10.corp.intrado.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+              fi
             fi
           fi
         fi
@@ -1700,6 +1769,11 @@ check_netbackup() {
         grep DEN13 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server inveri01-gig0.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           for chksvr in inveri01-gig0.scc911.com incobu02.corp.intrado.pri
           do
             grep -i ${chksvr} /usr/openv/netbackup/bp.conf > /dev/null
@@ -1726,6 +1800,11 @@ check_netbackup() {
         grep DEN15 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server inveri01-gig0.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -eq 0 ]]
           then
@@ -1749,6 +1828,11 @@ check_netbackup() {
         grep DFW10 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i dlls2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server dlls2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i dlls2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -1760,6 +1844,11 @@ check_netbackup() {
         grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i frfd2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server frfd2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i frfd2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -1771,6 +1860,11 @@ check_netbackup() {
         grep HNL02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i hnllhiecnbu11.ienv.a911net.net > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server hnllhiecnbu11.ienv.a911net.net is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i hnllhiecnbu11.ienv.a911net.net /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -1782,10 +1876,49 @@ check_netbackup() {
         grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri02.scc911.com > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server inveri02.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
           grep -i inveri02.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
           if [[ $? -ne 0 ]]
           then
             printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri02.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+SERVER = sfld2aabue911p01.we911.esinet.pri
+# Fairfield
+        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sfld2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server sfld2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+          grep -i sfld2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = sfld2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+        fi
+
+SERVER = sndg2aabue911p01.we911.esinet.pri
+# Fairfield
+        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sndg2aabue911p01.we911.esinet.pri > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}The Master server sndg2aabue911p01.we911.esinet.pri is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+          grep -i sndg2aabue911p01.we911.esinet.pri /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = sndg2aabue911p01.we911.esinet.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
         fi
 
