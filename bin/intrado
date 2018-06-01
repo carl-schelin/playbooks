@@ -265,6 +265,9 @@ runscript chkmessages
 # Update the nessus key
 runscript nessus
 
+# Update the ucmdbsvc key
+runscript ucmdbsvc
+
 # install simplejson if it exists
 runscript simplejson
 
