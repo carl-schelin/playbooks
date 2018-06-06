@@ -1888,7 +1888,7 @@ check_netbackup() {
           fi
         fi
 
-SERVER = sfld2aabue911p01.we911.esinet.pri
+# SERVER = sfld2aabue911p01.we911.esinet.pri
 # Fairfield
         grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
@@ -1905,7 +1905,7 @@ SERVER = sfld2aabue911p01.we911.esinet.pri
           fi
         fi
 
-SERVER = sndg2aabue911p01.we911.esinet.pri
+# SERVER = sndg2aabue911p01.we911.esinet.pri
 # Fairfield
         grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
@@ -1924,23 +1924,30 @@ SERVER = sndg2aabue911p01.we911.esinet.pri
 
       fi
 
-      BPHOSTNAME=${HOSTNAME}
-      if [[ -f ${SCRIPTS}/etc/fingerprint ]]
+# make sure the client_name is set correctly in order to get reports.
+# while the management interface is the desired client_name, if we are getting
+# backup reports, then whatever the name is, is correct.
+# so, if the backups.output file is empty, _then_ check on the client_name entry
+      if [[ ! -s ${SCRIPTS}/etc/backups.output ]]
       then
-        grep -i esinet ${SCRIPTS}/etc/fingerprint > /dev/null
-        if [[ $? -eq 0 ]]
+        BPHOSTNAME=${HOSTNAME}
+        if [[ -f ${SCRIPTS}/etc/fingerprint ]]
         then
-          BPHOSTNAME="${HOSTNAME}bu"
+          grep -i esinet ${SCRIPTS}/etc/fingerprint > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            BPHOSTNAME="${HOSTNAME}bu"
+          fi
         fi
-      fi
-      BPCONF=`grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}'`
-      if [[ ! ${BPCONF} = ${BPHOSTNAME} ]]
-      then
-        if [[ ${BPCONF} = '' ]]
+        BPCONF=`grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}'`
+        if [[ ! ${BPCONF} = ${BPHOSTNAME} ]]
         then
-          BPCONF="Blank"
+          if [[ ${BPCONF} = '' ]]
+          then
+            BPCONF="Blank"
+          fi
+          printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}${RESET}" >> "${LOG}"
         fi
-        printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}${RESET}" >> "${LOG}"
       fi
     fi
 
