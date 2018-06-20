@@ -160,6 +160,7 @@
 # 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
 # 2018/05/21 - CS - Updated bp.conf check for servers in Miami and Longmont
 # 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
+# 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -173,7 +174,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.233"
+VERSION="${BASENAME} v1.237"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1347,12 +1348,62 @@ check_ksh() {
 ######################
 
 check_kubernetes() {
+# check the status of etcd
+# check the status of the apiserver
 # enumerate namespaces to see what's running on the server.
 # then get the number of processes and report any containers that aren't fully running
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_kubernetes(11)"
   fi
+  if [[ -f /bin/etcdctl ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "/bin/etcdctl found; etcdctl cluster-health"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
+
+    etcdctl --ca-file=/etc/etcd/tls/kube-ca.pem --key-file=/etc/etcd/tls/worker-key.pem --cert-file=/etc/etcd/tls/worker.pem --endpoint=https://`hostname -f`:2379 cluster-health > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}etcd cluster healthy${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${RED}etcd cluster is not healthy${RESET}" >> "${LOG}"
+    fi
+  fi
+
+# check the local apiserver response. note that only the VIP is important. local can fail for whatever reason and as long as the VIP is successful, the cluster is functioning.
+  if [[ -f /bin/kube-apiserver ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "/bin/kube-apiserver found; kube-apiserver version check"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes local apiserver status${RESET}" >> "${LOG}"
+    curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://127.0.0.1/version > /dev/null 2>&1
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}Local apiserver query reply success${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${YELLOW}Local apiserver query failed${RESET}" >> "${LOG}"
+    fi
+
+# assumption of a 1.2 cluster for the location of the .config file for the api_server variable.
+    if [[ -f /var/tmp/kubernetes/.config ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking Kubernetes apiserver VIP status${RESET}" >> "${LOG}"
+      API_SERVER=`grep API_SERVER /var/tmp/kubernetes/.config | cut -f2 -d\"`
+      curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://${API_SERVER}/version > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}apiserver VIP query success${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}apiserver VIP query failed${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+
   if [[ -f /bin/kubectl ]]
   then
     if [[ ${DEBUG} = '11' ]]
