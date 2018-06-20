@@ -1808,7 +1808,7 @@ check_netbackup() {
             if [[ $? -eq 0 ]]
             then
               grep -i lmntcoecmma10.corp.intrado.pri /usr/openv/netbackup/bp.conf > /dev/null
-              if [[ $? -eq 0 ]]
+              if [[ $? -ne 0 ]]
               then
                 printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10.corp.intrado.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
               fi
