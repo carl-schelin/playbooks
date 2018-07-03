@@ -161,6 +161,7 @@
 # 2018/05/21 - CS - Updated bp.conf check for servers in Miami and Longmont
 # 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
+# 2018/07/02 - CS - Added a check of a service to see if it's running
 
 BASENAME=$(basename $0)
 DIRNAME=$(dirname $0)
@@ -174,7 +175,7 @@ fi
 # Source the configuration file
 . ${DIRNAME}/../.config
 
-VERSION="${BASENAME} v1.237"
+VERSION="${BASENAME} v1.239"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3711,6 +3712,32 @@ then
             printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
+          fi
+        fi
+      fi
+    fi
+
+# check for services that should be running.
+    if [[ $FIELD2 = 'Running' ]]
+    then
+      if [[ $OS = 'Linux' ]]
+      then
+        if [[ $OSMAJOR = '7' ]]
+        then
+          systemctl status $FIELD3 > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not running${RESET}" >> "${LOG}"
+          fi
+        else
+          service $FIELD3 status > /dev/null 2>&1
+          if [[ $? = 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not running${RESET}" >> "${LOG}"
           fi
         fi
       fi
