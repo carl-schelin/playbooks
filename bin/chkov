@@ -5,6 +5,7 @@
 # Added verification that openview is installed and is enabled
 # changed path to ${SCRIPTS}/var to keep files in one directory structure
 # add the ability to stop and start the script monitoring by passing stop or start to the chkov script
+# 20180727 - Update to use opcagt and to also check for message buffering.
 
 DIRNAME=$(dirname "$0")
 
@@ -86,14 +87,15 @@ do
 
 done
 
-#OUTPUT=$(/opt/OV/bin/opcagt -status | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running|Agent Health Status: Critical)" | awk '{print $1}')
-#if [[ ! -z ${OUTPUT} ]]
-#then
-#  echo "" >> "${LOG}"
-#  echo "${DATE}" >> "${LOG}"
-#  /opt/OV/bin/opcagt -status >> "${LOG}"
-#  /opt/OV/bin/opcagt -kill >> "${LOG}"
-#fi
+# adding a check for message buffering. If the agent is buffering, there's a problem with communications with the server. Restart the agent.
+OUTPUT=$(/opt/OV/bin/opcagt -status | grep -i "Could not contact Message Agent to query buffering state.")
+if [[ ! -z ${OUTPUT} ]]
+then
+  echo "" >> "${LOG}"
+  echo "${DATE}" >> "${LOG}"
+  /opt/OV/bin/opcagt -status >> "${LOG}"
+  /opt/OV/bin/opcagt -kill >> "${LOG}"
+fi
 
 # this takes about 15 seconds and restarts
 
