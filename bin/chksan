@@ -1,56 +1,65 @@
 #!/bin/ksh
 
-# chksan
+# ${BASENAME}
 # Carl Schelin
 # documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
-# update to include INTRADO directory
+# update to include SCRIPTS directory
 # added multipath -ll to Linux test
 # corrected multipath output path
 
-OS=`uname`
-INTRADO="/opt/intrado"
+BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
 
-if [[ -f $INTRADO/etc/chksan.output ]]
+if [[ ! -f ${DIRNAME}/../.config ]]
 then
-  rm $INTRADO/etc/chksan.output
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
 fi
 
-if [[ $OS = "SunOS" ]]
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+if [[ -f ${SCRIPTS}/etc/${BASENAME}.output ]]
+then
+  rm "${SCRIPTS}/etc/${BASENAME}.output"
+fi
+
+if [[ ${OS} = "SunOS" ]]
 then
 
-  for i in `/usr/sbin/luxadm probe | /usr/bin/grep "Logical Path" | /usr/bin/cut -f2 -d:`
+  for i in $(/usr/sbin/luxadm probe | /usr/bin/grep "Logical Path" | /usr/bin/cut -f2 -d:)
   do
-    /usr/sbin/luxadm display $i >> $INTRADO/etc/chksan.output
+    /usr/sbin/luxadm display "${i}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   done
 
 fi
 
-if [[ $OS = "Linux" ]]
+if [[ ${OS} = "Linux" ]]
 then
 
-  /usr/bin/systool -c fc_host -v > $INTRADO/etc/chksan.output
-  /sbin/multipath -ll >> $INTRADO/etc/chksan.output
+  /usr/bin/systool -c fc_host -v > "${SCRIPTS}/etc/${BASENAME}.output"
+  /sbin/multipath -ll >> "${SCRIPTS}/etc/${BASENAME}.output"
 
 fi
 
-if [[ $OS = "HP-UX" ]]
+if [[ ${OS} = "HP-UX" ]]
 then
 
   /usr/sbin/ioscan -fnC fc | tail +2 | while read MYLINE
    do 
-    if [[ -z "$HWP" ]]
-      then
-       HWP="`echo $MYLINE | awk '{print $3}'`"
+    if [[ -z "${HWP}" ]]
+    then
+       HWP=$(echo "${MYLINE}" | awk '{print $3}')
     fi
-    FCDEV="`echo $MYLINE | grep -v grep | grep '/dev/'`"
-    if [[ -n "$FCDEV" ]]
+    FCDEV=$(echo "${MYLINE}" | grep -v grep | grep '/dev/')
+    if [[ -n "${FCDEV}" ]]
      then 
-      echo "======= $FCDEV $HWP ======"
-      /opt/fcms/bin/fcmsutil $FCDEV get remote all
-      /usr/sbin/ioscan -fnC disk -H $HWP
+      echo "======= ${FCDEV} ${HWP} ======"
+      /opt/fcms/bin/fcmsutil "${FCDEV}" get remote all
+      /usr/sbin/ioscan -fnC disk -H "${HWP}"
       unset FCDEV
       unset HWP
     fi
-  done > $INTRADO/etc/chksan.output
+  done > "${SCRIPTS}/etc/${BASENAME}.output"
 
 fi
