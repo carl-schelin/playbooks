@@ -6,23 +6,33 @@
 
 # need to add checks when using keywords vs individual lines in the route file
 
-PROGNAME="chkroutetable"
-CONTENT="routetable"
-OS=`uname`
-INTRADO=/opt/intrado
-LOG=$INTRADO/etc/$CONTENT.output
+#BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
 
-if [[ -f $LOG ]]
+if [[ ! -f ${DIRNAME}/../.config ]]
 then
-  rm $LOG
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+#PROGNAME="chkroutetable"
+CONTENT="routetable"
+LOG=${SCRIPTS}/etc/${CONTENT}.output
+
+if [[ -f ${LOG} ]]
+then
+  rm "${LOG}"
 fi
 
 # Check routes on a Linux box
-if [[ $OS = "Linux" ]]
+if [[ ${OS} = "Linux" ]]
 then
-  touch $LOG
-  DEFAULTGATEWAY=`grep -i gateway /etc/sysconfig/network | cut -f2 -d= | sed -e "s/\"//g"`
-  DEFAULTDEVICE=`netstat -rn | grep "^0.0.0.0.*10.109.242.254" | awk '{print $NF}'`
+  touch "${LOG}"
+  DEFAULTGATEWAY=$(grep -i gateway /etc/sysconfig/network | cut -f2 -d= | sed -e "s/\"//g")
+  DEFAULTDEVICE=$(netstat -rn | grep "^0.0.0.0.*10.109.242.254" | awk '{print $NF}')
   IP=''
   if [[ -f /usr/sbin/ip ]]
   then
@@ -38,27 +48,27 @@ then
   fi
   if [[ ! -z $IP ]]
   then
-    for i in `$IP addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g"`
+    for i in $(${IP} addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g")
     do
-      if [[ -f /etc/sysconfig/network-scripts/route-$i ]]
+      if [[ -f /etc/sysconfig/network-scripts/route-${i} ]]
       then
-        for j in `egrep -v "^(#|$)" /etc/sysconfig/network-scripts/route-$i | awk '{print $1":"$2":"$3":"$4":"$5}'`
+        for j in $(egrep -v "^(#|$)" /etc/sysconfig/network-scripts/route-"${i}" | awk '{print $1":"$2":"$3":"$4":"$5}')
         do
           CHKADDR='yes'
 # check for '=' implying alternate network route configuration then build a line to be then parsed as if it was a single line
-          echo $j | grep '=' > /dev/null
-          if [[ $? = 0 ]]
+          echo "${j}" | grep '=' > /dev/null
+          if [[ $? -eq 0 ]]
           then
 # give me the increment number; 0 - x
-            INCREMENT=`echo $j | cut -f1 -d= | sed -e "s/ADDRESS//g"`
+            INCREMENT=$(echo "${j}" | cut -f1 -d= | sed -e "s/ADDRESS//g")
 # get the actual line name; add the '=' to make sure we don't match on 10 _and_ 100
-            CHKADDR="`echo $j | cut -f1 -d=`="
+            CHKADDR="$(echo "${j}" | cut -f1 -d=)="
 # get the actual address; due to the line, it'll have a bunch of ':' following the line
-            ALTRADDR=`echo $j | cut -f2 -d= | cut -f1 -d:`
+#            ALTRADDR=$(echo "${j}" | cut -f2 -d= | cut -f1 -d:)
 # search for and get the matching netmask.
-            ALTRMASK=`grep "NETMASK${INCREMENT}=" /etc/sysconfig/network-scripts/route-$i | cut -f2 -d=`
+#            ALTRMASK=$(grep "NETMASK${INCREMENT}=" /etc/sysconfig/network-scripts/route-"${i}" | cut -f2 -d=)
 # search for and get the matching gateway.
-            ALTRGATE=`grep "GATEWAY${INCREMENT}=" /etc/sysconfig/network-scripts/route-$i | cut -f2 -d=`
+            ALTRGATE=$(grep "GATEWAY${INCREMENT}=" /etc/sysconfig/network-scripts/route-"${i}" | cut -f2 -d=)
 
 # build a replacement line
             j="$ADDRESS/0:via:$ALTRGATE:dev:$i"
@@ -74,27 +84,27 @@ then
 
           if [[ $CHKADDR = 'yes' ]]
           then
-            ADDR=`echo $j | cut -f1 -d:`
-            VIA=`echo $j | cut -f2 -d:`
-            GATEWAY=`echo $j | cut -f3 -d:`
-            DEV=`echo $j | cut -f4 -d:`
-            DEVICE=`echo $j | cut -f5 -d:`
+            ADDR=$(   echo "${j}" | cut -f1 -d:)
+            VIA=$(    echo "${j}" | cut -f2 -d:)
+            GATEWAY=$(echo "${j}" | cut -f3 -d:)
+            DEV=$(    echo "${j}" | cut -f4 -d:)
+            DEVICE=$( echo "${j}" | cut -f5 -d:)
 
 # check ip address and mask
 # check via keyword
-            if [[ $VIA != 'via' ]]
+            if [[ ${VIA} != 'via' ]]
             then
-              echo "$ADDR line 'via' is incorrect: $VIA" >> $LOG
+              echo "${ADDR} line 'via' is incorrect: ${VIA}" >> "${LOG}"
             fi
 # check gateway
 # check dev keyword; if blank then dev is default to the file name interface name
-            if [[ -z $DEV ]]
+            if [[ -z ${DEV} ]]
             then
               DEVICE=${i}
             else
-              if [[ $DEV != 'dev' ]]
+              if [[ ${DEV} != 'dev' ]]
               then
-                echo "$ADDR line 'dev' is incorrect: $DEV" >> $LOG
+                echo "${ADDR} line 'dev' is incorrect: ${DEV}" >> "${LOG}"
               fi
             fi
 # check unnecessary routes
@@ -103,34 +113,34 @@ then
 # and if the gateway in the file has been set (should have been) /etc/sysconfig/network-scripts/ifcfg-interface
 # and the default gateway is the same as the gateway in the file
 # and the device is not the same as the default device
-            if [[ ! -z ${DEFAULTGATEWAY} ]] && [[ ! -z ${GATEWAY} ]] && [[ $DEFAULTGATEWAY = $GATEWAY ]] && [[ ! $DEVICE = $DEFAULTDEVICE ]]
+            if [[ ! -z ${DEFAULTGATEWAY} ]] && [[ ! -z ${GATEWAY} ]] && [[ ${DEFAULTGATEWAY} = "${GATEWAY}" ]] && [[ ! ${DEVICE} = "${DEFAULTDEVICE}" ]]
             then
-              echo "$ADDR uses ${DEFAULTGATEWAY} as its gateway and ${GATEWAY} is the default gateway so the route probably isn't needed" >> $LOG
+              echo "${ADDR} uses ${DEFAULTGATEWAY} as its gateway and ${GATEWAY} is the default gateway so the route probably isn't needed" >> "${LOG}"
             fi
           fi
         done
 
 # now check existing routes against the file
-        for j in `netstat -rn | grep $i | awk '{print $1":"$2}' | egrep -v "(^|:)0.0.0.0(:|$)"`
+        for j in $(netstat -rn | grep "${i}" | awk '{print $1":"$2}' | egrep -v "(^|:)0.0.0.0(:|$)")
         do
-          ADDR=`echo $j | cut -f1 -d:`
-          GATEWAY=`echo $j | cut -f2 -d:`
+          ADDR=$(   echo "${j}" | cut -f1 -d:)
+          GATEWAY=$(echo "${j}" | cut -f2 -d:)
 
-          OUTPUT=`grep $ADDR /etc/sysconfig/network-scripts/route-$i | grep $GATEWAY`
-          if [[ -z $OUTPUT ]]
+          OUTPUT=$(grep "${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" | grep "${GATEWAY}")
+          if [[ -z ${OUTPUT} ]]
           then
 # check for the ADDRESS0=address and GATEWAY0=address lines if the via line above doesn't work
-            egrep "ADDRESS.*=$ADDR" /etc/sysconfig/network-scripts/route-$i > /dev/null
-            if [[ $? = 0 ]]
+            egrep "ADDRESS.*=${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" > /dev/null
+            if [[ $? -eq 0 ]]
             then
-              INCREMENT=`egrep ADDRESS.*=$ADDR /etc/sysconfig/network-scripts/route-$i | cut -f1 -d= | sed -e "s/ADDRESS//g"`
-              egrep "GATEWAY${INCREMENT}=$GATEWAY" /etc/sysconfig/network-scripts/route-$i > /dev/null
-              if [[ $? > 0 ]]
+              INCREMENT=$(egrep "ADDRESS.*=${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" | cut -f1 -d= | sed -e "s/ADDRESS//g")
+              egrep "GATEWAY${INCREMENT}=${GATEWAY}" /etc/sysconfig/network-scripts/route-"${i}" > /dev/null
+              if [[ $? -gt 0 ]]
               then
-                echo "Gateway missing from /etc/sysconfig/network-scripts/route-$i: ADDRESS${INCREMENT}=$ADDR  GATEWAY${INCREMENT}=$GATEWAY" >> $LOG
+                echo "Gateway missing from /etc/sysconfig/network-scripts/route-${i}: ADDRESS${INCREMENT}=${ADDR}  GATEWAY${INCREMENT}=${GATEWAY}" >> "${LOG}"
               fi
             else
-              echo "Route missing from /etc/sysconfig/network-scripts/route-$i: $ADDR  $GATEWAY" >> $LOG
+              echo "Route missing from /etc/sysconfig/network-scripts/route-${i}: ${ADDR}  ${GATEWAY}" >> "${LOG}"
             fi
           fi
         done
