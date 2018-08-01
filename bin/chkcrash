@@ -3,12 +3,21 @@
 # chkcrash - Determine if a crash dump file has been created since the last time we checked.
 # Owner: Carl Schelin
 
-PROGNAME="chkcrash"
-OS=`uname`
+BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
 
 if [[ -d /var/crash ]]
 then
-  find /var/crash -print > /opt/intrado/etc/chkcrash.output
+  find /var/crash -print > "${SCRIPTS}"/etc/chkcrash.output
 fi
 
 exit 0
