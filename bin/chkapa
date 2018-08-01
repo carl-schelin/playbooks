@@ -5,9 +5,20 @@
 # This additional script is to supplement the network check in chkif script for hpux auto port aggregation 
 # Future versions of this script could contain checks for linux bonding or solaris ipmp. 
 
-OS=`uname`
-VERS=`uname -a | awk '{print $3}'`
-INTRADO="/opt/intrado"
+BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+VERS=$(uname -a | awk '{print $3}')
+LOGS="${SCRIPTS}/etc/apa.output"
 
 if [[ $OS = "HP-UX" ]]
 then
@@ -16,31 +27,32 @@ then
     if [[ $VERS = 'B.11.31' ]]	
     then
       # use nwmgr utility   
-      echo "APA Configured Interfaces" > $INTRADO/etc/apa.output 
-      echo "-------------------------" >> $INTRADO/etc/apa.output
-      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> $INTRADO/etc/apa.output
-      echo "Active Interfaces" >> $INTRADO/etc/apa.output	
-      echo "-----------------" >> $INTRADO/etc/apa.output
-      /usr/sbin/nwmgr | /usr/bin/grep UP >> $INTRADO/etc/apa.output  
-      echo "APA interfaces and active membership" >> $INTRADO/etc/apa.output 
-      echo "------------------------------------" >> $INTRADO/etc/apa.output
-      /usr/sbin/nwmgr -S apa | /usr/bin/grep -v Not_Enabled >> $INTRADO/etc/apa.output
+      echo "APA Configured Interfaces" > "${LOGS}"
+      echo "-------------------------" >> "${LOGS}"
+      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> "${LOGS}"
+      echo "Active Interfaces" >> "${LOGS}"
+      echo "-----------------" >> "${LOGS}"
+      /usr/sbin/nwmgr | /usr/bin/grep UP >> "${LOGS}"
+      echo "APA interfaces and active membership" >> "${LOGS}"
+      echo "------------------------------------" >> "${LOGS}"
+      /usr/sbin/nwmgr -S apa | /usr/bin/grep -v Not_Enabled >> "${LOGS}"
     else
       # grab the failover groups from the APA config file
-      echo "APA Configured Interfaces" > $INTRADO/etc/apa.output
-      echo "-------------------------" >> $INTRADO/etc/apa.output
-      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> $INTRADO/etc/apa.output
-      echo "Active Interfaces" >> $INTRADO/etc/apa.output
-      echo "-----------------" >> $INTRADO/etc/apa.output
-      /usr/sbin/lanscan | grep UP >> $INTRADO/etc/apa.output
-      echo "APA interfaces and active membership" >> $INTRADO/etc/apa.output
-      echo "------------------------------------" >> $INTRADO/etc/apa.output
+      echo "APA Configured Interfaces" > "${LOGS}"
+      echo "-------------------------" >> "${LOGS}"
+      /usr/bin/egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# >> "${LOGS}"
+      echo "Active Interfaces" >> "${LOGS}"
+      echo "-----------------" >> "${LOGS}"
+      /usr/sbin/lanscan | grep UP >> "${LOGS}"
+      echo "APA interfaces and active membership" >> "${LOGS}"
+      echo "------------------------------------" >> "${LOGS}"
       for i in `/usr/bin/grep 'FAILOVER_GROUP' /etc/lanmon/lanconfig.ascii | /usr/bin/grep -v ^# | awk '{print $2}' | sed 's/^lan//'`  
       do 
-        /usr/sbin/lanscan -q | grep $i >> $INTRADO/etc/apa.output
+        /usr/sbin/lanscan -q | grep $i >> "${LOGS}"
       done
     fi
   else
-    echo "BONDING: APA config file does not exist. No APA configured." > $INTRADO/etc/apa.output    
+    echo "BONDING: APA config file does not exist. No APA configured." > "${LOGS}"
   fi 
 fi
+
