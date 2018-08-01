@@ -163,8 +163,8 @@
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 # 2018/07/02 - CS - Added a check of a service to see if it's running
 
-BASENAME=$(basename $0)
-DIRNAME=$(dirname $0)
+BASENAME=$(basename {$0})
+DIRNAME=$(dirname {$0})
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -173,7 +173,7 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
+. "${DIRNAME}"/../.config
 
 VERSION="${BASENAME} v1.239"
 COUNT=0
@@ -3268,7 +3268,7 @@ fi
 echo "" > "${LOG}"
 echo "================================" >> "${LOG}"
 echo "Running System Validation Script" >> "${LOG}"
-echo $VERSION >> "${LOG}"
+echo "${VERSION}" >> "${LOG}"
 echo "================================" >> "${LOG}"
 echo "" >> "${LOG}"
 
@@ -3289,7 +3289,7 @@ echo ""
 ### Red Hat
 ###########
 
-if [[ $OS = "Linux" ]]
+if [[ ${OS} = "Linux" ]]
 then
   if [[ `id -u` -ne 0 ]]
   then
@@ -3302,7 +3302,7 @@ fi
 ### HP-UX
 ###########
 
-if [[ $OS = "HP-UX" ]]
+if [[ ${OS} = "HP-UX" ]]
 then
   if [[ `id -u` -ne 0 ]]
   then
@@ -3316,7 +3316,7 @@ fi
 ### SunOS
 ###########
 
-if [[ $OS = "SunOS" ]]
+if [[ ${OS} = "SunOS" ]]
 then
   if [[ `id | cut -f2 -d= | cut -f1 -d\(` -ne 0 ]]
   then
@@ -3331,7 +3331,7 @@ fi
 ### Start the check
 ##########
 
-echo ${VERSION}
+echo "${VERSION}"
 
 check_hostname
 
@@ -3378,6 +3378,7 @@ check_active_employees
 check_kubernetes
 
 # disable as it's really not helping; lots of deleted files on all systems.
+# function stil exists though
 #check_lsof
 
 check_disk_suite
@@ -3423,48 +3424,48 @@ then
     echo "Entering chkserver.input check"
   fi
 
-  for j in `egrep "^(${HOSTNAME}|\*):" ${SCRIPTS}/etc/chkserver.input`
+  for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS}/etc/chkserver.input)
   do
 
-    FIELD2=`echo $j | cut -f2 -d:`
-    FIELD3=`echo $j | cut -f3 -d:`
-    FIELD4=`echo $j | cut -f4 -d:`
+    FIELD2=`echo "${j}" | cut -f2 -d:`
+    FIELD3=`echo "${j}" | cut -f3 -d:`
+    FIELD4=`echo "${j}" | cut -f4 -d:`
 
-    if [[ $FIELD2 = 'CPU' ]]
+    if [[ ${FIELD2} = 'CPU' ]]
     then
       check_cpus
     fi
     
-    if [[ $FIELD2 = 'Memory' ]]
+    if [[ ${FIELD2} = 'Memory' ]]
     then
       check_memory
     fi
     
-    if [[ $FIELD2 = 'IP' ]]
+    if [[ ${FIELD2} = 'IP' ]]
     then
       check_addresses
     fi
 
-    if [[ $FIELD2 = 'Service' ]]
+    if [[ ${FIELD2} = 'Service' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Service check"
       fi
       grep "^${FIELD3}:" /etc/passwd > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> "${LOG}"
 
 
-        if [[ $OS = 'Linux' ]]
+        if [[ ${OS} = 'Linux' ]]
         then
-          PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*never"`
+          PASSWORD=$(chage -l "${FIELD3}" | egrep -i "password expires.*never")
           if [[ ! -z ${PASSWORD} ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
-            PASSWORD=`chage -l ${FIELD3} | egrep -i "password expires.*changed"`
+            PASSWORD=$(chage -l "${FIELD3}" | egrep -i "password expires.*changed")
             if [[ ! -z ${PASSWORD} ]]
             then
               printf "%b\n" "    ${RED}Password must be changed${RESET}" >> "${LOG}"
@@ -3472,8 +3473,8 @@ then
               printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
             fi
           fi
-          ACCOUNT=$(chage -l ${FIELD3} | egrep -i "account expires.*never")
-          if [[ ! -z $ACCOUNT ]]
+          ACCOUNT=$(chage -l "${FIELD3}" | egrep -i "account expires.*never")
+          if [[ ! -z ${ACCOUNT} ]]
           then
             printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> "${LOG}"
           else
@@ -3481,14 +3482,14 @@ then
           fi
         fi
 
-        if [[ $OS = 'HP-UX' ]]
+        if [[ ${OS} = 'HP-UX' ]]
         then
-          PASSWORD=$(passwd -s ${FIELD3} | awk '{print $5}')
-          if [[ $PASSWORD = '0' ]] || [[ -z $PASSWORD ]]
+          PASSWORD=$(passwd -s "${FIELD3}" | awk '{print $5}')
+          if [[ ${PASSWORD} = '0' ]] || [[ -z ${PASSWORD} ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
-            if [[ $PASSWORD = 'password must be changed' ]]
+            if [[ ${PASSWORD} = 'password must be changed' ]]
             then
               printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> "${LOG}"
             else
@@ -3504,15 +3505,15 @@ then
           fi
         fi
 
-        if [[ $OS = 'SunOS' ]]
+        if [[ ${OS} = 'SunOS' ]]
         then
           PASSWORD=$(grep "^${FIELD3}:" /etc/shadow | cut -f5 -d:)
-          if [[ $PASSWORD = '' ]]
+          if [[ ${PASSWORD} = '' ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
             PASSWORD=$(passwd -s | awk '{print $3}')
-            if [[ $PASSWORD = '00/00/00' ]]
+            if [[ ${PASSWORD} = '00/00/00' ]]
             then
               printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             else
@@ -3521,15 +3522,15 @@ then
           fi
         fi
 
-        if [[ $OS = 'FreeBSD' ]]
+        if [[ ${OS} = 'FreeBSD' ]]
         then
           PASSWORD=$(grep "^${FIELD3}:" /etc/master.passwd | cut -f5 -d:)
-          if [[ $PASSWORD = '' ]]
+          if [[ ${PASSWORD} = '' ]]
           then
             printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
           else
             PASSWORD=$(passwd -s | awk '{print $3}')
-            if [[ $PASSWORD = '00/00/00' ]]
+            if [[ ${PASSWORD} = '00/00/00' ]]
             then
               printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
             else
@@ -3546,34 +3547,34 @@ then
       if [[ ${FIELD3} = 'nginx' ]]
       then
         grep -i 640 /etc/logrotate.d/nginx > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> "${LOG}"
         fi
-        grep -i nginx ${SUDOERS} > /dev/null
-        if [[ $? = 1 ]]
+        grep -i nginx "${SUDOERS}" > /dev/null
+        if [[ $? -eq 1 ]]
         then
           printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> "${LOG}"
         fi
         ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> "${LOG}"
         fi
       fi
     fi
     
-    if [[ $FIELD2 = 'Group' ]]
+    if [[ ${FIELD2} = 'Group' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
         echo "Entering Group check"
       fi
-      if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
+      if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
       then
         grep "^${FIELD3}:" /etc/group > /dev/null
       else
-        getent group ${FIELD3} > /dev/null
+        getent group "${FIELD3}" > /dev/null
       fi
       if [[ $? -eq 0 ]]
       then
@@ -3583,7 +3584,7 @@ then
       fi
     fi
     
-    if [[ $FIELD2 = 'Sudoers' ]]
+    if [[ ${FIELD2} = 'Sudoers' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3591,7 +3592,7 @@ then
       fi
       if [[ ! -z ${SUDOERS} ]]
       then
-        grep "^%${FIELD3}" ${SUDOERS} > /dev/null
+        grep "^%${FIELD3}" "${SUDOERS}" > /dev/null
         if [[ $? = 0 ]]
         then
           printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> "${LOG}"
@@ -3604,7 +3605,7 @@ then
     fi
 
 # it's supposed to be installed, let's check
-    if [[ $FIELD2 = 'Openview' ]]
+    if [[ ${FIELD2} = 'Openview' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3617,7 +3618,7 @@ then
     fi
 
 # it's supposed to be installed, let's check
-    if [[ $FIELD2 = 'Netbackup' ]]
+    if [[ ${FIELD2} = 'Netbackup' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3630,7 +3631,7 @@ then
     fi
 
 # it's supposed to be installed, let's check
-    if [[ $FIELD2 = 'Datapalette' ]]
+    if [[ ${FIELD2} = 'Datapalette' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3643,7 +3644,7 @@ then
     fi
 
 # it's supposed to be installed, let's check
-    if [[ $FIELD2 = 'OpNet' ]]
+    if [[ ${FIELD2} = 'OpNet' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3656,7 +3657,7 @@ then
     fi
 
 # it's supposed to be installed, let's check
-    if [[ $FIELD2 = 'Centrify' ]]
+    if [[ ${FIELD2} = 'Centrify' ]]
     then
       if [[ ! ${DEBUG} = 'no' ]]
       then
@@ -3669,21 +3670,21 @@ then
     fi
 
 # check to see if an account is supposed to be allowed to use cron
-    if [[ $FIELD2 = 'Cron' ]]
+    if [[ ${FIELD2} = 'Cron' ]]
     then
 # if cron.allow exists, cron.deny is ignored
       if [[ -f ${CRONALLOW} ]]
       then
-        grep -i ${FIELD3} ${CRONALLOW} > /dev/null
-        if [[ $? = 1 ]]
+        grep -i "${FIELD3}" "${CRONALLOW}" > /dev/null
+        if [[ $? -eq 1 ]]
         then
           printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
         fi
       else
         if [[ -f ${CRONDENY} ]]
         then
-          grep -i ${FIELD3} ${CRONDENY} > /dev/null
-          if [[ $? = 0 ]]
+          grep -i "${FIELD3}" "${CRONDENY}" > /dev/null
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
           fi
@@ -3692,22 +3693,22 @@ then
     fi
 
 # check for services that should be enabled.
-    if [[ $FIELD2 = 'Enabled' ]]
+    if [[ ${FIELD2} = 'Enabled' ]]
     then
-      if [[ $OS = 'Linux' ]]
+      if [[ ${OS} = 'Linux' ]]
       then
-        if [[ $OSMAJOR = '7' ]]
+        if [[ ${OSMAJOR} = '7' ]]
         then
-          systemctl is-enabled $FIELD3 > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          systemctl is-enabled "$FIELD3" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
           fi
         else
-          chkconfig $FIELD3 --level=$(who -r | awk '{print $2}') > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
           else
@@ -3718,22 +3719,22 @@ then
     fi
 
 # check for services that should be running.
-    if [[ $FIELD2 = 'Running' ]]
+    if [[ ${FIELD2} = 'Running' ]]
     then
-      if [[ $OS = 'Linux' ]]
+      if [[ ${OS} = 'Linux' ]]
       then
-        if [[ $OSMAJOR = '7' ]]
+        if [[ ${OSMAJOR} = '7' ]]
         then
-          systemctl status $FIELD3 > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          systemctl status "$FIELD3" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}${FIELD3} is not running${RESET}" >> "${LOG}"
           fi
         else
-          service $FIELD3 status > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          service "${FIELD3}" status > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
           else
@@ -3765,12 +3766,10 @@ else
 fi
 
 
-echo "" >> "${LOG}"
-echo "External steps to be performed:" >> "${LOG}"
-echo "" >> "${LOG}"
-echo "1. Check service processor password" >> "${LOG}"
-echo "2. Have the unixsvc account ssh to this system to make sure it all works." >> "${LOG}"
-echo "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server" >> "${LOG}"
+print "\nExternal steps to be performed:\n\n" >> "${LOG}"
+print "1. Check service processor password\n" >> "${LOG}"
+print "2. Have the unixsvc account ssh to this system to make sure it all works.\n" >> "${LOG}"
+print "3. Have the unixsvc account copy the cfghtml file: $HOSTNAME.html to the jumpstart server\n" >> "${LOG}"
 
 if [[ ! -z $1 ]]
 then
