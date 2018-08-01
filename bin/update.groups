@@ -10,36 +10,46 @@
 # get the list of acceptable users in sysadmin from the group.master file
 # need to add a check for Centrify groups
 
+BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 PATH="$PATH:/bin:/usr/bin:/sbin:/usr/sbin"; export PATH
-INTRADO=/opt/intrado
 CENTRIFY="no"
-HOSTNAME=`hostname|cut -f1 -d.`
-DATE=`date +"%Y%m%d"`
-LOG=${INTRADO}/log/update.groups.output
+DATE=$(date +"%Y%m%d")
+LOG=${SCRIPTS}/log/update.groups.output
 DEBUG="no"
 DEBUG="yes"
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f $INTRADO/etc/changefreeze ]]
+if [[ -f $SCRIPTS/etc/changefreeze ]]
 then
-  echo "Changefreeze in effect" >> $LOG
+  echo "Changefreeze in effect" >> "${LOG}"
   exit 0
 fi
 
-if [[ ! -f ${INTRADO}/etc/group.master ]]
+if [[ ! -f ${SCRIPTS}/etc/group.master ]]
 then
   echo "No group.master file. Exiting."
   exit 1
 fi
 
-if [[ -f ${LOG} ]]
+if [[ -f "${LOG}" ]]
 then
-  rm ${LOG}
+  rm "${LOG}"
 fi
 
 if [[ ${DEBUG} = 'yes' ]]
 then
-  echo "Date: ${DATE}" >> ${LOG}
+  echo "Date: ${DATE}" >> "${LOG}"
 fi
 
 if [[ -f /usr/sbin/adclient ]]
@@ -51,16 +61,16 @@ then
   fi
 fi
 
-for i in `cut -f1 -d: /etc/group`
+for i in $(cut -f1 -d: /etc/group)
 do
 
   if [[ ${DEBUG} = 'yes' ]]
   then
-    echo "Checking ${i}" >> ${LOG}
+    echo "Checking ${i}" >> "${LOG}"
   fi
 
-  GROUP=`grep "^${HOSTNAME}:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-  GROUPLIST=`grep "^${HOSTNAME}:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+  GROUP=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
+  GROUPLIST=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
 
   if [[ -z ${GROUP} ]]
   then
@@ -73,8 +83,8 @@ do
         getent group uxadmins > /dev/null
         if [[ $? = 0 ]]
         then
-          GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-          GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+          GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
+          GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
         fi
       else
 # add this for any other environment where centrify is installed but the co-group doesn't exist (webapps/webadmin?)
@@ -83,23 +93,23 @@ do
           getent group webadmin > /dev/null
           if [[ $? = 0 ]]
           then
-            GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-            GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
           fi
         else
 # if neither are being checked, then check as normal
           if [[ -z ${GROUP} ]]
           then
-            GROUP=`grep "^centrify:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-            GROUPLIST=`grep "centrify:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
           fi
         fi
       fi
     fi
     if [[ -z ${GROUP} ]]
     then
-      GROUP=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f2 -d:`
-      GROUPLIST=`grep "^\*:${i}:" ${INTRADO}/etc/group.master | cut -f3 -d:`
+      GROUP=$(grep "^\*:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
+      GROUPLIST=$(grep "^\*:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
     fi
   fi
 
@@ -108,11 +118,11 @@ do
 
     if [[ ${DEBUG} = 'yes' ]]
     then
-      echo "Found ${GROUP} in ${INTRADO}/etc/group.master" >> ${LOG}
+      echo "Found ${GROUP} in ${SCRIPTS}/etc/group.master" >> "${LOG}"
     fi
 
 # see if the group exists
-    GID=`grep "^${GROUP}:" /etc/group | cut -f3 -d:`
+    GID=$(grep "^${GROUP}:" /etc/group | cut -f3 -d:)
 
 # shouldn't happen but you never know
     if [[ ! -z ${GID} ]]
@@ -120,13 +130,13 @@ do
 
       if [[ ${DEBUG} = 'yes' ]]
       then
-        echo "Found ${GID} in /etc/group" >> ${LOG}
+        echo "Found ${GID} in /etc/group" >> "${LOG}"
       fi
 
 # update the group info with what's in the group.master file
-      DONE=`grep "^${GROUP}:" /etc/group`
-      PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
-      DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
+      DONE=$(grep "^${GROUP}:" /etc/group)
+      PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
+      DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
       if [[ ! ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
       then
 
@@ -134,9 +144,9 @@ do
 # mainly we don't want to willy-nilly update everyone at once. Lots and lots of testing.
         if [[ ${DEBUG} = 'yes' ]]
         then
-          echo "Would Backup: cp /etc/group /etc/group-${DATE}" >> ${LOG}
-          echo "Would Update: sed -e \"s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g\" /etc/group-${DATE} to /etc/group" >> ${LOG}
-          echo "Would Send Changelog: Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" >> ${LOG}
+          echo "Would Backup: cp /etc/group /etc/group-${DATE}" >> "${LOG}"
+          echo "Would Update: sed -e \"s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g\" /etc/group-${DATE} to /etc/group" >> "${LOG}"
+          echo "Would Send Changelog: Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" >> "${LOG}"
         fi
         if [[ ${DEBUG} = 'yes' ]]
         then
@@ -150,28 +160,28 @@ do
             fi
             if [[ -f /etc/group-${DATE} ]]
             then
-              sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
-              DONE=`grep "^${GROUP}:" /etc/group`
-              PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
-              DONELIST=`grep "^${GROUP}:" /etc/group | cut -f4 -d:`
+              sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
+              DONE=$(grep "^${GROUP}:" /etc/group)
+              PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
+              DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
               if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
               then
-                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
                 grpconv
               else
                 echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
               fi
             else
-              cp -p /etc/group /etc/group-${DATE}
+              cp -p /etc/group /etc/group-"${DATE}"
               if [[ $? = 0 ]]
               then
-                sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-${DATE} > /etc/group
+                sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
 
-                DONE=`grep "^${GROUP}:" /etc/group`
-                PASSWD=`grep "^${GROUP}:" /etc/group | cut -f2 -d:`
+                DONE=$(grep "^${GROUP}:" /etc/group)
+                PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
                 if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
                 then
-                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s ${HOSTNAME} changelog@incojs01.scc911.com
+                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
                   grpconv
                 else
                   echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
