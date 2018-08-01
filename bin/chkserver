@@ -163,8 +163,8 @@
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 # 2018/07/02 - CS - Added a check of a service to see if it's running
 
-BASENAME=$(basename {$0})
-DIRNAME=$(dirname {$0})
+BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
