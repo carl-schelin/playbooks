@@ -10,8 +10,8 @@
 # get the list of acceptable users in sysadmin from the group.master file
 # need to add a check for Centrify groups
 
-BASENAME=$(basename "$0")
-DIRNAME=$(dirname "$0")
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
