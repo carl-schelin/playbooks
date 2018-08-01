@@ -8,8 +8,8 @@
 # then check for errors in the chkserver.output file
 # then check for warnings in the chkserver.output file
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -18,7 +18,7 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
+. "${DIRNAME}"/../.config
 
 ADMIN=/usr/local/admin
 VAR=${SCRIPTS}/var
@@ -42,12 +42,12 @@ else
   then
     echo "Primary script has not been run yet."
   else
-    RUNDATE=`ls -l ${LOGS} | awk '{print $7}'`
-    TODAY=`date +"%d"`
+    RUNDATE=$(ls -l "${LOGS}" | awk '{print $7}')
+    TODAY=$(date +"%d")
     if [[ $RUNDATE -ne $TODAY ]]
     then
-      DATE=`date +"%Y/%m/${RUNDATE}"`
-      TODAY=`date +"%Y/%m/%d"`
+      DATE=$(date +"%Y/%m/${RUNDATE}")
+      TODAY=$(date +"%Y/%m/%d")
       echo "${LOGS} didn't run today (last ran: ${DATE}, Today: ${TODAY})"
     fi
   fi
@@ -57,21 +57,21 @@ if [[ ! -f ${CHKSERVER} ]]
 then
   echo "${CHKSERVER} doesn't exist"
 else
-  grep "chkserver v1" ${CHKSERVER}
+  grep "chkserver v1" "${CHKSERVER}"
   echo "Errors:"
-  OUTPUT=`grep 31m ${CHKSERVER} | grep -v Error`
+  OUTPUT=$(grep 31m "${CHKSERVER}" | grep -v Error)
   if [[ ! -z $OUTPUT ]]
   then
-    grep 31m ${CHKSERVER} | grep -v Error
+    grep 31m "${CHKSERVER}" | grep -v Error
   else
     echo "No chkserver errors found"
   fi
   echo ""
   echo "Warnings:"
-  OUTPUT=`grep 33m ${CHKSERVER} | grep -v Warning`
+  OUTPUT=$(grep 33m "${CHKSERVER}" | grep -v Warning)
   if [[ ! -z $OUTPUT ]]
   then
-    grep 33m ${CHKSERVER} | grep -v Warning
+    grep 33m "${CHKSERVER}" | grep -v Warning
   else
     echo "No chkserver warnings found"
   fi
