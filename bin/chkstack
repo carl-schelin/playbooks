@@ -1,24 +1,32 @@
 #!/bin/ksh
 
-# chkstack
+# ${BASENAME}
 #   retrieves security and performance settings for review
 #   prints out entries that should be corrected
 #   review setting prior to changing of course
 #   All "should be" entries are industry best practices.
 #
 # Update script to add Linux performance settings.
-# update script to ensure data is sent to the chkstack.output file.
+# update script to ensure data is sent to the ${BASENAME}.output file.
 
-INTRADO=/opt/intrado
+BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
 
-if [[ -f $INTRADO/etc/chkstack.output ]]
+if [[ ! -f ${DIRNAME}/../.config ]]
 then
-  rm $INTRADO/etc/chkstack.output
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
 fi
 
-OS=`uname`
+# Source the configuration file
+. "${DIRNAME}"/../.config
 
-if [[ $OS = "SunOS" ]]
+if [[ -f ${SCRIPTS}/etc/${BASENAME}.output ]]
+then
+  rm "${SCRIPTS}/etc/${BASENAME}.output"
+fi
+
+if [[ ${OS} = "SunOS" ]]
 then
   #######################
   # Security Settings
@@ -26,147 +34,147 @@ then
 
   #
   # should be 60,000
-  ARP=`/usr/sbin/ndd -get /dev/arp arp_cleanup_interval`
-  if [[ ! $ARP = 60000 ]]
+  ARP=$(/usr/sbin/ndd -get /dev/arp arp_cleanup_interval)
+  if [[ ! ${ARP} -eq 60000 ]]
   then
-    echo "arp_cleanup_interval $ARP" >> $INTRADO/etc/chkstack.output
+    echo "arp_cleanup_interval ${ARP}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 0
-  BCAST1=`/usr/sbin/ndd -get /dev/ip ip_respond_to_echo_broadcast`
-  if [[ ! $BCAST1 = 0 ]]
+  BCAST1=$(/usr/sbin/ndd -get /dev/ip ip_respond_to_echo_broadcast)
+  if [[ ! ${BCAST1} -eq 0 ]]
   then
-    echo "ip_respond_to_echo_broadcast $BCAST1" >> $INTRADO/etc/chkstack.output
+    echo "ip_respond_to_echo_broadcast ${BCAST1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
-  BCAST2=`/usr/sbin/ndd -get /dev/ip ip6_respond_to_echo_broadcast`
-  if [[ ! $BCAST2 = 0 ]]
+  BCAST2=$(/usr/sbin/ndd -get /dev/ip ip6_respond_to_echo_broadcast)
+  if [[ ! ${BCAST2} -eq 0 ]]
   then
-    echo "ip6_respond_to_echo_broadcast $BCAST2" >> $INTRADO/etc/chkstack.output
+    echo "ip6_respond_to_echo_broadcast ${BCAST2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
-  BCAST3=`/usr/sbin/ndd -get /dev/ip ip_forward_directed_broadcasts`
-  if [[ ! $BCAST3 = 0 ]]
+  BCAST3=$(/usr/sbin/ndd -get /dev/ip ip_forward_directed_broadcasts)
+  if [[ ! ${BCAST3} -eq 0 ]]
   then
-    echo "ip_forward_directed_broadcasts $BCAST3" >> $INTRADO/etc/chkstack.output
+    echo "ip_forward_directed_broadcasts ${BCAST3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 1
-  REDIR1=`/usr/sbin/ndd -get /dev/ip ip_ignore_redirect`
-  if [[ ! $REDIR1 = 1 ]]
+  REDIR1=$(/usr/sbin/ndd -get /dev/ip ip_ignore_redirect)
+  if [[ ! ${REDIR1} -eq 1 ]]
   then
-    echo "ip_ignore_redirect $REDIR1" >> $INTRADO/etc/chkstack.output
+    echo "ip_ignore_redirect ${REDIR1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
-  REDIR2=`/usr/sbin/ndd -get /dev/ip ip6_ignore_redirect`
-  if [[ ! $REDIR2 = 1 ]]
+  REDIR2=$(/usr/sbin/ndd -get /dev/ip ip6_ignore_redirect)
+  if [[ ! ${REDIR2} -eq 1 ]]
   then
-    echo "ip6_ignore_redirect $REDIR2" >> $INTRADO/etc/chkstack.output
-  fi
-  
-  #
-  # should be 0
-  REDIR3=`/usr/sbin/ndd -get /dev/ip ip_send_redirects`
-  if [[ ! $REDIR3 = 0 ]]
-  then
-    echo "ip_send_redirects $REDIR3" >> $INTRADO/etc/chkstack.output
-  fi
-  
-  REDIR4=`/usr/sbin/ndd -get /dev/ip ip6_send_redirects`
-  if [[ ! $REDIR4 = 0 ]]
-  then
-    echo "ip6_send_redirects $REDIR4" >> $INTRADO/etc/chkstack.output
+    echo "ip6_ignore_redirect ${REDIR2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 0
-  PROBE1=`/usr/sbin/ndd -get /dev/ip ip_respond_to_address_mask_broadcast`
-  if [[ ! $PROBE1 = 0 ]]
+  REDIR3=$(/usr/sbin/ndd -get /dev/ip ip_send_redirects)
+  if [[ ! ${REDIR3} -eq 0 ]]
   then
-    echo "ip_respond_to_address_mask_broadcast $PROBE1" >> $INTRADO/etc/chkstack.output
+    echo "ip_send_redirects ${REDIR3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
-  PROBE2=`/usr/sbin/ndd -get /dev/ip ip_respond_to_timestamp_broadcast`
-  if [[ ! $PROBE2 = 0 ]]
+  REDIR4=$(/usr/sbin/ndd -get /dev/ip ip6_send_redirects)
+  if [[ ! ${REDIR4} -eq 0 ]]
   then
-    echo "ip_respond_to_timestamp_broadcast $PROBE2" >> $INTRADO/etc/chkstack.output
+    echo "ip6_send_redirects ${REDIR4}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 0
-  SOURCE1=`/usr/sbin/ndd -get /dev/ip ip_forward_src_routed`
-  if [[ ! $SOURCE1 = 0 ]]
+  PROBE1=$(/usr/sbin/ndd -get /dev/ip ip_respond_to_address_mask_broadcast)
+  if [[ ! ${PROBE1} -eq 0 ]]
   then
-    echo "ip_forward_src_routed $SOURCE1" >> $INTRADO/etc/chkstack.output
+    echo "ip_respond_to_address_mask_broadcast ${PROBE1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
-  SOURCE2=`/usr/sbin/ndd -get /dev/ip ip6_forward_src_routed`
-  if [[ ! $SOURCE2 = 0 ]]
+  PROBE2=$(/usr/sbin/ndd -get /dev/ip ip_respond_to_timestamp_broadcast)
+  if [[ ! ${PROBE2} -eq 0 ]]
   then
-    echo "ip6_forward_src_routed $SOURCE2" >> $INTRADO/etc/chkstack.output
+    echo "ip_respond_to_timestamp_broadcast ${PROBE2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
+  fi
+  
+  #
+  # should be 0
+  SOURCE1=$(/usr/sbin/ndd -get /dev/ip ip_forward_src_routed)
+  if [[ ! ${SOURCE1} -eq 0 ]]
+  then
+    echo "ip_forward_src_routed ${SOURCE1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
+  fi
+  
+  SOURCE2=$(/usr/sbin/ndd -get /dev/ip ip6_forward_src_routed)
+  if [[ ! ${SOURCE2} -eq 0 ]]
+  then
+    echo "ip6_forward_src_routed ${SOURCE2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 1
-  HOME1=`/usr/sbin/ndd -get /dev/ip ip_strict_dst_multihoming`
-  if [[ ! $HOME1 = 1 ]]
+  HOME1=$(/usr/sbin/ndd -get /dev/ip ip_strict_dst_multihoming)
+  if [[ ! ${HOME1} -eq 1 ]]
   then
-    echo "ip_strict_dst_multihoming $HOME1" >> $INTRADO/etc/chkstack.output
+    echo "ip_strict_dst_multihoming ${HOME1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
-  HOME2=`/usr/sbin/ndd -get /dev/ip ip6_strict_dst_multihoming`
-  if [[ ! $HOME2 = 1 ]]
+  HOME2=$(/usr/sbin/ndd -get /dev/ip ip6_strict_dst_multihoming)
+  if [[ ! ${HOME2} -eq 1 ]]
   then
-    echo "ip6_strict_dst_multihoming $HOME2" >> $INTRADO/etc/chkstack.output
+    echo "ip6_strict_dst_multihoming ${HOME2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
   
   #
   # should be 1024
-  CONN1=`/usr/sbin/ndd -get /dev/tcp tcp_conn_req_max_q`
-  if [[ ! $CONN1 = 1024 ]]
+  CONN1=$(/usr/sbin/ndd -get /dev/tcp tcp_conn_req_max_q)
+  if [[ ! ${CONN1} -eq 1024 ]]
   then
-    echo "tcp_conn_req_max_q $CONN1" >> $INTRADO/etc/chkstack.output
+    echo "tcp_conn_req_max_q ${CONN1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 4096
-  CONN2=`/usr/sbin/ndd -get /dev/tcp tcp_conn_req_max_q0`
-  if [[ ! $CONN2 = 4096 ]]
+  CONN2=$(/usr/sbin/ndd -get /dev/tcp tcp_conn_req_max_q0)
+  if [[ ! ${CONN2} -eq 4096 ]]
   then
-    echo "tcp_conn_req_max_q0 $CONN2" >> $INTRADO/etc/chkstack.output
+    echo "tcp_conn_req_max_q0 ${CONN2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 60000
-  CONN3=`/usr/sbin/ndd -get /dev/tcp tcp_time_wait_interval`
-  if [[ ! $CONN3 = 60000 ]]
+  CONN3=$(/usr/sbin/ndd -get /dev/tcp tcp_time_wait_interval)
+  if [[ ! ${CONN3} -eq 60000 ]]
   then
-    echo "tcp_time_wait_interval $CONN3" >> $INTRADO/etc/chkstack.output
+    echo "tcp_time_wait_interval ${CONN3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 2
-  ISS=`/usr/sbin/ndd -get /dev/tcp tcp_strong_iss`
-  if [[ ! $ISS = 2 ]]
+  ISS=$(/usr/sbin/ndd -get /dev/tcp tcp_strong_iss)
+  if [[ ! ${ISS} -eq 2 ]]
   then
-    echo "tcp_strong_iss $ISS" >> $INTRADO/etc/chkstack.output
+    echo "tcp_strong_iss ${ISS}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 32768
-  HWAT1=`/usr/sbin/ndd -get /dev/tcp tcp_xmit_hiwat`
-  if [[ ! $HWAT1 = 32768 ]]
+  HWAT1=$(/usr/sbin/ndd -get /dev/tcp tcp_xmit_hiwat)
+  if [[ ! ${HWAT1} -eq 32768 ]]
   then
-    echo "tcp_xmit_hwat $HWAT1" >> $INTRADO/etc/chkstack.output
+    echo "tcp_xmit_hwat ${HWAT1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 32768
-  HWAT2=`/usr/sbin/ndd -get /dev/tcp tcp_recv_hiwat`
-  if [[ ! $HWAT2 = 32768 ]]
+  HWAT2=$(/usr/sbin/ndd -get /dev/tcp tcp_recv_hiwat)
+  if [[ ! ${HWAT2} -eq 32768 ]]
   then
-    echo "tcp_recv_hwat $HWAT2" >> $INTRADO/etc/chkstack.output
+    echo "tcp_recv_hwat ${HWAT2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #######################
@@ -175,58 +183,58 @@ then
 
   #
   # should be 1
-  SCALE1=`/usr/sbin/ndd -get /dev/tcp tcp_wscale_always`
-  if [[ ! $SCALE1 = 1 ]]
+  SCALE1=$(/usr/sbin/ndd -get /dev/tcp tcp_wscale_always)
+  if [[ ! ${SCALE1} -eq 1 ]]
   then
-    echo "tcp_wscale_always $SCALE1" >> $INTRADO/etc/chkstack.output
+    echo "tcp_wscale_always ${SCALE1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 1
-  SCALE2=`/usr/sbin/ndd -get /dev/tcp tcp_tstamp_if_wscale`
-  if [[ ! $SCALE2 = 1 ]]
+  SCALE2=$(/usr/sbin/ndd -get /dev/tcp tcp_tstamp_if_wscale)
+  if [[ ! ${SCALE2} -eq 1 ]]
   then
-    echo "tcp_tstamp_if_wscale $SCALE2" >> $INTRADO/etc/chkstack.output
+    echo "tcp_tstamp_if_wscale ${SCALE2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 2
-  SACK=`/usr/sbin/ndd -get /dev/tcp tcp_sack_permitted`
-  if [[ ! $SACK = 2 ]]
+  SACK=$(/usr/sbin/ndd -get /dev/tcp tcp_sack_permitted)
+  if [[ ! ${SACK} -eq 2 ]]
   then
-    echo "tcp_sack_permitted $SACK" >> $INTRADO/etc/chkstack.output
+    echo "tcp_sack_permitted ${SACK}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 4,000,000
-  PERF1=`/usr/sbin/ndd -get /dev/tcp tcp_max_buf`
-  if [[ ! $PERF1 = 4000000 ]]
+  PERF1=$(/usr/sbin/ndd -get /dev/tcp tcp_max_buf)
+  if [[ ! ${PERF1} -eq 4000000 ]]
   then
-    echo "tcp_max_buf $PERF1" >> $INTRADO/etc/chkstack.output
+    echo "tcp_max_buf ${PERF1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 4,000,000
-  PERF2=`/usr/sbin/ndd -get /dev/tcp tcp_cwnd_max`
-  if [[ ! $PERF2 = 4000000 ]]
+  PERF2=$(/usr/sbin/ndd -get /dev/tcp tcp_cwnd_max)
+  if [[ ! ${PERF2} -eq 4000000 ]]
   then
-    echo "tcp_cwnd_max $PERF2" >> $INTRADO/etc/chkstack.output
+    echo "tcp_cwnd_max ${PERF2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 4,000,000
-  PERF3=`/usr/sbin/ndd -get /dev/tcp tcp_xmit_hiwat`
-  if [[ ! $PERF3 = 4000000 ]]
+  PERF3=$(/usr/sbin/ndd -get /dev/tcp tcp_xmit_hiwat)
+  if [[ ! ${PERF3} -eq 4000000 ]]
   then
-    echo "tcp_xmit_hiwat $PERF3" >> $INTRADO/etc/chkstack.output
+    echo "tcp_xmit_hiwat ${PERF3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 4,000,000
-  PERF4=`/usr/sbin/ndd -get /dev/tcp tcp_recv_hiwat`
-  if [[ ! $PERF4 = 4000000 ]]
+  PERF4=$(/usr/sbin/ndd -get /dev/tcp tcp_recv_hiwat)
+  if [[ ! ${PERF4} -eq 4000000 ]]
   then
-    echo "tcp_recv_hiwat $PERF4" >> $INTRADO/etc/chkstack.output
+    echo "tcp_recv_hiwat ${PERF4}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
 fi
@@ -239,146 +247,146 @@ then
 
   #
   # should be 1
-  ICMP1=`/sbin/sysctl net.ipv4.icmp_echo_ignore_broadcasts | /bin/awk '{print $NF}'`
-  if [[ ! $ICMP1 = 1 ]]
+  ICMP1=$(/sbin/sysctl net.ipv4.icmp_echo_ignore_broadcasts | /bin/awk '{print $NF}')
+  if [[ ! ${ICMP1} -eq 1 ]]
   then
-    echo "net.ipv4.icmp_echo_ignore_broadcasts $ICMP1" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.icmp_echo_ignore_broadcasts ${ICMP1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  ICMP2=`/sbin/sysctl net.ipv4.conf.all.accept_redirects | /bin/awk '{print $NF}'`
-  if [[ ! $ICMP2 = 1 ]]
+  ICMP2=$(/sbin/sysctl net.ipv4.conf.all.accept_redirects | /bin/awk '{print $NF}')
+  if [[ ! ${ICMP2} -eq 1 ]]
   then
-    echo "net.ipv4.conf.all.accept_redirects $ICMP2" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.accept_redirects ${ICMP2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  ICMP3=`/sbin/sysctl net.ipv6.conf.all.accept_redirects | /bin/awk '{print $NF}'`
-  if [[ ! $ICMP3 = 1 ]]
+  ICMP3=$(/sbin/sysctl net.ipv6.conf.all.accept_redirects | /bin/awk '{print $NF}')
+  if [[ ! ${ICMP3} -eq 1 ]]
   then
-    echo "net.ipv6.conf.all.accept_redirects $ICMP3" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv6.conf.all.accept_redirects ${ICMP3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  ICMP4=`/sbin/sysctl net.ipv4.conf.all.send_redirects | /bin/awk '{print $NF}'`
-  if [[ ! $ICMP4 = 1 ]]
+  ICMP4=$(/sbin/sysctl net.ipv4.conf.all.send_redirects | /bin/awk '{print $NF}')
+  if [[ ! ${ICMP4} -eq 1 ]]
   then
-    echo "net.ipv4.conf.all.send_redirects $ICMP4" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.send_redirects ${ICMP4}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  ICMP5=`/sbin/sysctl net.ipv6.conf.all.send_redirects | /bin/awk '{print $NF}'`
-  if [[ ! $ICMP5 = 1 ]]
+  ICMP5=$(/sbin/sysctl net.ipv6.conf.all.send_redirects | /bin/awk '{print $NF}')
+  if [[ ! ${ICMP5} -eq 1 ]]
   then
-    echo "net.ipv6.conf.all.send_redirects $ICMP5" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv6.conf.all.send_redirects ${ICMP5}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  SOURCE1=`/sbin/sysctl net.ipv4.conf.all.accept_source_route | /bin/awk '{print $NF}'`
-  if [[ ! $SOURCE1 = 0 ]]
+  SOURCE1=$(/sbin/sysctl net.ipv4.conf.all.accept_source_route | /bin/awk '{print $NF}')
+  if [[ ! ${SOURCE1} -eq 0 ]]
   then
-    echo "net.ipv4.conf.all.accept_source_route $SOURCE1" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.accept_source_route ${SOURCE1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  SOURCE2=`/sbin/sysctl net.ipv4.conf.all.forwarding | /bin/awk '{print $NF}'`
-  if [[ ! $SOURCE2 = 0 ]]
+  SOURCE2=$(/sbin/sysctl net.ipv4.conf.all.forwarding | /bin/awk '{print $NF}')
+  if [[ ! ${SOURCE2} -eq 0 ]]
   then
-    echo "net.ipv4.conf.all.forwarding $SOURCE2" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.forwarding ${SOURCE2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 0
-  SOURCE3=`/sbin/sysctl net.ipv4.conf.all.mc_forwarding| /bin/awk '{print $NF}'`
-  if [[ ! $SOURCE3 = 0 ]]
+  SOURCE3=$(/sbin/sysctl net.ipv4.conf.all.mc_forwarding| /bin/awk '{print $NF}')
+  if [[ ! ${SOURCE3} -eq 0 ]]
   then
-    echo "net.ipv4.conf.all.mc_forwarding $SOURCE3" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.mc_forwarding ${SOURCE3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 1
-  FILTER=`/sbin/sysctl net.ipv4.conf.all.rp_filter | /bin/awk '{print $NF}'`
-  if [[ ! $FILTER = 1 ]]
+  FILTER=$(/sbin/sysctl net.ipv4.conf.all.rp_filter | /bin/awk '{print $NF}')
+  if [[ ! ${FILTER} -eq 1 ]]
   then
-    echo "net.ipv4.conf.all.rp_filter $FILTER" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.rp_filter ${FILTER}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 1
-  MARTIANS=`/sbin/sysctl net.ipv4.conf.all.log_martians | /bin/awk '{print $NF}'`
-  if [[ ! $MARTIANS = 1 ]]
+  MARTIANS=$(/sbin/sysctl net.ipv4.conf.all.log_martians | /bin/awk '{print $NF}')
+  if [[ ! ${MARTIANS} -eq 1 ]]
   then
-    echo "net.ipv4.conf.all.log_martians $MARTIANS" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.conf.all.log_martians ${MARTIANS}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 1280
-  SYN1=`/sbin/sysctl net.ipv4.tcp_max_syn_backlog | /bin/awk '{print $NF}'`
-  if [[ ! $SYN1 = 1280 ]]
+  SYN1=$(/sbin/sysctl net.ipv4.tcp_max_syn_backlog | /bin/awk '{print $NF}')
+  if [[ ! ${SYN1} -eq 1280 ]]
   then
-    echo "net.ipv4.tcp_max_syn_backlog $SYN1" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_max_syn_backlog ${SYN1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # should be 1
-  SYN2=`/sbin/sysctl net.ipv4.tcp_syncookies | /bin/awk '{print $NF}'`
-  if [[ ! $SYN2 = 1 ]]
+  SYN2=$(/sbin/sysctl net.ipv4.tcp_syncookies | /bin/awk '{print $NF}')
+  if [[ ! ${SYN2} -eq 1 ]]
   then
-    echo "net.ipv4.tcp_syncookies $SYN2" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_syncookies ${SYN2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 0
-  MISC1=`/sbin/sysctl net.ip_forward | /bin/awk '{print $NF}'`
-  if [[ ! $MISC1 = 0 ]]
+  MISC1=$(/sbin/sysctl net.ip_forward | /bin/awk '{print $NF}')
+  if [[ ! ${MISC1} -eq 0 ]]
   then
-    echo "net.ip_forward $MISC1" >> $INTRADO/etc/chkstack.output
+    echo "net.ip_forward ${MISC1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 1800
-  MISC2=`/sbin/sysctl net.ipv4.tcp_keepalive_time | /bin/awk '{print $NF}'`
-  if [[ ! $MISC2 = 1800 ]]
+  MISC2=$(/sbin/sysctl net.ipv4.tcp_keepalive_time | /bin/awk '{print $NF}')
+  if [[ ! ${MISC2} -eq 1800 ]]
   then
-    echo "net.ipv4.tcp_keepalive_time $MISC2" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_keepalive_time ${MISC2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 1
-  MISC3=`/sbin/sysctl net.ipv4.tcp_window_scaling | /bin/awk '{print $NF}'`
-  if [[ ! $MISC3 = 1 ]]
+  MISC3=$(/sbin/sysctl net.ipv4.tcp_window_scaling | /bin/awk '{print $NF}')
+  if [[ ! ${MISC3} -eq 1 ]]
   then
-    echo "net.ipv4.tcp_window_scaling $MISC3" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_window_scaling ${MISC3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 0
-  MISC4=`/sbin/sysctl net.ipv4.tcp_sack | /bin/awk '{print $NF}'`
-  if [[ ! $MISC4 = 0 ]]
+  MISC4=$(/sbin/sysctl net.ipv4.tcp_sack | /bin/awk '{print $NF}')
+  if [[ ! ${MISC4} -eq 0 ]]
   then
-    echo "net.ipv4.tcp_sack $MISC4" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_sack ${MISC4}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 0
-  MISC5=`/sbin/sysctl net.ipv4.tcp_timestamps | /bin/awk '{print $NF}'`
-  if [[ ! $MISC5 = 0 ]]
+  MISC5=$(/sbin/sysctl net.ipv4.tcp_timestamps | /bin/awk '{print $NF}')
+  if [[ ! ${MISC5} -eq 0 ]]
   then
-    echo "net.ipv4.tcp_timestamps $MISC5" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_timestamps ${MISC5}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
   #
   # shouild be 1
-  MISC5=`/sbin/sysctl net.ipv4.icmp_ignore_bogus_error_responses | /bin/awk '{print $NF}'`
-  if [[ ! $MISC5 = 1 ]]
+  MISC5=$(/sbin/sysctl net.ipv4.icmp_ignore_bogus_error_responses | /bin/awk '{print $NF}')
+  if [[ ! ${MISC5} -eq 1 ]]
   then
-    echo "net.ipvr.icmp_ignore_bogus_error_responses $MISC5" >> $INTRADO/etc/chkstack.output
+    echo "net.ipvr.icmp_ignore_bogus_error_responses ${MISC5}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
 
@@ -389,49 +397,49 @@ then
   # need to identify the active interfaces and determine their speed 
   # so the appropriate max setting is made for the system.
 
-  INTERFACE=`/sbin/ifconfig | /bin/egrep -v "^(bond| |lo|$)" | /usr/bin/head -1 | /bin/awk '{print $1}'`
-  SPEED=`/sbin/ethtool $INTERFACE | grep Speed | awk '{print $NF}'`
+  INTERFACE=$(/sbin/ifconfig | /bin/egrep -v "^(bond| |lo|$)" | /usr/bin/head -1 | /bin/awk '{print $1}')
+  SPEED=$(/sbin/ethtool "${INTERFACE}" | grep Speed | awk '{print $NF}')
   if [[ $SPEED = "1000Mb/s" ]]
   then
-    SUGGESTED='16777216'
+    SUGGESTED=16777216
   fi
   if [[ $SPEED = "100Mb/s" ]]
   then
-    SUGGESTED='4194304'
+    SUGGESTED=4194304
   fi
 
   #
   # should be $SUGGESTED
-  CORE1=`/sbin/sysctl -a | grep net.core.rmem_max | /bin/awk '{print $NF}'`
-  if [[ ! $CORE1 = $SUGGESTED ]]
+  CORE1=$(/sbin/sysctl -a | grep net.core.rmem_max | /bin/awk '{print $NF}')
+  if [[ ! ${CORE1} -eq "${SUGGESTED}" ]]
   then
-    echo "net.core.rmem_max = $CORE1" >> $INTRADO/etc/chkstack.output
+    echo "net.core.rmem_max = ${CORE1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
-  CORE2=`/sbin/sysctl -a | grep net.core.wmem_max | /bin/awk '{print $NF}'`
-  if [[ ! $CORE2 = $SUGGESTED ]]
+  CORE2=$(/sbin/sysctl -a | grep net.core.wmem_max | /bin/awk '{print $NF}')
+  if [[ ! "${CORE2}" -eq "${SUGGESTED}" ]]
   then
-    echo "net.core.wmem_max = $CORE2" >> $INTRADO/etc/chkstack.output
+    echo "net.core.wmem_max = ${CORE2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
-#  CORE3='/sbin/sysctl -a | grep net.core.rmem_default | /bin/awk '{print $NF}'`
-#  CORE4='/sbin/sysctl -a | grep net.core.wmem_default | /bin/awk '{print $NF}'`
+#  CORE3=$(/sbin/sysctl -a | grep net.core.rmem_default | /bin/awk '{print $NF}')
+#  CORE4=$(/sbin/sysctl -a | grep net.core.wmem_default | /bin/awk '{print $NF}')
 
   #
   # should be $SUGGESTED
-  TCP1=`/sbin/sysctl -a | grep net.ipv4.tcp_mem | /bin/awk '{print $NF}'`
-  if [[ ! $TCP1 = $SUGGESTED ]]
+  TCP1=$(/sbin/sysctl -a | grep net.ipv4.tcp_mem | /bin/awk '{print $NF}')
+  if [[ ! ${TCP1} -eq "${SUGGESTED}" ]]
   then
-    echo "net.ipv4.tcp_mem = $TCP1" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_mem = ${TCP1}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
-  TCP2=`/sbin/sysctl -a | grep net.ipv4.tcp_rmem | /bin/awk '{print $NF}'`
-  if [[ ! $TCP2 = $SUGGESTED ]]
+  TCP2=$(/sbin/sysctl -a | grep net.ipv4.tcp_rmem | /bin/awk '{print $NF}')
+  if [[ ! ${TCP2} -eq "${SUGGESTED}" ]]
   then
-    echo "net.ipv4.tcp_rmem = $TCP2" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_rmem = ${TCP2}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
-  TCP3=`/sbin/sysctl -a | grep net.ipv4.tcp_wmem | /bin/awk '{print $NF}'`
-  if [[ ! $TCP3 = $SUGGESTED ]]
+  TCP3=$(/sbin/sysctl -a | grep net.ipv4.tcp_wmem | /bin/awk '{print $NF}')
+  if [[ ! ${TCP3} -eq "${SUGGESTED}" ]]
   then
-    echo "net.ipv4.tcp_wmem = $TCP3" >> $INTRADO/etc/chkstack.output
+    echo "net.ipv4.tcp_wmem = ${TCP3}" >> "${SCRIPTS}/etc/${BASENAME}.output"
   fi
 
 fi
