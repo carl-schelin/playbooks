@@ -1,0 +1,17 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Delete kubernetes config files every night at 1am.
+
+for i in `cat /usr/local/admin/kubernetes/userlist | cut -f1 -d:`
+do
+  if [[ -f /var/www/html/kubernetes/$i-admin.kubeconfig.zip ]]
+  then
+    rm /var/www/html/kubernetes/$i-admin.kubeconfig.zip
+  fi
+  if [[ -f /var/www/html/kubernetes/$i.kubeconfig.zip ]]
+  then
+    rm /var/www/html/kubernetes/$i.kubeconfig.zip
+  fi
+done
+
