@@ -491,9 +491,6 @@ then
 # retrieve sudoers information
   runscript chksudoers
 
-# check status of array
-  runscript chkarray
-
   if [[ $DOWEEK = '2' ]]
   then
     runscript logroll
