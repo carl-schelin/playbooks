@@ -162,6 +162,7 @@
 # 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 # 2018/07/02 - CS - Added a check of a service to see if it's running
+# 2018/09/20 - CS - Counting the number of defunct processes
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -175,7 +176,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.239"
+VERSION="${BASENAME} v1.242"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -831,6 +832,34 @@ check_default_passwords() {
   if [[ ${DEBUG} = '4' ]]
   then
     echo "Exiting check_default_passwords()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_defunct_processes() - 
+### Doc: * 
+######################
+
+check_defunct_processes() {
+# count the number of defunct processes
+# one one system, a perl script is not exiting correctly so generating a lot of defunct processes
+# this function counts and reports them.
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_defunct_processes(4)"
+  fi
+  printf "%b\n" "  ${GREEN}Defunct Process Check${RESET}" >> "${LOG}"
+
+  DEFUNCT=`ps -ef | grep defunct | grep -v grep | wc -l`
+  if [[ ${DEFUNCT} -gt 0 ]]
+  then
+    printf "%b\n" "    ${RED}There are ${DEFUNCT} processes${RESET}" >> "${LOG}"
+  fi
+
+  if [[ ${DEBUG} = '3' ]]
+  then
+    echo "Exiting check_defunct_processes()"
   fi
 }
 
@@ -3380,6 +3409,8 @@ check_kubernetes
 # disable as it's really not helping; lots of deleted files on all systems.
 # function stil exists though
 #check_lsof
+
+check_defunct_processes
 
 check_disk_suite
 
