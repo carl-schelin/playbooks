@@ -163,6 +163,7 @@
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 # 2018/07/02 - CS - Added a check of a service to see if it's running
 # 2018/09/20 - CS - Counting the number of defunct processes
+# 2018/09/21 - CS - Updated to check for either satellite server
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -176,7 +177,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.242"
+VERSION="${BASENAME} v1.243"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2563,10 +2564,10 @@ check_redhat_subscription() {
 
       if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
       then
-        RPM=`rpm -qa | grep 'katello-ca-consumer-lnmtcodcstl10'`
+        RPM=`rpm -qa | egrep 'katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)'`
         if [[ -z ${RPM} ]]
         then
-          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | grep katello-ca" >> "${LOG}"
+          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | egrep katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)" >> "${LOG}"
         fi
         RPM=`rpm -qa | grep 'katello-agent'`
         if [[ -z ${RPM} ]]
