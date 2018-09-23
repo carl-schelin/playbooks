@@ -8,8 +8,8 @@
 OS=`uname`
 CENTRIFY='no'
 CHANGELOG="changelog@incojs01.scc911.com"
-WHOCARES="carl.schelin@intrado.com"
 WHOCARES="unixadmins@intrado.com"
+WHOCARES="carl.schelin@intrado.com"
 
 if [[ $OS = "Linux" ]]
 then
@@ -104,13 +104,27 @@ then
 fi
 
 # Now see if the user is actually locked. No need to unlock/changelog an account if they're not actually locked out.
-if [[ $OS = 'SunOS' ]] || [[ $OS = 'HP-UX' ]]
+if [[ $OS = 'SunOS' ]]
 then
   STATUS=`passwd -s $1 | awk '{print $2}'`
   if [[ $STATUS = 'PS' ]]
   then
     echo "Your account ($1) is not locked on `hostname|cut -f1 -d.`" | mailx -s "Not locked on `hostname|cut -f1 -d.`" $2
     echo "$1 attempted an account unlock where the account wasn't locked." | mailx -s "User account unlock request but not locked on `hostname|cut -f1 -d.`" $WHOCARES
+    exit 1
+  fi
+fi
+
+if [[ $OS = 'HP-UX' ]]
+then
+# getting them all but only LIFETIME, EXCEEDED, and LOCKED are ones we'll check
+  GETPRPW_LIFETIME=`/usr/lbin/getprpw -r -m lockout $1 | cut -c1`
+  GETPRPW_EXCEEDED=`/usr/lbin/getprpw -r -m lockout $1 | cut -c4`
+  GETPRPW_LOCKED=`  /usr/lbin/getprpw -r -m lockout $1 | cut -c6`
+  if [[ $GETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_LOCKED = '0' ]]
+  then
+    echo "Your account ($1) is not locked or disabled on `hostname|cut -f1 -d.`" | mailx -s "Not locked or disabled on `hostname|cut -f1 -d.`" $2
+    echo "$1 attempted an account unlock or enable where the account wasn't disabled." | mailx -s "User account unlock request but not locked on `hostname|cut -f1 -d.`" $WHOCARES
     exit 1
   fi
 fi
@@ -134,12 +148,27 @@ then
   /usr/lbin/modprpw -v $1
   /usr/lbin/modprpw -k $1
   /usr/lbin/modprpw -e $1
-  STATUS=`passwd -s $1 | awk '{print $2}'`
-  if [[ $STATUS = "PS" ]]
+  NEWSTATUS=`passwd -s $1 | awk '{print $2}'`
+  NEWGETPRPW_LIFETIME=`/usr/lbin/getprpw -r -m lockout $1 | cut -c1`
+  NEWGETPRPW_EXCEEDED=`/usr/lbin/getprpw -r -m lockout $1 | cut -c4`
+  NEWGETPRPW_LOCKED=`  /usr/lbin/getprpw -r -m lockout $1 | cut -c6`
+  if [[ $NEWGETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_LIFETIME = '1' ]]
   then
     echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
-  else
+  fi
+  if [[ $NEWGETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_EXCEEDED = '1' ]]
+  then
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
+  fi
+  if [[ $NEWGETPRPW_LOCKED = '0' ]] && [[ $GETPRPW_LOCKED = '1' ]]
+  then
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
+  fi
+  if [[ $NEWGETPRPW_LIFETIME = '1' ]] || [[ $NEWGETPRPW_EXCEEDED = '1' ]] || [[ $NEWGETPRPW_LOCKED  = '1' ]]
+  then
     echo "Failed to unlock $1's account. Please open a ticket." | mailx -s "User account unlock failed on `hostname|cut -f1 -d.`" $2
     echo "Failed to unlock $1's account" | mailx -s "Account Unlock Failure on `hostname|cut -f1 -d.`" $WHOCARES
   fi
