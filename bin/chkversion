@@ -158,3 +158,8 @@ then
   echo "Installed" > $ADMIN/etc/newrelic.version
 fi
 
+if [[ -x /opt/dell/srvadmin/bin/omreport ]];
+ then
+   /opt/dell/srvadmin/bin/omreport about > ${ADMIN}/etc/omsa.version
+fi
+
