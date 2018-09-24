@@ -280,9 +280,6 @@ runscript modifysudo
 # lock users listed in the lockuser.dat file
 runscript lockuser
 
-# Check the routing table
-runscript chkroutetable
-
 # Check the server configuration
 runscript chkserver
 
@@ -322,9 +319,6 @@ runscript cleanup
 
 ## Kevins ov hotfix check - retired 12/28/2015
 ## runscript ovhfchk
-
-## Kevins chkomsa
-runscript chkomsa
 
 ## Kevins setcentrify script
 runscript setcentrify
