@@ -106,7 +106,7 @@ fi
 
 # delete any retired scripts and data files.
 
-for i in chkarray chkems chkipcs chksudo sync-clock leaping ovhfchk ovupdate retired setdate
+for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate
 do
   if [[ -f /opt/intrado/bin/$i ]]
   then
@@ -114,7 +114,7 @@ do
   fi
 done
 
-for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run
+for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output
 do
   if [[ -f /opt/intrado/etc/$i ]]
   then
