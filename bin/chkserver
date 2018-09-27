@@ -164,7 +164,8 @@
 # 2018/07/02 - CS - Added a check of a service to see if it's running
 # 2018/09/20 - CS - Counting the number of defunct processes
 # 2018/09/21 - CS - Updated to check for either satellite server
-# 2018/09/24 - CS - Moved the functionality of chkroutetable into the chkserver script
+# 2018/09/24 - CS - Moved the functionality of the chkroutetable script into the chkserver script
+# 2018/09/27 - CS - Added a check for the vpn routes as configured in .config
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -178,7 +179,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.244"
+VERSION="${BASENAME} v1.245"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -425,7 +426,7 @@ check_management_route() {
 
 
 ######################
-### Doc: Function: check_active_employees() - (number of users) * 3 Checks
+### Doc: Function: check_active_employees(1) - (number of users) * 3 Checks
 ### Doc: * Using the chksudo.dat file, loops through the /etc/passwd file
 ### Doc: ** If the user is not in the users.exclude file (consists of service and system accounts)
 ### Doc: ** Checks to see if the user account is locked.
@@ -513,7 +514,7 @@ check_active_employees() {
 
 
 ######################
-### Doc: Function: check_addresses() - 6 Checks
+### Doc: Function: check_addresses(0) - 6 Checks
 ### Doc: * Check to make sure interface starts on boot
 ### Doc: * Check the IP Address to make sure it's in /etc/hosts
 ### Doc: * Note: Unix uses 192.168.0.0/24 for Private Networks.
@@ -527,7 +528,7 @@ check_active_employees() {
 check_addresses() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering IP check"
+    echo "Entering check_addresses(0)"
   fi
   if [[ $OS = 'Linux' ]]
   then
@@ -580,11 +581,15 @@ check_addresses() {
   else
     printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> "${LOG}"
   fi
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_addresses()"
+  fi
 }
 
 
 ######################
-### Doc: Function: check_centrify() - 
+### Doc: Function: check_centrify(2) - 3 checks
 ### Doc: * Checks to see if Centrify is installed
 ### Doc: * Checks to see if Centrify is running
 ### Doc: * Checks to see if Centrify is connected to a domain and reports which domain
@@ -642,7 +647,7 @@ check_centrify() {
 
 
 ######################
-### Doc: Function: check_cfg2html() - 
+### Doc: Function: check_cfg2html(28) - 2 checks
 ### Doc: * Is cfg2html installed
 ### Doc: * Has it be run at least once
 ######################
@@ -669,14 +674,14 @@ check_cfg2html() {
 
 
 ######################
-### Doc: Function: check_cpus() - 
+### Doc: Function: check_cpus(0) - 1 check
 ### Doc: * Checks the number of CPUs against the expected number from the chkserver.input file.
 ######################
 
 check_cpus() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering CPU check"
+    echo "Entering check_cpus(0)"
   fi
   COUNT=$(grep -c processor /proc/cpuinfo)
   if [[ $COUNT -ne $FIELD3 ]]
@@ -685,11 +690,15 @@ check_cpus() {
   else
     printf "%b\n" "  ${GREEN}$COUNT CPUs as expected${RESET}" >> "${LOG}"
   fi
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_cpus()"
+  fi
 }
 
 
 ######################
-### Doc: Function: check_crash() - 
+### Doc: Function: check_crash(39) - 1 check
 ### Doc: * Depending on OS, checks the crash dump directory for any files.
 ######################
 
@@ -726,7 +735,7 @@ check_crash() {
 
 
 ######################
-### Doc: Function: check_data_palette() - 
+### Doc: Function: check_data_palette(3) - 4 checks
 ### Doc: * Checks to see if Data Palette is installed
 ### Doc: * Checks to see if Data Palette is running
 ### Doc: * Checks to see if Data Palette can ping the Nerve Center(s)
@@ -790,7 +799,7 @@ check_data_palette() {
 
 
 ######################
-### Doc: Function: check_default_passwords() - 
+### Doc: Function: check_default_passwords(4) - (users, root, service account) checks
 ### Doc: * Depending on OS, checks each system admin to see if the installation password is still set to the default
 ######################
 
@@ -839,8 +848,8 @@ check_default_passwords() {
 
 
 ######################
-### Doc: Function: check_defunct_processes() - 
-### Doc: * 
+### Doc: Function: check_defunct_processes(0) - 1 check
+### Doc: * Counting the number of defunct processes
 ######################
 
 check_defunct_processes() {
@@ -849,7 +858,7 @@ check_defunct_processes() {
 # this function counts and reports them.
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_defunct_processes(4)"
+    echo "Entering check_defunct_processes(0)"
   fi
   printf "%b\n" "  ${GREEN}Defunct Process Check${RESET}" >> "${LOG}"
 
@@ -859,7 +868,7 @@ check_defunct_processes() {
     printf "%b\n" "    ${RED}There are ${DEFUNCT} processes${RESET}" >> "${LOG}"
   fi
 
-  if [[ ${DEBUG} = '3' ]]
+  if [[ ${DEBUG} = '0' ]]
   then
     echo "Exiting check_defunct_processes()"
   fi
@@ -867,7 +876,7 @@ check_defunct_processes() {
 
 
 ######################
-### Doc: Function: check_disk_space() - 
+### Doc: Function: check_disk_space(31) - 3 checks
 ### Doc: Depending on the OS, checks the disk space for standard file systems
 ### Doc: Reports a warning if over 85%
 ### Doc: Reports an error if over 95%
@@ -923,7 +932,7 @@ check_disk_space() {
 
 
 ######################
-### Doc: Function: check_disk_suite() - 
+### Doc: Function: check_disk_suite(5) - 2 checks
 ### Doc: * Checks for capital letters in the output of metadb indicating a failed disk
 ### Doc: * Checks for the word 'metareplace' metastat indicating a failed disk
 ######################
@@ -958,7 +967,7 @@ check_disk_suite() {
 
 
 ######################
-### Doc: Function: check_eeprom() - 
+### Doc: Function: check_eeprom(37) - 1 check
 ### Doc: * Checks the output of eeprom on Solaris for the auto-boot? setting. False == the system won't boot to the OS
 ######################
 
@@ -987,7 +996,7 @@ check_eeprom() {
 
 
 ######################
-### Doc: Function: check_email() - 
+### Doc: Function: check_email(32) - 2 checks * email servers
 ### Doc: * Checks to see if the email server(s) can be pinged
 ### Doc: * Checks to see if the email server(s) can be accessed
 ######################
@@ -1039,7 +1048,7 @@ check_email() {
 
 
 ######################
-### Doc: Function: check_floppy() - 
+### Doc: Function: check_floppy(35) - 1 check
 ### Doc: * Only for VMware systems, check to see if the Floppy device exists.
 ######################
 
@@ -1067,7 +1076,7 @@ check_floppy() {
 
 
 ######################
-### Doc: Function: check_group_membership() - 
+### Doc: Function: check_group_membership(6) - 7 checks * the number of groups
 ### Doc: * Collects all the groups from the system and from any external groups (Centrify)
 ### Doc: * Loops through the group listing on the system and checks the group against the group.master file.
 ### Doc: ** Reports if a group is not standard (webadmins vs standard webapps for example)
@@ -1210,8 +1219,8 @@ check_group_membership() {
 
 
 ######################
-### Doc: Function: check_hostname() - 
-### Number of Checks: 1
+### Doc: Function: check_hostname() - 1 check
+### Doc: * Verify hostname is in /etc/hosts
 ######################
 
 check_hostname() {
@@ -1227,12 +1236,16 @@ check_hostname() {
   else
     printf "%b\n" "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> "${LOG}"
   fi
+  if [[ ${DEBUG} = '7' ]]
+  then
+    echo "Exiting check_hostname()"
+  fi
 }
 
 
 ######################
-### Doc: Function: check_interfaces() - 
-### Number of Checks: 1
+### Doc: Function: check_interfaces(33) - 1 check
+### Doc: * Check for FAILED interfaces
 ######################
 
 check_interfaces() {
@@ -1274,8 +1287,9 @@ check_interfaces() {
 
 
 ######################
-### Doc: Function: check_intrado() - 
-### Number of Checks: 2
+### Doc: Function: check_intrado(8) - 2 checks
+### Doc: * Checks to see if the intrado script has run
+### Doc: * Checks to see if the intrado script is enabled in root's cron
 ######################
 
 check_intrado() {
@@ -1300,8 +1314,9 @@ check_intrado() {
 
 
 ######################
-### Doc: Function: check_jumpstart() - 
-### Number of Checks: 2
+### Doc: Function: check_jumpstart(9) - 2 checks * the number of management servers
+### Doc: * Checks to see if a management server is pingable
+### Doc: * Checks to see if a management server port is accessible
 ######################
 
 check_jumpstart() {
@@ -1351,8 +1366,8 @@ check_jumpstart() {
 
 
 ######################
-### Doc: Function: check_ksh() - 
-### Number of Checks: 1
+### Doc: Function: check_ksh(10) - 1 check
+### Doc: * Verifies /usr/bin/ksh exists as all scripts are using this shell
 ######################
 
 check_ksh() {
@@ -1375,8 +1390,13 @@ check_ksh() {
 
 
 ######################
-### Doc: Function: check_kubernetes() - 
-### Number of Checks: 2 * [Number of Containers to check]
+### Doc: Function: check_kubernetes(11) - 3 + 2 * number of containers to check
+### Doc: * If on a master server
+### Doc: ** checks etcd health
+### Doc: ** checks local apiserver health
+### Doc: ** checks vip apiserver health
+### Doc: ** checks the binaries/pods to make sure they're healthy
+### Doc: ** checks the containers in the various namespaces for health
 ######################
 
 check_kubernetes() {
@@ -1388,11 +1408,12 @@ check_kubernetes() {
   then
     echo "Entering check_kubernetes(11)"
   fi
-  if [[ -f /bin/etcdctl ]]
+# on 1.2 it's in /bin, on 1.11 it's in /usr/local/bin.
+  if [[ -f /bin/etcdctl ]] || [[ -f /usr/local/bin/etcdctl ]]
   then
     if [[ ${DEBUG} = '11' ]]
     then
-      echo "/bin/etcdctl found; etcdctl cluster-health"
+      echo "etcdctl found; etcdctl cluster-health"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
 
@@ -1406,11 +1427,11 @@ check_kubernetes() {
   fi
 
 # check the local apiserver response. note that only the VIP is important. local can fail for whatever reason and as long as the VIP is successful, the cluster is functioning.
-  if [[ -f /bin/kube-apiserver ]]
+  if [[ -f /bin/kube-apiserver ]] || [[ -f /usr/local/bin/kube-apiserver ]]
   then
     if [[ ${DEBUG} = '11' ]]
     then
-      echo "/bin/kube-apiserver found; kube-apiserver version check"
+      echo "kube-apiserver found; kube-apiserver version check"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes local apiserver status${RESET}" >> "${LOG}"
     curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://127.0.0.1/version > /dev/null 2>&1
@@ -1436,11 +1457,11 @@ check_kubernetes() {
     fi
   fi
 
-  if [[ -f /bin/kubectl ]]
+  if [[ -f /bin/kubectl ]] || [[ -f /usr/local/bin/kubectl ]]
   then
     if [[ ${DEBUG} = '11' ]]
     then
-      echo "/bin/kubectl found; kubectl get nodes"
+      echo "kubectl found; kubectl get nodes"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> "${LOG}"
     for i in `kubectl get nodes | grep -v NAME | awk '{print $1":"$2}'`
@@ -1499,8 +1520,8 @@ check_kubernetes() {
 
 
 ######################
-### Doc: Function: check_logs() - 
-### Number of Checks: 1
+### Doc: Function: check_logs(12) - 1 check
+### Doc: * Verifies there was a log entry for the day. The logme script runs logger to create a single entry so there should always be one entry
 ######################
 
 check_logs() {
@@ -1540,8 +1561,8 @@ check_logs() {
 
 
 ######################
-### Doc: Function: check_lsof() - 
-### Number of Checks: 1
+### Doc: Function: check_lsof(13) - 1 check
+### Doc: * Checking for deleted processes in lsof. Mainly looking for failed log roll processes.
 ######################
 
 check_lsof() {
@@ -1566,14 +1587,14 @@ check_lsof() {
 
 
 ######################
-### Doc: Function: check_memory() - 
-### Number of Checks: 2
+### Doc: Function: check_memory(0) - 1 check
+### Doc: * Verify the expected amount of RAM is installed
 ######################
 
 check_memory() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering Memory check"
+    echo "Entering check_memory(0)"
   fi
 
   if [[ ${OS} = 'Linux' ]]
@@ -1614,12 +1635,26 @@ check_memory() {
   else
     printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> "${LOG}"
   fi
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_memory()"
+  fi
 }
 
 
 ######################
-### Doc: Function: check_netbackup() - 
-### Number of Checks: 10
+### Doc: Function: check_netbackup(14) - 11 checks
+### Doc: * Verifies netbackup is installed
+### Doc: * if the agent is version 6, check the hosts.allow file for missing systems
+### Doc: * verifies that vnetd is running
+### Doc: * verifies that bpcd is running
+### Doc: * verifies ping access to the netbackup servers
+### Doc: * verifies access to the netbackup ports
+### Doc: * verifies the first SERVER entry is a FQDN for the correct backup server
+### Doc: * verifies the remaining SERVER entries are for media servers
+### Doc: * verifies the CLIENT_NAME is as expected
+### Doc: * verifies a backup occurred
+### Doc: * verifies the last backup occurred within 7 days
 ######################
 
 check_netbackup() {
@@ -2073,9 +2108,9 @@ check_netbackup() {
 
 
 ######################
-### Doc: Function: check_nrpe() - 
-### Check the status of Nagios Remote Plugin Executor
-### Number of Checks: 2
+### Doc: Function: check_nrpe(15) - 2 checks
+### Doc: * Verifies that the agent is installed
+### Doc: * Verifies that the agent is running
 ######################
 
 check_nrpe() {
@@ -2102,8 +2137,8 @@ check_nrpe() {
 
 
 ######################
-### Doc: Function: check_oomkiller() - 
-### Number of Checks: 1
+### Doc: Function: check_oomkiller(34) - 1 check
+### Doc: * Count the number of oom-killer messages
 ######################
 
 check_oomkiller() {
@@ -2125,7 +2160,7 @@ check_oomkiller() {
 
 
 ######################
-### Doc: Function: check_openview() - 
+### Doc: Function: check_openview(16) - 
 ### Number of Checks: 9
 ######################
 
@@ -2341,7 +2376,7 @@ check_openview() {
 
 
 ######################
-### Doc: Function: check_opnet() - 
+### Doc: Function: check_opnet(17) - 
 ### Number of Checks: 6
 ######################
 
@@ -2411,7 +2446,7 @@ check_opnet() {
 
 
 ######################
-### Doc: Function: check_privileged_access() - 
+### Doc: Function: check_privileged_access(18) - 
 ### Number of Checks: 2 * [Number of users on the system]
 ######################
 
@@ -2476,7 +2511,7 @@ check_privileged_access() {
 
 
 ######################
-### Doc: Function: check_redhat_subscription() - 
+### Doc: Function: check_redhat_subscription(19) - 
 ### Number of Checks: 1
 ######################
 
@@ -2587,7 +2622,7 @@ check_redhat_subscription() {
 
 
 ######################
-### Doc: Function: check_removeips() - 
+### Doc: Function: check_removeips(20) - 
 ### Number of Checks: 2
 ######################
 
@@ -2627,7 +2662,7 @@ check_removeips() {
 
 
 ######################
-### Doc: Function: check_resolver() - 
+### Doc: Function: check_resolver(21) - 
 ### Number of Checks: 2 * [Number of nameserver entries] + 1
 ######################
 
@@ -2743,7 +2778,7 @@ check_resolver() {
 
 
 ######################
-### Doc: Function: check_routetable() - 
+### Doc: Function: check_routetable(22) - 
 ### Number of Checks: 1
 ######################
 
@@ -2751,10 +2786,6 @@ check_routetable() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_routetable(22)"
-  fi
-  if [[ ! -f ${SCRIPTS}/etc/routetable.output ]]
-  then
-    ${SCRIPTS}/bin/chkroutetable
   fi
   printf "%b\n" "  ${GREEN}Checking routing.${RESET}" >> "${LOG}"
 
@@ -2897,7 +2928,7 @@ check_routetable() {
 
 
 ######################
-### Doc: Function: check_rrdtool() - 
+### Doc: Function: check_rrdtool(23) - 
 ### Number of Checks: 1
 ######################
 
@@ -2922,7 +2953,7 @@ check_rrdtool() {
 
 
 ######################
-### Doc: Function: check_scanners() - 
+### Doc: Function: check_scanners(38) - 
 ### Check the routes to the vulnerability scanners
 ######################
 
@@ -2957,7 +2988,7 @@ check_scanners() {
 
 
 ######################
-### Doc: Function: check_security() - 
+### Doc: Function: check_security(36) - 
 ### Number of Checks: 1
 ######################
 
@@ -2982,7 +3013,7 @@ check_security() {
 
 
 ######################
-### Doc: Function: check_selinux() - 
+### Doc: Function: check_selinux(29) - 
 ### Number of Checks: 1
 ######################
 
@@ -3022,7 +3053,7 @@ check_selinux() {
 
 
 ######################
-### Doc: Function: check_sudoers() - 
+### Doc: Function: check_sudoers(24) - 
 ### Number of Checks: 3
 ######################
 
@@ -3088,7 +3119,7 @@ check_sudoers() {
 
 
 ######################
-### Doc: Function: check_swap() - 
+### Doc: Function: check_swap(25) - 
 ### Number of Checks: 3
 ### For Red Hat:
 ### Swap >= Ram up to 8G
@@ -3152,7 +3183,7 @@ check_swap() {
 
 
 ######################
-### Doc: Function: check_techops() - 
+### Doc: Function: check_techops(30) - 
 ### Number of Checks: 2
 ######################
 
@@ -3179,7 +3210,7 @@ check_techops() {
 
 
 ######################
-### Doc: Function: check_time() - 
+### Doc: Function: check_time(26) - 
 ### Number of Checks: 6
 ######################
 
@@ -3322,7 +3353,7 @@ check_time() {
 
 
 ######################
-### Doc: Function: check_vmware_agent() - 
+### Doc: Function: check_vmware_agent(27) - 
 ### Number of Checks: 2
 ######################
 
@@ -3385,6 +3416,35 @@ check_vmware_agent() {
     echo "Exiting check_vmware_agent()"
   fi
 }
+
+
+######################
+### Doc: Function: check_vpn_route(0) - 1 check
+### Doc: * Verify access to the VPN via the management interface
+######################
+
+check_vpn_route() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_vpn_route(0)"
+  fi
+# exit if not checking
+  if [[ ! ${CHECK_VPN} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping VPN Route Check${RESET}" >> "${LOG}"
+    return
+  fi
+  printf "%b\n" "  ${GREEN}Checking VPN Routes.${RESET}" >> "${LOG}"
+  for routes in ${VPN_ROUTES}
+  do
+    check_management_route ${routes}
+  done
+  if [[ ${DEBUG} = '00' ]]
+  then
+    echo "Exiting check_vpn_route()"
+  fi
+}
+
 
 # show documentation for the script
 if [[ ! -z $1 ]] && [[ "$1" = '-h' ]]
@@ -3524,6 +3584,8 @@ check_disk_space
 check_oomkiller
 
 check_vmware_agent
+
+check_vpn_route
 
 check_rrdtool
 
