@@ -166,6 +166,7 @@
 # 2018/09/21 - CS - Updated to check for either satellite server
 # 2018/09/24 - CS - Moved the functionality of the chkroutetable script into the chkserver script
 # 2018/09/27 - CS - Added a check for the vpn routes as configured in .config
+# 2018/09/27 - CS - Updated several functions so the Doc part was accurate.
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -179,7 +180,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.245"
+VERSION="${BASENAME} v1.246"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
