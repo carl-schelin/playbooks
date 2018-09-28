@@ -172,6 +172,7 @@
 # 2018/09/28 - CS - Moved the individual lines of function calls into a loop to make it easier to interrupt
 # 2018/09/28 - CS - Moved all the config checks to functions to clean up the actual checking area
 # 2018/09/28 - CS - Added the ability to just check one function by passing view [value]. The config checks are not part of this check
+# 2018/09/28 - CS - Moved the chksecurity (remote root access) logic into the function
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -185,7 +186,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.248"
+VERSION="${BASENAME} v1.249"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -737,7 +738,9 @@ check_config_cpus() {
 
 
 ######################
-### Doc: Function: check_config_cron(48) - 
+### Doc: Function: check_config_cron(48) - 2 checks
+### Doc: * Checks service account against cron.allow file
+### Doc: * Checks service account against cron.deny file
 ######################
 
 check_config_cron() {
@@ -771,7 +774,8 @@ check_config_cron() {
 
 
 ######################
-### Doc: Function: check_config_datapalette(49) - 
+### Doc: Function: check_config_datapalette(49) - 1 check
+### Doc: * Has data palette been installed
 ######################
 
 check_config_datapalette() {
@@ -791,7 +795,8 @@ check_config_datapalette() {
 
 
 ######################
-### Doc: Function: check_config_enabled(50) - 
+### Doc: Function: check_config_enabled(50) - 1 check
+### Doc: * Linux only, verify a service is enabled
 ######################
 
 check_config_enabled() {
@@ -828,7 +833,8 @@ check_config_enabled() {
 
 
 ######################
-### Doc: Function: check_config_group(43) - 
+### Doc: Function: check_config_group(43) - 1 checks
+### Doc: * Verifies that a group exists
 ######################
 
 check_config_group() {
@@ -912,7 +918,8 @@ check_memory() {
 
 
 ######################
-### Doc: Function: check_config_netbackup(51) - 
+### Doc: Function: check_config_netbackup(51) - 1 check
+### Doc: * is netbackup installed
 ######################
 
 check_config_netbackup() {
@@ -932,7 +939,8 @@ check_config_netbackup() {
 
 
 ######################
-### Doc: Function: check_config_openview(52) - 
+### Doc: Function: check_config_openview(52) - 1 check
+### Doc: * Is openview installed
 ######################
 
 check_config_openview() {
@@ -952,7 +960,8 @@ check_config_openview() {
 
 
 ######################
-### Doc: Function: check_config_opnet(53) - 
+### Doc: Function: check_config_opnet(53) - 1 check
+### Doc: * is opnet installed
 ######################
 
 check_config_opnet() {
@@ -972,7 +981,8 @@ check_config_opnet() {
 
 
 ######################
-### Doc: Function: check_config_running(54) - 
+### Doc: Function: check_config_running(54) - 1 check
+### Doc: * Linux only, is a called service running
 ######################
 
 check_config_running() {
@@ -1009,7 +1019,14 @@ check_config_running() {
 
 
 ######################
-### Doc: Function: check_config_service(45) - 
+### Doc: Function: check_config_service(45) - 6 checks
+### Doc: * determine if an account exists
+### Doc: * verifies if an account password expires
+### Doc: * verifies if an account expires
+### Doc: * if the account is nginx,
+### Doc: ** check log rotate config
+### Doc: ** check log permissions
+### Doc: ** check log rights
 ######################
 
 check_config_service() {
@@ -1135,7 +1152,9 @@ check_config_service() {
 
 
 ######################
-### Doc: Function: check_config_sudoers(55) - 1 check
+### Doc: Function: check_config_sudoers(55) - 2 checks
+### Doc: * Note if the sudoers is unable to be located
+### Doc: * Verify the expected group exists in sudoers
 ######################
 
 check_config_sudoers() {
@@ -1264,7 +1283,9 @@ check_data_palette() {
 
 
 ######################
-### Doc: Function: check_default_gateway(56) - 
+### Doc: Function: check_default_gateway(56) - 0 checks
+### Doc: * reports on whether or not the default gateway was found in the expected location. This is a reporting function.
+### Doc: * Since the IP config check has multiple lines (potentially) this needs to run after all the chkserver.input checks have run.
 ######################
 
 check_default_gateway() {
@@ -2600,8 +2621,8 @@ check_oomkiller() {
 
 
 ######################
-### Doc: Function: check_openview(16) - 
-### Number of Checks: 9
+### Doc: Function: check_openview(16) - 9 checks
+### Doc: *
 ######################
 
 check_openview() {
@@ -2816,8 +2837,8 @@ check_openview() {
 
 
 ######################
-### Doc: Function: check_opnet(17) - 
-### Number of Checks: 6
+### Doc: Function: check_opnet(17) - 6 checks
+### Doc: *
 ######################
 
 check_opnet() {
@@ -2951,8 +2972,12 @@ check_privileged_access() {
 
 
 ######################
-### Doc: Function: check_redhat_subscription(19) - 
-### Number of Checks: 1
+### Doc: Function: check_redhat_subscription(19) - 5 checks
+### Doc: * checks to see if the satellite server is pingable
+### Doc: * checks to see if the satellite server ports are accessible
+### Doc: * checks to see if subscription manager is installed
+### Doc: ** if installed, checks the subscription status
+### Doc: * checks to see if the katello agent is installed
 ######################
 
 check_redhat_subscription() {
@@ -3062,8 +3087,8 @@ check_redhat_subscription() {
 
 
 ######################
-### Doc: Function: check_removeips(20) - 
-### Number of Checks: 2
+### Doc: Function: check_removeips(20) - 1 check
+### Doc: * checks to see if removeipc is set to yes or commented out
 ######################
 
 check_removeips() {
@@ -3102,8 +3127,8 @@ check_removeips() {
 
 
 ######################
-### Doc: Function: check_resolver(21) - 
-### Number of Checks: 2 * [Number of nameserver entries] + 1
+### Doc: Function: check_resolver(21) - 2 checks * number of name server entries
+### Doc: *
 ######################
 
 check_resolver() {
@@ -3219,7 +3244,7 @@ check_resolver() {
 
 ######################
 ### Doc: Function: check_routetable(22) - 
-### Number of Checks: 1
+### Doc: *
 ######################
 
 check_routetable() {
@@ -3368,8 +3393,8 @@ check_routetable() {
 
 
 ######################
-### Doc: Function: check_rrdtool(23) - 
-### Number of Checks: 1
+### Doc: Function: check_rrdtool(23) - 1 check
+### Doc: * is updaterrd running
 ######################
 
 check_rrdtool() {
@@ -3393,8 +3418,8 @@ check_rrdtool() {
 
 
 ######################
-### Doc: Function: check_scanners(38) - 
-### Check the routes to the vulnerability scanners
+### Doc: Function: check_scanners(38) - 1 check
+### Doc: * checks to make sure the security scanners are using the correct network route
 ######################
 
 check_scanners() {
@@ -3428,8 +3453,8 @@ check_scanners() {
 
 
 ######################
-### Doc: Function: check_security(36) - 
-### Number of Checks: 1
+### Doc: Function: check_security(36) - 1 check
+### Doc: * checks to see if remote root access via ssh is enabled
 ######################
 
 check_security() {
@@ -3437,13 +3462,124 @@ check_security() {
   then
     echo "Entering check_security(36)"
   fi
-  if [[ -f ${SCRIPTS}/etc/chksecurity.output ]]
+  if [[ $OS = "OSF1" ]]
   then
-    SECURITY=`cat ${SCRIPTS}/etc/chksecurity.output | awk '{print $NF}'`
-    if [[ ${SECURITY} = 'yes' ]]
+    if [[ -f /etc/ssh2/sshd2_config ]]
     then
-      printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> "${LOG}"
+    SSHD="/etc/sshd2/ssh2_config"
     fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "HP-UX" ]]
+  then
+    if [[ -f /opt/ssh/etc/sshd_config ]]
+    then
+      SSHD="/opt/ssh/etc/sshd_config"
+    fi
+    if [[ -f /opt/openssh-3.7.1p1/sshd_config ]]
+    then
+      SSHD="/opt/openssh-3.7.1p1/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "SunOS" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+    if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/centrifydc/ssh/sshd_config"
+  fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      if [[ -z $PRL ]]
+      then
+        CONSOLE=`grep -v "^#" /etc/default/login | grep -i console`
+        if [[ -z $CONSOLE ]]
+        then
+          PRL="yes"
+        else
+          PRL="without-password"
+        fi
+      fi
+    fi
+  fi
+
+  if [[ $OS = "Linux" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+    if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/centrifydc/ssh/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "FreeBSD" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ ${PRL} = 'yes' ]]
+  then
+    printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '36' ]]
   then
@@ -3651,8 +3787,8 @@ check_techops() {
 
 
 ######################
-### Doc: Function: check_time(26) - 
-### Number of Checks: 6
+### Doc: Function: check_time(26) - 6 checks
+### Doc: *
 ######################
 
 check_time() {
