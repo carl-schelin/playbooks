@@ -221,7 +221,7 @@ runscript chkversion
 runscript chkprtdiag
 
 # initially get the setting for permitrootlogin from sshd_config. Others will be added.
-runscript chksecurity
+#runscript chksecurity
 
 # get any san configuration info
 runscript chksan
@@ -230,7 +230,7 @@ runscript chksan
 runscript chkports
 
 # gather and report on time
-runscript chktime
+#runscript chktime
 
 # gather cluster state info 
 runscript chkcluster
@@ -242,7 +242,7 @@ runscript chkapa
 runscript chksys
 
 # check the sync status of Satellite
-runscript chksync
+#runscript chksync
 
 # gather system information
 runscript chkpwck
