@@ -173,6 +173,7 @@
 # 2018/09/28 - CS - Moved all the config checks to functions to clean up the actual checking area
 # 2018/09/28 - CS - Added the ability to just check one function by passing view [value]. The config checks are not part of this check
 # 2018/09/28 - CS - Moved the chksecurity (remote root access) logic into the function
+# 2018/10/03 - CS - Moved the chksecurity (remote root access) logic into the function
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -186,7 +187,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.249"
+VERSION="${BASENAME} v1.250"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -528,6 +529,68 @@ check_active_employees() {
   if [[ ${DEBUG} = '1' ]]
   then
     echo "Exiting check_active_employees()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_artifactory(57) - 
+### Doc: *
+######################
+
+check_artifactory() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_artifactory(57)"
+  fi
+  if [[ ! ${CHECK_ARTIFACTORY} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Artifactory Check${RESET}" >> "${LOG}"
+    return
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking Artifactory Access${RESET}" >> "${LOG}"
+  for j in ${ARTIFACTORY_SERVERS}
+  do
+    CA_SITE=`echo $j | cut -f1 -d:`
+    CA_IP=`echo $j | cut -f2 -d:`
+    CA_PROTOCOL=`echo $j | cut -f3 -d:`
+    CA_PORTS=`echo $j | cut -f4 -d: | sed -e "s/,/ /g"`
+
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=`grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS}/etc/chkserver.exclude`
+    if [[ "${APPROVED}" = "" ]]
+    then
+      echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
+      check_management_route ${CA_IP}
+      ping ${CA_IP} ${PINGCT} > /dev/null
+      if [[ $? = 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Artifactory site ${CA_SITE}:${CA_IP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
+        then
+          for k in ${CA_PORTS}
+          do
+            echo "quit" | ${NETCAT} -w 2 -vn ${CA_IP} ${k} > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Artifactory Server ${CA_SITE}:${CA_IP}:${k} is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${YELLOW}Artifactory Server ${CA_SITE}:${CA_IP}:${k} is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      else
+        printf "%b\n" "    ${RED}Artifactory Server ${CA_SITE}:${CA_IP} is not pingable${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}Artifactory Server ${CA_SITE}:${CA_IP} check was skipped.${RESET}" >> "${LOG}"
+    fi
+  done
+
+  if [[ ${DEBUG} = '57' ]]
+  then
+    echo "Exiting check_artifactory()"
   fi
 }
 
@@ -1246,34 +1309,45 @@ check_data_palette() {
     else
       printf "%b\n" "    ${RED}Data Palette is not running${RESET}" >> "${LOG}"
     fi
+
     for i in ${DATA_PALETTE_SERVERS}
     do
       DPSITE=$(echo $i | cut -f1 -d:)
       DPIP=$(echo $i | cut -f2 -d:)
       DPPROTOCOL=$(echo $i | cut -f3 -d:)
-      DPPORT=$(echo $i | cut -f4 -d:)
+      DPPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
-      check_management_route ${DPIP}
-      echo "  ping check of data palette nerve center: ${DPIP}"
-      ping ${DPIP} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+# looking for a skip entry in the chkserver.exclude file
+      APPROVED=`grep -i "^${HOSTNAME}:DataPalette:${DPIP}" ${SCRIPTS}/etc/chkserver.exclude`
+      if [[ "${APPROVED}" = "" ]]
       then
-        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPIP} is pingable${RESET}" >> "${LOG}"
-        if [[ ! -z ${NETCAT} ]]
+        echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
+        check_management_route ${DPIP}
+        ping ${DPIP} ${PINGCT} > /dev/null
+        if [[ $? = 0 ]]
         then
-          echo "  nc check of Data Palette Nerve Center ${DPIP}"
-          echo "quit" | ${NETCAT} -w 2 -vn ${DPIP} ${DPPORT} > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP} is pingable${RESET}" >> "${LOG}"
+          if [[ ! -z ${NETCAT} ]]
           then
-            printf "%b\n" "    ${GREEN}Data Palette Nerve Center (${DPIP}:${DPPORT}) is accessible${RESET}" >> "${LOG}"
-          else
-            printf "%b\n" "    ${RED}Data Palette Nerve Center (${DPIP}:${DPPORT}) is not accessible${RESET}" >> "${LOG}"
+            for k in ${DPPORTS}
+            do
+              echo "quit" | ${NETCAT} -w 2 -vn ${DPIP} ${k} > /dev/null 2>&1
+              if [[ $? = 0 ]]
+              then
+                printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP}:${k} is accessible${RESET}" >> "${LOG}"
+              else
+                printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPSITE}:${DPIP}:${k} is not accessible${RESET}" >> "${LOG}"
+              fi
+            done
           fi
+        else
+          printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPSITE}:${DPIP} is not pingable${RESET}" >> "${LOG}"
         fi
       else
-        printf "%b\n" "    ${RED}Data Palette Nerve Center ${DPIP} is not pingable${RESET}" >> "${LOG}"
+        printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP} check was skipped.${RESET}" >> "${LOG}"
       fi
     done
+
   fi
   if [[ ${DEBUG} = '3' ]]
   then
@@ -1528,35 +1602,45 @@ check_email() {
     printf "%b\n" "    ${GREEN}Skipping EMail Check${RESET}" >> "${LOG}"
     return
   fi
+
   for i in ${EMAIL_SERVERS}
   do
     EMAILSITE=$(echo $i | cut -f1 -d:)
     EMAILIP=$(echo $i | cut -f2 -d:)
     EMAILPROTOCOL=$(echo $i | cut -f3 -d:)
-    EMAILPORT=$(echo $i | cut -f4 -d:)
+    EMAILPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
-    printf "%b\n" "  ${GREEN}Checking mail server (${EMAILIP}:${EMAILPORT})${RESET}" >> "${LOG}"
-    check_management_route ${EMAILIP}
-    echo "  ping check of mail server: ${EMAILIP}"
-    ping ${EMAILIP} ${PINGCT} > /dev/null
-    if [[ $? = 0 ]]
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=`grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS}/etc/chkserver.exclude`
+    if [[ "${APPROVED}" = "" ]]
     then
-      printf "%b\n" "    ${GREEN}Email server ${EMAILIP} is pingable${RESET}" >> "${LOG}"
-      if [[ ! -z ${NETCAT} ]]
+      echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
+      check_management_route ${EMAILIP}
+      ping ${EMAILIP} ${PINGCT} > /dev/null
+      if [[ $? = 0 ]]
       then
-        echo "  nc check of Mail Server ${EMAILIP}"
-        echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${EMAILPORT} > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        printf "%b\n" "    ${GREEN}Email server ${EMAILSITE}:${EMAILIP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
         then
-          printf "%b\n" "    ${GREEN}Email server (${EMAILIP}:${EMAILPORT}) is accessible${RESET}" >> "${LOG}"
-        else
-          printf "%b\n" "    ${RED}Email server (${EMAILIP}:${EMAILPORT}) is not accessible${RESET}" >> "${LOG}"
+          for j in ${EMAILPORTS}
+          do
+            echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${j} > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Email server (${EMAILSITE}:${EMAILIP}:${j}) is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Email server (${EMAILSITE}:${EMAILIP}:${j}) is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
         fi
+      else
+        printf "%b\n" "    ${RED}Email server ${EMAILSITE}:{$EMAILIP} is not pingable${RESET}" >> "${LOG}"
       fi
     else
-      printf "%b\n" "    ${RED}Email server {$EMAILIP} is not pingable${RESET}" >> "${LOG}"
+      printf "%b\n" "    ${GREEN}Email Server ${EMAILSITE}:${EMAILIP} check was skipped.${RESET}" >> "${LOG}"
     fi
   done
+
   if [[ ${DEBUG} = '32' ]]
   then
     echo "Exiting check_email()"
@@ -1831,58 +1915,6 @@ check_intrado() {
 
 
 ######################
-### Doc: Function: check_jumpstart(9) - 2 checks * the number of management servers
-### Doc: * Checks to see if a management server is pingable
-### Doc: * Checks to see if a management server port is accessible
-######################
-
-check_jumpstart() {
-  if [[ ! ${DEBUG} = 'no' ]]
-  then
-    echo "Entering check_jumpstart(9)"
-  fi
-  if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
-  then
-    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
-    return
-  fi
-  for i in ${MANAGEMENT_SERVERS}
-  do
-    MGTSITE=`echo  $i | cut -f1 -d:`
-    MGTIP=`echo  $i | cut -f2 -d:`
-    MGTPROTOCOL=`echo $i | cut -f3 -d:`
-    MGTPORT=`echo $i | cut -f4 -d:`
-
-    printf "%b\n" "  ${GREEN}Checking management server (${MGTIP}:${MGTPORT})${RESET}" >> "${LOG}"
-    check_management_route ${MGTIP}
-    echo "  ping check of management server: ${MGTIP}"
-    ping ${MGTIP} ${PINGCT} > /dev/null
-    if [[ $? = 0 ]]
-    then
-      printf "%b\n" "    ${GREEN}Management server ${MGTIP} is pingable${RESET}" >> "${LOG}"
-      if [[ ! -z ${NETCAT} ]]
-      then
-        echo "  nc check of Management Server ${MGTIP}:${MGTPORT}"
-        echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${MGTPORT} > /dev/null 2>&1
-        if [[ $? = 0 ]]
-        then
-          printf "%b\n" "    ${GREEN}Management server ${MGTIP}:${MGTPORT} is accessible${RESET}" >> "${LOG}"
-        else
-          printf "%b\n" "    ${RED}Management server ${MGTIP}:${MGTPORT} is not accessible${RESET}" >> "${LOG}"
-        fi
-      fi
-    else
-      printf "%b\n" "    ${RED}Management server ${MGTIP} is not pingable${RESET}" >> "${LOG}"
-    fi
-  done
-  if [[ ${DEBUG} = '9' ]]
-  then
-    echo "Exiting check_jumpstart()"
-  fi
-}
-
-
-######################
 ### Doc: Function: check_ksh(10) - 1 check
 ### Doc: * Verifies /usr/bin/ksh exists as all scripts are using this shell
 ######################
@@ -2099,6 +2131,68 @@ check_lsof() {
   if [[ ${DEBUG} = '13' ]]
   then
     echo "Exiting check_lsof()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_management(9) - 2 checks * the number of management servers
+### Doc: * Checks to see if a management server is pingable
+### Doc: * Checks to see if a management server port is accessible
+######################
+
+check_management() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_management(9)"
+  fi
+  if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
+    return
+  fi
+
+  for i in ${MANAGEMENT_SERVERS}
+  do
+    MGTSITE=`echo  $i | cut -f1 -d:`
+    MGTIP=`echo  $i | cut -f2 -d:`
+    MGTPROTOCOL=`echo $i | cut -f3 -d:`
+    MGTPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /"`
+
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=`grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS}/etc/chkserver.exclude`
+    if [[ "${APPROVED}" = "" ]]
+    then
+      echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
+      check_management_route ${MGTIP}
+      ping ${MGTIP} ${PINGCT} > /dev/null
+      if [[ $? = 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
+        then
+          for k in ${MGTPORTS}
+          do
+            echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${k} > /dev/null 2>&1
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP}:${k} is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Management server ${MGTSITE}:${MGTIP}:${k} is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      else
+        printf "%b\n" "    ${RED}Management server ${MGTSITE}:${MGTIP} is not pingable${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}Artifactory Server ${MGTSITE}:${MGTIP} check was skipped.${RESET}" >> "${LOG}"
+    fi
+  done
+
+  if [[ ${DEBUG} = '9' ]]
+  then
+    echo "Exiting check_management()"
   fi
 }
 
@@ -2680,40 +2774,49 @@ check_openview() {
 
       for i in ${MONITORING_SERVERS}
       do
-        OVSITE=`echo $i | cut -f1 -d:`
-        OVIP=`echo $i | cut -f2 -d:`
-        OVPROTOCOL=`echo $i | cut -f3 -d:`
-        OVPORT=`echo $i | cut -f4 -d:`
+        MONSITE=`echo $i | cut -f1 -d:`
+        MONIP=`echo $i | cut -f2 -d:`
+        MONPROTOCOL=`echo $i | cut -f3 -d:`
+        MONPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /g"`
 
-        check_management_route ${OVIP}
-
-        ping ${OVIP} ${PINGCT} > /dev/null
-        if [[ $? = 0 ]]
+# looking for a skip entry in the chkserver.exclude file
+        APPROVED=`grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS}/etc/chkserver.exclude`
+        if [[ "${APPROVED}" = "" ]]
         then
-          printf "%b\n" "    ${GREEN}${OVSITE} Openview VIP is pingable${RESET}" >> "${LOG}"
-          if [[ ! -z ${NETCAT} ]]
-          then
-# netcat isn't working correctly everywhere but it is working in some places...
-            echo "  nc check of ${OVSITE} Openview Server"
-            echo "" | ${NETCAT} -w 2 -vn ${OVIP} ${OVPORT} > /dev/null 2>&1
-            if [[ $? = 0 ]]
-            then
-              printf "%b\n" "    ${GREEN}${OVSITE} VIP is accessible${RESET}" >> "${LOG}"
-            else
-              printf "%b\n" "    ${RED}${OVSITE} VIP is not accessible${RESET}" >> "${LOG}"
-            fi
-          fi
-
-# since we're here, check the Openview Ping tool too
-          /opt/OV/bin/bbcutil -ping ${OVIP} > /dev/null
+          echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
+          check_management_route ${MONIP}
+          ping ${MONIP} ${PINGCT} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "    ${GREEN}bbcutil is able to ping ${OVSITE}${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${GREEN}Monitoring site ${MONSITE}:${MONIP} is pingable${RESET}" >> "${LOG}"
+            if [[ ! -z ${NETCAT} ]]
+            then
+              for j in ${MONPORTS}
+              do
+# netcat isn't working correctly everywhere but it is working in some places...
+                echo "" | ${NETCAT} -w 2 -vn ${MONIP} ${j} > /dev/null 2>&1
+                if [[ $? = 0 ]]
+                then
+                  printf "%b\n" "    ${GREEN}Monitoring site ${MONSITE}:${MONIP}:${j} is accessible${RESET}" >> "${LOG}"
+                else
+                  printf "%b\n" "    ${RED}Monitoring site ${MONSITE}:${MONIP}:${j} is not accessible${RESET}" >> "${LOG}"
+                fi
+              done
+            fi
+
+# since we're here, check the Openview Ping tool too
+            /opt/OV/bin/bbcutil -ping ${MONIP} > /dev/null
+            if [[ $? = 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}bbcutil is able to ping ${MONSITE}${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}bbcutil is unable to ping ${MONSITE}${RESET} /opt/OV/bin/bbcutil -ping ${MONIP}" >> "${LOG}"
+            fi
           else
-            printf "%b\n" "    ${RED}bbcutil is unable to ping ${OVSITE}${RESET} /opt/OV/bin/bbcutil -ping ${OVIP}" >> "${LOG}"
+            printf "%b\n" "    ${RED}Monitoring site ${MONSITE}:{MONIP} is not pingable${RESET}" >> "${LOG}"
           fi
         else
-          printf "%b\n" "    ${RED}${OVSITE} Openview VIP is not pingable${RESET}" >> "${LOG}"
+          printf "%b\n" "    ${GREEN}Monitoring Server ${MONSITE}:${MONIP} check was skipped.${RESET}" >> "${LOG}"
         fi
       done
 
@@ -2872,32 +2975,45 @@ check_opnet() {
         printf "%b\n" "    ${GREEN}OpNet is configured to start on boot${RESET}" >> "${LOG}"
       fi
     fi
-    if [[ ! -z ${NETCAT} ]]
-    then
-      for j in ${OPNET_SERVERS}
-      do
-        OPNETSITE=`echo $j | cut -f1 -d:`
-        OPNETIP=`echo $j | cut -f2 -d:`
-        OPNETPROTOCOL=`echo $j | cut -f3 -d:`
-        OPNETPORT=`echo $j | cut -f4 -d:`
+
+    for j in ${OPNET_SERVERS}
+    do
+      OPNETSITE=`echo $j | cut -f1 -d:`
+      OPNETIP=`echo $j | cut -f2 -d:`
+      OPNETPROTOCOL=`echo $j | cut -f3 -d:`
+      OPNETPORTS=`echo $j | cut -f4 -d: | sed -e "s/,/ /g"`
 
 # looking for a skip entry in the chkserver.exclude file
-        APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude`
-        if [[ "${APPROVED}" = "" ]]
+      APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude`
+      if [[ "${APPROVED}" = "" ]]
+      then
+        echo "  Beginning check of OpNet Server: ${OPNETSITE}:${OPNETIP}:${OPNETPORTS}"
+        check_management_route ${OPNETIP}
+        ping ${OPNETIP} ${PINGCT} > /dev/null
+        if [[ $? -eq 0 ]]
         then
-          echo "  nc check of OpNet Server"
-          echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${OPNETPORT} > /dev/null 2>&1
-          if [[ $? = 0 ]]
+          printf "%b\n" "    ${GREEN}OpNet site ${OPNETSITE}:${OPNETIP} is pingable${RESET}" >> "${LOG}"
+          if [[ ! -z ${NETCAT} ]]
           then
-            printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) is accessible${RESET}" >> "${LOG}"
-          else
-            printf "%b\n" "    ${YELLOW}OpNet Server (${OPNETIP}:${OPNETPORT}) is not accessible${RESET}" >> "${LOG}"
+            for k in ${OPNETPORTS}
+            do
+              echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${k} > /dev/null 2>&1
+              if [[ $? = 0 ]]
+              then
+                printf "%b\n" "    ${GREEN}OpNet Server ${OPNETSITE}:${OPNETIP}:${k} is accessible${RESET}" >> "${LOG}"
+              else
+                printf "%b\n" "    ${YELLOW}OpNet Server ${OPNETSITE}:${OPNETIP}:${k} is not accessible${RESET}" >> "${LOG}"
+              fi
+            done
           fi
         else
-          printf "%b\n" "    ${GREEN}OpNet Server (${OPNETIP}:${OPNETPORT}) check was skipped.${RESET}" >> "${LOG}"
+          printf "%b\n" "    ${RED}OpNet Server ${OPNETSITE}:${OPNETIP} is not pingable${RESET}" >> "${LOG}"
         fi
-      done
-    fi
+      else
+        printf "%b\n" "    ${GREEN}OpNet Server (${OPNETSITE}:${OPNETIP}) check was skipped.${RESET}" >> "${LOG}"
+      fi
+    done
+
   fi 
   if [[ ${DEBUG} = '17' ]]
   then
@@ -3001,30 +3117,30 @@ check_redhat_subscription() {
       SATSITE=`echo $i | cut -f1 -d:`
       SATIP=`echo $i | cut -f2 -d:`
       SATPROTOCOL=`echo $i | cut -f3 -d:`
-      SATPORT=`echo $i | cut -f4 -d:`
+      SATPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /g"`
 
-      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATIP}${RESET}" >> "${LOG}"
+      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATSITE}:${SATIP}${RESET}" >> "${LOG}"
       check_management_route ${SATIP}
       echo "  ping check of Red Hat Satellite Server: ${SATIP}"
       ping ${SATIP} ${PINGCT} > /dev/null
       if [[ $? = 0 ]]
       then
-        printf "%b\n" "    ${GREEN}Satellite Server ${SATIP} is pingable${RESET}" >> "${LOG}"
+        printf "%b\n" "    ${GREEN}Satellite Server ${SATSITE}:${SATIP} is pingable${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}Satellite Server ${SATIP} is not pingable${RESET}" >> "${LOG}"
+        printf "%b\n" "    ${RED}Satellite Server ${SATSITE}:${SATIP} is not pingable${RESET}" >> "${LOG}"
       fi
 
 # since it's a block of ports; easier to check outside the normal variable setup.
       printf "  nc check of Satellite Server ports:"
-      for j in 80 443 5646 5647 5671 5672 8140 9090 
+      for j in ${SATPORTS}
       do
         printf " $j"
         echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "    ${GREEN}Satellite Server (${SATIP}:${j}) is accessible${RESET}" >> "${LOG}"
+          printf "%b\n" "    ${GREEN}Satellite Server (${SATSITE}:${SATIP}:${j}) is accessible${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}Satellite Server (${SATIP}:${j}) is not accessible${RESET}" >> "${LOG}"
+          printf "%b\n" "    ${RED}Satellite Server (${SATSITE}:${SATIP}:${j}) is not accessible${RESET}" >> "${LOG}"
         fi
       done
       printf "\n"
@@ -3841,43 +3957,43 @@ check_time() {
 
       for i in ${TIME_SERVERS}
       do
-        TIMESITE=`echo $i | cut -f1 -d:`
-        TIMEIP=`echo $i | cut -f2 -d:`
-        TIMEPROTOCOL=`echo $i | cut -f2 -d:`
-        TIMEPORT=`echo $i | cut -f2 -d:`
+        TIME_SITE=`echo $i | cut -f1 -d:`
+        TIME_IP=`echo $i | cut -f2 -d:`
+        TIME_PROTOCOL=`echo $i | cut -f2 -d:`
+        TIME_PORT=`echo $i | cut -f2 -d:`
 
-        check_management_route ${TIMEIP}
-        echo "  ping check of time server: ${TIMEIP}"
-        ping ${TIMEIP} ${PINGCT} > /dev/null
+        check_management_route ${TIME_IP}
+        echo "  ping check of time server: ${TIME_IP}"
+        ping ${TIME_IP} ${PINGCT} > /dev/null
         if [[ $? = 0 ]]
         then
-          printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is pingable.${RESET}" >> "${LOG}"
+          printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is pingable.${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not pingable.${RESET}" >> "${LOG}"
+          printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not pingable.${RESET}" >> "${LOG}"
         fi
-        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${TIMEIP}`
+        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${TIME_IP}`
         if [[ -z $OUTPUT ]]
         then
-          printf "%b\n" "      ${RED}GPS Server ${TIMEIP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
+          printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
         else
-          echo "  time check of time server: ${TIMEIP}"
-          ntpdate -q ${TIMEIP} > /dev/null
+          echo "  time check of time server: ${TIME_IP}"
+          ntpdate -q ${TIME_IP} > /dev/null
           if [[ $? = 0 ]]
           then
-            printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} is providing time.${RESET}" >> "${LOG}"
+            printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is providing time.${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "      ${RED}GPS Server ${TIMEIP}:${TIMEPROTOCOL}/${TIMEPORT} is not reachable.${RESET} ntpdate -q ${TIMEIP} failed" >> "${LOG}"
+            printf "%b\n" "      ${RED}GPS Server ${TIME_IP}:${TIME_PROTOCOL}/${TIME_PORT} is not reachable.${RESET} ntpdate -q ${TIME_IP} failed" >> "${LOG}"
           fi
 
 # Updated NTP check - validates ticker status as well as reachability
 # The modified T_COMMAND/awk pipelines now return a string with only "<status> <reachability>" for the provided IP
           if [[ $T_MSG = 'chrony' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${TIMEIP}/'{print substr($1,2,1),$5}'`
+            OUTPUT=`${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,2,1),$5}'`
           fi
           if [[ $T_MSG = 'ntp' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${TIMEIP}/'{print substr($1,1,1),$7}'`
+            OUTPUT=`${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,1,1),$7}'`
           fi
 # Then these ksh constructs split out the status and reachability values without a fork/exec subshell by
 # trimming a prefix/suffix from the combined string using built-in parameter expansion
@@ -3885,7 +4001,7 @@ check_time() {
           STATUS="${OUTPUT%% *}"
           if [[ -z ${REACH} ]]
           then
-            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIMEIP}.${RESET}" >> "${LOG}"
+            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIME_IP}.${RESET}" >> "${LOG}"
           else
 # Reachability should always be 377 - anything else is a problem of some kind, regardless of status or a recent reboot and rerun
             if [[ $REACH = '377' ]]
@@ -3893,13 +4009,13 @@ check_time() {
 # But even if reachability is 377, status must be '*' or '+' also or there's a different kind of problem.
               if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
               then
-                printf "%b\n" "      ${GREEN}GPS Server ${TIMEIP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> "${LOG}"
+                printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> "${LOG}"
 # commenting out for now as this depends on network; converting to rrdtool graph
 #              else
-#                printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> "${LOG}"
+#                printf "%b\n" "      ${RED}GPS Server ${TIME_IP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> "${LOG}"
               fi
             else
-              printf "%b\n" "      ${RED}GPS Server ${TIMEIP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> "${LOG}"
+              printf "%b\n" "      ${RED}GPS Server ${TIME_IP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -4050,7 +4166,7 @@ echo "" >> "${LOG}"
 
 echo "Note:"
 echo "  Ping checks have a count of 1"
-echo "  Netcat (nc) checks have a wait of 2"
+echo "  Port access checks via netcat have a wait of 2"
 echo "  ./chkserver debug [number] displays more messages for that function"
 echo "  ./chkserver view [number] executes just the single function. System config checks are excluded from this."
 echo ""
@@ -4113,7 +4229,7 @@ echo "${VERSION}"
 ####
 ##############
 
-for i in check_hostname:7 check_sudoers:24 check_selinux:29 check_resolver:21 check_routetable:22 check_time:26 check_email:32 check_jumpstart:9 check_redhat_subscription:19 check_interfaces:33 check_swap:25
+for i in check_hostname:7 check_sudoers:24 check_selinux:29 check_resolver:21 check_routetable:22 check_time:26 check_email:32 check_management:9 check_redhat_subscription:19 check_interfaces:33 check_swap:25
 do
   FUNCTION_CALL=`echo $i | cut -f1 -d:`
   FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
@@ -4152,7 +4268,7 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15
+for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57
 do
   FUNCTION_CALL=`echo $i | cut -f1 -d:`
   FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
