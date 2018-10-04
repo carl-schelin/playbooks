@@ -173,7 +173,8 @@
 # 2018/09/28 - CS - Moved all the config checks to functions to clean up the actual checking area
 # 2018/09/28 - CS - Added the ability to just check one function by passing view [value]. The config checks are not part of this check
 # 2018/09/28 - CS - Moved the chksecurity (remote root access) logic into the function
-# 2018/10/03 - CS - Moved the chksecurity (remote root access) logic into the function
+# 2018/10/03 - CS - Added an artifactory function plus cleaned up the various management ping and port checks
+# 2018/10/04 - CS - Moved the chkvx functionality into the script
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -552,13 +553,13 @@ check_artifactory() {
   printf "%b\n" "  ${GREEN}Checking Artifactory Access${RESET}" >> "${LOG}"
   for j in ${ARTIFACTORY_SERVERS}
   do
-    CA_SITE=`echo $j | cut -f1 -d:`
-    CA_IP=`echo $j | cut -f2 -d:`
-    CA_PROTOCOL=`echo $j | cut -f3 -d:`
-    CA_PORTS=`echo $j | cut -f4 -d: | sed -e "s/,/ /g"`
+    CA_SITE=$(echo $j | cut -f1 -d:)
+    CA_IP=$(echo $j | cut -f2 -d:)
+    CA_PROTOCOL=$(echo $j | cut -f3 -d:)
+    CA_PORTS=$(echo $j | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=`grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS}/etc/chkserver.exclude`
+    APPROVED=$(grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS}/etc/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
@@ -938,29 +939,29 @@ check_memory() {
   if [[ ${OS} = 'Linux' ]]
   then
 # in kb
-    MEMORY=`awk '/MemTotal/{print $2}' /proc/meminfo`
+    MEMORY=$(awk '/MemTotal/{print $2}' /proc/meminfo)
     COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
   fi
 
   if [[ ${OS} = 'SunOS' ]]
   then
 # in mb
-    MEMORY=`prtconf | awk '/Memory/{print $3}'`
+    MEMORY=$(prtconf | awk '/Memory/{print $3}')
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
   if [[ ${OS} = 'HP-UX' ]]
   then
 # in mb
-    MEMORY=`machinfo | awk '/Memory:/{print $2}/Memory =/{print $3}'`
+    MEMORY=$(machinfo | awk '/Memory:/{print $2}/Memory =/{print $3}')
 #    if [[ -z ${MEMORY} ]]
 #    then
-#      MEMORY=`machinfo | grep "Memory =" | awk '{print $3}'`
+#      MEMORY=$(machinfo | grep "Memory =" | awk '{print $3}')
 #    fi
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
-  APPROVED=`grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS}/etc/chkserver.exclude`
+  APPROVED=$(grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS}/etc/chkserver.exclude)
 # if blank, then we didn't find an approved value, continue with the check
   if [[ "${APPROVED}" = "" ]]
   then
@@ -1318,7 +1319,7 @@ check_data_palette() {
       DPPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-      APPROVED=`grep -i "^${HOSTNAME}:DataPalette:${DPIP}" ${SCRIPTS}/etc/chkserver.exclude`
+      APPROVED=$(grep -i "^${HOSTNAME}:DataPalette:${DPIP}" ${SCRIPTS}/etc/chkserver.exclude)
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
@@ -1453,7 +1454,7 @@ check_defunct_processes() {
   fi
   printf "%b\n" "  ${GREEN}Defunct Process Check${RESET}" >> "${LOG}"
 
-  DEFUNCT=`ps -ef | grep defunct | grep -v grep | wc -l`
+  DEFUNCT=$(ps -ef | grep defunct | grep -v grep | wc -l)
   if [[ ${DEFUNCT} -gt 0 ]]
   then
     printf "%b\n" "    ${RED}There are ${DEFUNCT} defunct processes${RESET}" >> "${LOG}"
@@ -1611,7 +1612,7 @@ check_email() {
     EMAILPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=`grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS}/etc/chkserver.exclude`
+    APPROVED=$(grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS}/etc/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
@@ -1783,24 +1784,24 @@ check_group_membership() {
           fi
           if [[ -z ${GRPFND} ]]
           then
-            GRPFND=`grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:"`
+            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:")
             if [[ ! -z ${GRPFND} ]]
             then
-              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="?:${i}"
             fi
           else
             if [[ ${CENTRIFY} = 'yes' ]]
             then
-              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="centrify:${i}"
             else
-              PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="*:${i}"
             fi
           fi
         else
-          PRESENT=`grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)"`
+          PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)")
           FOUND="${HOSTNAME}:${i}"
         fi
 
@@ -1829,7 +1830,7 @@ check_hostname() {
   then
     echo "Entering check_hostname(7)"
   fi
-  HOSTNAME=`hostname|cut -f1 -d.`
+  HOSTNAME=$(hostname|cut -f1 -d.)
   grep -i ${HOSTNAME} /etc/hosts > /dev/null
   if [[ $? = 0 ]]
   then
@@ -1857,23 +1858,23 @@ check_interfaces() {
   printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> "${LOG}"
   if [[ $OS = 'SunOS' ]]
   then
-    OUTPUT=`ifconfig -a | grep FAILED`
+    OUTPUT=$(ifconfig -a | grep FAILED)
   fi
   if [[ $OS = 'Linux' ]]
   then
-    OUTPUT=`ifconfig | grep FAILED`
+    OUTPUT=$(ifconfig | grep FAILED)
   fi
   if [[ $OS = 'HP-UX' ]]
   then
     OUTPUT=''
-    for i in `lanscan | grep lan | awk '{print $5}'`
+    for i in $(lanscan | grep lan | awk '{print $5}')
     do
-      OUTPUT="${OUTPUT}`ifconfig $i | grep FAILED`"
+      OUTPUT="${OUTPUT}$(ifconfig $i | grep FAILED)"
     done
   fi
   if [[ $OS = 'FreeBSD' ]]
   then
-    OUTPUT=`ifconfig | grep FAILED`
+    OUTPUT=$(ifconfig | grep FAILED)
   fi
 
   if [[ ! -z ${OUTPUT} ]]
@@ -1902,7 +1903,7 @@ check_intrado() {
   then
     printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> "${LOG}"
   fi
-  CRON=`crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/intrado"`
+  CRON=$(crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/intrado")
   if [[ -z $CRON ]]
   then
     printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> "${LOG}"
@@ -1966,7 +1967,7 @@ check_kubernetes() {
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
 
-    etcdctl --ca-file=/etc/etcd/tls/kube-ca.pem --key-file=/etc/etcd/tls/worker-key.pem --cert-file=/etc/etcd/tls/worker.pem --endpoint=https://`hostname -f`:2379 cluster-health > /dev/null
+    etcdctl --ca-file=/etc/etcd/tls/kube-ca.pem --key-file=/etc/etcd/tls/worker-key.pem --cert-file=/etc/etcd/tls/worker.pem --endpoint=https://$(hostname -f):2379 cluster-health > /dev/null
     if [[ $? -eq 0 ]]
     then
       printf "%b\n" "    ${GREEN}etcd cluster healthy${RESET}" >> "${LOG}"
@@ -1995,7 +1996,7 @@ check_kubernetes() {
     if [[ -f /var/tmp/kubernetes/.config ]]
     then
       printf "%b\n" "  ${GREEN}Checking Kubernetes apiserver VIP status${RESET}" >> "${LOG}"
-      API_SERVER=`grep API_SERVER /var/tmp/kubernetes/.config | cut -f2 -d\"`
+      API_SERVER=$(grep API_SERVER /var/tmp/kubernetes/.config | cut -f2 -d\")
       curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://${API_SERVER}/version > /dev/null 2>&1
       if [[ $? -eq 0 ]]
       then
@@ -2013,15 +2014,15 @@ check_kubernetes() {
       echo "kubectl found; kubectl get nodes"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> "${LOG}"
-    for i in `kubectl get nodes | grep -v NAME | awk '{print $1":"$2}'`
+    for i in $(kubectl get nodes | grep -v NAME | awk '{print $1":"$2}')
     do
       if [[ ${DEBUG} = '11' ]]
       then
         echo $i
       fi
-      NODE=`echo $i | cut -f1 -d:`
+      NODE=$(echo $i | cut -f1 -d:)
 # management nodes are 'Ready,SchedulingDisabled'; just looking for 'Ready' or not.
-      STATUS=`echo $i | cut -f2 -d: | cut -f1 -d,`
+      STATUS=$(echo $i | cut -f2 -d: | cut -f1 -d,)
 
       if [[ ! ${STATUS} = 'Ready' ]]
       then
@@ -2034,16 +2035,16 @@ check_kubernetes() {
       echo "kubectl get namespaces"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> "${LOG}"
-    for i in `kubectl get namespaces | grep Active | egrep -v "(NAME|default)"`
+    for i in $(kubectl get namespaces | grep Active | egrep -v "(NAME|default)")
     do
       FLAG=0
-      for j in `kubectl --namespace=${i} get pods | awk '{print $1":"$2":"$3":"$4}'`
+      for j in $(kubectl --namespace=${i} get pods | awk '{print $1":"$2":"$3":"$4}')
       do
-        CONTAINER=`echo ${j} | cut -f1 -d:`
-        ACTIVE=`echo ${j} | cut -f2 -d: | cut -f1 -d/`
-        EXPECTED=`echo ${j} | cut -f2 -d: | cut -f2 -d/`
-        ERROR=`echo ${j} | cut -f3 -d:`
-        DAYS=`echo ${j} | cut -f4 -d:`
+        CONTAINER=$(echo ${j} | cut -f1 -d:)
+        ACTIVE=$(echo ${j} | cut -f2 -d: | cut -f1 -d/)
+        EXPECTED=$(echo ${j} | cut -f2 -d: | cut -f2 -d/)
+        ERROR=$(echo ${j} | cut -f3 -d:)
+        DAYS=$(echo ${j} | cut -f4 -d:)
         if [[ ${DEBUG} = '11' ]]
         then
           echo ${j}
@@ -2078,7 +2079,7 @@ check_logs() {
   then
     echo "Entering check_logs(12)"
   fi
-  CL_TODAY=`date +"%b %e"`
+  CL_TODAY=$(date +"%b %e")
 
 # default logfile for Solaris
   PLOG="/var/adm/messages"
@@ -2097,7 +2098,7 @@ check_logs() {
 
   printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> "${LOG}"
 
-  OUTPUT=`tail -1 ${PLOG} | grep "^${CL_TODAY}"`
+  OUTPUT=$(tail -1 ${PLOG} | grep "^${CL_TODAY}")
   if [[ -z $OUTPUT ]]
   then
     printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> "${LOG}"
@@ -2122,7 +2123,7 @@ check_lsof() {
   which lsof
   if [[ $? = 0 ]]
   then
-    OUTPUT=`lsof | grep "(deleted)" | wc -l`
+    OUTPUT=$(lsof | grep "(deleted)" | wc -l)
     if [[ $OUTPUT -gt 0 ]]
     then
       printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> "${LOG}"
@@ -2154,13 +2155,13 @@ check_management() {
 
   for i in ${MANAGEMENT_SERVERS}
   do
-    MGTSITE=`echo  $i | cut -f1 -d:`
-    MGTIP=`echo  $i | cut -f2 -d:`
-    MGTPROTOCOL=`echo $i | cut -f3 -d:`
-    MGTPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /"`
+    MGTSITE=$(echo  $i | cut -f1 -d:)
+    MGTIP=$(echo  $i | cut -f2 -d:)
+    MGTPROTOCOL=$(echo $i | cut -f3 -d:)
+    MGTPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=`grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS}/etc/chkserver.exclude`
+    APPROVED=$(grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS}/etc/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
@@ -2228,7 +2229,7 @@ check_netbackup() {
 # netbackup version 7 doesn't use hosts.allow any more.
     if [[ -f /usr/openv/netbackup/bin/version ]]
     then
-      VERSION=`awk '{print $2}' /usr/openv/netbackup/bin/version | cut -f1 -d.`
+      VERSION=$(awk '{print $2}' /usr/openv/netbackup/bin/version | cut -f1 -d.)
 # if 6, check for hosts.allow
 # if 7, no need to check; warning if it exists?      
       if [[ ${VERSION} = 6 ]]
@@ -2268,7 +2269,7 @@ check_netbackup() {
     done
 
 # 13724 is vnetd
-    NBLIST=`netstat -an | grep LISTEN | grep 13724`
+    NBLIST=$(netstat -an | grep LISTEN | grep 13724)
     if [[ -z $NBLIST ]]
     then
       printf "%b\n" "    ${RED}NetBackup vnetd is not running${RESET}" >> "${LOG}"
@@ -2276,7 +2277,7 @@ check_netbackup() {
       printf "%b\n" "    ${GREEN}NetBackup vnetd is running${RESET}" >> "${LOG}"
     fi
 # 13782 is bpcd
-    NBLIST=`netstat -an | grep LISTEN | egrep 13782`
+    NBLIST=$(netstat -an | grep LISTEN | egrep 13782)
     if [[ -z $NBLIST ]]
     then
       printf "%b\n" "    ${RED}NetBackup bpcd is not running${RESET}" >> "${LOG}"
@@ -2612,7 +2613,7 @@ check_netbackup() {
             BPHOSTNAME="${HOSTNAME}bu"
           fi
         fi
-        BPCONF=`grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}'`
+        BPCONF=$(grep CLIENT_NAME /usr/openv/netbackup/bp.conf | awk '{print $3}')
         if [[ ! ${BPCONF} = ${BPHOSTNAME} ]]
         then
           if [[ ${BPCONF} = '' ]]
@@ -2635,15 +2636,15 @@ check_netbackup() {
       then
         printf "%b\n" "    ${RED}${SCRIPTS}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> "${LOG}"
       else
-        OUTPUT=`awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS}/etc/backups.output`
+        OUTPUT=$(awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS}/etc/backups.output)
         if [[ $OS = 'Linux' ]]
         then
-          BUDATE=`date --date=$OUTPUT +"%s"`
+          BUDATE=$(date --date=$OUTPUT +"%s")
         else
-          BUYEAR=`echo $OUTPUT | cut -f3 -d/`
-          BUMONTH=`echo $OUTPUT | cut -f2 -d/`
-          BUDAY=`echo $OUTPUT | cut -f1 -d/`
-          BUDATE=`epoch $BUYEAR $BUMONTH $BUDAY`
+          BUYEAR=$(echo $OUTPUT | cut -f3 -d/)
+          BUMONTH=$(echo $OUTPUT | cut -f2 -d/)
+          BUDAY=$(echo $OUTPUT | cut -f1 -d/)
+          BUDATE=$(epoch $BUYEAR $BUMONTH $BUDAY)
         fi
         EXPIRED=$(( $BUDATE + $SEVEN ))
         if [[ ${EPOCH} -gt ${EXPIRED} ]]
@@ -2676,7 +2677,7 @@ check_nrpe() {
   if [[ -f /usr/sbin/nrpe ]]
   then
     printf "%b\n" "  ${GREEN}The NRPE agent is installed${RESET}" >> "${LOG}"
-    NAGIOS=`ps -e | grep nrpe`
+    NAGIOS=$(ps -e | grep nrpe)
     if [[ -z $NAGIOS ]]
     then
       printf "%b\n" "    ${RED}The NRPE agent is not running${RESET}" >> "${LOG}"
@@ -2736,9 +2737,9 @@ check_openview() {
     return
   fi
 # delete the check openview output file in case it exists and shouldn't
-  if [[ -f $ADMIN/etc/chkopenview.output ]]
+  if [[ -f ${SCRIPTS}/etc/chkopenview.output ]]
   then
-    rm $ADMIN/etc/chkopenview.output
+    rm ${SCRIPTS}/etc/chkopenview.output
   fi
 # check to see if chkov is uncommented
   grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
@@ -2756,15 +2757,16 @@ check_openview() {
   if [[ -d /opt/OV/bin ]]
   then
     printf "%b\n" "  ${GREEN}OpenView agent is installed${RESET}" >> "${LOG}"
-    OPENVIEW=`ps -e | grep ovcd`
+    OPENVIEW=$(ps -e | grep ovcd)
     if [[ -z $OPENVIEW ]]
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
-      ABORT=`/opt/OV/bin/ovcstatus | grep -ci abort`
-      RUNNING=`/opt/OV/bin/ovcstatus | grep -ci running`
-      STOPPED=`/opt/OV/bin/ovcstatus | grep -ci stopped`
-      STARTING=`/opt/OV/bin/ovcstatus | grep -ci starting`
+      /opt/OV/bin/ovstatus > ${SCRIPTS}/var/ovstatus.output
+      ABORT=$(grep -ci abort ${SCRIPTS}/var/ovstatus.output)
+      RUNNING=$(grep -ci running ${SCRIPTS}/var/ovstatus.output)
+      STOPPED=$(grep -ci stopped ${SCRIPTS}/var/ovstatus.output)
+      STARTING=$(grep -ci starting ${SCRIPTS}/var/ovstatus.output)
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
         printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
@@ -2774,13 +2776,13 @@ check_openview() {
 
       for i in ${MONITORING_SERVERS}
       do
-        MONSITE=`echo $i | cut -f1 -d:`
-        MONIP=`echo $i | cut -f2 -d:`
-        MONPROTOCOL=`echo $i | cut -f3 -d:`
-        MONPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /g"`
+        MONSITE=$(echo $i | cut -f1 -d:)
+        MONIP=$(echo $i | cut -f2 -d:)
+        MONPROTOCOL=$(echo $i | cut -f3 -d:)
+        MONPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-        APPROVED=`grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS}/etc/chkserver.exclude`
+        APPROVED=$(grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS}/etc/chkserver.exclude)
         if [[ "${APPROVED}" = "" ]]
         then
           echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
@@ -2820,8 +2822,8 @@ check_openview() {
         fi
       done
 
-      CERTLIST=`/opt/OV/bin/ovcert -list | egrep -vc "(Keystore|Certificates|\+|^$)"`
-      CERTS=`/opt/OV/bin/ovcert -status`
+      CERTLIST=$(/opt/OV/bin/ovcert -list | egrep -vc "(Keystore|Certificates|\+|^$)")
+      CERTS=$(/opt/OV/bin/ovcert -status)
       if [[ ${CERTS} = 'Status: Certificate is installed.' ]]
       then
         printf "%b\n" "    ${GREEN}Certificates (${CERTLIST}) are installed${RESET}" >> "${LOG}"
@@ -2844,7 +2846,7 @@ check_openview() {
         fi
       fi
 
-      BUFFERING=`/opt/OV/bin/opcagt -status | grep -i buffering`
+      BUFFERING=$(/opt/OV/bin/opcagt -status | grep -i buffering)
       if [[ ${BUFFERING} = 'Message Agent is buffering.' ]]
       then
         printf "%b\n" "    ${RED}Openview agent is buffering${RESET}" >> "${LOG}"
@@ -2853,9 +2855,9 @@ check_openview() {
 # check the configuration for Openview.
 # the chkserver.input file should have entries identifying 
 # the ip and management bits
-      EXPECTED_IP=`grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
-      EXPECTED_INTERFACE=`grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
-      EXPECTED_MONITOR=`grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:`
+      EXPECTED_IP=$(grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
+      EXPECTED_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
+      EXPECTED_MONITOR=$(grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
 
       if [[ ${DEBUG} = 16 ]]
       then
@@ -2867,42 +2869,42 @@ check_openview() {
         printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Openview Configuration${RESET}" >> "${LOG}"
       else
 # now check the configuration
-        RESULT=`/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR`
+        RESULT=$(/opt/OV/bin/ovconfget bbc.cb SERVER_BIND_ADDR)
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: bbc.cb SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget bbc.http SERVER_BIND_ADDR`
+        RESULT=$(/opt/OV/bin/ovconfget bbc.http SERVER_BIND_ADDR)
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: bbc.http SERVER_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget bbc.http CLIENT_BIND_ADDR`
+        RESULT=$(/opt/OV/bin/ovconfget bbc.http CLIENT_BIND_ADDR)
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: bbc.http CLIENT_BIND_ADDR=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_IP_ADDRESS`
+        RESULT=$(/opt/OV/bin/ovconfget eaagt OPC_IP_ADDRESS)
         if [[ ! ${EXPECTED_IP} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: eaagt OPC_IP_ADDRESS=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_MGMT_SERVER`
+        RESULT=$(/opt/OV/bin/ovconfget eaagt OPC_MGMT_SERVER)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR`
+        RESULT=$(/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER`
+        RESULT=$(/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
         fi
-        RESULT=`/opt/OV/bin/ovconfget sec.core.auth MANAGER`
+        RESULT=$(/opt/OV/bin/ovconfget sec.core.auth MANAGER)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
           printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
@@ -2912,7 +2914,7 @@ check_openview() {
 # see if any policies are loaded; making sure of linux for sure.
       if [[ -f /opt/OV/bin/ovpolicy ]]
       then
-        POLICIES=`/opt/OV/bin/ovpolicy -list | grep "No policies are installed"`
+        POLICIES=$(/opt/OV/bin/ovpolicy -list | grep "No policies are installed")
         if [[ ! -z ${POLICIES} ]]
         then
           printf "%b\n" "    ${RED}Openview reports no installed policies${RESET} /opt/OV/bin/ovpolicy -list" >> "${LOG}"
@@ -2958,7 +2960,7 @@ check_opnet() {
   then
     printf "%b\n" "  ${GREEN}OpNet is installed${RESET}" >> "${LOG}"
 # Panorama starts as /bin/sh /opt/Panorama/....
-    APPI=`ps -ef | grep "/opt/Panorama/"`
+    APPI=$(ps -ef | grep "/opt/Panorama/")
     if [[ ! -z $APPI ]]
     then
       printf "%b\n" "    ${GREEN}OpNet is running${RESET}" >> "${LOG}"
@@ -2967,7 +2969,7 @@ check_opnet() {
     fi
     if [[ $OS = 'Linux' ]]
     then
-      OUTPUT=`chkconfig --list appinternals | grep ":on"`
+      OUTPUT=$(chkconfig --list appinternals | grep ":on")
       if [[ -z $OUTPUT ]]
       then
         printf "%b\n" "    ${YELLOW}OpNet is not configured to start on boot${RESET}" >> "${LOG}"
@@ -2978,13 +2980,13 @@ check_opnet() {
 
     for j in ${OPNET_SERVERS}
     do
-      OPNETSITE=`echo $j | cut -f1 -d:`
-      OPNETIP=`echo $j | cut -f2 -d:`
-      OPNETPROTOCOL=`echo $j | cut -f3 -d:`
-      OPNETPORTS=`echo $j | cut -f4 -d: | sed -e "s/,/ /g"`
+      OPNETSITE=$(echo $j | cut -f1 -d:)
+      OPNETIP=$(echo $j | cut -f2 -d:)
+      OPNETPROTOCOL=$(echo $j | cut -f3 -d:)
+      OPNETPORTS=$(echo $j | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-      APPROVED=`grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude`
+      APPROVED=$(grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude)
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of OpNet Server: ${OPNETSITE}:${OPNETIP}:${OPNETPORTS}"
@@ -3040,18 +3042,18 @@ check_privileged_access() {
   if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> "${LOG}"
-    for j in `awk -F: '{print $1":"$2":"$4}' ${SCRIPTS}/etc/chksudoers.output`
+    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS}/etc/chksudoers.output)
     do
-      SERVER=`echo $j | cut -f1 -d:`
-      USER=`echo $j | cut -f2 -d:`
-      ROOT=`echo $j | cut -f3 -d:`
+      SERVER=$(echo $j | cut -f1 -d:)
+      USER=$(echo $j | cut -f2 -d:)
+      ROOT=$(echo $j | cut -f3 -d:)
 
       if [[ ${ROOT} = 'yes' ]]
       then
-        OUTPUT=`grep "^\*:${USER}:" ${SCRIPTS}/etc/chksudo.dat`
+        OUTPUT=$(grep "^\*:${USER}:" ${SCRIPTS}/etc/chksudo.dat)
         if [[ -z $OUTPUT ]]
         then
-          OUTPUT=`grep "^${SERVER}:${USER}:" ${SCRIPTS}/etc/chksudo.dat`
+          OUTPUT=$(grep "^${SERVER}:${USER}:" ${SCRIPTS}/etc/chksudo.dat)
           if [[ -z $OUTPUT ]]
           then
             printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> "${LOG}"
@@ -3062,15 +3064,15 @@ check_privileged_access() {
         then
 # only need the date
 #wkkihiecerb21:escott:999999:30010101
-          EXPIREDATE=`echo $OUTPUT | cut -f4 -d:`
+          EXPIREDATE=$(echo $OUTPUT | cut -f4 -d:)
           if [[ $OS = 'Linux' ]]
           then
-            EXPIRE=`date --date="${EXPIREDATE}" +"%s"`
+            EXPIRE=$(date --date="${EXPIREDATE}" +"%s")
           else
-            EXYEAR=`echo $EXPIREDATE | cut -c1-4`
-            EXMONTH=`echo $EXPIREDATE | cut -c5-6`
-            EXDAY=`echo $EXPIREDATE | cut -c7-8`
-            EXPIRE=`epoch $EXYEAR $EXMONTH $EXDAY`
+            EXYEAR=$(echo $EXPIREDATE | cut -c1-4)
+            EXMONTH=$(echo $EXPIREDATE | cut -c5-6)
+            EXDAY=$(echo $EXPIREDATE | cut -c7-8)
+            EXPIRE=$(epoch $EXYEAR $EXMONTH $EXDAY)
           fi
           if [[ ${EPOCH} -gt ${EXPIRE} ]]
           then
@@ -4141,6 +4143,71 @@ check_vpn_route() {
 }
 
 
+######################
+### Doc: Function: check_vxprint_vxdisk(58) - 4 checks
+### Doc: * Checks for the number of stale drives
+### Doc: * Checks for the number of failed drives
+### Doc: * Report if there are not 4 spare drives
+### Doc: * Report if data is found on a spare drive - typically drives are moved back when replacements are found
+######################
+
+check_vxprint_vxdisk() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_vxprint_vxdisk(0)"
+  fi
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    if [[ -f /sbin/vxprint ]] && [[ -f /sbin/vxdisk ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking vxvm Status${RESET}" >> "${LOG}"
+
+      VXPRINTOUT="${SCRIPTS}/var/vxprint.output"
+      VXDISKOUT="${SCRIPTS}/var/vxdisk.output"
+
+      vxprint > ${VXPRINTOUT}
+      vxdisk list > ${VXPRINTOUT}
+
+# Test for stale condition
+      NUMX=$(grep -ci "stale" ${VXPRINTOUT})
+      if [[ ${NUMX} -gt 0 ]]
+      then
+        printf "%b\n" "    ${RED}Stale (failing) drives found: ${NUMX}.${RESET}" >> "${LOG}"
+      fi
+
+# Test for failed drive
+      NUMF=$(grep -ci "fail" ${VXDISKOUT})
+      if [[ ${NUMF} -gt 0 ]]
+      then
+        printf "%b\n" "    ${RED}Failed drives found: ${NUMF}.${RESET}" >> "${LOG}"
+      fi
+
+# Spares should be 4
+      NUMS=$(grep -c "spare" ${VXDISKOUT})
+      if [[ ${NUMS} -ne 4 ]]
+      then
+        printf "%b\n" "    ${YELLOW}Incorrect number of spares found: ${NUMS}.${RESET}" >> "${LOG}"
+      fi
+
+      for drive in $(awk '/spare/ {print $3}' ${VXDISKOUT})
+      do
+        DATA=$(awk -v search="$drive" '$2 ~ search && $7 != "SPARE" {print $2"  "$3}' ${VXPRINTOUT})
+        if [ ! -z ${DATA} ]
+        then
+          printf "%b\n" "    ${YELLOW}Data found on spare drive ${drive}: ${DATA}.${RESET}" >> "${LOG}"
+        fi
+      done
+    fi
+  fi
+
+  if [[ ${DEBUG} = '0' ]]
+  then
+    echo "Exiting check_vxprint_vxdisk()"
+  fi
+}
+
+
 # show documentation for the script
 if [[ ! -z $1 ]] && [[ "$1" = '-h' ]]
 then
@@ -4179,7 +4246,7 @@ echo ""
 
 if [[ ${OS} = "Linux" ]]
 then
-  if [[ `id -u` -ne 0 ]]
+  if [[ $(id -u) -ne 0 ]]
   then
     printf "%b" "${RED}Due to the checks, this script must be run by root.${RESET}\n"
     exit 0
@@ -4192,7 +4259,7 @@ fi
 
 if [[ ${OS} = "HP-UX" ]]
 then
-  if [[ `id -u` -ne 0 ]]
+  if [[ $(id -u) -ne 0 ]]
   then
     printf "%b\n" "${RED}Due to the checks, this script must be run by root.${RESET}"
     exit 0
@@ -4206,7 +4273,7 @@ fi
 
 if [[ ${OS} = "SunOS" ]]
 then
-  if [[ `id | cut -f2 -d= | cut -f1 -d\(` -ne 0 ]]
+  if [[ $(id | cut -f2 -d= | cut -f1 -d\() -ne 0 ]]
   then
     printf "%b\n" "${RED}Due to the checks, this script must be run by root.${RESET}"
     exit 0
@@ -4231,8 +4298,8 @@ echo "${VERSION}"
 
 for i in check_hostname:7 check_sudoers:24 check_selinux:29 check_resolver:21 check_routetable:22 check_time:26 check_email:32 check_management:9 check_redhat_subscription:19 check_interfaces:33 check_swap:25
 do
-  FUNCTION_CALL=`echo $i | cut -f1 -d:`
-  FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
 
   if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
   then
@@ -4242,8 +4309,8 @@ done
 
 for i in check_crash:39 check_techops:30 check_logs:12 check_centrify:2 check_group_membership:6 check_default_passwords:4 check_scanners:38 check_security:36 check_privileged_access:18 check_active_employees:1
 do
-  FUNCTION_CALL=`echo $i | cut -f1 -d:`
-  FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
 
   if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
   then
@@ -4257,8 +4324,8 @@ done
 
 for i in check_kubernetes:11 check_defunct_processes:42 check_disk_suite:31 check_eeprom:37 check_disk_space:31 check_oomkiller:34 check_vmware_agent:27 check_vpn_route:46 check_rrdtool:23 check_cfg2html:28
 do
-  FUNCTION_CALL=`echo $i | cut -f1 -d:`
-  FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
 
   if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
   then
@@ -4268,10 +4335,10 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57
+for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57 check_vxprint_vxdisk:58
 do
-  FUNCTION_CALL=`echo $i | cut -f1 -d:`
-  FUNCTION_NUMBER=`echo $i | cut -f2 -d:`
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
 
   if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
   then
@@ -4295,9 +4362,9 @@ then
     for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS}/etc/chkserver.input)
     do
 
-      FIELD2=`echo "${j}" | cut -f2 -d:`
-      FIELD3=`echo "${j}" | cut -f3 -d:`
-      FIELD4=`echo "${j}" | cut -f4 -d:`
+      FIELD2=$(echo "${j}" | cut -f2 -d:)
+      FIELD3=$(echo "${j}" | cut -f3 -d:)
+      FIELD4=$(echo "${j}" | cut -f4 -d:)
 
       if [[ ${FIELD2} = 'CPU' ]]
       then
