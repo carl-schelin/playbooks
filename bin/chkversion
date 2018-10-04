@@ -23,7 +23,7 @@
 ADMIN=/opt/intrado
 
 # clean up
-for i in datapal httpd informix mysqld netbackup newrelic opnet oracle ovc postgres sudo vmtoolsd wildfly
+for i in datapal httpd informix mysqld netbackup newrelic omsa opnet oracle ovc postgres sudo vmtoolsd wildfly
 do
   if [[ -f $ADMIN/etc/$i.version ]]
   then
@@ -34,27 +34,18 @@ done
 # checking installed software
 # for the chksys script, at least one line needs to be added even if it's just "Installed"
 
-# check for the Openview version
-if [[ -f /opt/OV/bin/opcagt ]]
+##############################################
+### Data Palette - datapal.version
+##############################################
+
+if [[ -f /opt/datapalette/bin/datapal ]]
 then
-  /opt/OV/bin/opcagt -version > $ADMIN/etc/ovc.version
-else
-  if [[ -f /opt/OV/bin/OpC/opcagt ]]
-  then
-    /opt/OV/bin/OpC/opcagt -version > $ADMIN/etc/ovc.version
-  else
-    if [[ -f /opt/OV/bin/ovc ]]
-    then
-      /opt/OV/bin/ovc -version > $ADMIN/etc/ovc.version
-    fi
-  fi
+  echo "Installed" > $ADMIN/etc/datapal.version
 fi
 
-# checking for netbackup
-if [[ -f /usr/openv/netbackup/bin/version ]]
-then
-  cp /usr/openv/netbackup/bin/version $ADMIN/etc/netbackup.version
-fi
+##############################################
+### HTTPD - httpd.version
+##############################################
 
 OUTPUT=`ps -e | grep httpd`
 if [[ ! -z $OUTPUT ]]
@@ -68,6 +59,23 @@ then
   fi
   $OUTPUT -version | head -1 > $ADMIN/etc/httpd.version
 fi
+
+##############################################
+### Informix - informix.version
+##############################################
+
+OUTPUT=`ps -ef | grep oninit | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  if [[ -f /usr/informix/bin/onstat ]]
+  then
+    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > $ADMIN/etc/informix.version
+  fi
+fi
+
+##############################################
+### MySQLd - mysqld.version
+##############################################
 
 OUTPUT=`ps -e | grep mysqld`
 if [[ ! -z $OUTPUT ]]
@@ -94,10 +102,65 @@ then
   fi
 fi
 
-if [[ -f /usr/local/bin/sudo ]]
+##############################################
+### Netbackup - netbackup.version
+##############################################
+
+if [[ -f /usr/openv/netbackup/bin/version ]]
 then
-  /usr/local/bin/sudo -V | head -1 > $ADMIN/etc/sudo.version
+  cp /usr/openv/netbackup/bin/version $ADMIN/etc/netbackup.version
 fi
+
+##############################################
+### New Relic - newrelic.version
+##############################################
+
+OUTPUT=`ps -ef | grep newrelic | grep -v grep`
+if [[ ! -z $OUTPUT ]]
+then
+  echo "Installed" > $ADMIN/etc/newrelic.version
+fi
+
+##############################################
+### Dell Open Manage Report - omsa.version
+##############################################
+
+if [[ -x /opt/dell/srvadmin/bin/omreport ]];
+ then
+   /opt/dell/srvadmin/bin/omreport about > ${ADMIN}/etc/omsa.version
+fi
+
+##############################################
+### Openview - ovc.version
+##############################################
+
+if [[ -f /opt/OV/bin/opcagt ]]
+then
+  /opt/OV/bin/opcagt -version > $ADMIN/etc/ovc.version
+else
+  if [[ -f /opt/OV/bin/OpC/opcagt ]]
+  then
+    /opt/OV/bin/OpC/opcagt -version > $ADMIN/etc/ovc.version
+  else
+    if [[ -f /opt/OV/bin/ovc ]]
+    then
+      /opt/OV/bin/ovc -version > $ADMIN/etc/ovc.version
+    fi
+  fi
+fi
+
+##############################################
+### Opnet - opnet.version
+##############################################
+
+if [[ -d /opt/Panorama ]]
+then
+  echo "Installed" > $ADMIN/etc/opnet.version
+fi
+
+##############################################
+### Oracle - oracle.version
+##############################################
 
 OUTPUT=`ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_`
 if [[ ! -z $OUTPUT ]]
@@ -107,6 +170,10 @@ then
     echo $i >> $ADMIN/etc/oracle.version
   done
 fi
+
+##############################################
+### Postgres - postgres.version
+##############################################
 
 OUTPUT=`ps -ef | grep pgsql | grep -v grep`
 if [[ ! -z $OUTPUT ]]
@@ -122,29 +189,27 @@ then
   $DIR/psql --version | head -1 > $ADMIN/etc/postgres.version
 fi
 
-OUTPUT=`ps -ef | grep oninit | grep -v grep`
-if [[ ! -z $OUTPUT ]]
+##############################################
+### sudo - sudo.version
+##############################################
+
+if [[ -f /usr/local/bin/sudo ]]
 then
-  if [[ -f /usr/informix/bin/onstat ]]
-  then
-    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > $ADMIN/etc/informix.version
-  fi
+  /usr/local/bin/sudo -V | head -1 > $ADMIN/etc/sudo.version
 fi
 
-if [[ -f /opt/datapalette/bin/datapal ]]
-then
-  echo "Installed" > $ADMIN/etc/datapal.version
-fi
-
-if [[ -d /opt/Panorama ]]
-then
-  echo "Installed" > $ADMIN/etc/opnet.version
-fi
+##############################################
+### VMWare Tools - vmtoolsd.version
+##############################################
 
 if [[ -f /usr/sbin/vmtoolsd ]]
 then
   /usr/sbin/vmtoolsd -v > $ADMIN/etc/vmtoolsd.version
 fi
+
+##############################################
+### Wildfly - wildfly.version
+##############################################
 
 OUTPUT=`ps -ef | grep wildfly | grep -v grep`
 if [[ ! -z $OUTPUT ]]
@@ -152,14 +217,4 @@ then
   echo "Installed" > $ADMIN/etc/wildfly.version
 fi
 
-OUTPUT=`ps -ef | grep newrelic | grep -v grep`
-if [[ ! -z $OUTPUT ]]
-then
-  echo "Installed" > $ADMIN/etc/newrelic.version
-fi
-
-if [[ -x /opt/dell/srvadmin/bin/omreport ]];
- then
-   /opt/dell/srvadmin/bin/omreport about > ${ADMIN}/etc/omsa.version
-fi
 
