@@ -154,17 +154,17 @@ then
   NEWGETPRPW_LOCKED=`  /usr/lbin/getprpw -r -m lockout $1 | cut -c6`
   if [[ $NEWGETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_LIFETIME = '1' ]]
   then
-    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d.` $CHANGELOG
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
   fi
   if [[ $NEWGETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_EXCEEDED = '1' ]]
   then
-    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d.` $CHANGELOG
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
   fi
   if [[ $NEWGETPRPW_LOCKED = '0' ]] && [[ $GETPRPW_LOCKED = '1' ]]
   then
-    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d.` $CHANGELOG
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
   fi
   if [[ $NEWGETPRPW_LIFETIME = '1' ]] || [[ $NEWGETPRPW_EXCEEDED = '1' ]] || [[ $NEWGETPRPW_LOCKED  = '1' ]]
@@ -180,7 +180,7 @@ then
   STATUS=`passwd -S $1 | awk '{print $2}'`
   if [[ $STATUS = "PS" ]]
   then
-    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d.` $CHANGELOG
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
   else
     echo "Failed to unlock $1's account. Please open a ticket." | mailx -s "User account unlock failed on `hostname|cut -f1 -d.`" $2
@@ -195,7 +195,7 @@ then
   if [[ $STATUS = "PS" ]]
   then
     echo "Account unlocked." | mailx -s "User account unlocked on `hostname|cut -f1 -d.`" $2
-    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d` $CHANGELOG
+    echo "Unlocked $1's account" | mailx -s `hostname|cut -f1 -d.` $CHANGELOG
   else
     echo "Failed to unlock $1's account. Please open a ticket." | mailx -s "User account unlock failed on `hostname|cut -f1 -d.`" $2
     echo "Failed to unlock $1's account" | mailx -s "Account Unlock Failure on `hostname|cut -f1 -d.`" $WHOCARES
