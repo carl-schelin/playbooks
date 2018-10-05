@@ -109,7 +109,7 @@ fi
 
 # delete any retired scripts and data files.
 
-for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate
+for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile
 do
   if [[ -f /opt/intrado/bin/$i ]]
   then
@@ -117,7 +117,7 @@ do
   fi
 done
 
-for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output
+for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output chkprofile.output
 do
   if [[ -f /opt/intrado/etc/$i ]]
   then
@@ -137,7 +137,7 @@ done
 
 SERVERS="coolcaecada11 coolcaecera11 coolcaecera1b coolcaecera21 coolcaecera2b coolcaecera31 enwdcoecada1b enwdcoecadb1b enwdcoecera1b enwdcoecera2b enwdcoecera3b enwdcoecerb1b "
 SERVERS="$SERVERS enwdcoecerb2b enwdcoecerb3b enwdcoecmpb1b enwdcoecutb1b lnmtcodccl20 miamfldctxb0 miamflecada1b miamflecadb1b miamflecera1b miamflecera2b miamflecera3b "
-SERVERS="$SERVERS miamflecerb1b miamflecerb2b miamflecerb3b miamflecuta1b miamflecutb1b incoov01 chksudo chksecurity chksync chktime"
+SERVERS="$SERVERS miamflecerb1b miamflecerb2b miamflecerb3b miamflecuta1b miamflecutb1b incoov01 "
 
 for i in $SERVERS
 do
