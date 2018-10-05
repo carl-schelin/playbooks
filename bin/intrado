@@ -198,7 +198,7 @@ runscript chkif
 runscript chkdef
 
 # Produces the output of the TMPROOT variable in sudoers
-runscript chksudo
+#runscript chksudo
 
 # check all raid devices
 runscript chkraid
@@ -291,9 +291,6 @@ runscript update.groups
 
 # get the openview configuration
 runscript getovconf
-
-# see if users are looking at the profile or chkserver.output file
-runscript chkprofile
 
 # show the policies
 runscript chkpolicy
@@ -488,11 +485,6 @@ then
   if [[ $DOWEEK = '2' ]]
   then
     runscript logroll
-  fi
-
-  if [[ $DOMONTH = '01' ]]
-  then
-    runscript scanraid
   fi
 
 # ensure log files are set up correctly
