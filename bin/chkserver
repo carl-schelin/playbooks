@@ -367,9 +367,9 @@ EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
 ######################
 
 check_management_route() {
-  IPADDRESS=$1
+  IPADDRESS=${1}
 
-  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
+  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" "${SCRIPTS}/etc/chkserver.input" | cut -f3 -d:)
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
   then
@@ -2815,7 +2815,7 @@ check_openview() {
               printf "%b\n" "    ${RED}bbcutil is unable to ping ${MONSITE}${RESET} /opt/OV/bin/bbcutil -ping ${MONIP}" >> "${LOG}"
             fi
           else
-            printf "%b\n" "    ${RED}Monitoring site ${MONSITE}:{MONIP} is not pingable${RESET}" >> "${LOG}"
+            printf "%b\n" "    ${RED}Monitoring site ${MONSITE}:${MONIP} is not pingable${RESET}" >> "${LOG}"
           fi
         else
           printf "%b\n" "    ${GREEN}Monitoring Server ${MONSITE}:${MONIP} check was skipped.${RESET}" >> "${LOG}"
@@ -3116,10 +3116,10 @@ check_redhat_subscription() {
     fi
     for i in ${SATELLITE_SERVERS}
     do
-      SATSITE=`echo $i | cut -f1 -d:`
-      SATIP=`echo $i | cut -f2 -d:`
-      SATPROTOCOL=`echo $i | cut -f3 -d:`
-      SATPORTS=`echo $i | cut -f4 -d: | sed -e "s/,/ /g"`
+      SATSITE=$(echo $i | cut -f1 -d:)
+      SATIP=$(echo $i | cut -f2 -d:)
+      SATPROTOCOL=$(echo $i | cut -f3 -d:)
+      SATPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
       printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATSITE}:${SATIP}${RESET}" >> "${LOG}"
       check_management_route ${SATIP}
@@ -3159,7 +3159,7 @@ check_redhat_subscription() {
 
       printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> "${LOG}"
 
-      STATUS=`/usr/bin/subscription-manager list | awk '/^Status:/{print $2}'`
+      STATUS=$(/usr/bin/subscription-manager list | awk '/^Status:/{print $2}')
       if [[ ${DEBUG} = '19' ]]
       then
         echo "  Returned status: ${STATUS}"
@@ -3183,12 +3183,12 @@ check_redhat_subscription() {
 
       if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
       then
-        RPM=`rpm -qa | egrep 'katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)'`
+        RPM=$(rpm -qa | egrep 'katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)')
         if [[ -z ${RPM} ]]
         then
           printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | egrep katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)" >> "${LOG}"
         fi
-        RPM=`rpm -qa | grep 'katello-agent'`
+        RPM=$(rpm -qa | grep 'katello-agent')
         if [[ -z ${RPM} ]]
         then
           printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> "${LOG}"
@@ -3222,14 +3222,14 @@ check_removeips() {
     if [[ -f /etc/systemd/logind.conf ]]
     then
 # get the answer
-      OUTPUT=`grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=`
+      OUTPUT=$(grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=)
       if [[ $OUTPUT = 'yes' ]]
       then
         printf "%b\n" "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
       fi
       if [[ -z $OUTPUT ]]
       then
-        OUTPUT=`grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=`
+        OUTPUT=$(grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=)
         if [[ $OUTPUT = 'yes' ]]
         then
           printf "%b\n" "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
@@ -3256,19 +3256,19 @@ check_resolver() {
   fi
   if [[ -f /etc/nsswitch.conf ]]
   then
-    OUTPUT=`grep -i ^hosts: /etc/nsswitch.conf | grep -i dns`
+    OUTPUT=$(grep -i ^hosts: /etc/nsswitch.conf | grep -i dns)
     if [[ -z $OUTPUT ]]
     then
       printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> "${LOG}"
     else
       if [[ -f /etc/resolv.conf ]]
       then
-        COUNT=`grep -v "^#" /etc/resolv.conf | grep -c nameserver`
+        COUNT=$(grep -v "^#" /etc/resolv.conf | grep -c nameserver)
         if [[ $COUNT = 0 ]]
         then
           printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> "${LOG}"
         else
-          for i in `awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf`
+          for i in $(awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf)
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> "${LOG}"
             check_management_route ${i}
@@ -3284,12 +3284,12 @@ check_resolver() {
             then
               for j in ${MANAGEMENT_SERVERS}
               do
-                MGTSITE=`echo $j | cut -f1 -d:`
-                MGTIP=`echo $j | cut -f2 -d:`
-                MGTPROTOCOL=`echo $j | cut -f3 -d:`
-                MGTPORT=`echo $j | cut -f4 -d:`
+                MGTSITE=$(echo $j | cut -f1 -d:)
+                MGTIP=$(echo $j | cut -f2 -d:)
+                MGTPROTOCOL=$(echo $j | cut -f3 -d:)
+                MGTPORT=$(echo $j | cut -f4 -d:)
 
-                OUTPUT=`dig @${i} +time=1 ${MGTSITE} | grep -v "^;" | grep "${MGTIP}"`
+                OUTPUT=$(dig @${i} +time=1 ${MGTSITE} | grep -v "^;" | grep "${MGTIP}")
                 if [[ -z $OUTPUT ]]
                 then
                   printf "%b\n" "    ${RED}Unable to resolve ${MGTSITE}${RESET}" >> "${LOG}"
@@ -3303,14 +3303,14 @@ check_resolver() {
           done
 
 # check all the IPv4 IPs on the system; exclude loopback and private IPs
-          for HOSTIP in `ip addr | grep inet | egrep -v "(inet6|127.0.0.1|192.168.0.)" | awk '{print $2}' | cut -f1 -d/`
+          for HOSTIP in $(ip addr | grep inet | egrep -v "(inet6|127.0.0.1|192.168.0.)" | awk '{print $2}' | cut -f1 -d/)
           do
             if [[ ${DEBUG} = 21 ]]
             then
               echo "IP to be checked: ${HOSTIP}"
             fi
 # lookup the IP address in DNS; response is the hostname
-            for HOSTNM in `dig -x ${HOSTIP} | egrep -v "^(;|$)" | grep PTR | awk '{print $NF}'`
+            for HOSTNM in $(dig -x ${HOSTIP} | egrep -v "^(;|$)" | grep PTR | awk '{print $NF}')
             do
               if [[ ${DEBUG} = 21 ]]
               then
@@ -3324,7 +3324,7 @@ check_resolver() {
                 printf "%b\n" "    ${RED}${HOSTIP} unable to be found in DNS.${RESET} dig -x ${HOSTIP}" >> "${LOG}"
               else
 # got a hostname back, check both that there's a response (not blank)
-                HOSTPTR=`dig ${HOSTNM} | egrep -v "^(;|$)" | grep ${HOSTIP} | awk '{print $NF}'`
+                HOSTPTR=$(dig ${HOSTNM} | egrep -v "^(;|$)" | grep ${HOSTIP} | awk '{print $NF}')
                 if [[ ${DEBUG} = 21 ]]
                 then
                   echo "---------------------"
@@ -3483,9 +3483,9 @@ check_routetable() {
 # checking the HP configuration. Per the docs, there should be incremented changes
 # for each route. The ROUTE_NUMBER command should also equal the number of routes
     echo "  Checking HP-UX Route Configuration"
-    COUNT=`grep -v "^#" /etc/rc.config.d/netconf | grep -c ROUTE_DESTINATION`
+    COUNT=$(grep -v "^#" /etc/rc.config.d/netconf | grep -c ROUTE_DESTINATION)
 # doing a sort in case there are more than one ROUTE_COUNT entries and then just grabbing the last one
-    ACTUAL=`grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_COUNT | sort | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+    ACTUAL=$(grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_COUNT | sort | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
 
     if [[ ! ${COUNT} = ${ACTUAL} ]]
     then
@@ -3493,9 +3493,9 @@ check_routetable() {
     fi
 
 # each ROUTE_DESTINATION line should have unique [x] values
-    for j in `grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_DESTINATION | cut -f2 -d\[ | cut -f1 -d\] | sort -n | uniq`
+    for j in $(grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_DESTINATION | cut -f2 -d\[ | cut -f1 -d\] | sort -n | uniq)
     do
-      COUNT=`grep -v "^#" /etc/rc.config.d/netconf | grep -c "ROUTE_DESTINATION\[${j}\]"`
+      COUNT=$(grep -v "^#" /etc/rc.config.d/netconf | grep -c "ROUTE_DESTINATION\[${j}\]")
       if [[ ${COUNT} -gt 1 ]]
       then
         printf "%b\n" "    ${RED}/etc/rc.config.d/netconf has defined ROUTE_DESTINATION[$j] ${COUNT} times.${RESET}" >> "${LOG}"
@@ -3522,7 +3522,7 @@ check_rrdtool() {
   fi
   if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
   then
-    UPDATERRD=`ps -ef | grep updaterrd`
+    UPDATERRD=$(ps -ef | grep updaterrd)
     if [[ -z $UPDATERRD ]]
     then
       printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> "${LOG}"
@@ -3550,9 +3550,9 @@ check_scanners() {
     printf "%b\n" "  ${GREEN}Checking security scanner routes${RESET}" >> "${LOG}"
     for j in ${SECURITY_SERVERS}
     do
-      SECSITE=`echo $j | cut -f1 -d:`
-      SECZONE=`echo $j | cut -f2 -d:`
-      SECIP=`echo $j | cut -f3 -d:`
+      SECSITE=$(echo $j | cut -f1 -d:)
+      SECZONE=$(echo $j | cut -f2 -d:)
+      SECIP=$(echo $j | cut -f3 -d:)
 
       if [[ ${SERVER_SITE} = ${SECSITE} ]]
       then
@@ -3589,7 +3589,7 @@ check_security() {
 
     if [[ ! -z $SSHD ]]
     then
-      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
       if [[ -z $PRL ]]
       then
         PRL="yes"
@@ -3614,7 +3614,7 @@ check_security() {
 
     if [[ ! -z $SSHD ]]
     then
-      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
       if [[ -z $PRL ]]
       then
         PRL="yes"
@@ -3639,10 +3639,10 @@ check_security() {
 
     if [[ ! -z $SSHD ]]
     then
-      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
       if [[ -z $PRL ]]
       then
-        CONSOLE=`grep -v "^#" /etc/default/login | grep -i console`
+        CONSOLE=$(grep -v "^#" /etc/default/login | grep -i console)
         if [[ -z $CONSOLE ]]
         then
           PRL="yes"
@@ -3670,7 +3670,7 @@ check_security() {
 
     if [[ ! -z $SSHD ]]
     then
-      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
       if [[ -z $PRL ]]
       then
         PRL="yes"
@@ -3687,7 +3687,7 @@ check_security() {
 
     if [[ ! -z $SSHD ]]
     then
-      PRL=`grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}'`
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
       if [[ -z $PRL ]]
       then
         PRL="yes"
@@ -3724,10 +3724,10 @@ check_selinux() {
       echo ""
     fi
     printf "%b\n" "  ${GREEN}Checking selinux status${RESET}" >> "${LOG}"
-    SESTATUS=`sestatus | awk '/status/ {print $3}'`
+    SESTATUS=$(sestatus | awk '/status/ {print $3}')
     if [[ ${SESTATUS} = 'enabled' ]]
     then
-      ENABLED=`sestatus | awk '/Current mode:/ {print $3}'`
+      ENABLED=$(sestatus | awk '/Current mode:/ {print $3}')
       if [[ ${ENABLED} = 'enforcing' ]]
       then
         printf "%b\n" "    ${RED}selinux is in Enforcing mode${RESET}" >> "${LOG}"
@@ -3777,13 +3777,13 @@ check_sudoers() {
     then
       echo "  Checking groups are a real group."
     fi
-    for i in `awk '/^%/{sub(/%/,"",$1);print $1}' ${SUDOERS}`
+    for i in $(awk '/^%/{sub(/%/,"",$1);print $1}' ${SUDOERS})
     do
       if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
       then
         if [[ ${DEBUG} = '24' ]]
         then
-          OUTPUT=`grep "^${i}:" /etc/group`
+          OUTPUT=$(grep "^${i}:" /etc/group)
           echo "    Checking ^${i}: in /etc/group. Found: ${OUTPUT}"
         fi
         grep "^${i}:" /etc/group > /dev/null
@@ -3794,7 +3794,7 @@ check_sudoers() {
       else
         if [[ ${DEBUG} = '24' ]]
         then
-          OUTPUT=`getent group ${i}`
+          OUTPUT=$(getent group ${i})
           echo "    Checking for ^${i}:. Found: ${OUTPUT}"
         fi
         getent group ${i} > /dev/null
@@ -3826,14 +3826,14 @@ check_swap() {
   then
     echo "Entering check_swap(25)"
   fi
-  APPROVED=`grep -i "^${HOSTNAME}:Swap" ${SCRIPTS}/etc/chkserver.exclude | cut -f3 -d:`
+  APPROVED=$(grep -i "^${HOSTNAME}:Swap" ${SCRIPTS}/etc/chkserver.exclude | cut -f3 -d:)
   if [[ $OS = 'Linux' ]]
   then
     if [[ -f /usr/sbin/lvdisplay ]]
     then
-      SWAP=`awk '/swap/{print $1}' /etc/fstab`
-      SIZE=`lvdisplay ${SWAP} | awk '/LV Size/{print $3}'`
-      TOTAL=`awk '/MemTotal/{print $2}' /proc/meminfo`
+      SWAP=$(awk '/swap/{print $1}' /etc/fstab)
+      SIZE=$(lvdisplay ${SWAP} | awk '/LV Size/{print $3}')
+      TOTAL=$(awk '/MemTotal/{print $2}' /proc/meminfo)
       MEMORY=$(( ${TOTAL} / 1024 / 1024 + 1 ))
 
       if [[ ${DEBUG} = '25' ]]
@@ -3842,9 +3842,9 @@ check_swap() {
       fi
 
 # try this with free instead
-      SWAP=`free | awk '/Swap/{print $2}'`
-      ADDED=`echo "${SWAP} / 1024 / 1024" | bc`
-      SIZE=`echo "(${SWAP} / 1024 + ${ADDED}) / 1024" | bc`
+      SWAP=$(free | awk '/Swap/{print $2}')
+      ADDED=$(echo "${SWAP} / 1024 / 1024" | bc)
+      SIZE=$(echo "(${SWAP} / 1024 + ${ADDED}) / 1024" | bc)
 
       if [[ ${DEBUG} = '25' ]]
       then
@@ -3931,7 +3931,7 @@ check_time() {
     T_MSG='chrony'
     T_COMMAND='/bin/chronyc -n sources'
     T_CONFIG='/etc/chrony.conf'
-    T_RUNNING=`ps -e | grep chronyd`
+    T_RUNNING=$(ps -e | grep chronyd)
   fi
 
 # everything else; Sun and older Red Hat
@@ -3945,7 +3945,7 @@ check_time() {
     else
       T_CONFIG='/etc/ntp.conf'
     fi
-    T_RUNNING=`ps -ef | egrep "(xntpd|ntpd)"`
+    T_RUNNING=$(ps -ef | egrep "(xntpd|ntpd)")
   fi
 
 # is it installed?
@@ -3959,10 +3959,10 @@ check_time() {
 
       for i in ${TIME_SERVERS}
       do
-        TIME_SITE=`echo $i | cut -f1 -d:`
-        TIME_IP=`echo $i | cut -f2 -d:`
-        TIME_PROTOCOL=`echo $i | cut -f2 -d:`
-        TIME_PORT=`echo $i | cut -f2 -d:`
+        TIME_SITE=$(echo $i | cut -f1 -d:)
+        TIME_IP=$(echo $i | cut -f2 -d:)
+        TIME_PROTOCOL=$(echo $i | cut -f2 -d:)
+        TIME_PORT=$(echo $i | cut -f2 -d:)
 
         check_management_route ${TIME_IP}
         echo "  ping check of time server: ${TIME_IP}"
@@ -3973,7 +3973,7 @@ check_time() {
         else
           printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not pingable.${RESET}" >> "${LOG}"
         fi
-        OUTPUT=`grep -v "^#" ${T_CONFIG} | grep ${TIME_IP}`
+        OUTPUT=$(grep -v "^#" ${T_CONFIG} | grep ${TIME_IP})
         if [[ -z $OUTPUT ]]
         then
           printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
@@ -3991,11 +3991,11 @@ check_time() {
 # The modified T_COMMAND/awk pipelines now return a string with only "<status> <reachability>" for the provided IP
           if [[ $T_MSG = 'chrony' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,2,1),$5}'`
+            OUTPUT=$(${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,2,1),$5}')
           fi
           if [[ $T_MSG = 'ntp' ]]
           then
-            OUTPUT=`${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,1,1),$7}'`
+            OUTPUT=$(${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,1,1),$7}')
           fi
 # Then these ksh constructs split out the status and reachability values without a fork/exec subshell by
 # trimming a prefix/suffix from the combined string using built-in parameter expansion
@@ -4023,8 +4023,8 @@ check_time() {
         fi
       done
 
-      DRIFTFILE=`awk '/^[^#]?driftfile/{df=$2}END{print df}' ${T_CONFIG}`
-      DRIFTPATH=`dirname ${DRIFTFILE}`
+      DRIFTFILE=$(awk '/^[^#]?driftfile/{df=$2}END{print df}' ${T_CONFIG})
+      DRIFTPATH=$(dirname ${DRIFTFILE})
       if [[ -d ${DRIFTPATH} ]]
       then
         if [[ ! -f ${DRIFTFILE} ]]
@@ -4069,7 +4069,7 @@ check_vmware_agent() {
     if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
     then
       printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> "${LOG}"
-      VMTOOLS=`ps -e | grep vmtoolsd`
+      VMTOOLS=$(ps -e | grep vmtoolsd)
       if [[ -z $VMTOOLS ]]
       then
         printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> "${LOG}"
@@ -4084,7 +4084,7 @@ check_vmware_agent() {
     then
       if [[ ${OSMAJOR} = '7' ]]
       then
-        OUTPUT=`systemctl status ctrl-alt-del.target | grep "Loaded: masked"`
+        OUTPUT=$(systemctl status ctrl-alt-del.target | grep "Loaded: masked")
         if [[ -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
@@ -4092,7 +4092,7 @@ check_vmware_agent() {
       fi
       if [[ ${OSMAJOR} = '6' ]]
       then
-        OUTPUT=`egrep "^(start|exec)" /etc/init/control-alt-delete.conf`
+        OUTPUT=$(egrep "^(start|exec)" /etc/init/control-alt-delete.conf)
         if [[ ! -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> "${LOG}"
@@ -4100,7 +4100,7 @@ check_vmware_agent() {
       fi
       if [[ ${OSMAJOR} = '5' ]]
       then
-        OUTPUT=`grep "^ca::ctrlaltdel" /etc/inittab`
+        OUTPUT=$(grep "^ca::ctrlaltdel" /etc/inittab)
         if [[ ! -z ${OUTPUT} ]]
         then
           printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
