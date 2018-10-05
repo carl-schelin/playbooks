@@ -41,8 +41,11 @@ fi
 
 if [[ -d /opt/nbu ]]
 then
-  echo "Removing /opt/nbu"
-  rm -rf /opt/nbu
+  if [[ -f /usr/openv/netbackup/bp.conf ]]
+  then
+    echo "Removing /opt/nbu"
+    rm -rf /opt/nbu
+  fi
 fi
 
 if [[ -f /var/tmp/openview.failed ]]
