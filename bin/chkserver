@@ -1853,7 +1853,7 @@ check_guid() {
     echo "Entering check_guid(60)"
   fi
 
-  find / -user root -perm -2000 > ${SCRIPTS_LOGS}/chkguid.review
+  find / -user root -perm -2000 | sort > ${SCRIPTS_LOGS}/chkguid.review
 
   compare_files chkguid
 
@@ -3871,7 +3871,7 @@ check_suid() {
     echo "Entering check_suid(59)"
   fi
 
-  find / -user root -perm -4000 > ${SCRIPTS_LOGS}/chksuid.review
+  find / -user root -perm -4000 | sort > ${SCRIPTS_LOGS}/chksuid.review
 
   compare_files chksuid
 
