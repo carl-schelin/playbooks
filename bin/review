@@ -39,7 +39,7 @@ else
   if [[ -f ${SCRIPTS_LOGS}/${CHKFILE}.review && ! -f ${SCRIPTS_LOGS}/${CHKFILE}.valid ]]
   then
     print "\n-- ${CHKFILE}.valid doesn't exist ----------"
-    more ${SCRIPTS_LOGS}/$CHKFILE.valid
+    more ${SCRIPTS_LOGS}/$CHKFILE.review
     print -n "\nOkay to update ${CHKFILE}.valid with ${CHKFILE}.review? [y] "
     read CHECK
     if [[ -z ${CHECK} ]] || [[ "${CHECK}" = "y" ]]
