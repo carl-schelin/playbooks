@@ -175,6 +175,7 @@
 # 2018/09/28 - CS - Moved the chksecurity (remote root access) logic into the function
 # 2018/10/03 - CS - Added an artifactory function plus cleaned up the various management ping and port checks
 # 2018/10/04 - CS - Moved the chkvx functionality into the script
+# 2018/10/08 - CS - Added a comparison function and a check of suid and guid files
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -188,7 +189,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.250"
+VERSION="${BASENAME} v1.253"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -198,7 +199,7 @@ GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
 RESET="\033[0m"
-LOG=${SCRIPTS}/etc/chkserver.output
+LOG=${SCRIPTS_LOGS}/chkserver.output
 SEVEN=$(( 86400 * 7 ))
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
 
@@ -248,6 +249,7 @@ then
       VIEW=$2
     fi
   fi
+
 fi
 
 if [[ -f "${LOG}" ]]
@@ -369,7 +371,7 @@ EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
 check_management_route() {
   IPADDRESS=${1}
 
-  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" "${SCRIPTS}/etc/chkserver.input" | cut -f3 -d:)
+  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
   then
@@ -438,6 +440,25 @@ check_management_route() {
   fi
 }
 
+# report if a .valid file doesn't exist or if the .diff file is > 0 bytes in size indicating something's changed
+compare_files() {
+  CF_PASSED=${1}
+
+  if [[ ! -f ${SCRIPTS_LOGS}/${CF_PASSED}.review ]]
+  then
+    printf "%b\n" "  ${YELLOW}${CF_PASSED}.review file doesn't exist.${RESET}" >> "${LOG}"
+  else
+    if [[ ! -f ${SCRIPTS_LOGS}/${CF_PASSED}.valid ]]
+    then
+      printf "%b\n" "  ${YELLOW}${CF_PASSED}.valid file doesn't exist.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
+    else
+      if [[ -s ${SCRIPTS_LOGS}/${CF_PASSED}.diff ]]
+      then
+        printf "%b\n" "  ${RED}${CF_PASSED}.diff is indicating changes have occurred on the system and review is required.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
+      fi
+    fi
+  fi
+}
 
 
 ###################################
@@ -469,12 +490,12 @@ check_active_employees() {
   then
     echo "Entering check_active_employees(1)"
   fi
-  if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
+  if [[ -f ${SCRIPTS_DATA}/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> "${LOG}"
     for j in $(cut -f1 -d: /etc/passwd)
     do
-      grep -i "^${j}$" ${SCRIPTS}/etc/users.exclude > /dev/null
+      grep -i "^${j}$" ${SCRIPTS_DATA}/users.exclude > /dev/null
       if [[ $? = 1 ]]
       then
 
@@ -517,10 +538,10 @@ check_active_employees() {
           EMAIL=$(grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,)
           if [[ ! -z $EMAIL ]]
           then
-            grep -i "^${EMAIL}$" ${SCRIPTS}/etc/intrado.email > /dev/null
+            grep -i "^${EMAIL}$" ${SCRIPTS_DATA}/intrado.email > /dev/null
             if [[ $? = 1 ]]
             then
-              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS}/etc/intrado.email file and the account isn't locked.${RESET}" >> "${LOG}"
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS_DATA}/intrado.email file and the account isn't locked.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -559,7 +580,7 @@ check_artifactory() {
     CA_PORTS=$(echo $j | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=$(grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS}/etc/chkserver.exclude)
+    APPROVED=$(grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
@@ -961,7 +982,7 @@ check_memory() {
     COUNT=$(( $MEMORY / 1024 + 1 ))
   fi
 
-  APPROVED=$(grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS}/etc/chkserver.exclude)
+  APPROVED=$(grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS_DATA}/chkserver.exclude)
 # if blank, then we didn't find an approved value, continue with the check
   if [[ "${APPROVED}" = "" ]]
   then
@@ -1319,7 +1340,7 @@ check_data_palette() {
       DPPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-      APPROVED=$(grep -i "^${HOSTNAME}:DataPalette:${DPIP}" ${SCRIPTS}/etc/chkserver.exclude)
+      APPROVED=$(grep -i "^${HOSTNAME}:DataPalette:${DPIP}" ${SCRIPTS_DATA}/chkserver.exclude)
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
@@ -1481,7 +1502,7 @@ check_disk_space() {
   fi
 
   printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> "${LOG}"
-  DISKSPACE=${SCRIPTS}/etc/diskspace.output
+  DISKSPACE=${SCRIPTS_LOGS}/diskspace.output
   if [[ $OS = "HP-UX" ]]
   then
     bdf -l > ${DISKSPACE}
@@ -1612,7 +1633,7 @@ check_email() {
     EMAILPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=$(grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS}/etc/chkserver.exclude)
+    APPROVED=$(grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
@@ -1816,6 +1837,28 @@ check_group_membership() {
   if [[ ${DEBUG} = '6' ]]
   then
     echo "Exiting check_group_membership()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_guid(60) - 
+### Doc: * 
+######################
+
+check_guid() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_guid(60)"
+  fi
+
+  find / -user root -perm -2000 > ${SCRIPTS_LOGS}/chkguid.review
+
+  compare_files chkguid
+
+  if [[ ${DEBUG} = '60' ]]
+  then
+    echo "Exiting check_guid()"
   fi
 }
 
@@ -2161,7 +2204,7 @@ check_management() {
     MGTPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /")
 
 # looking for a skip entry in the chkserver.exclude file
-    APPROVED=$(grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS}/etc/chkserver.exclude)
+    APPROVED=$(grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
       echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
@@ -2762,11 +2805,11 @@ check_openview() {
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
-      /opt/OV/bin/ovstatus > ${SCRIPTS}/var/ovstatus.output
-      ABORT=$(grep -ci abort ${SCRIPTS}/var/ovstatus.output)
-      RUNNING=$(grep -ci running ${SCRIPTS}/var/ovstatus.output)
-      STOPPED=$(grep -ci stopped ${SCRIPTS}/var/ovstatus.output)
-      STARTING=$(grep -ci starting ${SCRIPTS}/var/ovstatus.output)
+      /opt/OV/bin/opcagt status > ${SCRIPTS}/var/opcagt.status.output
+      ABORT=$(grep -ci abort ${SCRIPTS}/var/opcagt.status.output)
+      RUNNING=$(grep -ci running ${SCRIPTS}/var/opcagt.status.output)
+      STOPPED=$(grep -ci stopped ${SCRIPTS}/var/opcagt.status.output)
+      STARTING=$(grep -ci starting ${SCRIPTS}/var/opcagt.status.output)
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
         printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
@@ -2782,7 +2825,7 @@ check_openview() {
         MONPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-        APPROVED=$(grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS}/etc/chkserver.exclude)
+        APPROVED=$(grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS_DATA}/chkserver.exclude)
         if [[ "${APPROVED}" = "" ]]
         then
           echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
@@ -2855,9 +2898,9 @@ check_openview() {
 # check the configuration for Openview.
 # the chkserver.input file should have entries identifying 
 # the ip and management bits
-      EXPECTED_IP=$(grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
-      EXPECTED_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
-      EXPECTED_MONITOR=$(grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS}/etc/chkserver.input | cut -f3 -d:)
+      EXPECTED_IP=$(grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
+      EXPECTED_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
+      EXPECTED_MONITOR=$(grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
 
       if [[ ${DEBUG} = 16 ]]
       then
@@ -2986,7 +3029,7 @@ check_opnet() {
       OPNETPORTS=$(echo $j | cut -f4 -d: | sed -e "s/,/ /g")
 
 # looking for a skip entry in the chkserver.exclude file
-      APPROVED=$(grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS}/etc/chkserver.exclude)
+      APPROVED=$(grep -i "^${HOSTNAME}:OpNet:${OPNETIP}" ${SCRIPTS_DATA}/chkserver.exclude)
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of OpNet Server: ${OPNETSITE}:${OPNETIP}:${OPNETPORTS}"
@@ -3817,6 +3860,28 @@ check_sudoers() {
 
 
 ######################
+### Doc: Function: check_suid(59) - 
+### Doc: * 
+######################
+
+check_suid() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_suid(59)"
+  fi
+
+  find / -user root -perm -4000 > ${SCRIPTS_LOGS}/chksuid.review
+
+  compare_files chksuid
+
+  if [[ ${DEBUG} = '59' ]]
+  then
+    echo "Exiting check_suid()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_swap(25) - 1 check
 ### Doc: * Verify that swap matches the expected size. equals ram up to 8G and 8G for greater than that.
 ######################
@@ -3826,7 +3891,7 @@ check_swap() {
   then
     echo "Entering check_swap(25)"
   fi
-  APPROVED=$(grep -i "^${HOSTNAME}:Swap" ${SCRIPTS}/etc/chkserver.exclude | cut -f3 -d:)
+  APPROVED=$(grep -i "^${HOSTNAME}:Swap" ${SCRIPTS_DATA}/chkserver.exclude | cut -f3 -d:)
   if [[ $OS = 'Linux' ]]
   then
     if [[ -f /usr/sbin/lvdisplay ]]
@@ -4154,7 +4219,7 @@ check_vpn_route() {
 check_vxprint_vxdisk() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_vxprint_vxdisk(0)"
+    echo "Entering check_vxprint_vxdisk(58)"
   fi
 
   if [[ ${OS} = 'HP-UX' ]]
@@ -4201,7 +4266,7 @@ check_vxprint_vxdisk() {
     fi
   fi
 
-  if [[ ${DEBUG} = '0' ]]
+  if [[ ${DEBUG} = '58' ]]
   then
     echo "Exiting check_vxprint_vxdisk()"
   fi
@@ -4335,7 +4400,7 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57 check_vxprint_vxdisk:58
+for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57 check_vxprint_vxdisk:58 check_suid:0 check_guid:0
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
@@ -4351,7 +4416,7 @@ done
 if [[ $VIEW -eq 0 ]]
 then
 # these checks are pulled from the auto-generated chkserver.input file.
-  if [[ -f ${SCRIPTS}/etc/chkserver.input ]]
+  if [[ -f ${SCRIPTS_DATA}/chkserver.input ]]
   then
 
     if [[ ! ${DEBUG} = 'no' ]]
@@ -4359,7 +4424,7 @@ then
       echo "Entering chkserver.input system configuration check"
     fi
 
-    for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS}/etc/chkserver.input)
+    for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS_DATA}/chkserver.input)
     do
 
       FIELD2=$(echo "${j}" | cut -f2 -d:)
