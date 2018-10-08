@@ -189,7 +189,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.253"
+VERSION="${BASENAME} v1.254"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -452,6 +452,7 @@ compare_files() {
     then
       printf "%b\n" "  ${YELLOW}${CF_PASSED}.valid file doesn't exist.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
     else
+      diff ${SCRIPTS_LOGS}/${CF_PASSED}.review ${SCRIPTS_LOGS}/${CF_PASSED}.valid > ${SCRIPTS_LOGS}/${CF_PASSED}.diff
       if [[ -s ${SCRIPTS_LOGS}/${CF_PASSED}.diff ]]
       then
         printf "%b\n" "  ${RED}${CF_PASSED}.diff is indicating changes have occurred on the system and review is required.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
