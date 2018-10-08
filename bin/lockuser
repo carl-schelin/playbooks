@@ -141,10 +141,6 @@ LOCKUSERS() {
     fi
   fi
 
-  if [[ ! -z $LOCKED ]]; then
-    echo "Locked $LOCKED account(s)" > $ADMIN/etc/locked.output
-  fi
-  
   if [[ $OS = 'FreeBSD' ]]; then
     for i in $USERTOLOCK; do
       # check for locked account
