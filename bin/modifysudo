@@ -17,12 +17,9 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
-ADMIN=/opt/intrado
+HOSTNAME=$(hostname | cut -f1 -d. | tr '[:lower:]' '[:upper:]')
 SUDOTMP=${SCRIPTS_LOGS}/sudoers.unixsvc
-WHOCARES="unixadmins@intrado.com"
 WHOCARES="carl.schelin@intrado.com"
-CHANGELOG="changelog@incojs01.scc911.com"
 
 # if a changefreeze is in effect, stop the execution of the script.
 if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
@@ -90,22 +87,22 @@ fi
 if [[ -f ${SUDOERS} ]]
 then
 # search for the ansible group and add the unixsvc rule if it's missing
-  grep ansgrp ${SUDOERS} > /dev/null
+  grep ansgrp "${SUDOERS}" > /dev/null
   if [[ $? -eq 1 ]]
   then
 # back it up
-    cp ${SUDOERS} ${SUDOTMP}
+    cp "${SUDOERS}" "${SUDOTMP}"
 # verify a clean copy
-    diff ${SUDOERS} ${SUDOTMP} > /dev/null
+    diff "${SUDOERS}" "${SUDOTMP}" > /dev/null
     if [[ $? -eq 0 ]]
     then
 # remove old unixsvc info if it exists
-      egrep -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
+      egrep -v "^unixsvc.*NOPASSWD:" "${SUDOTMP}" > "${SUDOERS}"
 
 # add new info
-      echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
+      echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> "${SUDOERS}"
       echo "" >> ${SUDOERS}
-      echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      echo "Added unixsvc rule to ${SUDOERS} via the modifysudo script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
     fi
   fi
 
@@ -113,14 +110,14 @@ then
   grep towersvc /etc/passwd > /dev/null
   if [[ $? -eq 0 ]]
   then
-    grep "^towersvc" ${SUDOERS}
+    grep "^towersvc" "${SUDOERS}"
     if [[ $? -eq 1 ]]
     then
 
 # then update the tower rule if it doesn't exist
-      echo "towersvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
-      echo "" >> ${SUDOERS}
-      echo "Added towersvc rule to $SUDOERS via the modifysudo script" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      echo "towersvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> "${SUDOERS}"
+      echo "" >> "${SUDOERS}"
+      echo "Added towersvc rule to $SUDOERS via the modifysudo script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
     fi
   fi
 fi
