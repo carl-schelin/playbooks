@@ -5,14 +5,27 @@
 # 20170301 CS update to add '(%ansgrp)' and ansgrp with root membership
 # 20170321 CS update to add '(%ansgrp)' and ansgrp with root membership
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 HOSTNAME=`hostname | cut -f1 -d. | tr [a-z] [A-Z]`
-OS=`uname`
 ADMIN=/opt/intrado
-SUDOTMP=$ADMIN/etc/sudoers.unixsvc
-PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin; export PATH
+SUDOTMP=${SCRIPTS_LOGS}/sudoers.unixsvc
+WHOCARES="unixadmins@intrado.com"
+WHOCARES="carl.schelin@intrado.com"
+CHANGELOG="changelog@incojs01.scc911.com"
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f $ADMIN/etc/changefreeze ]]
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
 then
   exit 0
 fi
@@ -51,18 +64,18 @@ fi
 # if no sudo file then it's not installed/not found
 if [[ "${SUDOERS}" = "" ]]
 then
-  echo "Not found" | mailx -s "Sudoers not found: ${HOSTNAME}" carl.schelin@intrado.com
+  echo "Not found" | mailx -s "Sudoers not found: ${HOSTNAME}" ${WHOCARES}
   exit 0
 fi
 
 grep ansgrp /etc/group > /dev/null
-if [[ $? = 1 ]]
+if [[ $? -eq 1 ]]
 then
   groupadd ansgrp
 fi
 
 egrep "ansgrp.*root" /etc/group > /dev/null
-if [[ $? = 1 ]]
+if [[ $? -eq 1 ]]
 then
   if [[ ${OS} = 'Linux' ]]
   then
@@ -78,13 +91,13 @@ if [[ -f ${SUDOERS} ]]
 then
 # search for the ansible group and add the unixsvc rule if it's missing
   grep ansgrp ${SUDOERS} > /dev/null
-  if [[ $? = 1 ]]
+  if [[ $? -eq 1 ]]
   then
 # back it up
     cp ${SUDOERS} ${SUDOTMP}
 # verify a clean copy
     diff ${SUDOERS} ${SUDOTMP} > /dev/null
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
 # remove old unixsvc info if it exists
       egrep -v "^unixsvc.*NOPASSWD:" ${SUDOTMP} > ${SUDOERS}
@@ -92,22 +105,22 @@ then
 # add new info
       echo "unixsvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
       echo "" >> ${SUDOERS}
-      echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+      echo "Added unixsvc rule to $SUDOERS via the modifysudo script" | mailx -s ${HOSTNAME} ${CHANGELOG}
     fi
   fi
 
 # add the same for towersvc if the account exists
   grep towersvc /etc/passwd > /dev/null
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     grep "^towersvc" ${SUDOERS}
-    if [[ $? = 1 ]]
+    if [[ $? -eq 1 ]]
     then
 
 # then update the tower rule if it doesn't exist
       echo "towersvc		${HOSTNAME} = (%ansgrp) NOPASSWD: ${BINSH} -c *" >> ${SUDOERS}
       echo "" >> ${SUDOERS}
-      echo "Added towersvc rule to $SUDOERS via the modifysudo script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+      echo "Added towersvc rule to $SUDOERS via the modifysudo script" | mailx -s ${HOSTNAME} ${CHANGELOG}
     fi
   fi
 fi
