@@ -18,7 +18,7 @@ fi
 . "${DIRNAME}"/../.config
 
 VERS=$(uname -a | awk '{print $3}')
-LOGS="${SCRIPTS}/etc/apa.output"
+LOGS="${SCRIPTS_DATA}/apa.output"
 
 if [[ $OS = "HP-UX" ]]
 then
