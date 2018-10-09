@@ -3,11 +3,22 @@
 # Check the version of bash installed on the various platforms.
 # Documentation: https://incowk01/makers/index.php?title=Chkbash
 # updated to retrieve the CVE info from the changelog on Red Hat and CentOS
-OS=`uname`
-INTRADO=/opt/intrado
-LOG=$INTRADO/etc/bash.vulnerable
-CVE=$INTRADO/etc/bash.cve
-BIN=$INTRADO/bin
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+LOG=${SCRIPTS_LOGS}/bash.vulnerable
+CVE=${SCRIPTS_LOGS}/bash.cve
+BIN=${SCRIPTS_BINS}
 OUTPUT=''
 
 # try to bypass the 'can't find bash' problem on hp-ux
@@ -30,11 +41,6 @@ fi
 
 if [[ ! -z $BASHBIN ]]
 then
-
-  if [[ ! -d $INTRADO/log ]]
-  then
-    mkdir $INTRADO/log
-  fi
 
   if [[ $OS = 'Linux' ]]
   then
