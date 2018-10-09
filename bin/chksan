@@ -19,9 +19,9 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-if [[ -f ${SCRIPTS}/etc/${BASENAME}.output ]]
+if [[ -f ${SCRIPTS_LOGS}/${BASENAME}.output ]]
 then
-  rm "${SCRIPTS}/etc/${BASENAME}.output"
+  rm "${SCRIPTS_LOGS}/${BASENAME}.output"
 fi
 
 if [[ ${OS} = "SunOS" ]]
@@ -29,7 +29,7 @@ then
 
   for i in $(/usr/sbin/luxadm probe | /usr/bin/grep "Logical Path" | /usr/bin/cut -f2 -d:)
   do
-    /usr/sbin/luxadm display "${i}" >> "${SCRIPTS}/etc/${BASENAME}.output"
+    /usr/sbin/luxadm display "${i}" >> "${SCRIPTS_LOGS}/${BASENAME}.output"
   done
 
 fi
@@ -37,8 +37,8 @@ fi
 if [[ ${OS} = "Linux" ]]
 then
 
-  /usr/bin/systool -c fc_host -v > "${SCRIPTS}/etc/${BASENAME}.output"
-  /sbin/multipath -ll >> "${SCRIPTS}/etc/${BASENAME}.output"
+  /usr/bin/systool -c fc_host -v > "${SCRIPTS_LOGS}/${BASENAME}.output"
+  /sbin/multipath -ll >> "${SCRIPTS_LOGS}/${BASENAME}.output"
 
 fi
 
@@ -60,6 +60,6 @@ then
       unset FCDEV
       unset HWP
     fi
-  done > "${SCRIPTS}/etc/${BASENAME}.output"
+  done > "${SCRIPTS_LOGS}/${BASENAME}.output"
 
 fi
