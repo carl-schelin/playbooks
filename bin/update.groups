@@ -22,18 +22,17 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
 CENTRIFY="no"
 DATE=$(date +"%Y%m%d")
 LOG=${SCRIPTS_LOGS}/update.groups.output
 DEBUG="no"
 DEBUG="yes"
-
-# if a changefreeze is in effect, stop the execution of the script.
-if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
-then
-  echo "Changefreeze in effect" >> "${LOG}"
-  exit 0
-fi
 
 if [[ ! -f ${SCRIPTS_DATA}/group.master ]]
 then
