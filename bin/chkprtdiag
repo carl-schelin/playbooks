@@ -4,25 +4,36 @@
 # 9/30/2011 - get output of prtdiag from Sun systems.
 # 10/3/2011 - change prtdiag directory to its well known location
 
-TIMEOUT=60
-OS=`uname`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 CONTENT="prtdiag"
+TIMEOUT=60
 FLAGS="-v"
 
 if [[ $OS = "SunOS" ]]
 then
 
 # delete the old output file
-  if [[ -f /opt/intrado/etc/$CONTENT.output ]]
+  if [[ -f ${SCRIPTS_DATA}/$CONTENT.output ]]
   then
-    rm /opt/intrado/etc/$CONTENT.output
+    rm ${SCRIPTS_DATA}/$CONTENT.output
   fi
 
 # run the command to get the expected output
 
   if [[ -f /usr/platform/`uname -i`/sbin/$CONTENT ]]
   then
-    /usr/platform/`uname -i`/sbin/$CONTENT $FLAGS > /opt/intrado/etc/$CONTENT.output 2>&1 &
+    /usr/platform/`uname -i`/sbin/$CONTENT $FLAGS > ${SCRIPTS_DATA}/$CONTENT.output 2>&1 &
     PID=$!
   fi
 
