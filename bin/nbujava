@@ -16,19 +16,25 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
 if [[ -f /etc/redhat-release ]]
 then
 
-  JAVA=`rpm -qa | grep -i VRTSnbjava`
+  JAVA=$(rpm -qa | grep -i VRTSnbjava)
 
   if [[ ! -z $JAVA ]]
   then
-    yum erase -y ${JAVA}
+    yum erase -y "${JAVA}"
 
-    VERIFY=`rpm -qa | grep -i VRTSnbjava`
+    VERIFY=$(rpm -qa | grep -i VRTSnbjava)
     if [[ -z $VERIFY ]]
     then
-      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s ${HOSTNAME} ${CHANGELOG}
+      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s "${HOSTNAME}" "${CHANGELOG}"
     fi
 
     service vxpbx_exchanged status > /dev/null
