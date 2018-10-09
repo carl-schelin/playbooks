@@ -38,7 +38,7 @@ then
 # only install for Red Hat 5 systems
       grep -q " 5" /etc/redhat-release > /dev/null
 
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
 
 # and install the missing rpm
