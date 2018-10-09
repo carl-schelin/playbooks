@@ -5,16 +5,27 @@
 # This script checks for the existance of glibc-2.18 or higher
 # if older than 2.18, vulnerable to ghost
 
-INTRADO=/opt/intrado
-OUT=$INTRADO/etc/ghost.output
-CVE=$INTRADO/etc/ghost.cve
-BIN=$INTRADO/bin
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+OUT=${SCRIPTS_LOGS}/ghost.output
+CVE=${SCRIPTS_LOGS}/ghost.cve
+BIN=${SCRIPTS_BINS}
 MONTH=`date | awk '{print $2}'`
 OS=`uname`
 
 if [[ $OS = 'Linux' ]]
 then
-  rpm -qa | grep glibc-2 > $OUT
-  rpm -q --changelog glibc | grep -i cve > $INTRADO/etc/ghost.cve
+  rpm -qa | grep glibc-2 > ${OUT}
+  rpm -q --changelog glibc | grep -i cve > ${CVE}/ghost.cve
 fi
 

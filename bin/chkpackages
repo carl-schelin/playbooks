@@ -3,10 +3,20 @@
 # Carl Schelin
 # Generate a list of packages for import into the inventory
 
-OS=$(uname)
-INTRADO='/opt/intrado'
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 ID=$(id | cut -f1 -d\( | cut -f2 -d=)
-OUTPUT=$INTRADO/etc/chkpackages.output
+OUTPUT=${SCRIPTS_LOGS}/chkpackages.output
 
 if [[ ! $ID = 0 ]]
 then

@@ -2,9 +2,20 @@
 
 # Run the machinfo utility to get a snapshot of HP-UX hardware details
 
-OS=`uname`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 INTRADO='/opt/intrado'
-ID=`id | cut -f1 -d\( | cut -f2 -d=`
+ID=$(id | cut -f1 -d\( | cut -f2 -d=)
 
 if [[ ! $ID = 0 ]]
 then
@@ -12,18 +23,18 @@ then
   exit 1
 fi
 
-if [[ -f $INTRADO/etc/machinfo.output ]]
+if [[ -f ${SCRIPTS_LOGS}/machinfo.output ]]
 then
-  rm $INTRADO/etc/machinfo.output
+  rm ${SCRIPTS_LOGS}/machinfo.output
 fi
 
 if [[ $OS = "HP-UX" ]]
 then
   if [[ -f /usr/contrib/bin/machinfo ]]
   then
-    /usr/contrib/bin/machinfo > $INTRADO/etc/machinfo.output 2>&1
+    /usr/contrib/bin/machinfo > ${SCRIPTS_LOGS}/machinfo.output 2>&1
   else
-    echo "Unable to locate machinfo" > $INTRADO/etc/machinfo.output
+    echo "Unable to locate machinfo" > ${SCRIPTS_LOGS}/machinfo.output
   fi
 fi
 
