@@ -22,21 +22,20 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-PATH="$PATH:/bin:/usr/bin:/sbin:/usr/sbin"; export PATH
 CENTRIFY="no"
 DATE=$(date +"%Y%m%d")
-LOG=${SCRIPTS}/log/update.groups.output
+LOG=${SCRIPTS_LOGS}/update.groups.output
 DEBUG="no"
 DEBUG="yes"
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f $SCRIPTS/etc/changefreeze ]]
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
 then
   echo "Changefreeze in effect" >> "${LOG}"
   exit 0
 fi
 
-if [[ ! -f ${SCRIPTS}/etc/group.master ]]
+if [[ ! -f ${SCRIPTS_DATA}/group.master ]]
 then
   echo "No group.master file. Exiting."
   exit 1
@@ -69,8 +68,8 @@ do
     echo "Checking ${i}" >> "${LOG}"
   fi
 
-  GROUP=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
-  GROUPLIST=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
+  GROUP=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+  GROUPLIST=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
 
   if [[ -z ${GROUP} ]]
   then
@@ -83,8 +82,8 @@ do
         getent group uxadmins > /dev/null
         if [[ $? = 0 ]]
         then
-          GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
-          GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
+          GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+          GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
         fi
       else
 # add this for any other environment where centrify is installed but the co-group doesn't exist (webapps/webadmin?)
@@ -93,23 +92,23 @@ do
           getent group webadmin > /dev/null
           if [[ $? = 0 ]]
           then
-            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
-            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
           fi
         else
 # if neither are being checked, then check as normal
           if [[ -z ${GROUP} ]]
           then
-            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
-            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
           fi
         fi
       fi
     fi
     if [[ -z ${GROUP} ]]
     then
-      GROUP=$(grep "^\*:${i}:" "${SCRIPTS}"/etc/group.master | cut -f2 -d:)
-      GROUPLIST=$(grep "^\*:${i}:" "${SCRIPTS}"/etc/group.master | cut -f3 -d:)
+      GROUP=$(grep "^\*:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+      GROUPLIST=$(grep "^\*:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
     fi
   fi
 
@@ -118,7 +117,7 @@ do
 
     if [[ ${DEBUG} = 'yes' ]]
     then
-      echo "Found ${GROUP} in ${SCRIPTS}/etc/group.master" >> "${LOG}"
+      echo "Found ${GROUP} in ${SCRIPTS_DATA}/group.master" >> "${LOG}"
     fi
 
 # see if the group exists
