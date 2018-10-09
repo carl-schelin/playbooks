@@ -82,9 +82,20 @@
 # 2017-09-25 - Fixed to use a better method of figuring out groups
 # 2017-11-10 - added getovconf to get the openview configuration
 
-INTRADO=/opt/intrado
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 HOSTNAME=`hostname|cut -f1 -d.`
-LOG=$INTRADO/var/intrado.log
+LOG=${SCRIPTS_LOGS}/intrado.log
 EXITCODE=0
 OS=`uname`
 GROUP=sysadmin
@@ -104,39 +115,39 @@ fi
 
 if [[ -f /etc/cron.allow ]]
 then
-  cp /etc/cron.allow ${INTRADO}/etc
+  cp /etc/cron.allow ${SCRIPTS_LOGS}
 fi
 if [[ -f /etc/cron.deny ]]
 then
-  cp /etc/cron.deny ${INTRADO}/etc
+  cp /etc/cron.deny ${SCRIPTS_LOGS}
 fi
 
 # ensure directories exist and are writeable
-if [[ ! -d $INTRADO/var ]]
+if [[ ! -d ${SCRIPTS_LOGS} ]]
 then
-  mkdir -p $INTRADO/var
-  chown unixsvc:${GROUP} $INTRADO/var
-  chmod 770 $INTRADO/var
+  mkdir -p ${SCRIPTS_LOGS}
+  chown unixsvc:${GROUP} ${SCRIPTS_LOGS}
+  chmod 770 ${SCRIPTS_LOGS}
 fi
-if [[ ! -d $INTRADO/etc ]]
+if [[ ! -d ${SCRIPTS_DATA} ]]
 then
-  mkdir -p $INTRADO/etc
-  chown unixsvc:${GROUP} $INTRADO/etc
-  chmod 770 $INTRADO/etc
+  mkdir -p ${SCRIPTS_DATA}
+  chown unixsvc:${GROUP} ${SCRIPTS_DATA}
+  chmod 770 ${SCRIPTS_DATA}
 fi
 
 echo "`date` intrado script started" >> $LOG
 
 # First ensure the /opt/intrado directory structure is owned properly so data files can be written
-chown -R unixsvc:${GROUP} $INTRADO
-chmod -R 770 $INTRADO
+chown -R unixsvc:${GROUP} ${SCRIPTS}
+chmod -R 770 ${SCRIPTS}
 
 # function to run the scripts and set a timeout. this ensures all scripts exit before the final cleanup
 runscript () {
 
-  if [[ -f $INTRADO/bin/$1 ]]
+  if [[ -f ${SCRIPTS_BINS}/$1 ]]
   then
-    $INTRADO/bin/$1 >> $LOG &
+    ${SCRIPTS_BINS}/$1 >> $LOG &
     PID=$!
     BSTAMP=`date`
 
@@ -213,7 +224,7 @@ runscript chkstack
 # first clean out the old version files
 if [[ $DOMONTH = '01' ]]
 then
-  rm $INTRADO/etc/*.version
+  rm ${SCRIPTS_LOGS}/*.version
 fi
 runscript chkversion
 
@@ -326,9 +337,9 @@ then
 # run cfg2html on the first of the month
   if [[ $OS = "FreeBSD" ]]
   then
-    $INTRADO/cfghtml/cfg2html > $INTRADO/cfghtml/$HOSTNAME.html
+    ${SCRIPTS}/cfghtml/cfg2html > ${SCRIPTS}/cfghtml/$HOSTNAME.html
   else
-    $INTRADO/cfghtml/cfg2html >> $LOG
+    ${SCRIPTS}/cfghtml/cfg2html >> $LOG
   fi
 
 # run explorer if it exists
@@ -382,7 +393,7 @@ then
 # make a backup of the anaconda kickstart config file
   if [[ -f /root/anaconda-ks.cfg ]]
   then
-    cp -p /root/anaconda-ks.cfg $INTRADO/etc/ >> $LOG
+    cp -p /root/anaconda-ks.cfg ${SCRIPTS_LOGS} >> $LOG
   fi
 
 # ensure log files are set up correctly
@@ -453,7 +464,7 @@ then
 
   if [[ $DOMONTH = '01' ]]
   then
-    if [[ -f $INTRADO/bin/$HOSTNAME ]]
+    if [[ -f ${SCRIPTS_BINS}/$HOSTNAME ]]
     then
       runscript $HOSTNAME
     fi
@@ -522,7 +533,7 @@ runscript chkcentrify
 # can be two different things.
 #====================================================================
 
-if [[ -f $INTRADO/bin/$HOSTNAME ]]
+if [[ -f ${SCRIPTS_BINS}/$HOSTNAME ]]
 then
   runscript $HOSTNAME
 fi
@@ -531,7 +542,7 @@ fi
 # hostname of the server as the file name to execute scripts on Sunday's run.
 if [[ $DOWEEK = "07" ]]
 then
-  if [[ -f $INTRADO/bin/$HOSTNAME.weekly ]]
+  if [[ -f ${SCRIPTS_BINS}/$HOSTNAME.weekly ]]
   then
     runscript $HOSTNAME.weekly
   fi
@@ -542,25 +553,25 @@ echo "`date` intrado script ended" >> $LOG
 echo "======================" >> $LOG
 
 # Ensure the /opt/intrado directory structure is owned properly so data files can be read
-chown -R unixsvc:${GROUP} $INTRADO
-chmod -R 770 $INTRADO
-find $INTRADO/etc -type f -exec chmod 660 {} \;
-find $INTRADO/var -type f -exec chmod 660 {} \;
+chown -R unixsvc:${GROUP} ${SCRIPTS}
+chmod -R 770 ${SCRIPTS}
+find ${SCRIPTS_DATA} -type f -exec chmod 660 {} \;
+find ${SCRIPTS_LOGS} -type f -exec chmod 660 {} \;
 
 # Clean up the old data files in case they exist.
-find $INTRADO/etc -atime +1 -exec rm {} \;
+find ${SCRIPTS_LOGS} -atime +1 -exec rm {} \;
 
 # Finally create a tar file of all the data in the etc directory. Give it 5 minutes before performing this step
 sleep 300
-if [[ -f $INTRADO/etc.tar.gz ]]
+if [[ -f ${SCRIPTS}/etc.tar.gz ]]
 then
-  rm $INTRADO/etc.tar.gz
+  rm ${SCRIPTS}/etc.tar.gz
 fi
-if [[ -f $INTRADO/etc.tar ]]
+if [[ -f ${SCRIPTS}/etc.tar ]]
 then
-  rm $INTRADO/etc.tar
+  rm ${SCRIPTS}/etc.tar
 fi
-cd $INTRADO/etc
+cd ${SCRIPTS_LOGS}
 tar cf ../etc.tar *
 
 exit $EXITCODE
