@@ -18,9 +18,19 @@
 # 20160l20 - Removed -s flag from sautil, need logical volume information (jschroet)
 # 20170126 - Added hpssacli Smart Array Controller utility
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 PROGNAME="chkraid"
-OS=`uname`
-HOSTNAME=`hostname|cut -f1 -d.`
 REL=""
 
 if [[ $OS = "SunOS" ]]
@@ -35,9 +45,9 @@ fi
 
 # create the holding directory
 
-if [[ ! -d /opt/intrado/etc ]]
+if [[ ! -d ${SCRIPTS_LOGS} ]]
 then
-  mkdir /opt/intrado/etc
+  mkdir ${SCRIPTS_LOGS}
 fi
 
 # There are 8 tools we are capturing data for right now:
@@ -71,7 +81,7 @@ do
     fi
     if [[ $HOSTNAME = "incoga13" || $HOSTNAME = "incoga23" ]]
     then
-      /usr/sbin/raidctl -l c3t2d0 > /opt/intrado/etc/raidctl.$HOSTNAME
+      /usr/sbin/raidctl -l c3t2d0 > ${SCRIPTS_LOGS}/raidctl.$HOSTNAME
       FLAGS="-l c3t0d0"
     fi
   fi
@@ -95,31 +105,31 @@ do
 # Delete the old output file. This lets us know if there's a problem 
 # with the tool completing
 
-  if [[ -f /opt/intrado/etc/$CONTENT.output ]]
+  if [[ -f ${SCRIPTS_LOGS}/$CONTENT.output ]]
   then
-    rm /opt/intrado/etc/$CONTENT.output
+    rm ${SCRIPTS_LOGS}/$CONTENT.output
   fi
 
 # run the command to get the expected output
 
   if [[ -f /usr/sbin/$CONTENT ]]
   then
-    /usr/sbin/$CONTENT $FLAGS > /opt/intrado/etc/$CONTENT.output 2>&1 &
+    /usr/sbin/$CONTENT $FLAGS > ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
     PID=$!
 
 # If using arcconf (adaptec) append to raidctl output file
   else
     if [[ -f /opt/StorMan/$CONTENT ]]
     then
-      /opt/StorMan/$CONTENT $FLAGS >> /opt/intrado/etc/$CONTENT.output 2>&1 &
+      /opt/StorMan/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
       PID=$!
     else
       if [[ -f /usr/bin/$CONTENT ]]
       then
-        /usr/bin/$CONTENT $FLAGS >> /opt/intrado/etc/$CONTENT.output 2>&1 &
+        /usr/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
         PID=$!
       else
-        echo "RAID: $CONTENT binary is not installed" > /opt/intrado/etc/$CONTENT.output
+        echo "RAID: $CONTENT binary is not installed" > ${SCRIPTS_LOGS}/$CONTENT.output
       fi
     fi
   fi
@@ -145,14 +155,13 @@ do
     kill -KILL $PID
   fi
 
-  if [[ -f /opt/intrado/etc/raidctl.$HOSTNAME ]]
+  if [[ -f ${SCRIPTS_LOGS}/raidctl.$HOSTNAME ]]
   then
-    cat /opt/intrado/etc/raidctl.$HOSTNAME >> /opt/intrado/etc/raidctl.output
-    rm /opt/intrado/etc/raidctl.$HOSTNAME
+    cat ${SCRIPTS_LOGS}/raidctl.$HOSTNAME >> ${SCRIPTS_LOGS}/raidctl.output
+    rm ${SCRIPTS_LOGS}/raidctl.$HOSTNAME
   fi
 
 done
-
 
 exit 0
 
