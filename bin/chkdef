@@ -1,33 +1,20 @@
 #!/bin/ksh
 
 # Report on defunct processes
-# updated to add INTRADO variable
 
-OS=`uname`
-INTRADO="/opt/intrado"
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
-if [[ $OS = "Linux" ]]
+if [[ ! -f ${DIRNAME}/../.config ]]
 then
-  PS=/bin/ps
-  GREP=/bin/grep
-fi
-if [[ $OS = "SunOS" ]]
-then
-  PS=/usr/bin/ps
-  GREP=/usr/bin/grep
-fi
-if [[ $OS = "HP-UX" ]]
-then
-  PS=/usr/bin/ps
-  GREP=/usr/bin/grep
-fi
-if [[ $OS = "OSF1" ]]
-then
-  PS=/sbin/ps
-  GREP=/sbin/grep
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
 fi
 
-$PS -ef | $GREP defunct | $GREP -v grep > $INTRADO/etc/defunct.data
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+ps -ef | grep defunct | grep -v grep > ${SCRIPTS_LOGS}/defunct.data
 
 exit 0
 
