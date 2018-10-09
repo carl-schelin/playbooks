@@ -12,10 +12,20 @@
 #            vs | read var which fails on linux
 
 # write out the date so the logs can be scanned. 
-SERVER=`hostname | cut -f1 -d.`
-OS=`uname`
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 PERL=/usr/bin/perl
-INTRADO=/opt/intrado
 DESTINATION=/var/tmp
 
 # cleanup
@@ -66,11 +76,11 @@ LOGDATE=`$PERL -e '@T=localtime(time-86400);printf("%04d%02d%02d",$T[5]+1900,$T[
 
 if [[ -f $PLOG ]]
 then
-  grep "^$DATE" $PLOG | grep $SERVER > $DESTINATION/messages.intrado
+  grep "^$DATE" $PLOG | grep $HOSTNAME > $DESTINATION/messages.intrado
 
   if [[ -f $DESTINATION/messages.intrado ]]
   then
-    $PERL $INTRADO/bin/msgprocess > $DESTINATION/messages.$LOGDATE
+    $PERL ${SCRIPTS_BINS}/msgprocess > $DESTINATION/messages.$LOGDATE
     rm $DESTINATION/messages.intrado
   fi
 fi
