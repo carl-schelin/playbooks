@@ -2792,7 +2792,7 @@ check_openview() {
     printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
   fi
 # see if openview is configured to just not start
-  if [[ -f ${SCRIPTS_LOGS}/openview.stop ]]
+  if [[ -f ${SCRIPTS_DATA}/openview.stop ]]
   then
     printf "%b\n" "  ${YELLOW}The Openview agent is configured to not start if stopped (script exits without checking)${RESET}" >> "${LOG}"
   fi
