@@ -18,8 +18,13 @@ fi
 . "${DIRNAME}"/../.config
 
 CENTRIFY='no'
-WHOCARES="unixadmins@intrado.com"
-WHOCARES="carl.schelin@intrado.com"
+DEBUG="no"
+DEBUG="yes"
+# override whocares during testing
+if [[ ${DEBUG} = 'yes' ]]
+then
+  WHOCARES="carl.schelin@intrado.com"
+fi
 
 if [[ $OS = "Linux" ]]
 then
