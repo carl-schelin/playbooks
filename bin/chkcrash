@@ -17,7 +17,7 @@ fi
 
 if [[ -d /var/crash ]]
 then
-  find /var/crash -print > "${SCRIPTS}"/etc/chkcrash.output
+  find /var/crash -print > "${SCRIPTS_LOGS}/chkcrash.output"
 fi
 
 exit 0
