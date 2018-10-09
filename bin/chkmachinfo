@@ -14,7 +14,6 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-INTRADO='/opt/intrado'
 ID=$(id | cut -f1 -d\( | cut -f2 -d=)
 
 if [[ ! $ID = 0 ]]
