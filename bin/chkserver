@@ -1732,19 +1732,19 @@ check_group_membership() {
   for i in ${GROUPLIST}
   do
 # look for the hostname first then see if the system is centrified, otherwise check all servers
-    GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+    GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
     if [[ -z ${GROUP} ]]
     then
       if [[ ${CENTRIFY} = 'yes' ]]
       then
-        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
       else
-        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
       fi
 # check non-standard groups if not found
       if [[ -z ${GROUP} ]]
       then
-        GROUP=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
         if [[ ! -z ${GROUP} ]]
         then
           printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> "${LOG}"
@@ -1795,35 +1795,35 @@ check_group_membership() {
       for j in ${USERLIST}
       do
 # look for the hostname first, if not found, then check the centrify flag and * if not centrified, then check the questionable groups
-        GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^${HOSTNAME}:${i}:")
+        GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^${HOSTNAME}:${i}:")
         if [[ -z ${GRPFND} ]]
         then
           if [[ ${CENTRIFY} = 'yes' ]]
           then
-            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^centrify:${i}:")
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^centrify:${i}:")
           else
-            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\*:${i}:")
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\*:${i}:")
           fi
           if [[ -z ${GRPFND} ]]
           then
-            GRPFND=$(grep -v "^#" ${SCRIPTS}/etc/group.master | grep -i "^\?:${i}:")
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\?:${i}:")
             if [[ ! -z ${GRPFND} ]]
             then
-              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="?:${i}"
             fi
           else
             if [[ ${CENTRIFY} = 'yes' ]]
             then
-              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="centrify:${i}"
             else
-              PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)")
               FOUND="*:${i}"
             fi
           fi
         else
-          PRESENT=$(grep -v "^#" ${SCRIPTS}/etc/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)")
+          PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)")
           FOUND="${HOSTNAME}:${i}"
         fi
 
@@ -1943,7 +1943,7 @@ check_intrado() {
   then
     echo "Entering check_intrado(8)"
   fi
-  if [[ ! -f ${SCRIPTS}/var/intrado.log ]]
+  if [[ ! -f ${SCRIPTS_LOGS}/intrado.log ]]
   then
     printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> "${LOG}"
   fi
@@ -2367,10 +2367,10 @@ check_netbackup() {
 # if MIA04 then should only have inveri02.scc911.com
 # englewood
 # SERVER = enwdcoecmma10.corp.intrado.pri
-      if [[ -f ${SCRIPTS}/etc/fingerprint ]]
+      if [[ -f ${SCRIPTS_DATA}/fingerprint ]]
       then
 # Birmingham
-        grep BHM02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep BHM02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i brhm2aabue911p01.we911.esinet.pri > /dev/null
@@ -2386,7 +2386,7 @@ check_netbackup() {
         fi
 
 # Charlotte
-        grep CLT01 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep CLT01 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i chrl2aabue911p01.we911.esinet.pri > /dev/null
@@ -2403,14 +2403,14 @@ check_netbackup() {
 
 # most systems work fine with the location however the ESINet servers in Longmont labs have a local backup server that's not the main inveri01 server.
 # Moab Lab machine
-        grep "DEN03" ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep "DEN03" ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
 
-          grep "ESINet" ${SCRIPTS}/etc/fingerprint > /dev/null
+          grep "ESINet" ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
-            grep "moab0" ${SCRIPTS}/etc/fingerprint > /dev/null
+            grep "moab0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i moab0aabue911q01.we911lab.esinet.pri > /dev/null
@@ -2426,7 +2426,7 @@ check_netbackup() {
             fi
 
 # Peru Lab machine
-            grep "peru0" ${SCRIPTS}/etc/fingerprint > /dev/null
+            grep "peru0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i peru0aabue911q01.we911lab.esinet.pri > /dev/null
@@ -2442,7 +2442,7 @@ check_netbackup() {
             fi
 
 # Yodo Lab machine
-            grep "yodo0" ${SCRIPTS}/etc/fingerprint > /dev/null
+            grep "yodo0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i yodo0aabue911q01.we911lab.esinet.pri > /dev/null
@@ -2471,7 +2471,7 @@ check_netbackup() {
                 printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
               fi
             done
-            grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+            grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
               grep -i lmntcoecmma10.corp.intrado.pri /usr/openv/netbackup/bp.conf > /dev/null
@@ -2484,7 +2484,7 @@ check_netbackup() {
         fi
 
 # Old Englewood
-        grep DEN13 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep DEN13 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
@@ -2500,7 +2500,7 @@ check_netbackup() {
               printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
             fi
           done
-          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+          grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
             for chksvr in enwdcoecmma10.corp.intrado.pri lmntcoecmma10.corp.intrado.pri
@@ -2515,7 +2515,7 @@ check_netbackup() {
         fi
 
 # New Englewood
-        grep DEN15 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep DEN15 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
@@ -2528,7 +2528,7 @@ check_netbackup() {
           then
             printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
-          grep "^Zone: E911" ${SCRIPTS}/etc/fingerprint > /dev/null
+          grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
             for chksvr in enwdcoecmma10.corp.intrado.pri lmntcoecmma10.corp.intrado.pri
@@ -2543,7 +2543,7 @@ check_netbackup() {
         fi
 
 # Dallas-Fort Worth
-        grep DFW10 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep DFW10 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i dlls2aabue911p01.we911.esinet.pri > /dev/null
@@ -2559,7 +2559,7 @@ check_netbackup() {
         fi
 
 # Fairfield
-        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i frfd2aabue911p01.we911.esinet.pri > /dev/null
@@ -2575,7 +2575,7 @@ check_netbackup() {
         fi
 
 # Honolulu and Waikiki
-        grep HNL02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep HNL02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i hnllhiecnbu11.ienv.a911net.net > /dev/null
@@ -2591,7 +2591,7 @@ check_netbackup() {
         fi
 
 # Miami - Nap of the Americas
-        grep MIA04 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep MIA04 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri02.scc911.com > /dev/null
@@ -2608,7 +2608,7 @@ check_netbackup() {
 
 # SERVER = sfld2aabue911p01.we911.esinet.pri
 # Fairfield
-        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sfld2aabue911p01.we911.esinet.pri > /dev/null
@@ -2625,7 +2625,7 @@ check_netbackup() {
 
 # SERVER = sndg2aabue911p01.we911.esinet.pri
 # Fairfield
-        grep OAK02 ${SCRIPTS}/etc/fingerprint > /dev/null
+        grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sndg2aabue911p01.we911.esinet.pri > /dev/null
@@ -2646,12 +2646,12 @@ check_netbackup() {
 # while the management interface is the desired client_name, if we are getting
 # backup reports, then whatever the name is, is correct.
 # so, if the backups.output file is empty, _then_ check on the client_name entry
-      if [[ ! -s ${SCRIPTS}/etc/backups.output ]]
+      if [[ ! -s ${SCRIPTS_LOGS}/backups.output ]]
       then
         BPHOSTNAME=${HOSTNAME}
-        if [[ -f ${SCRIPTS}/etc/fingerprint ]]
+        if [[ -f ${SCRIPTS_DATA}/fingerprint ]]
         then
-          grep -i esinet ${SCRIPTS}/etc/fingerprint > /dev/null
+          grep -i esinet ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
             BPHOSTNAME="${HOSTNAME}bu"
@@ -2674,13 +2674,13 @@ check_netbackup() {
 #----------------  ---------- -------- ----------- - --------------- ------------
 #07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
 
-    if [[ -f  ${SCRIPTS}/etc/backups.output ]]
+    if [[ -f  ${SCRIPTS_LOGS}/backups.output ]]
     then
-      if [[ ! -s ${SCRIPTS}/etc/backups.output ]]
+      if [[ ! -s ${SCRIPTS_LOGS}/backups.output ]]
       then
-        printf "%b\n" "    ${RED}${SCRIPTS}/etc/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> "${LOG}"
+        printf "%b\n" "    ${RED}${SCRIPTS_LOGS}/backups.output is empty.${RESET} Verify the servername in /usr/openv/netbackup/bp.conf" >> "${LOG}"
       else
-        OUTPUT=$(awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS}/etc/backups.output)
+        OUTPUT=$(awk '/Backed Up/{next}/------------/{next}{print $1;exit}' ${SCRIPTS_LOGS}/backups.output)
         if [[ $OS = 'Linux' ]]
         then
           BUDATE=$(date --date=$OUTPUT +"%s")
@@ -2781,9 +2781,9 @@ check_openview() {
     return
   fi
 # delete the check openview output file in case it exists and shouldn't
-  if [[ -f ${SCRIPTS}/etc/chkopenview.output ]]
+  if [[ -f ${SCRIPTS_LOGS}/chkopenview.output ]]
   then
-    rm ${SCRIPTS}/etc/chkopenview.output
+    rm ${SCRIPTS_LOGS}/chkopenview.output
   fi
 # check to see if chkov is uncommented
   grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
@@ -2792,7 +2792,7 @@ check_openview() {
     printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
   fi
 # see if openview is configured to just not start
-  if [[ -f ${SCRIPTS}/var/openview.stop ]]
+  if [[ -f ${SCRIPTS_LOGS}/openview.stop ]]
   then
     printf "%b\n" "  ${YELLOW}The Openview agent is configured to not start if stopped (script exits without checking)${RESET}" >> "${LOG}"
   fi
@@ -2806,11 +2806,11 @@ check_openview() {
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
-      /opt/OV/bin/opcagt status > ${SCRIPTS}/var/opcagt.status.output
-      ABORT=$(grep -ci abort ${SCRIPTS}/var/opcagt.status.output)
-      RUNNING=$(grep -ci running ${SCRIPTS}/var/opcagt.status.output)
-      STOPPED=$(grep -ci stopped ${SCRIPTS}/var/opcagt.status.output)
-      STARTING=$(grep -ci starting ${SCRIPTS}/var/opcagt.status.output)
+      /opt/OV/bin/opcagt status > ${SCRIPTS_LOGS}/opcagt.status.output
+      ABORT=$(grep -ci abort ${SCRIPTS_LOGS}/opcagt.status.output)
+      RUNNING=$(grep -ci running ${SCRIPTS_LOGS}/opcagt.status.output)
+      STOPPED=$(grep -ci stopped ${SCRIPTS_LOGS}/opcagt.status.output)
+      STARTING=$(grep -ci starting ${SCRIPTS_LOGS}/opcagt.status.output)
       if [[ ${ABORT} = 0 ]] && [[ ${RUNNING} -gt 0 ]]
       then
         printf "%b\n" "    ${GREEN}Openview agent is running: Stopped: ${STOPPED} Starting: ${STARTING} Running: ${RUNNING}${RESET}" >> "${LOG}"
@@ -2966,12 +2966,12 @@ check_openview() {
       fi
 
 # system checked to see if openview is installed and running before sending a message
-      if [[ ! -f ${SCRIPTS}/var/chkopenview.completed ]] && [[ ! -f ${SCRIPTS}/var/chkopenview.block ]]
+      if [[ ! -f ${SCRIPTS_LOGS}/chkopenview.completed ]] && [[ ! -f ${SCRIPTS_LOGS}/chkopenview.block ]]
       then
         if [[ -f /opt/OV/bin/opcmsg ]]
         then
-          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS}/etc/chkopenview.output 2>&1
-          touch ${SCRIPTS}/var/chkopenview.completed
+          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
+          touch ${SCRIPTS_LOGS}/chkopenview.completed
         fi
       fi
 
@@ -3083,10 +3083,10 @@ check_privileged_access() {
   then
     echo "Entering check_privileged_access(18)"
   fi
-  if [[ -f ${SCRIPTS}/etc/chksudo.dat ]]
+  if [[ -f ${SCRIPTS_DATA}/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> "${LOG}"
-    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS}/etc/chksudoers.output)
+    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS_LOGS}/chksudoers.output)
     do
       SERVER=$(echo $j | cut -f1 -d:)
       USER=$(echo $j | cut -f2 -d:)
@@ -3094,10 +3094,10 @@ check_privileged_access() {
 
       if [[ ${ROOT} = 'yes' ]]
       then
-        OUTPUT=$(grep "^\*:${USER}:" ${SCRIPTS}/etc/chksudo.dat)
+        OUTPUT=$(grep "^\*:${USER}:" ${SCRIPTS_DATA}/chksudo.dat)
         if [[ -z $OUTPUT ]]
         then
-          OUTPUT=$(grep "^${SERVER}:${USER}:" ${SCRIPTS}/etc/chksudo.dat)
+          OUTPUT=$(grep "^${SERVER}:${USER}:" ${SCRIPTS_DATA}/chksudo.dat)
           if [[ -z $OUTPUT ]]
           then
             printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> "${LOG}"
@@ -4136,7 +4136,7 @@ check_vmware_agent() {
     then
       printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> "${LOG}"
       VMTOOLS=$(ps -e | grep vmtoolsd)
-      if [[ -z $VMTOOLS ]]
+      if [[ -z ${VMTOOLS} ]]
       then
         printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> "${LOG}"
       else
@@ -4229,11 +4229,11 @@ check_vxprint_vxdisk() {
     then
       printf "%b\n" "  ${GREEN}Checking vxvm Status${RESET}" >> "${LOG}"
 
-      VXPRINTOUT="${SCRIPTS}/var/vxprint.output"
-      VXDISKOUT="${SCRIPTS}/var/vxdisk.output"
+      VXPRINTOUT="${SCRIPTS_LOGS}/vxprint.output"
+      VXDISKOUT="${SCRIPTS_LOGS}/vxdisk.output"
 
       vxprint > ${VXPRINTOUT}
-      vxdisk list > ${VXPRINTOUT}
+      vxdisk list > ${VXDISKOUT}
 
 # Test for stale condition
       NUMX=$(grep -ci "stale" ${VXPRINTOUT})
