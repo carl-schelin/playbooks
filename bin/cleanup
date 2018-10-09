@@ -1,5 +1,17 @@
 #!/bin/ksh
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 # prevent the Netbackup Fiber Transport client from starting. Caused an incident where incofmc2 failed to completely start due to the nbfbclnt script halting on starting the agent.
 if [[ -f /usr/openv/netbackup/bin/nbftclnt ]]
 then
@@ -26,8 +38,8 @@ done
 
 if [[ -d /opt/cfghtml ]]
 then
-  echo "Moving /opt/cfghtml to /opt/intrado/"
-  mv /opt/cfghtml /opt/intrado/
+  echo "Moving /opt/cfghtml to ${SCRIPTS}/"
+  mv /opt/cfghtml ${SCRIPTS}/
 fi
 
 if [[ -d /opt/ov ]]
@@ -50,8 +62,8 @@ fi
 
 if [[ -f /var/tmp/openview.failed ]]
 then
-  echo "Moving openview.failed to /opt/intrado/var"
-  mv /var/tmp/openview.failed /opt/intrado/var/
+  echo "Moving openview.failed to ${SCRIPTS_LOGS}/"
+  mv /var/tmp/openview.failed ${SCRIPTS_LOGS}/
 fi
 
 if [[ -f /usr/local/patchdiag ]]
@@ -60,10 +72,10 @@ then
   rm -rf /usr/local/patchdiag
 fi
 
-if [[ -f /opt/intrado/etc/motd ]]
+if [[ -f ${SCRIPTS_DATA}/motd ]]
 then
-  cp /opt/intrado/etc/motd /etc/motd
-  cp /opt/intrado/etc/motd /etc/issue
+  cp ${SCRIPTS_DATA}/motd /etc/motd
+  cp ${SCRIPTS_DATA}/motd /etc/issue
 fi
 
 if [[ -f /tmp/newuser ]]
@@ -92,44 +104,44 @@ then
 fi
 
 # remove log files older than 10 days
-find /opt/intrado/var -name logfile.* -atime +10 -exec rm {} \;
+find ${SCRIPTS_LOGS} -name logfile.* -atime +10 -exec rm {} \;
 
 # and remove old log files than 90 days (3 files)
-find /opt/intrado/var -name intrado.log.* -atime +92 -exec rm {} \;
+find ${SCRIPTS_LOGS} -name intrado.log.* -atime +92 -exec rm {} \;
 
 # remove runnow script if it exists. the chkov script deletes it after running but if chkov isn't enabled, it won't run or be removed. This auto-removes it.
-if [[ -f /opt/intrado/bin/runnow ]]
+if [[ -f ${SCRIPTS_BINS}/runnow ]]
 then
-  rm /opt/intrado/bin/runnow
+  rm ${SCRIPTS_BINS}/runnow
 fi
-if [[ -f /opt/intrado/bin/runonce ]]
+if [[ -f ${SCRIPTS_BINS}/runonce ]]
 then
-  rm /opt/intrado/bin/runonce
+  rm ${SCRIPTS_BINS}/runonce
 fi
 
 # delete any retired scripts and data files.
 
 for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile
 do
-  if [[ -f /opt/intrado/bin/$i ]]
+  if [[ -f ${SCRIPTS_BINS}/$i ]]
   then
-    rm /opt/intrado/bin/$i
+    rm ${SCRIPTS_BINS}/$i
   fi
 done
 
 for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output chkprofile.output
 do
-  if [[ -f /opt/intrado/etc/$i ]]
+  if [[ -f ${SCRIPTS_LOGS}/$i ]]
   then
-    rm /opt/intrado/etc/$i
+    rm ${SCRIPTS_LOGS}/$i
   fi
 done
 
 for i in leaping.log
 do
-  if [[ -f /opt/intrado/var/$i ]]
+  if [[ -f ${SCRIPTS_LOGS}/$i ]]
   then
-    rm /opt/intrado/var/$i
+    rm ${SCRIPTS_LOGS}/$i
   fi
 done
 
@@ -141,9 +153,9 @@ SERVERS="$SERVERS miamflecerb1b miamflecerb2b miamflecerb3b miamflecuta1b miamfl
 
 for i in $SERVERS
 do
-  if [[ -f /opt/intrado/bin/$i ]]
+  if [[ -f ${SCRIPTS_BINS}/$i ]]
   then
-    rm /opt/intrado/bin/$i
+    rm ${SCRIPTS_BINS}/$i
   fi
 done
 
