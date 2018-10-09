@@ -4,7 +4,17 @@
 # Remove the netbackup java package and restart the vxpbx_exchanged service
 # the package isn't needed for netbackup and adds vulnerabilities
 
-ADMIN=/opt/intrado
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
 
 if [[ -f /etc/redhat-release ]]
 then
@@ -18,7 +28,7 @@ then
     VERIFY=`rpm -qa | grep -i VRTSnbjava`
     if [[ -z $VERIFY ]]
     then
-      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s `hostname | cut -f1 -d.` changelog@incojs01.scc911.com
+      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s ${HOSTNAME} ${CHANGELOG}
     fi
 
     service vxpbx_exchanged status > /dev/null
