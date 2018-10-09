@@ -33,17 +33,17 @@ fi
 
 # Check for any disabled printers, email team if any found
 if [ ! -z "$LPSTAT" ]; then
-  hostname > "${SCRIPTS}/etc/${BASENAME}.output"
-  date >> "${SCRIPTS}/etc/${BASENAME}.output"
-  /usr/bin/lpstat -p |grep disabled >> "${SCRIPTS}/etc/${BASENAME}.output"
-  echo "" >> "${SCRIPTS}/etc/${BASENAME}.output"
-  echo "One or more printers are disabled on ${HOSTNAME}! Manual intervention is required." >> "${SCRIPTS}/etc/${BASENAME}.output"
-  echo "Please run the command \"sudo /usr/sbin/cupsenable \[PRINTER\]\" on each disabled printer." >> "${SCRIPTS}/etc/${BASENAME}.output"
-  echo "See \"https://incowk01/wiki/index.php/Fixing_disabled_printers_in_CUPS\"." for details. >> "${SCRIPTS}/etc/${BASENAME}.output"
-  ${MAIL} -s "${HOSTNAME}: Printer Disabled!!" ${EMAIL} < "${SCRIPTS}/etc/${BASENAME}.output"
+  hostname > "${SCRIPTS_DATA}/${BASENAME}.output"
+  date >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  /usr/bin/lpstat -p |grep disabled >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "" >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "One or more printers are disabled on ${HOSTNAME}! Manual intervention is required." >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "Please run the command \"sudo /usr/sbin/cupsenable \[PRINTER\]\" on each disabled printer." >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "See \"https://incowk01/wiki/index.php/Fixing_disabled_printers_in_CUPS\"." for details. >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  ${MAIL} -s "${HOSTNAME}: Printer Disabled!!" ${EMAIL} < "${SCRIPTS_DATA}/${BASENAME}.output"
  else
-  date > "${SCRIPTS}/etc/${BASENAME}.output"
-  hostname > "${SCRIPTS}/etc/${BASENAME}.output"
-  echo "All printers online." >> "${SCRIPTS}/etc/${BASENAME}.output"
+  date > "${SCRIPTS_DATA}/${BASENAME}.output"
+  hostname > "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "All printers online." >> "${SCRIPTS_DATA}/${BASENAME}.output"
 fi
 
