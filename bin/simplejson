@@ -3,12 +3,22 @@
 # Carl Schelin
 # Install the python-simplejson rpm to support Ansible
 
-ADMIN=/opt/intrado
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
 
 if [[ -f /etc/redhat-release ]]
 then
 
-  ARCH=`arch`
+  ARCH=$(arch)
   if [[ $ARCH = 'i686' ]]
   then
     PACKAGE='python-simplejson-2.0.9-8.el5.i386.rpm'
@@ -16,11 +26,11 @@ then
     PACKAGE='python-simplejson-2.0.9-8.el5.x86_64.rpm'
   fi
 
-  if [[ -f $ADMIN/etc/$PACKAGE ]]
+  if [[ -f ${SCRIPTS_DATA}/${PACKAGE} ]]
   then
 
 # potentially install only if the simplejson rpm is missing
-    OUTPUT=`rpm -qa | grep simplejson`
+    OUTPUT=$(rpm -qa | grep simplejson)
 
     if [[ -z $OUTPUT ]]
     then
@@ -32,7 +42,7 @@ then
       then
 
 # and install the missing rpm
-        rpm -ivh $ADMIN/etc/$PACKAGE
+        rpm -ivh "$SCRIPTS_DATA}/${PACKAGE}"
 
       fi
 
