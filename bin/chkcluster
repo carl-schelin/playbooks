@@ -5,11 +5,19 @@
 # Template borrowed from Carl's chk scripts
 # 20120831 - Initial draft of script
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
 
 PROGNAME="chkcluster"
-OS=`uname`
-HOSTNAME=`hostname|cut -f1 -d.`
 REL=""
 
 if [[ $OS = "SunOS" ]]
@@ -22,24 +30,13 @@ then
   fi
 fi
 
-
-# create the holding directory
-
-if [[ ! -d /opt/intrado/etc ]]
-then
-  mkdir /opt/intrado/etc
-fi
-
-
 # Tools for capturing cluster data
 #/usr/sbin/cmviewcl
 #/usr/sbin/clustat 
 
 for CONTENT in cmviewcl clustat
 do
-
   TIMEOUT=40
-
 
 # Flag options for future use in case we want more cluster detail
   FLAGS=""
@@ -52,14 +49,12 @@ do
     FLAGS=""     # 
   fi
 
-
-
 # Delete the old output file. This lets us know if there's a problem
 # with the tool completing
 
-  if [[ -f /opt/intrado/etc/$CONTENT.output ]]
+  if [[ -f ${SCRIPTS_LOGS}/$CONTENT.output ]]
   then
-    rm /opt/intrado/etc/$CONTENT.output
+    rm ${SCRIPTS_LOGS}/$CONTENT.output
   fi
 
 # run the command to get the expected output
@@ -67,10 +62,10 @@ do
   if [[ -f /usr/sbin/$CONTENT ]]
   then
     #NOTE: the grep here is to remove the date line in clustat output.  Does not affect cmviewcl.
-    /usr/sbin/$CONTENT $FLAGS | grep -v "Cluster Status for .*\@" > /opt/intrado/etc/$CONTENT.output 2>&1 &
+    /usr/sbin/$CONTENT $FLAGS | grep -v "Cluster Status for .*\@" > ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
     PID=$!
   else
-      echo "CLUSTER: $CONTENT binary is not installed" > /opt/intrado/etc/$CONTENT.output
+      echo "CLUSTER: $CONTENT binary is not installed" > ${SCRIPTS_LOGS}/$CONTENT.output
   fi
 
 # wait for the specified number of seconds for the command to complete
@@ -95,5 +90,5 @@ do
   fi
 done
 
-
 exit 0
+
