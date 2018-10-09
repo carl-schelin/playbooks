@@ -460,7 +460,7 @@ function network_iface {
     # and now virtual interfaces will be presented as 'global secondary'
         if [[ -f /usr/sbin/ip ]]; then
           TEST=`/usr/sbin/ip addr show $INTERFACE`
-          if [[ $? = 0 ]]; then
+          if [[ $? -eq 0 ]]; then
             MAC=`/usr/sbin/ip addr show $INTERFACE | /bin/grep 'link/ether' | /bin/awk '{print $2}'`
 
             for j in `/usr/sbin/ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}'`
@@ -507,7 +507,7 @@ function network_iface {
   
     # now check for a valid interface
             TEST=`/sbin/ifconfig $INTERFACE`
-            if [[ $? = 0 ]]; then
+            if [[ $? -eq 0 ]]; then
 
               IP=`/sbin/ifconfig $INTERFACE | /bin/grep 'inet addr' | /bin/cut -f2 -d: | /bin/awk '{print $1}'`
               if [[ $INTERFACE = 'lo' ]]; then
