@@ -55,10 +55,10 @@ then
 
   ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS}"/etc/nagios.output
 
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
-    if [[ $? != 0 || ! $(systemctl is-failed nagios) ]]; then
+    if [[ $? -ne 0 || ! $(systemctl is-failed nagios) ]]; then
       systemctl status nagios | mailx -s "Nagios restart failure" ${WHOCARES}
     fi
   else
@@ -70,10 +70,10 @@ else
   then
     ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS}"/etc/nagios.output
 
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
       systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
-      if [[ $? != 0 || ! $(systemctl is-failed nagios) ]]; then
+      if [[ $? -ne 0 || ! $(systemctl is-failed nagios) ]]; then
         systemctl status nagios | mailx -s "Nagios restart failure" ${WHOCARES}
       fi
     else 
