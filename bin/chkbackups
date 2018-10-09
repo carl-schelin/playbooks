@@ -6,24 +6,35 @@
 # updated to remove the start date of the beginning of the month. It might take a bit 
 # but we'll get an accurate representation of when the last backup occurred.
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 PROGNAME="chkbackups"
-OS=`uname`
 CHKDATE=`perl -MPOSIX -le 'print strftime "%m/%d/%Y", (localtime(time-604800));'`
 
-if [[ -f /opt/intrado/etc/backups.output ]]
+if [[ -f ${SCRIPTS_LOGS}/backups.output ]]
 then
-  rm /opt/intrado/etc/backups.output
+  rm ${SCRIPTS_LOGS}/backups.output
 fi
 
 if [[ -f /usr/openv/netbackup/bin/bpclimagelist ]]
 then
   if [[ -n $CHKDATE ]]; then
-    /usr/openv/netbackup/bin/bpclimagelist -s $CHKDATE  > /opt/intrado/etc/backups.output
+    /usr/openv/netbackup/bin/bpclimagelist -s $CHKDATE  > ${SCRIPTS_LOGS}/backups.output
   else
-    /usr/openv/netbackup/bin/bpclimagelist > /opt/intrado/etc/backups.output
+    /usr/openv/netbackup/bin/bpclimagelist > ${SCRIPTS_LOGS}/backups.output
   fi
 else
-  echo "Netbackup not installed" /opt/intrado/etc/backups.output
+  echo "Netbackup not installed" ${SCRIPTS_LOGS}/backups.output
 fi
 
 exit 0
