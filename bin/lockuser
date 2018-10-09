@@ -261,7 +261,7 @@ if [[ -f /usr/bin/adquery ]]; then
   # returns 0 if joined
   # returns 10 if not joined
   /usr/bin/adinfo > /dev/null 2>&1
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     echo "Centrify managed system. Exiting."
     exit 1
