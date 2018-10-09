@@ -54,7 +54,7 @@ fi
 if [[ -f /usr/sbin/adclient ]]
 then
   /usr/bin/adinfo > /dev/null
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     CENTRIFY='yes'
   fi
@@ -80,7 +80,7 @@ do
       if [[ ${i} = 'sysadmin' ]]
       then
         getent group uxadmins > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
           GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
@@ -90,7 +90,7 @@ do
         if [[ ${i} = 'webapps' ]]
         then
           getent group webadmin > /dev/null
-          if [[ $? = 0 ]]
+          if [[ $? -eq 0 ]]
           then
             GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
             GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
@@ -172,7 +172,7 @@ do
               fi
             else
               cp -p /etc/group /etc/group-"${DATE}"
-              if [[ $? = 0 ]]
+              if [[ $? -eq 0 ]]
               then
                 sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
 
