@@ -24,26 +24,26 @@ then
   exit 0
 fi
 
-CHANGELOG=""
+UPDATES=""
 COMMA=""
-for i in $(grep -v "^#" "${SCRIPTS}"/etc/valid.email | cut -f1 -d:)
+for i in $(grep -v "^#" "${SCRIPTS_DATA}/valid.email" | cut -f1 -d:)
 do
   ORIGINAL=$(egrep "^${i}:" /etc/passwd)
-  if [[ ! -z "${ORIGINAL}" ]]
+  if [[ ! -z ${ORIGINAL} ]]
   then
-    EMAIL=$(egrep "^${i}:" "${SCRIPTS}"/etc/valid.email | cut -f2 -d:)
+    EMAIL=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email" | cut -f2 -d:)
     usermod -c "${EMAIL}" "${i}"
     UPDATED=$(egrep "^${i}:" /etc/passwd)
-    if [[ ! "${ORIGINAL}" = "${UPDATED}" ]]
+    if [[ ! ${ORIGINAL} = "${UPDATED}" ]]
     then
-      CHANGELOG="${CHANGELOG}${COMMA}${i}"
+      UPDATES="${UPDATES}${COMMA}${i}"
       COMMA=","
     fi
   fi
 done
 
-if [[ ! -z ${CHANGELOG} ]]
+if [[ ! -z ${UPDATES} ]]
 then
-  echo "Updated ${CHANGELOG} to correct their GECOS field" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
+  echo "Updated ${UPDATES} to correct their GECOS field" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
 fi
 
