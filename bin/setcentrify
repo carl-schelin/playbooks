@@ -3,8 +3,8 @@
 # KevinZupan
 # Check certain centrify settings or file options and change them to what we want
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -13,11 +13,11 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
+. "${DIRNAME}"/../.config
 
 # uncommon settings
-ID=`id | cut -f1 -d\( | cut -f2 -d=`
-OUTPUT=${SCRIPTS}/etc/setcentrify.output
+ID=$(id | cut -f1 -d\( | cut -f2 -d=)
+OUTPUT="${SCRIPTS_LOGS}/setcentrify.output"
 
 if [[ ! $ID = 0 ]]
 then
@@ -27,20 +27,20 @@ fi
 
 if [[ -f $OUTPUT ]]
 then
-  rm $OUTPUT
+  rm "${OUTPUT}"
 fi
 
 # create a blank file to stop the complaining of the morning report
-touch $OUTPUT
+touch "${OUTPUT}"
 
 set -A DISABLE_FILES '/usr/share/centrifydc/libexec/adcert' \
                      '/usr/share/centrifydc/mappers/machine/certgp.pl' \
                      '/usr/share/centrifydc/mappers/machine/rhel_certgp.pl'
 
-for DISFILE in ${DISABLE_FILES[@]}; do
+for DISFILE in "${DISABLE_FILES[@]}"; do
   if [[ -x $DISFILE ]]; then
-    chmod a-x $DISFILE
-    echo "$DISFILE execution bit removed" >> $OUTPUT
+    chmod a-x "${DISFILE}"
+    echo "$DISFILE execution bit removed" >> "${OUTPUT}"
   fi
 done
 

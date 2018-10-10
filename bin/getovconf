@@ -2,8 +2,8 @@
 
 # Get the Openview configuration
 
-BASENAME=`basename $0`
-DIRNAME=`dirname $0`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
@@ -12,24 +12,23 @@ then
 fi
 
 # Source the configuration file
-. ${DIRNAME}/../.config
-
+. "${DIRNAME}/../.config"
 
 # need to be root:
-RUNBY=`/usr/bin/id -u`
+RUNBY=$(/usr/bin/id -u)
 if [[ ! $RUNBY -eq 0 ]]
 then
   echo "This script must be run by root."
   exit 0
 fi
 
-if [[ -f ${SCRIPTS}/etc/getovconf.output ]]
+if [[ -f ${SCRIPTS_LOGS}/getovconf.output ]]
 then
-  rm ${SCRIPTS}/etc/getovconf.output
+  rm "${SCRIPTS_LOGS}/getovconf.output"
 fi
 
 if [[ -f /opt/OV/bin/ovconfget ]]
 then
-  /opt/OV/bin/ovconfget > ${SCRIPTS}/etc/getovconf.output
+  /opt/OV/bin/ovconfget > "${SCRIPTS_LOGS}/getovconf.output"
 fi
 
