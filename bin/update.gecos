@@ -19,7 +19,7 @@ source "${DIRNAME}"/../.config
 PATH=$PATH:/bin:/usr/bin:/sbin:/usr/sbin
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f ${SCRIPTS}/etc/changefreeze ]]
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
 then
   exit 0
 fi
