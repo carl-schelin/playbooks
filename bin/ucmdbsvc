@@ -41,9 +41,9 @@ then
     chmod 700 "${UCMDBDIR}/.ssh"
   fi
 
-  if [[ -f ${SCRIPTS}/etc/ucmdbsvc.id_rsa.pub ]]
+  if [[ -f ${SCRIPTS_DATA}/ucmdbsvc.id_rsa.pub ]]
   then
-    cp "${SCRIPTS}/etc/ucmdbsvc.id_rsa.pub" "${UCMDBDIR}/.ssh/authorized_keys"
+    cp "${SCRIPTS_DATA}/ucmdbsvc.id_rsa.pub" "${UCMDBDIR}/.ssh/authorized_keys"
     chown -R "${UCMDBSVC}:${UCMDBGRP}" "${UCMDBDIR}"
     chmod 400 "${UCMDBDIR}/.ssh/authorized_keys"
   fi
