@@ -20,7 +20,6 @@ fi
 TMPDIR=/var/tmp
 NAGIOS=/usr/local/nagios
 NAGOBJ=$NAGIOS/etc/objects
-WHOCARES=unixadmins@intrado.com
 RESTART=no
 # Day of Week 1=Monday, 7=Sunday
 DOWEEK=$(date +"%u")
@@ -80,5 +79,30 @@ else
       mailx -s "Nagios configuration error" ${WHOCARES} < "${SCRIPTS}"/etc/nagios.output
     fi
   fi
+fi
+
+
+WHOCARES=carl.schelin@intrado.com
+
+#
+# validate the databases and report any errors
+#
+/usr/bin/mysqlcheck --user=root --password='this4now!!' -A > ${SCRIPTS_LOGS}/mysql.output
+
+OUTPUT=`grep -v "OK$" ${SCRIPTS_LOGS}/mysql.output | grep -v "The storage engine for the table doesn't support check" | egrep -v "(^warning|^error|hitcounter)"`
+
+if [[ ! -z $OUTPUT ]]
+then
+  BODY="Wiki Mysql Errors Found"
+  for i in $OUTPUT
+  do
+    DIR=`echo $i|cut -f1 -d.`
+    INDEX=`echo $i|cut -f2 -d.`.MYI
+
+    BODY="${BODY}cd /var/lib/mysql/$DIR"
+    BODY="${BODY}myisamchk -r $INDEX"
+  done
+
+  echo $BODY | mail -s "Wiki Mysql Errors Found" "${WHOCARES}"
 fi
 
