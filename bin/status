@@ -5,7 +5,7 @@
 # 1/9/17 TCS - updated to not restart nagios if an error occurs with the scripts
 # 3/10/17 KSZ - Updated to use systemctl instead of service and added notification incase of restart failure
 
-BASENAME=$(basename "$0")
+#BASENAME=$(basename "$0")
 DIRNAME=$(dirname "$0")
 
 if [[ ! -f ${DIRNAME}/../.config ]]
@@ -52,31 +52,31 @@ done
 if [[ ${RESTART} = 'yes' ]]
 then
 
-  ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS}"/etc/nagios.output
+  ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS_LOGS}/nagios.output"
 
   if [[ $? -eq 0 ]]
   then
     systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
     if [[ $? -ne 0 || ! $(systemctl is-failed nagios) ]]; then
-      systemctl status nagios | mailx -s "Nagios restart failure" ${WHOCARES}
+      systemctl status nagios | mailx -s "Nagios restart failure" "${WHOCARES}"
     fi
   else
-    mailx -s "Nagios configuration error" ${WHOCARES} < "${SCRIPTS}"/etc/nagios.output
+    mailx -s "Nagios configuration error" "${WHOCARES}" < "${SCRIPTS_LOGS}/nagios.output"
   fi  
 else
 # restart every Monday just to be sure.
   if [[ ${DOWEEK} = 1 ]]
   then
-    ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS}"/etc/nagios.output
+    ${NAGIOS}/bin/nagios -v ${NAGIOS}/etc/nagios.cfg > "${SCRIPTS_LOGS}/nagios.output"
 
     if [[ $? -eq 0 ]]
     then
       systemctl is-active nagios > /dev/null 2>&1 && systemctl restart nagios || systemctl start nagios
       if [[ $? -ne 0 || ! $(systemctl is-failed nagios) ]]; then
-        systemctl status nagios | mailx -s "Nagios restart failure" ${WHOCARES}
+        systemctl status nagios | mailx -s "Nagios restart failure" "${WHOCARES}"
       fi
     else 
-      mailx -s "Nagios configuration error" ${WHOCARES} < "${SCRIPTS}"/etc/nagios.output
+      mailx -s "Nagios configuration error" "${WHOCARES}" < "${SCRIPTS_LOGS}/nagios.output"
     fi
   fi
 fi
@@ -87,22 +87,22 @@ WHOCARES=carl.schelin@intrado.com
 #
 # validate the databases and report any errors
 #
-/usr/bin/mysqlcheck --user=root --password='this4now!!' -A > ${SCRIPTS_LOGS}/mysql.output
+/usr/bin/mysqlcheck --user=root --password='this4now!!' -A > "${SCRIPTS_LOGS}/mysql.output"
 
-OUTPUT=`grep -v "OK$" ${SCRIPTS_LOGS}/mysql.output | grep -v "The storage engine for the table doesn't support check" | egrep -v "(^warning|^error|hitcounter)"`
+OUTPUT=$(grep -v "OK$" "${SCRIPTS_LOGS}/mysql.output" | grep -v "The storage engine for the table doesn't support check" | egrep -v "(^warning|^error|hitcounter)")
 
 if [[ ! -z $OUTPUT ]]
 then
   BODY="Wiki Mysql Errors Found"
   for i in $OUTPUT
   do
-    DIR=`echo $i|cut -f1 -d.`
-    INDEX=`echo $i|cut -f2 -d.`.MYI
+    DIR=$(echo "${i}" | cut -f1 -d.)
+    INDEX=$(echo "${i}" | cut -f2 -d.).MYI
 
     BODY="${BODY}cd /var/lib/mysql/$DIR"
     BODY="${BODY}myisamchk -r $INDEX"
   done
 
-  echo $BODY | mail -s "Wiki Mysql Errors Found" "${WHOCARES}"
+  echo "${BODY}" | mail -s "Wiki Mysql Errors Found" "${WHOCARES}"
 fi
 

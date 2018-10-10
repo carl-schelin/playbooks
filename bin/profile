@@ -21,10 +21,8 @@ fi
 . "${DIRNAME}"/../.config
 
 ADMIN=/usr/local/admin
-VAR=${SCRIPTS}/var
-ETC=${SCRIPTS}/etc
-LOGS=${VAR}/intrado.log
-CHKSERVER=${ETC}/chkserver.output
+LOGS=${SCRIPTS_LOGS}/intrado.log
+CHKSERVER=${SCRIPTS_LOGS}/chkserver.output
 
 # generally this will be run on a server when logging in
 # but it can also be run on the utility servers to check out
