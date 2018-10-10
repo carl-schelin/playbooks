@@ -17,9 +17,21 @@
 # 01/20/16 - added sfw sudoers check - TCS
 # 01/31/18 - Added debugging code to better identify where account issues pop up
 
-HOSTNAME=`hostname|cut -f1 -d.`
-OUTPUT="/opt/intrado/etc/chksudoers.output"
-CHKSUDOERS="/opt/intrado/etc/chksudoers.dat"
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+OUTPUT="${SCRIPTS_LOGS}/chksudoers.output"
+CHKSUDOERS="${SCRIPTS_LOGS}/chksudoers.dat"
+CHKUSERS="${SCRIPTS_LOGS}/chkusers.dat"
 DEBUG="yes"
 DEBUG="no"
 
@@ -56,19 +68,19 @@ then
 fi
 
 # clean up the file
-if [[ -f $OUTPUT ]]
+if [[ -f "${OUTPUT}" ]]
 then
-  rm $OUTPUT
+  rm "${OUTPUT}"
 fi
 
 if [[ $DEBUG = 'yes' ]]
 then
-  echo "Checking $SUDOERS: User_Alias:"
+  echo "Checking ${SUDOERS}: User_Alias:"
 fi
 # there shouldn't be anyone using the User_Alias entry but this checks just in case
-for i in `grep -v "^#" $SUDOERS | grep "User_Alias" | cut -f2 -d= | sed -e "s/,/ /g"`
+for i in $(grep -v "^#" "${SUDOERS}" | grep "User_Alias" | cut -f2 -d= | sed -e "s/,/ /g")
 do
-  ROOT=`grep -v "^#" $SUDOERS | egrep "^User_Alias.*TMPROOT" | grep $i`
+  ROOT=$(grep -v "^#" "${SUDOERS}" | egrep "^User_Alias.*TMPROOT" | grep "${i}")
   if [[ -z $ROOT ]]
   then
     TMPROOT="no"
@@ -76,34 +88,34 @@ do
     TMPROOT="yes"
   fi
 
-  STATUS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
-  GECOS=`grep "^$HOSTNAME:$i:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
-  echo "$HOSTNAME:$i:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+  STATUS=$(grep "^${HOSTNAME}:${i}:" "${CHKUSERS}" | cut -f6 -d:)
+  GECOS=$(grep "^${HOSTNAME}:${i}:" "${CHKUSERS}" | cut -f3 -d:)
+  echo "${HOSTNAME}:${i}:${GECOS}:${TMPROOT}:${STATUS}" >> "${OUTPUT}"
   if [[ $DEBUG = 'yes' ]]
   then
-    echo "$HOSTNAME:$i:$GECOS:$TMPROOT:$STATUS"
+    echo "${HOSTNAME}:${i}:${GECOS}:${TMPROOT}:${STATUS}"
   fi
 done
 
 if [[ $DEBUG = 'yes' ]]
 then
-  echo "Checking $SUDOERS: Cmnd_Alias:"
+  echo "Checking ${SUDOERS}: Cmnd_Alias:"
 fi
 # this section builds a list of the Cmnd_Aliases that have root access. Generally TMPSU but others such as BEASU have it as well.
-for i in `grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | cut -f2 -d= | sed -e "s/ /_/g" | sed -e "s/,/ /g"`
+for i in $(grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | cut -f2 -d= | sed -e "s/ /_/g" | sed -e "s/,/ /g")
 do
-  CMD=`echo $i | sed -e "s/_/ /g"`
+  CMD=$(echo "${i}" | sed -e "s/_/ /g")
 # trim spaces
-  CHKCMD=`echo $CMD`
+  CHKCMD=$(echo "${CMD}")
 
   if [[ $CHKCMD = "/usr/bin/su" || $CHKCMD = "/usr/bin/su -" || $CHKCMD = "/bin/su" || $CHKCMD = "/bin/su -" ]]
   then
-    CMND_ALIAS=`grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | egrep "(${CMD}$|${CMD},)" | awk '{print $2}'`
+    CMND_ALIAS=$(grep -v "^#" "${SUDOERS}" | grep "Cmnd_Alias" | egrep "(${CMD}$|${CMD},)" | awk '{print $2}')
   fi
 done
 
 # replace the spaces (if any) with a pipe for the egrep command
-CMND_ALIAS=`echo $CMND_ALIAS | sed -e "s/ /|/g"`
+CMND_ALIAS=$(echo "${CMND_ALIAS}" | sed -e "s/ /|/g")
 
 if [[ $DEBUG = 'yes' ]]
 then
@@ -111,21 +123,21 @@ then
   grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'
 fi
 # ok, run through the %groups and see who has what. check for space or tabs
-for i in `grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'`
+for i in $(grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}')
 do
-# get the group info from /opt/intrado/etc/group
-  GID=`grep "^$i:" /opt/intrado/etc/group | cut -f3 -d:`
+# get the group info from ${SCRIPTS_DATA}/group
+  GID=$(grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f3 -d:)
 
   if [[ $DEBUG = 'yes' ]]
   then
-    grep "^$i:" /opt/intrado/etc/group | cut -f3 -d:
-    echo "Checking group id $GID:"
+    grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f3 -d:
+    echo "Checking group id ${GID}:"
   fi
-  for j in `grep "^$i:" /opt/intrado/etc/group | cut -f4 -d: | sed -e "s/,/ /g"`
+  for j in $(grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f4 -d: | sed -e "s/,/ /g")
   do
 
 # check to see if a group is root accessible and set the yes/no flag
-    ROOT=`grep -v "^#" $SUDOERS | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1`
+    ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1)
     if [[ -z $ROOT ]]
     then
       TMPROOT="no"
@@ -133,9 +145,9 @@ do
       TMPROOT="yes"
     fi
 
-    STATUS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
-    GECOS=`grep "^$HOSTNAME:$j:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
-    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
     if [[ $DEBUG = 'yes' ]]
     then
       echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
@@ -147,18 +159,18 @@ do
     echo "Checking group membership for users in passwd:"
   fi
 # parse the passwd file and see if anyone is a member of a root accessible GID
-  for j in `awk -F: '{print $1":"$4}' /opt/intrado/etc/passwd`
+  for j in $(awk -F: '{print $1":"$4}' "${SCRIPTS_DATA}/passwd")
   do
-    USER=`echo $j | cut -f1 -d:`
-    UGID=`echo $j | cut -f2 -d:`
+    USER=$(echo "${j}" | cut -f1 -d:)
+    UGID=$(echo "${j}" | cut -f2 -d:)
 
-    if [[ $GID = $UGID ]]
+    if [[ ${GID} = "${UGID}" ]]
     then
-      ROOT=`grep -v "^#" $SUDOERS | grep "^%$i" | awk '{print $NF}'`
+      ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%${i}" | awk '{print $NF}')
       if [[ $DEBUG = 'yes' ]]
       then
-        echo "$SUDOERS - $i"
-        grep -v "^#" $SUDOERS | grep "^%$i" | awk '{print $NF}'
+        echo "${SUDOERS} - ${i}"
+        grep -v "^#" ${SUDOERS} | grep "^%${i}" | awk '{print $NF}'
       fi
       if [[ -z $ROOT ]]
       then
@@ -167,22 +179,22 @@ do
         TMPROOT="yes"
       fi
 
-      STATUS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f6 -d:`
-      GECOS=`grep "^$HOSTNAME:$USER:" /opt/intrado/etc/chkusers.dat | cut -f3 -d:`
-      echo "$HOSTNAME:$USER:$GECOS:$TMPROOT:$STATUS" >> $OUTPUT
+      STATUS=$(grep "^${HOSTNAME}:${USER}:" "${CHKUSERS}" | cut -f6 -d:)
+      GECOS=$(grep "^${HOSTNAME}:${USER}:" "${CHKUSERS}" | cut -f3 -d:)
+      echo "${HOSTNAME}:${USER}:${GECOS}:${TMPROOT}:${STATUS}" >> "${OUTPUT}"
       if [[ $DEBUG = 'yes' ]]
       then
-        echo "$HOSTNAME:$USER:$GECOS:$TMPROOT:$STATUS"
+        echo "${HOSTNAME}:${USER}:${GECOS}:${TMPROOT}:${STATUS}"
       fi
     fi
   done
 done
 
 # sort and clear out the duplicates if any
-sort $OUTPUT | uniq > $CHKSUDOERS
+sort "${OUTPUT}" | uniq > "${CHKSUDOERS}"
 
 # make a backup of the sudoers file
-cp $SUDOERS /opt/intrado/etc/
+cp "${SUDOERS}" "${SCRIPTS_DATA}"
 
 exit 0
 
