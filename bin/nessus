@@ -41,9 +41,9 @@ then
     chmod 700 "${NESDIR}/.ssh"
   fi
 
-  if [[ -f ${SCRIPTS}/etc/nessus.id_rsa.pub ]]
+  if [[ -f ${SCRIPTS_DATA}/nessus.id_rsa.pub ]]
   then
-    cp "${SCRIPTS}/etc/nessus.id_rsa.pub" "${NESDIR}/.ssh/authorized_keys"
+    cp "${SCRIPTS_DATA}/nessus.id_rsa.pub" "${NESDIR}/.ssh/authorized_keys"
     chown -R "${NESSUS}:${NESGRP}" "${NESDIR}"
     chmod 400 "${NESDIR}"/.ssh/authorized_keys
   fi
