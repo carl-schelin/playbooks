@@ -20,14 +20,26 @@
 # 20170331 - remove ovc.version file if it exists
 # 20180322 - Updated it to fully clean and added wildfly and newrelic
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 ADMIN=/opt/intrado
 
 # clean up
 for i in datapal httpd informix mysqld netbackup newrelic omsa opnet oracle ovc postgres sudo vmtoolsd wildfly
 do
-  if [[ -f $ADMIN/etc/$i.version ]]
+  if [[ -f ${SCRIPTS_DATA}/$i.version ]]
   then
-    rm $ADMIN/etc/$i.version
+    rm "${SCRIPTS_DATA}/$i.version"
   fi
 done
 
@@ -40,36 +52,36 @@ done
 
 if [[ -f /opt/datapalette/bin/datapal ]]
 then
-  echo "Installed" > $ADMIN/etc/datapal.version
+  echo "Installed" > "${SCRIPTS_DATA}/datapal.version"
 fi
 
 ##############################################
 ### HTTPD - httpd.version
 ##############################################
 
-OUTPUT=`ps -e | grep httpd`
+OUTPUT=$(ps -e | grep httpd)
 if [[ ! -z $OUTPUT ]]
 then
 # if started in the last 24 hours, it'll be hh:mm:ss
-  OUTPUT=`ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $8}'`
+  OUTPUT=$(ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $8}')
   if [[ ! -x $OUTPUT ]]
   then
 # if been up a while, it'll be Oct 16'
-    OUTPUT=`ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $9}'`
+    OUTPUT=$(ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $9}')
   fi
-  $OUTPUT -version | head -1 > $ADMIN/etc/httpd.version
+  $OUTPUT -version | head -1 > "${SCRIPTS_DATA}/httpd.version"
 fi
 
 ##############################################
 ### Informix - informix.version
 ##############################################
 
-OUTPUT=`ps -ef | grep oninit | grep -v grep`
+OUTPUT=$(ps -ef | grep oninit | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
   if [[ -f /usr/informix/bin/onstat ]]
   then
-    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > $ADMIN/etc/informix.version
+    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > "${SCRIPTS_DATA}/informix.version"
   fi
 fi
 
@@ -77,27 +89,27 @@ fi
 ### MySQLd - mysqld.version
 ##############################################
 
-OUTPUT=`ps -e | grep mysqld`
+OUTPUT=$(ps -e | grep mysqld)
 if [[ ! -z $OUTPUT ]]
 then
 # if started in the last 24 hours, it'll be hh:mm:ss
-  OUTPUT=`ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $8}'`
+  OUTPUT=$(ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $8}')
   if [[ ! -x $OUTPUT ]]
   then
 # if been up a while, it'll be Oct 16'
-    OUTPUT=`ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $9}'`
+    OUTPUT=$(ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $9}')
   fi
 # mysql is installed but run as './mysqld' vs an absolute path. at least this tells you it's been found
   if [[ -f $OUTPUT ]]
   then
-    $OUTPUT --version | head -1 > $ADMIN/etc/mysqld.version
+    $OUTPUT --version | head -1 > "${SCRIPTS_DATA}/mysqld.version"
   else
-    OUTPUT=`find /opt -name mysqld -print | sort | tail -1`  
+    OUTPUT=$(find /opt -name mysqld -print | sort | tail -1)
     if [[ -f $OUTPUT ]]
     then
       $OUTPUT --version | head -1 > $ADMIN/etc/mysqld.version
     else
-      echo "$OUTPUT running but can't get version" > $ADMIN/etc/mysqld.version
+      echo "$OUTPUT running but can't get version" > "${SCRIPTS_DATA}/mysqld.version"
     fi
   fi
 fi
@@ -108,17 +120,17 @@ fi
 
 if [[ -f /usr/openv/netbackup/bin/version ]]
 then
-  cp /usr/openv/netbackup/bin/version $ADMIN/etc/netbackup.version
+  cp /usr/openv/netbackup/bin/version "${SCRIPTS_DATA}/netbackup.version"
 fi
 
 ##############################################
 ### New Relic - newrelic.version
 ##############################################
 
-OUTPUT=`ps -ef | grep newrelic | grep -v grep`
+OUTPUT=$(ps -ef | grep newrelic | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
-  echo "Installed" > $ADMIN/etc/newrelic.version
+  echo "Installed" > "${SCRIPTS_DATA}/newrelic.version"
 fi
 
 ##############################################
@@ -127,7 +139,7 @@ fi
 
 if [[ -x /opt/dell/srvadmin/bin/omreport ]];
  then
-   /opt/dell/srvadmin/bin/omreport about > ${ADMIN}/etc/omsa.version
+   /opt/dell/srvadmin/bin/omreport about > "${SCRIPTS_DATA}/omsa.version"
 fi
 
 ##############################################
@@ -136,15 +148,15 @@ fi
 
 if [[ -f /opt/OV/bin/opcagt ]]
 then
-  /opt/OV/bin/opcagt -version > $ADMIN/etc/ovc.version
+  /opt/OV/bin/opcagt -version > "${SCRIPTS_DATA}/ovc.version"
 else
   if [[ -f /opt/OV/bin/OpC/opcagt ]]
   then
-    /opt/OV/bin/OpC/opcagt -version > $ADMIN/etc/ovc.version
+    /opt/OV/bin/OpC/opcagt -version > "${SCRIPTS_DATA}/ovc.version"
   else
     if [[ -f /opt/OV/bin/ovc ]]
     then
-      /opt/OV/bin/ovc -version > $ADMIN/etc/ovc.version
+      /opt/OV/bin/ovc -version > "${SCRIPTS_DATA}/ovc.version"
     fi
   fi
 fi
@@ -155,19 +167,19 @@ fi
 
 if [[ -d /opt/Panorama ]]
 then
-  echo "Installed" > $ADMIN/etc/opnet.version
+  echo "Installed" > "${SCRIPTS_DATA}/opnet.version"
 fi
 
 ##############################################
 ### Oracle - oracle.version
 ##############################################
 
-OUTPUT=`ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_`
+OUTPUT=$(ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_)
 if [[ ! -z $OUTPUT ]]
 then
   for i in $OUTPUT
   do
-    echo $i >> $ADMIN/etc/oracle.version
+    echo "${i}" >> "${SCRIPTS_DATA}/oracle.version"
   done
 fi
 
@@ -175,18 +187,18 @@ fi
 ### Postgres - postgres.version
 ##############################################
 
-OUTPUT=`ps -ef | grep pgsql | grep -v grep`
+OUTPUT=$(ps -ef | grep pgsql | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
 # if started in the last 24 hours, it'll be hh:mm:ss
-  OUTPUT=`ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $8}'`
+  OUTPUT=$(ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $8}')
   if [[ ! -x $OUTPUT ]]
   then
 # if been up a while, it'll be Oct 16'
-    OUTPUT=`ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $9}'`
+    OUTPUT=$(ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $9}')
   fi
-  DIR=`dirname $OUTPUT`
-  $DIR/psql --version | head -1 > $ADMIN/etc/postgres.version
+  DIR=$(dirname "${OUTPUT}")
+  "${DIR}/psql" --version | head -1 > "${SCRIPTS_DATA}/postgres.version"
 fi
 
 ##############################################
@@ -195,7 +207,7 @@ fi
 
 if [[ -f /usr/local/bin/sudo ]]
 then
-  /usr/local/bin/sudo -V | head -1 > $ADMIN/etc/sudo.version
+  /usr/local/bin/sudo -V | head -1 > "${SCRIPTS_DATA}/sudo.version"
 fi
 
 ##############################################
@@ -204,17 +216,17 @@ fi
 
 if [[ -f /usr/sbin/vmtoolsd ]]
 then
-  /usr/sbin/vmtoolsd -v > $ADMIN/etc/vmtoolsd.version
+  /usr/sbin/vmtoolsd -v > "${SCRIPTS_DATA}/vmtoolsd.version"
 fi
 
 ##############################################
 ### Wildfly - wildfly.version
 ##############################################
 
-OUTPUT=`ps -ef | grep wildfly | grep -v grep`
+OUTPUT=$(ps -ef | grep wildfly | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
-  echo "Installed" > $ADMIN/etc/wildfly.version
+  echo "Installed" > "${SCRIPTS_DATA}/wildfly.version"
 fi
 
 
