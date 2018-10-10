@@ -159,3 +159,53 @@ do
   fi
 done
 
+# transition stuff between /opt/intrado/var and /opt/intrado/etc
+INVAR="/opt/intrado/var"
+INETC="/opt/intrado/etc"
+
+for i in 2011 2012 2013 2014 2015 2016 2017
+do
+  if [[ -f ${INVAR}/logfile.${i}* ]]
+  then
+    rm ${INVAR}/logfile.${i}*
+  fi
+  if [[ -f ${INVAR}/intrado.log.${i}* ]]
+  then
+    rm ${INVAR}/intrado.log.${i}*
+  fi
+done
+
+mv ${INVAR}/logfile.* ${INETC}/
+mv ${INVAR}/intrado.log.* ${INETC}/
+
+for i in carl chkopenview.completed enwdcoecuta1b.log lsof.output opcagt.status.output ovstatus.output
+do
+  if [[ -f ${INVAR}/$i ]]
+  then
+    rm ${INVAR}/$i
+  fi
+done
+
+for i in openview.failed intrado.log recert.log
+do
+  if [[ -f ${INETC}/$i ]]
+  then
+    if [[ -f ${INVAR}/$i ]]
+    then
+      cat ${INETC}/$i >> ${INVAR}/$i
+    fi
+  fi
+  if [[ -f ${INVAR}/$i ]]
+  then
+    mv ${INVAR}/$i ${INETC}/$i
+  fi
+done
+
+for i in opctrapi.failed openview.stop vxprint.output
+do
+  if [[ -f ${INVAR}/$i ]]
+  then
+    mv ${INVAR}/$i ${INETC}/$i
+  fi
+done
+
