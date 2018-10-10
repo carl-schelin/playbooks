@@ -24,12 +24,12 @@ then
   echo "verified as healthy for the system and is used to quickly identify a problem."
   echo ""
   print "\n<- ${CHKFILE}.review ---------- ${CHKFILE}.valid ->"
-  more ${SCRIPTS_LOGS}/${CHKFILE}.diff
+  more "${SCRIPTS_LOGS}/${CHKFILE}.diff"
   print -n "\nOkay to update ${CHKFILE}.valid with ${CHKFILE}.review? [y] "
   read CHECK
   if [[ -z ${CHECK} ]] || [[ "${CHECK}" = "y" ]]
   then
-    cp ${SCRIPTS_LOGS}/$CHKFILE.review ${SCRIPTS_LOGS}/$CHKFILE.valid
+    cp "${SCRIPTS_LOGS}/$CHKFILE.review" "${SCRIPTS_LOGS}/$CHKFILE.valid"
     print "${CHKFILE}.valid updated with ${CHKFILE}.review"
   else
     print "${CHKFILE}.valid not updated"
@@ -39,12 +39,12 @@ else
   if [[ -f ${SCRIPTS_LOGS}/${CHKFILE}.review && ! -f ${SCRIPTS_LOGS}/${CHKFILE}.valid ]]
   then
     print "\n-- ${CHKFILE}.valid doesn't exist ----------"
-    more ${SCRIPTS_LOGS}/$CHKFILE.review
+    more "${SCRIPTS_LOGS}/$CHKFILE.review"
     print -n "\nOkay to update ${CHKFILE}.valid with ${CHKFILE}.review? [y] "
     read CHECK
     if [[ -z ${CHECK} ]] || [[ "${CHECK}" = "y" ]]
     then
-      cp ${SCRIPTS_LOGS}/${CHKFILE}.review ${SCRIPTS_LOGS}/${CHKFILE}.valid
+      cp "${SCRIPTS_LOGS}/${CHKFILE}.review" "${SCRIPTS_LOGS}/${CHKFILE}.valid"
       print "${CHKFILE}.valid updated with ${CHKFILE}.review"
     else
       print "${CHKFILE}.review not updated"
