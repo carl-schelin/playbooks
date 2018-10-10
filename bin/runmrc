@@ -10,10 +10,22 @@
 #   change the output so the backup files can be gathered without 
 #   having to have a translation table.
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 if [[ -f /usr/sbin/megarc ]]
 then
 
-  /usr/sbin/megarc -savecfg -f/opt/intrado/etc/megarc.cfg -a0
+  /usr/sbin/megarc -savecfg -f${SCRIPTS_DATA}/megarc.cfg -a0
 
 fi
 
