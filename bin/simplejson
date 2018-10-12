@@ -15,6 +15,12 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
 if [[ -f /etc/redhat-release ]]
 then
 
@@ -43,6 +49,8 @@ then
 
 # and install the missing rpm
         rpm -ivh "$SCRIPTS_DATA}/${PACKAGE}"
+
+        echo "Installed ${PACKAGE} to provide support for Ansible playbooks" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
 
       fi
 
