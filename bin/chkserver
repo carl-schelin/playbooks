@@ -176,6 +176,7 @@
 # 2018/10/03 - CS - Added an artifactory function plus cleaned up the various management ping and port checks
 # 2018/10/04 - CS - Moved the chkvx functionality into the script
 # 2018/10/08 - CS - Added a comparison function and a check of suid and guid files
+# 2018/10/15 - CS - Added the check_apa and check_passwd comparison check functions
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -189,7 +190,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.258"
+VERSION="${BASENAME} v1.260"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3121,6 +3122,28 @@ check_opnet() {
 
 
 ######################
+### Doc: Function: check_passwd(62) - 
+### Doc: 
+######################
+
+check_passwd() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_passwd(62)"
+  fi
+
+  pwck > ${SCRIPTS_LOGS}/chkpwck.review
+
+  compare_files chkpwck
+
+  if [[ ${DEBUG} = '62' ]]
+  then
+    echo "Exiting check_passwd()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_privileged_access(18) - 
 ### Number of Checks: 2 * [Number of users on the system]
 ######################
@@ -4464,7 +4487,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
