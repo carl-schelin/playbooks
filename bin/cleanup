@@ -121,7 +121,7 @@ fi
 
 # delete any retired scripts and data files.
 
-for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile runps getsysinfo
+for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile runps getsysinfo chkapa
 do
   if [[ -f ${SCRIPTS_BINS}/$i ]]
   then
@@ -129,7 +129,7 @@ do
   fi
 done
 
-for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output chkprofile.output
+for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output chkprofile.output chkapa.output
 do
   if [[ -f ${SCRIPTS_LOGS}/$i ]]
   then
@@ -201,11 +201,37 @@ do
   fi
 done
 
+
+# extra bits found when checking to make sure things are clean
+
+if [[ -f /opt/intrado/var/enwdcoecuta1b.log ]]
+then
+  rm /opt/intrado/var/enwdcoecuta1b.log
+fi
+
 for i in opctrapi.failed openview.stop vxprint.output
 do
   if [[ -f ${INVAR}/$i ]]
   then
     mv ${INVAR}/$i ${INETC}/$i
+  fi
+done
+
+if [[ -d /opt/intrado/bin/scripts ]]
+then
+  rm -rf /opt/intrado/bin/scripts
+fi
+
+if [[ -d /opt/intrado/bin/decommissioned ]]
+then
+  rm -rf /opt/intrado/bin/decommissioned
+fi
+
+for i in chkconfig incomsu1 yodo ntpd.output oracle.output enwdcoecuta1b STDOUT nohup.out culali01 1 culali03 elmali01 elmali03
+do
+  if [[ -f /opt/intrado/bin/$i ]]
+  then
+    rm /opt/intrado/bin/$i
   fi
 done
 
