@@ -557,6 +557,58 @@ check_active_employees() {
 
 
 ######################
+### Doc: Function: check_apa(61) - 
+### Doc: Extracted from chkapa by Paul Pietras
+### Doc: *
+######################
+
+check_apa() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_apa(61)"
+  fi
+  if [[ ${OS} = 'HP=UX' ]]
+  then
+    if [[ -s /etc/lanmon/lanconfig.ascii ]]
+    then
+      if [[ ${KERNELVERS} = 'B.11.31' ]]
+      then
+        # use nwmgr utility
+        echo "APA Configured Interfaces" > "${SCRIPTS_LOGS}/chkapa.review"
+        echo "-------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "Active Interfaces" >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "-----------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        nwmgr | grep UP >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "APA interfaces and active membership" >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "------------------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        nwmgr -S apa | grep -v Not_Enabled >> "${SCRIPTS_LOGS}/chkapa.review"
+      else
+        # grab the failover groups from the APA config file
+        echo "APA Configured Interfaces" > "${SCRIPTS_LOGS}/chkapa.review"
+        echo "-------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "Active Interfaces" >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "-----------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        lanscan | grep UP >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "APA interfaces and active membership" >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "------------------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        for i in `grep 'FAILOVER_GROUP' /etc/lanmon/lanconfig.ascii | grep -v ^# | awk '{print $2}' | sed 's/^lan//'`
+        do
+          lanscan -q | grep $i >> "${SCRIPTS_LOGS}/chkapa.review"
+        done
+      fi
+      compare_files chkapa
+    fi
+  fi
+  if [[ ${DEBUG} = '61' ]]
+  then
+    echo "Exiting check_apa()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_artifactory(57) - 
 ### Doc: *
 ######################
@@ -4401,7 +4453,18 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15 check_artifactory:57 check_vxprint_vxdisk:58 check_suid:0 check_guid:0
+for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
