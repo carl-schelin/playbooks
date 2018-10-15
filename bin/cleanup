@@ -121,7 +121,7 @@ fi
 
 # delete any retired scripts and data files.
 
-for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile
+for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile runps getsysinfo
 do
   if [[ -f ${SCRIPTS_BINS}/$i ]]
   then
