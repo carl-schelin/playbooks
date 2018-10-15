@@ -164,7 +164,7 @@ do
               DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
               if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
               then
-                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
+                echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
                 grpconv
               else
                 echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
@@ -179,7 +179,7 @@ do
                 PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
                 if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
                 then
-                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" changelog@incojs01.scc911.com
+                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
                   grpconv
                 else
                   echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
