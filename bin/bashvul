@@ -16,8 +16,8 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-LOG=${SCRIPTS}/etc/bash.vulnerable
-OUT=${SCRIPTS}/etc/bash.output
+LOG=${SCRIPTS_LOGS}/bash.vulnerable
+OUT=${SCRIPTS_LOGS}/bash.output
 MONTH=$(date | awk '{print $2}')
 
 # try to bypass the 'can't find bash' problem on hp-ux
