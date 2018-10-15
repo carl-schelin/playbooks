@@ -189,7 +189,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.254"
+VERSION="${BASENAME} v1.258"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -417,7 +417,7 @@ check_management_route() {
               ip addr | grep " ${IPADDRESS}/"
             fi
             ip addr | grep " ${IPADDRESS}/" > /dev/null
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}We're on ${IPADDRESS} so we're good.${RESET}" >> "${LOG}"
             else
@@ -497,7 +497,7 @@ check_active_employees() {
     for j in $(cut -f1 -d: /etc/passwd)
     do
       grep -i "^${j}$" ${SCRIPTS_DATA}/users.exclude > /dev/null
-      if [[ $? = 1 ]]
+      if [[ $? -eq 1 ]]
       then
 
         LOCKED=''
@@ -540,7 +540,7 @@ check_active_employees() {
           if [[ ! -z $EMAIL ]]
           then
             grep -i "^${EMAIL}$" ${SCRIPTS_DATA}/intrado.email > /dev/null
-            if [[ $? = 1 ]]
+            if [[ $? -eq 1 ]]
             then
               printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS_DATA}/intrado.email file and the account isn't locked.${RESET}" >> "${LOG}"
             fi
@@ -587,7 +587,7 @@ check_artifactory() {
       echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
       check_management_route ${CA_IP}
       ping ${CA_IP} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Artifactory site ${CA_SITE}:${CA_IP} is pingable${RESET}" >> "${LOG}"
         if [[ ! -z ${NETCAT} ]]
@@ -595,7 +595,7 @@ check_artifactory() {
           for k in ${CA_PORTS}
           do
             echo "quit" | ${NETCAT} -w 2 -vn ${CA_IP} ${k} > /dev/null 2>&1
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}Artifactory Server ${CA_SITE}:${CA_IP}:${k} is accessible${RESET}" >> "${LOG}"
             else
@@ -638,7 +638,7 @@ check_centrify() {
     then
       printf "%b\n" "    ${GREEN}Centrify is running${RESET}" >> "${LOG}"
       /usr/bin/adinfo
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         CENTRIFY='yes'
 #[root@cofmcc1 bin]# adinfo
@@ -661,7 +661,7 @@ check_centrify() {
 #Linux:cschelin@infltx10$ echo $?
 #10
       /usr/bin/adinfo
-      if [[ $? = 10 ]]
+      if [[ $? -eq 10 ]]
       then
         printf "%b\n" "    ${RED}Centrify is not connected${RESET}" >> "${LOG}"
       fi
@@ -729,14 +729,14 @@ check_config_addresses() {
     INTERFACE=$(egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-)
     printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> "${LOG}"
     egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
       printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> "${LOG}"
     else
       printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> "${LOG}"
     fi
     grep -i ${FIELD3} /etc/hosts > /dev/null
-    if [[ $? = 1 ]]
+    if [[ $? -eq 1 ]]
     then
       printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> "${LOG}"
     fi
@@ -747,7 +747,7 @@ check_config_addresses() {
     else
       echo "  ping check of the gateway: ${FIELD4}"
       ping ${FIELD4} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> "${LOG}"
       else
@@ -756,14 +756,14 @@ check_config_addresses() {
     fi
     GATEWAY="${GATEWAY} ${FIELD4}"
     grep "GATEWAY=${FIELD4}" /etc/sysconfig/network > /dev/null
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
       GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
       GWFLAG='yes'
     fi
 # check the interface file too
     grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
       GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
       GWFLAG='yes'
@@ -1251,7 +1251,7 @@ check_config_sudoers() {
   if [[ ! -z ${SUDOERS} ]]
   then
     grep "^%${FIELD3}" "${SUDOERS}" > /dev/null
-    if [[ $? = 0 ]]
+    if [[ $? -eq 0 ]]
     then
       printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> "${LOG}"
     else
@@ -1347,7 +1347,7 @@ check_data_palette() {
         echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
         check_management_route ${DPIP}
         ping ${DPIP} ${PINGCT} > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP} is pingable${RESET}" >> "${LOG}"
           if [[ ! -z ${NETCAT} ]]
@@ -1355,7 +1355,7 @@ check_data_palette() {
             for k in ${DPPORTS}
             do
               echo "quit" | ${NETCAT} -w 2 -vn ${DPIP} ${k} > /dev/null 2>&1
-              if [[ $? = 0 ]]
+              if [[ $? -eq 0 ]]
               then
                 printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP}:${k} is accessible${RESET}" >> "${LOG}"
               else
@@ -1640,7 +1640,7 @@ check_email() {
       echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
       check_management_route ${EMAILIP}
       ping ${EMAILIP} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Email server ${EMAILSITE}:${EMAILIP} is pingable${RESET}" >> "${LOG}"
         if [[ ! -z ${NETCAT} ]]
@@ -1648,7 +1648,7 @@ check_email() {
           for j in ${EMAILPORTS}
           do
             echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${j} > /dev/null 2>&1
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}Email server (${EMAILSITE}:${EMAILIP}:${j}) is accessible${RESET}" >> "${LOG}"
             else
@@ -1760,12 +1760,12 @@ check_group_membership() {
         if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
         then
           grep -i "^${j}:" /etc/passwd > /dev/null
-          if [[ $? = 1 ]]
+          if [[ $? -eq 1 ]]
           then
             printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> "${LOG}"
           fi
           egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group > /dev/null
-          if [[ $? = 1 ]]
+          if [[ $? -eq 1 ]]
           then
             printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> "${LOG}"
           fi
@@ -1876,7 +1876,7 @@ check_hostname() {
   fi
   HOSTNAME=$(hostname|cut -f1 -d.)
   grep -i ${HOSTNAME} /etc/hosts > /dev/null
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> "${LOG}"
   else
@@ -2165,7 +2165,7 @@ check_lsof() {
     echo "Entering check_lsof(13)"
   fi
   which lsof
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     OUTPUT=$(lsof | grep "(deleted)" | wc -l)
     if [[ $OUTPUT -gt 0 ]]
@@ -2211,7 +2211,7 @@ check_management() {
       echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
       check_management_route ${MGTIP}
       ping ${MGTIP} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP} is pingable${RESET}" >> "${LOG}"
         if [[ ! -z ${NETCAT} ]]
@@ -2219,7 +2219,7 @@ check_management() {
           for k in ${MGTPORTS}
           do
             echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${k} > /dev/null 2>&1
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP}:${k} is accessible${RESET}" >> "${LOG}"
             else
@@ -2286,7 +2286,7 @@ check_netbackup() {
           for nb in bpcd bpjava-msvc vnetd vopied
           do
             grep "^${nb}:" /etc/hosts.allow > /dev/null
-            if [[ ! $? = 0 ]]
+            if [[ ! $? -eq 0 ]]
             then
               printf "%b\n" "    ${RED}${nb} is missing from /etc/hosts.allow${RESET}" >> "${LOG}"
             fi
@@ -2297,7 +2297,7 @@ check_netbackup() {
             for nbip in ${BUSERVERS}
             do
               grep "^${nb}:" /etc/hosts.allow | egrep "(:|,| )${nbip}( |,|$)" > /dev/null
-              if [[ ! $? = 0 ]]
+              if [[ ! $? -eq 0 ]]
               then
                 printf "%b\n" "    ${RED}${nbip} is missing from the ${nb} line in /etc/hosts.allow${RESET}" >> "${LOG}"
               fi
@@ -2335,14 +2335,14 @@ check_netbackup() {
       if [[ ! -z ${NETCAT} ]]
       then
         echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 1556 > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}${NBLIST}:1556 is accessible${RESET}" >> "${LOG}"
         else
           printf "%b\n" "    ${RED}${NBLIST}:1556 is not accessible${RESET}" >> "${LOG}"
         fi
         echo "" | ${NETCAT} -w 2 -vn ${NBLIST} 13724 > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}${NBLIST}:13724 is accessible${RESET}" >> "${LOG}"
         else
@@ -2748,7 +2748,7 @@ check_oomkiller() {
   fi
   printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> "${LOG}"
   grep "invoked oom-killer" ${PLOG} > /dev/null
-  if [[ $? = 0 ]]
+  if [[ $? -eq 0 ]]
   then
     printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> "${LOG}"
   fi
@@ -2787,7 +2787,7 @@ check_openview() {
   fi
 # check to see if chkov is uncommented
   grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
-  if [[ $? = 1 ]]
+  if [[ $? -eq 1 ]]
   then
     printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
   fi
@@ -2832,7 +2832,7 @@ check_openview() {
           echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
           check_management_route ${MONIP}
           ping ${MONIP} ${PINGCT} > /dev/null
-          if [[ $? = 0 ]]
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "    ${GREEN}Monitoring site ${MONSITE}:${MONIP} is pingable${RESET}" >> "${LOG}"
             if [[ ! -z ${NETCAT} ]]
@@ -2841,7 +2841,7 @@ check_openview() {
               do
 # netcat isn't working correctly everywhere but it is working in some places...
                 echo "" | ${NETCAT} -w 2 -vn ${MONIP} ${j} > /dev/null 2>&1
-                if [[ $? = 0 ]]
+                if [[ $? -eq 0 ]]
                 then
                   printf "%b\n" "    ${GREEN}Monitoring site ${MONSITE}:${MONIP}:${j} is accessible${RESET}" >> "${LOG}"
                 else
@@ -2852,7 +2852,7 @@ check_openview() {
 
 # since we're here, check the Openview Ping tool too
             /opt/OV/bin/bbcutil -ping ${MONIP} > /dev/null
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}bbcutil is able to ping ${MONSITE}${RESET}" >> "${LOG}"
             else
@@ -3044,7 +3044,7 @@ check_opnet() {
             for k in ${OPNETPORTS}
             do
               echo "quit" | ${NETCAT} -w 2 -vn ${OPNETIP} ${k} > /dev/null 2>&1
-              if [[ $? = 0 ]]
+              if [[ $? -eq 0 ]]
               then
                 printf "%b\n" "    ${GREEN}OpNet Server ${OPNETSITE}:${OPNETIP}:${k} is accessible${RESET}" >> "${LOG}"
               else
@@ -3169,7 +3169,7 @@ check_redhat_subscription() {
       check_management_route ${SATIP}
       echo "  ping check of Red Hat Satellite Server: ${SATIP}"
       ping ${SATIP} ${PINGCT} > /dev/null
-      if [[ $? = 0 ]]
+      if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Satellite Server ${SATSITE}:${SATIP} is pingable${RESET}" >> "${LOG}"
       else
@@ -3182,7 +3182,7 @@ check_redhat_subscription() {
       do
         printf " $j"
         echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}Satellite Server (${SATSITE}:${SATIP}:${j}) is accessible${RESET}" >> "${LOG}"
         else
@@ -3318,7 +3318,7 @@ check_resolver() {
             check_management_route ${i}
             echo "  ping check of nameserver: ${i}"
             ping ${i} ${PINGCT} > /dev/null
-            if [[ $? = 0 ]]
+            if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> "${LOG}"
             else
@@ -3811,7 +3811,7 @@ check_sudoers() {
       echo "  Found ${SUDOERS}"
     fi
     grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
-    if [[ $? = 1 ]]
+    if [[ $? -eq 1 ]]
     then
       printf "%b\n" "    ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> "${LOG}"
     fi
@@ -4033,7 +4033,7 @@ check_time() {
         check_management_route ${TIME_IP}
         echo "  ping check of time server: ${TIME_IP}"
         ping ${TIME_IP} ${PINGCT} > /dev/null
-        if [[ $? = 0 ]]
+        if [[ $? -eq 0 ]]
         then
           printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is pingable.${RESET}" >> "${LOG}"
         else
@@ -4046,7 +4046,7 @@ check_time() {
         else
           echo "  time check of time server: ${TIME_IP}"
           ntpdate -q ${TIME_IP} > /dev/null
-          if [[ $? = 0 ]]
+          if [[ $? -eq 0 ]]
           then
             printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is providing time.${RESET}" >> "${LOG}"
           else
