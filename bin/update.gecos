@@ -16,34 +16,31 @@ fi
 # Source the configuration file
 source "${DIRNAME}"/../.config
 
-PATH=$PATH:/bin:/usr/bin:/sbin:/usr/sbin
-
 # if a changefreeze is in effect, stop the execution of the script.
 if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
 then
   exit 0
 fi
 
-UPDATES=""
-COMMA=""
-for i in $(grep -v "^#" "${SCRIPTS_DATA}/valid.email" | cut -f1 -d:)
+# get the user name from /etc/passwd
+for i in $(cut -f1 -d: /etc/passwd)
 do
-  ORIGINAL=$(egrep "^${i}:" /etc/passwd)
-  if [[ ! -z ${ORIGINAL} ]]
+  echo "Checking $i"
+  VALIDUSER=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email")
+  if [[ ! -z "${VALIDUSER}" ]]
   then
-    EMAIL=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email" | cut -f2 -d:)
-    usermod -c "${EMAIL}" "${i}"
-    UPDATED=$(egrep "^${i}:" /etc/passwd)
-    if [[ ! ${ORIGINAL} = "${UPDATED}" ]]
+# get the current and correct GECOS entry for the user
+    echo "Found: $i"
+    VALIDGECOS=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email" | cut -f2 -d:)
+    GECOS=$(egrep "^${i}:" "/etc/passwd" | cut -f5 -d:)
+    echo "Comparing valid.email: ${VALIDGECOS} and passwd: ${GECOS}"
+    if [[ ! ${VALIDGECOS} = "${GECOS}" ]]
     then
-      UPDATES="${UPDATES}${COMMA}${i}"
-      COMMA=","
+      echo "Needs updating"
+      usermod -c "${VALIDGECOS}" "${i}"
+      echo "Changelog sent"
+      echo "Updated ${i} to correct their GECOS field" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
     fi
   fi
 done
-
-if [[ ! -z ${UPDATES} ]]
-then
-  echo "Updated ${UPDATES} to correct their GECOS field" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
-fi
 
