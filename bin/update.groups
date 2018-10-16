@@ -70,6 +70,10 @@ do
   GROUP=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
   GROUPLIST=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
 
+###########
+# if the server and group was NOT found in the group master file, check external sources for the information using 
+###########
+
   if [[ -z ${GROUP} ]]
   then
     if [[ ${CENTRIFY} = 'yes' ]]
@@ -111,6 +115,10 @@ do
     fi
   fi
 
+###########
+# if the hostname and group was found in the group.master file, process the members of the group
+###########
+
   if [[ ! -z ${GROUP} ]]
   then
 
@@ -131,7 +139,12 @@ do
         echo "Found ${GID} in /etc/group" >> "${LOG}"
       fi
 
-# update the group info with what's in the group.master file
+# so, we've pulled the validated group list from the group.master file
+# and we now have the group id (GID) from the existing group entry
+# get the actual group list; group:x:222:user1,user2,user3 from /etc/group
+# then compare it to the validated group list from the group.master file
+# if it DOES NOT match, back up the group file, use the backed up file to update the /etc/group file with the correct, validated group listing.
+# use the extracted GID and PASSWD
       DONE=$(grep "^${GROUP}:" /etc/group)
       PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
       DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
@@ -156,6 +169,7 @@ do
             then
               PASSWD='\*';
             fi
+# if we've already done one group, don't make multiple backup files, just use the existing backup file.
             if [[ -f /etc/group-${DATE} ]]
             then
               sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
