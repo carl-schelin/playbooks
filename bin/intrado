@@ -548,7 +548,12 @@ then
   fi
 fi
 
-# And finish the log
+# And finish the log; extra lines to ensure a clean last line
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
 echo "`date` intrado script ended" >> $LOG
 echo "======================" >> $LOG
 
