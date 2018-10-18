@@ -177,6 +177,8 @@
 # 2018/10/04 - CS - Moved the chkvx functionality into the script
 # 2018/10/08 - CS - Added a comparison function and a check of suid and guid files
 # 2018/10/15 - CS - Added the check_apa and check_passwd comparison check functions
+# 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
+# 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -190,7 +192,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.260"
+VERSION="${BASENAME} v1.262"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -929,6 +931,44 @@ check_config_datapalette() {
   if [[ ${DEBUG} = '49' ]]
   then
     echo "Exiting check_config_datapalette()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_disabled(63) - 1 check
+### Doc: * Linux only, verify a service is not enabled
+######################
+
+check_config_disabled() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_disabled(63)"
+  fi
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${OSMAJOR} = '7' ]]
+    then
+      systemctl is-enabled "$FIELD3" > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+      fi
+    else
+      chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '63' ]]
+  then
+    echo "Exiting check_config_disabled()"
   fi
 }
 
@@ -3867,6 +3907,39 @@ check_selinux() {
 
 
 ######################
+### Doc: Function: check_services(64) - 
+### Doc: * 
+######################
+
+check_services() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_suid(64)"
+  fi
+
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${MAJORVERSION} = '7' ]]
+    then
+      systemctl list-unit-files > ${SCRIPT_LOGS}/chkservices.review
+    fi
+# both 7 and lower have chkconfig to show services and status
+    chkconfig >> ${SCRIPT_LOGS}/chkservices.review
+
+# for now, just in the if statement. once sun and hp are figured out, add them
+    compare_files chkservices
+  fi
+
+#  compare_files chkservices
+
+  if [[ ${DEBUG} = '64' ]]
+  then
+    echo "Exiting check_services()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_sudoers(24) - 3 checks
 ### Doc: * Verifies sudoers is in a known location
 ### Doc: * Verifies that the hostname is in the sudoers file
@@ -4487,7 +4560,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
@@ -4511,6 +4584,7 @@ then
       echo "Entering chkserver.input system configuration check"
     fi
 
+# checking for server specific checks or all server checks.
     for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS_DATA}/chkserver.input)
     do
 
@@ -4588,6 +4662,12 @@ then
       if [[ ${FIELD2} = 'Enabled' ]]
       then
         check_config_enabled
+      fi
+
+# check for services that should not be enabled.
+      if [[ ${FIELD2} = 'Disabled' ]]
+      then
+        check_config_disabled
       fi
 
 # check for services that should be running.
