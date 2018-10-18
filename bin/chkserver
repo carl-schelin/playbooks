@@ -3914,17 +3914,29 @@ check_selinux() {
 check_services() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_suid(64)"
+    echo "Entering check_services(64)"
   fi
 
   if [[ ${OS} = 'Linux' ]]
   then
-    if [[ ${MAJORVERSION} = '7' ]]
+    if [[ ${DEBUG} = '64' ]]
     then
-      systemctl list-unit-files > ${SCRIPT_LOGS}/chkservices.review
+      echo "  Linux system. Checking config"
     fi
 # both 7 and lower have chkconfig to show services and status
-    chkconfig >> ${SCRIPT_LOGS}/chkservices.review
+    chkconfig > ${SCRIPTS_LOGS}/chkservices.review
+    if [[ ${DEBUG} = '64' ]]
+    then
+      echo "  chkconfig output generated"
+    fi
+    if [[ ${OSMAJOR} = '7' ]]
+    then
+      if [[ ${DEBUG} = '64' ]]
+      then
+        echo "  RH7, systemctl output"
+      fi
+      systemctl list-unit-files >> ${SCRIPTS_LOGS}/chkservices.review
+    fi
 
 # for now, just in the if statement. once sun and hp are figured out, add them
     compare_files chkservices
