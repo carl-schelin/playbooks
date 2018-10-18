@@ -945,24 +945,28 @@ check_config_disabled() {
   then
     echo "Entering check_config_disabled(63)"
   fi
-  if [[ ${OS} = 'Linux' ]]
+  grep "^${HOSTNAME}:Enabled:${FIELD3}" "${SCRIPTS_DATA}/chkserver.exclude" > /dev/null
+  if [[ $? -gt 0 ]]
   then
-    if [[ ${OSMAJOR} = '7' ]]
+    if [[ ${OS} = 'Linux' ]]
     then
-      systemctl is-enabled "$FIELD3" > /dev/null 2>&1
-      if [[ $? -eq 0 ]]
+      if [[ ${OSMAJOR} = '7' ]]
       then
-        printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+        systemctl is-enabled "$FIELD3" > /dev/null 2>&1
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+        fi
       else
-        printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
-      fi
-    else
-      chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
-      if [[ $? -eq 0 ]]
-      then
-        printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
-      else
-        printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+        chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+        fi
       fi
     fi
   fi
