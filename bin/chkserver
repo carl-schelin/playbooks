@@ -179,6 +179,7 @@
 # 2018/10/15 - CS - Added the check_apa and check_passwd comparison check functions
 # 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
 # 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
+# 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -192,7 +193,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.262"
+VERSION="${BASENAME} v1.264"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -570,6 +571,9 @@ check_apa() {
   then
     echo "Entering check_apa(61)"
   fi
+
+  CHKAPA="${SCRIPTS_LOGS}/chkapa.review"
+
   if [[ ${OS} = 'HP=UX' ]]
   then
     if [[ -s /etc/lanmon/lanconfig.ascii ]]
@@ -577,31 +581,33 @@ check_apa() {
       if [[ ${KERNELVERS} = 'B.11.31' ]]
       then
         # use nwmgr utility
-        echo "APA Configured Interfaces" > "${SCRIPTS_LOGS}/chkapa.review"
-        echo "-------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
-        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "Active Interfaces" >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "-----------------" >> "${SCRIPTS_LOGS}/chkapa.review"
-        nwmgr | grep UP >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "APA interfaces and active membership" >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "------------------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
-        nwmgr -S apa | grep -v Not_Enabled >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "APA Configured Interfaces" > "${CHKAPA}"
+        echo "-------------------------" >> "${CHKAPA}"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${CHKAPA}"
+        echo "Active Interfaces" >> "${CHKAPA}"
+        echo "-----------------" >> "${CHKAPA}"
+        nwmgr | grep UP >> "${CHKAPA}"
+        echo "APA interfaces and active membership" >> "${CHKAPA}"
+        echo "------------------------------------" >> "${CHKAPA}"
+        nwmgr -S apa | grep -v Not_Enabled >> "${CHKAPA}"
       else
         # grab the failover groups from the APA config file
-        echo "APA Configured Interfaces" > "${SCRIPTS_LOGS}/chkapa.review"
-        echo "-------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
-        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "Active Interfaces" >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "-----------------" >> "${SCRIPTS_LOGS}/chkapa.review"
-        lanscan | grep UP >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "APA interfaces and active membership" >> "${SCRIPTS_LOGS}/chkapa.review"
-        echo "------------------------------------" >> "${SCRIPTS_LOGS}/chkapa.review"
+        echo "APA Configured Interfaces" > "${CHKAPA}"
+        echo "-------------------------" >> "${CHKAPA}"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${CHKAPA}"
+        echo "Active Interfaces" >> "${CHKAPA}"
+        echo "-----------------" >> "${CHKAPA}"
+        lanscan | grep UP >> "${CHKAPA}"
+        echo "APA interfaces and active membership" >> "${CHKAPA}"
+        echo "------------------------------------" >> "${CHKAPA}"
         for i in `grep 'FAILOVER_GROUP' /etc/lanmon/lanconfig.ascii | grep -v ^# | awk '{print $2}' | sed 's/^lan//'`
         do
-          lanscan -q | grep $i >> "${SCRIPTS_LOGS}/chkapa.review"
+          lanscan -q | grep $i >> "${CHKAPA}"
         done
       fi
+
       compare_files chkapa
+
     fi
   fi
   if [[ ${DEBUG} = '61' ]]
@@ -1950,7 +1956,9 @@ check_guid() {
     echo "Entering check_guid(60)"
   fi
 
-  find / -user root -perm -2000 | sort > ${SCRIPTS_LOGS}/chkguid.review
+  CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
+
+  find / -user root -perm -2000 | sort > "${CHKGUID}"
 
   compare_files chkguid
 
@@ -3166,6 +3174,59 @@ check_opnet() {
 
 
 ######################
+### Doc: Function: check_packages(65) - 
+### Doc: * 
+######################
+
+check_packages() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_packages(65)"
+  fi
+
+  CHKPACKAGES="${SCRIPTS_LOGS}/chkpackages.review"
+
+  if [[ $OS = "Linux" ]]
+  then
+    if [[ -f /etc/redhat-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/centos-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/debian_version ]]
+    then
+      /usr/bin/dpkg-query -l | grep "^ii " | awk '{print $2"-"$3}' > "${CHKPACKAGES}"
+    fi
+  fi
+
+  if [[ $OS = "SunOS" ]]
+  then
+    /usr/bin/pkginfo -l > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "HP-UX" ]]
+  then
+    /usr/sbin/swlist | grep "^ " | awk '{print $1"-"$2}' > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "OSF1" ]]
+  then
+    /usr/sbin/swlist > "${CHKPACKAGES}"
+  fi
+
+  compare_files chkpackages
+
+  if [[ ${DEBUG} = '65' ]]
+  then
+    echo "Exiting check_packages()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_passwd(62) - 
 ### Doc: 
 ######################
@@ -3176,7 +3237,9 @@ check_passwd() {
     echo "Entering check_passwd(62)"
   fi
 
-  pwck > ${SCRIPTS_LOGS}/chkpwck.review
+  CHKPWCK="${SCRIPTS_LOGS}/chkpwck.review"
+
+  pwck > "${CHKPWCK}"
 
   compare_files chkpwck
 
@@ -3921,6 +3984,8 @@ check_services() {
     echo "Entering check_services(64)"
   fi
 
+  CHKSERVICES="${SCRIPTS_LOGS}/chkservices.review"
+
   if [[ ${OS} = 'Linux' ]]
   then
     if [[ ${DEBUG} = '64' ]]
@@ -3928,7 +3993,7 @@ check_services() {
       echo "  Linux system. Checking config"
     fi
 # both 7 and lower have chkconfig to show services and status
-    chkconfig > ${SCRIPTS_LOGS}/chkservices.review
+    chkconfig > "${CHKSERVICES}"
     if [[ ${DEBUG} = '64' ]]
     then
       echo "  chkconfig output generated"
@@ -3939,7 +4004,7 @@ check_services() {
       then
         echo "  RH7, systemctl output"
       fi
-      systemctl list-unit-files >> ${SCRIPTS_LOGS}/chkservices.review
+      systemctl list-unit-files >> "${CHKSERVICES}"
     fi
 
 # for now, just in the if statement. once sun and hp are figured out, add them
@@ -4035,7 +4100,9 @@ check_suid() {
     echo "Entering check_suid(59)"
   fi
 
-  find / -user root -perm -4000 | sort > ${SCRIPTS_LOGS}/chksuid.review
+  CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
+
+  find / -user root -perm -4000 | sort > "${CHKSUID}"
 
   compare_files chksuid
 
@@ -4576,7 +4643,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
