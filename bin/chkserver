@@ -3075,8 +3075,8 @@ check_openview() {
       then
         if [[ -f /opt/OV/bin/opcmsg ]]
         then
-          printf "%b\n" "    ${YELLOW}Sent a Minor test message to the Unix team{RESET}" >> "${LOG}"
-          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
+          printf "%b\n" "    ${YELLOW}Testing: Sent a Minor test message to the Unix team{RESET}" >> "${LOG}"
+#          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
           touch ${SCRIPTS_LOGS}/chkopenview.completed
         fi
       fi
