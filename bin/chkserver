@@ -180,8 +180,6 @@
 # 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
 # 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
 # 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
-# 2018/10/23 - CS - Updated check_netbackup to add debugging. Fixed New Englewood -eq should be -ne in second check.
-# 2018/10/23 - CS - Updated DEBUG to only check the one called function. DEBUG without a parameter still shows all debugging
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -195,7 +193,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.265"
+VERSION="${BASENAME} v1.264"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -648,7 +646,10 @@ check_artifactory() {
     APPROVED=$(grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
-      echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
+      if [[ ${DEBUG} = 57 ]]
+      then
+        echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
+      fi
       check_management_route ${CA_IP}
       ping ${CA_IP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
@@ -1743,7 +1744,10 @@ check_email() {
     APPROVED=$(grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
-      echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
+      if [[ ${DEBUG} = 32 ]]
+      then
+        echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
+      fi
       check_management_route ${EMAILIP}
       ping ${EMAILIP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
@@ -2316,7 +2320,10 @@ check_management() {
     APPROVED=$(grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS_DATA}/chkserver.exclude)
     if [[ "${APPROVED}" = "" ]]
     then
-      echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
+      if [[ ${DEBUG} = 9 ]]
+      then
+        echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
+      fi
       check_management_route ${MGTIP}
       ping ${MGTIP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
@@ -3043,7 +3050,10 @@ check_openview() {
         APPROVED=$(grep -i "^${HOSTNAME}:Monitoring:${MONIP}" ${SCRIPTS_DATA}/chkserver.exclude)
         if [[ "${APPROVED}" = "" ]]
         then
-          echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
+          if [[ ${DEBUG} = 16 ]]
+          then
+            echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
+          fi
           check_management_route ${MONIP}
           ping ${MONIP} ${PINGCT} > /dev/null
           if [[ $? -eq 0 ]]
@@ -3459,7 +3469,10 @@ check_redhat_subscription() {
 
       printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATSITE}:${SATIP}${RESET}" >> "${LOG}"
       check_management_route ${SATIP}
-      echo "  ping check of Red Hat Satellite Server: ${SATIP}"
+      if [[ ${DEBUG} = 19 ]]
+      then
+        echo "  ping check of Red Hat Satellite Server: ${SATIP}"
+      fi
       ping ${SATIP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
       then
@@ -3469,10 +3482,16 @@ check_redhat_subscription() {
       fi
 
 # since it's a block of ports; easier to check outside the normal variable setup.
-      printf "  nc check of Satellite Server ports:"
+      if [[ ${DEBUG} = '19' ]]
+      then
+        printf "  nc check of Satellite Server ports:"
+      fi
       for j in ${SATPORTS}
       do
-        printf " $j"
+        if [[ ${DEBUG} = '19' ]]
+        then
+          printf " $j"
+        fi
         echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
         if [[ $? -eq 0 ]]
         then
@@ -3481,7 +3500,10 @@ check_redhat_subscription() {
           printf "%b\n" "    ${RED}Satellite Server (${SATSITE}:${SATIP}:${j}) is not accessible${RESET}" >> "${LOG}"
         fi
       done
-      printf "\n"
+      if [[ ${DEBUG} = '19' ]]
+      then
+        printf "\n"
+      fi
     done
 
     if [[ ! -f /usr/bin/subscription-manager ]]
@@ -3608,7 +3630,10 @@ check_resolver() {
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> "${LOG}"
             check_management_route ${i}
-            echo "  ping check of nameserver: ${i}"
+            if [[ ${DEBUG} = 21 ]]
+            then
+              echo "  ping check of nameserver: ${i}"
+            fi
             ping ${i} ${PINGCT} > /dev/null
             if [[ $? -eq 0 ]]
             then
@@ -4372,7 +4397,10 @@ check_time() {
         TIME_PORT=$(echo $i | cut -f2 -d:)
 
         check_management_route ${TIME_IP}
-        echo "  ping check of time server: ${TIME_IP}"
+        if [[ ${DEBUG} = 26 ]]
+        then
+          echo "  ping check of time server: ${TIME_IP}"
+        fi
         ping ${TIME_IP} ${PINGCT} > /dev/null
         if [[ $? -eq 0 ]]
         then
@@ -4385,7 +4413,10 @@ check_time() {
         then
           printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
         else
-          echo "  time check of time server: ${TIME_IP}"
+          if [[ ${DEBUG} = 26 ]]
+          then
+            echo "  time check of time server: ${TIME_IP}"
+          fi
           ntpdate -q ${TIME_IP} > /dev/null
           if [[ $? -eq 0 ]]
           then
