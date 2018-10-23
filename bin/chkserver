@@ -180,6 +180,8 @@
 # 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
 # 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
 # 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
+# 2018/10/23 - CS - Updated check_netbackup to add debugging. Fixed New Englewood -eq should be -ne in second check.
+# 2018/10/23 - CS - Updated DEBUG to only check the one called function. DEBUG without a parameter still shows all debugging
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -193,7 +195,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.264"
+VERSION="${BASENAME} v1.265"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -239,7 +241,8 @@ then
   then
     if [[ ! -z $2 ]]
     then
-      DEBUG="$2"
+      DEBUG=$2
+      VIEW=$2
     else
       DEBUG='Yes'
     fi
@@ -2374,11 +2377,19 @@ check_netbackup() {
   fi
   if [[ -f /usr/openv/netbackup/bp.conf ]]
   then
+    if [[ ${DEBUG} -eq 14 ]]
+    then
+      echo "  NetBackup is installed in /usr/openv/netbackup"
+    fi
     printf "%b\n" "  ${GREEN}NetBackup is installed${RESET}" >> "${LOG}"
 # netbackup version 7 doesn't use hosts.allow any more.
     if [[ -f /usr/openv/netbackup/bin/version ]]
     then
       VERSION=$(awk '{print $2}' /usr/openv/netbackup/bin/version | cut -f1 -d.)
+      if [[ ${DEBUG} -eq 14 ]]
+      then
+        echo "  NetBackup version ${VERSION}"
+      fi
 # if 6, check for hosts.allow
 # if 7, no need to check; warning if it exists?      
       if [[ ${VERSION} = 6 ]]
@@ -2414,6 +2425,10 @@ check_netbackup() {
 
     for NBLIST in ${BUIPLIST}
     do
+      if [[ ${DEBUG} -eq 14 ]]
+      then
+        echo "  Checking management route ${NBLIST}"
+      fi
       check_management_route ${NBLIST}
     done
 
@@ -2460,6 +2475,10 @@ check_netbackup() {
 # except for ESINet systems when the shortname should end with 'bu' for the backup interface
     if [[ -f /usr/openv/netbackup/bp.conf ]]
     then
+      if [[ ${DEBUG} -eq 14 ]]
+      then
+        echo "  Checking bp.conf"
+      fi
 # if BHM02 then should only have brhm2aabue911p01.we911.esinet.pri
 # if CLT01 then should only have brhm2aabue911p01.we911.esinet.pri
 # if DEN03 then should have:
@@ -2474,10 +2493,18 @@ check_netbackup() {
 # SERVER = enwdcoecmma10.corp.intrado.pri
       if [[ -f ${SCRIPTS_DATA}/fingerprint ]]
       then
+        if [[ ${DEBUG} -eq 14 ]]
+        then
+          echo "  Checking fingerprint"
+        fi
 # Birmingham
         grep BHM02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Birmingham server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i brhm2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2494,6 +2521,10 @@ check_netbackup() {
         grep CLT01 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Charlotte server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i chrl2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2511,13 +2542,20 @@ check_netbackup() {
         grep "DEN03" ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
-
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Longmont server"
+          fi
           grep "ESINet" ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
           then
             grep "moab0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
+              if [[ ${DEBUG} -eq 14 ]]
+              then
+                echo "  Moab server"
+              fi
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i moab0aabue911q01.we911lab.esinet.pri > /dev/null
               if [[ $? -ne 0 ]]
               then
@@ -2534,6 +2572,10 @@ check_netbackup() {
             grep "peru0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
+              if [[ ${DEBUG} -eq 14 ]]
+              then
+                echo "  Peru server"
+              fi
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i peru0aabue911q01.we911lab.esinet.pri > /dev/null
               if [[ $? -ne 0 ]]
               then
@@ -2550,6 +2592,10 @@ check_netbackup() {
             grep "yodo0" ${SCRIPTS_DATA}/fingerprint > /dev/null
             if [[ $? -eq 0 ]]
             then
+              if [[ ${DEBUG} -eq 14 ]]
+              then
+                echo "  Yodo server"
+              fi
               egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i yodo0aabue911q01.we911lab.esinet.pri > /dev/null
               if [[ $? -ne 0 ]]
               then
@@ -2563,6 +2609,11 @@ check_netbackup() {
             fi
           else
 # Longmont
+            if [[ ${DEBUG} -eq 14 ]]
+            then
+              echo "  egrep -i \"^SERVER\" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com"
+              egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com
+            fi
             egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
             if [[ $? -ne 0 ]]
             then
@@ -2592,6 +2643,10 @@ check_netbackup() {
         grep DEN13 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Old Englewood server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2623,15 +2678,37 @@ check_netbackup() {
         grep DEN15 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  New Englewood server"
+          fi
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  egrep -i \"^SERVER\" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com"
+            egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com
+            echo $?
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri01-gig0.scc911.com > /dev/null
           if [[ $? -ne 0 ]]
           then
             printf "%b\n" "    ${RED}The Master server inveri01-gig0.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
           fi
-          grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
-          if [[ $? -eq 0 ]]
+          if [[ ${DEBUG} -eq 14 ]]
           then
-            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0.scc911.com\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+            echo "  grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf"
+            grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf
+            echo $?
+          fi
+          grep -i inveri01-gig0.scc911.com /usr/openv/netbackup/bp.conf > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${YELLOW}There is no \"SERVER = inveri01-gig0.scc911.com\" entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+          fi
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  grep \"^Zone: E911\" ${SCRIPTS_DATA}/fingerprint"
+            grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
+            echo $?
           fi
           grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
           if [[ $? -eq 0 ]]
@@ -2651,6 +2728,10 @@ check_netbackup() {
         grep DFW10 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Dallas-Fort Worth server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i dlls2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2667,6 +2748,10 @@ check_netbackup() {
         grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Fairfield Worth server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i frfd2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2683,6 +2768,10 @@ check_netbackup() {
         grep HNL02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Honolulu and Waikiki server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i hnllhiecnbu11.ienv.a911net.net > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2699,6 +2788,10 @@ check_netbackup() {
         grep MIA04 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Miami server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i inveri02.scc911.com > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2716,6 +2809,10 @@ check_netbackup() {
         grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Fairfield server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sfld2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2733,6 +2830,10 @@ check_netbackup() {
         grep OAK02 ${SCRIPTS_DATA}/fingerprint > /dev/null
         if [[ $? -eq 0 ]]
         then
+          if [[ ${DEBUG} -eq 14 ]]
+          then
+            echo "  Fairfield server"
+          fi
           egrep -i "^SERVER" /usr/openv/netbackup/bp.conf | head -1 | grep -i sndg2aabue911p01.we911.esinet.pri > /dev/null
           if [[ $? -ne 0 ]]
           then
@@ -2751,6 +2852,10 @@ check_netbackup() {
 # while the management interface is the desired client_name, if we are getting
 # backup reports, then whatever the name is, is correct.
 # so, if the backups.output file is empty, _then_ check on the client_name entry
+      if [[ ${DEBUG} -eq 14 ]]
+      then
+        echo "  Checking backups.output for data"
+      fi
       if [[ ! -s ${SCRIPTS_LOGS}/backups.output ]]
       then
         BPHOSTNAME=${HOSTNAME}
@@ -2779,6 +2884,10 @@ check_netbackup() {
 #----------------  ---------- -------- ----------- - --------------- ------------
 #07/15/2017 12:00  07/29/2017   138984    15491642 N Full Backup     BRHM_ECR_Servers
 
+    if [[ ${DEBUG} -eq 14 ]]
+    then
+      echo "  Are there backups?"
+    fi
     if [[ -f  ${SCRIPTS_LOGS}/backups.output ]]
     then
       if [[ ! -s ${SCRIPTS_LOGS}/backups.output ]]
