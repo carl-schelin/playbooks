@@ -2116,6 +2116,16 @@ check_kubernetes() {
   if [[ -f /opt/kubernetes/.config ]]
   then
     KUBE_ETCD_CERTS=`grep "^ETCD_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_KUBERNETES_CERTS=`grep "^KUBERNETES_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_API_SERVER=`grep "^EXTERNAL_IP=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+# if 1.2
+    KUBE_CA_FILE="kube-ca.pem"
+    KUBE_WORKER_FILE="worker.pem"
+    KUBE_WORKER_KEY_FILE="worker-key.pem"
+# if 1.9+:
+    KUBE_CA_FILE="ca.pem"
+    KUBE_WORKER_FILE="kubernetes.pem"
+    KUBE_WORKER_KEY_FILE="kubernetes-key.pem"
 
 # on 1.2 it's in /bin, on 1.11 it's in /usr/local/bin.
     if [[ -f /bin/etcdctl ]] || [[ -f /usr/local/bin/etcdctl ]]
@@ -2125,15 +2135,6 @@ check_kubernetes() {
         echo "etcdctl found; etcdctl cluster-health"
       fi
       printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
-
-# if 1.2
-      KUBE_CA_FILE="kube-ca.pem"
-      KUBE_WORKER_FILE="worker.pem"
-      KUBE_WORKER_KEY_FILE="worker-key.pem"
-# if 1.9+:
-      KUBE_CA_FILE="ca.pem"
-      KUBE_WORKER_FILE="kubernetes.pem"
-      KUBE_WORKER_KEY_FILE="kubernetes-key.pem"
 
       etcdctl --ca-file=${KUBE_ETCD_CERTS}/${KUBE_CA_FILE} --key-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_KEY_FILE} --cert-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_FILE} --endpoint=https://${INTERNAL_IP}:2379 cluster-health > /dev/null
       if [[ $? -eq 0 ]]
@@ -2153,7 +2154,7 @@ check_kubernetes() {
       echo "kube-apiserver found; kube-apiserver version check"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes local apiserver status${RESET}" >> "${LOG}"
-    curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://127.0.0.1/version > /dev/null 2>&1
+    curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://127.0.0.1/version > /dev/null 2>&1
     if [[ $? -eq 0 ]]
     then
       printf "%b\n" "    ${GREEN}Local apiserver query reply success${RESET}" >> "${LOG}"
@@ -2165,8 +2166,7 @@ check_kubernetes() {
     if [[ -f /var/tmp/kubernetes/.config ]]
     then
       printf "%b\n" "  ${GREEN}Checking Kubernetes apiserver VIP status${RESET}" >> "${LOG}"
-      API_SERVER=$(grep API_SERVER /var/tmp/kubernetes/.config | cut -f2 -d\")
-      curl -vvv --cert /etc/kubernetes/tls/worker.pem --key /etc/kubernetes/tls/worker-key.pem --cacert /etc/kubernetes/tls/kube-ca.pem https://${API_SERVER}/version > /dev/null 2>&1
+      curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://${KUBE_API_SERVER}/version > /dev/null 2>&1
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}apiserver VIP query success${RESET}" >> "${LOG}"
@@ -3207,7 +3207,7 @@ check_openview() {
       then
         if [[ -f /opt/OV/bin/opcmsg ]]
         then
-          printf "%b\n" "    ${YELLOW}Testing: Sent a Minor test message to the Unix team{RESET}" >> "${LOG}"
+          printf "%b\n" "    ${YELLOW}Testing: Sent a Minor test message to the Unix team. Missing ${SCRIPTS_LOGS}/chkopenview.completed or ${SCRIPTS_LOGS}/chkopenview.block.${RESET}" >> "${LOG}"
 #          /opt/OV/bin/opcmsg o=Test a=Test msg_g=MON-ADM severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
           touch ${SCRIPTS_LOGS}/chkopenview.completed
         fi
