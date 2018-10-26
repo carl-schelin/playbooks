@@ -193,7 +193,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.265"
+VERSION="${BASENAME} v1.270"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3539,7 +3539,7 @@ check_redhat_subscription() {
       then
         printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
       fi
-      if [[ ${STATUS} = 'No' ]]
+      if [[ ${STATUS} = 'No' ]] || [[ ${STATUS} = 'Not' ]]
       then
         printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
       fi
