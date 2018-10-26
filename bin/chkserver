@@ -1058,7 +1058,7 @@ check_config_group() {
 ### Doc: * Verify the expected amount of RAM is installed
 ######################
 
-check_memory() {
+check_config_memory() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_config_memory(44)"
