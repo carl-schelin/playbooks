@@ -193,7 +193,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.270"
+VERSION="${BASENAME} v1.271"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3203,13 +3203,16 @@ check_openview() {
       fi
 
 # system checked to see if openview is installed and running before sending a message
-      if [[ ! -f ${SCRIPTS_LOGS}/chkopenview.completed ]] && [[ ! -f ${SCRIPTS_LOGS}/chkopenview.block ]]
+      if [[ ! -f ${SCRIPTS_LOGS}/chkopenview.completed ]]
       then
-        if [[ -f /opt/OV/bin/opcmsg ]]
+        if [[ ! -f ${SCRIPTS_LOGS}/chkopenview.block ]]
         then
-          printf "%b\n" "    ${YELLOW}Testing: Sent a Minor test message to the Unix team. Missing ${SCRIPTS_LOGS}/chkopenview.completed or ${SCRIPTS_LOGS}/chkopenview.block.${RESET}" >> "${LOG}"
-          /opt/OV/bin/opcmsg o=Test a=Test msg_g=ADM-UNIX severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
-          touch ${SCRIPTS_LOGS}/chkopenview.completed
+          if [[ -f /opt/OV/bin/opcmsg ]]
+          then
+            printf "%b\n" "    ${YELLOW}Testing: Sent a Minor test message to the Unix team. Missing ${SCRIPTS_LOGS}/chkopenview.completed or ${SCRIPTS_LOGS}/chkopenview.block.${RESET}" >> "${LOG}"
+            /opt/OV/bin/opcmsg o=Test a=Test msg_g=ADM-UNIX severity=minor msg_t='Unix Monitoring Test - Please Ignore' > ${SCRIPTS_LOGS}/chkopenview.output 2>&1
+            touch ${SCRIPTS_LOGS}/chkopenview.completed
+          fi
         fi
       fi
 
