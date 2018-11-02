@@ -201,6 +201,13 @@ do
   fi
 done
 
+for i in group.master.backup 
+do
+  if [[ -f /opt/intrado/etc/$i ]]
+  then
+    rm /opt/intrado/etc/$i
+  fi
+done
 
 # extra bits found when checking to make sure things are clean
 
