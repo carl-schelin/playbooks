@@ -61,14 +61,15 @@ do
   if [ ! -d $ROOT/mysql.$DATE/$i ]
   then
     mkdir -p $ROOT/mysql.$DATE/$i
-  fi
 
 # ensure mysql can actually write to the database directory
-  chmod -R 775 $ROOT/mysql.$DATE
-  chown -R mysql:mysql $ROOT/mysql.$DATE
+    chmod -R 775 $ROOT/mysql.$DATE
+    chown -R mysql:mysql $ROOT/mysql.$DATE
 
-  echo "Dumping $i" >> $LOG
-  /usr/bin/mysqldump --tab=$ROOT/mysql.$DATE/$i --opt $i --user=root --password=this4now!! >> $LOG
+    echo "Dumping $i" >> $LOG
+    echo "Dumping $i"
+    /usr/bin/mysqldump --tab=$ROOT/mysql.$DATE/$i --opt $i --user=root --password=this4now!! >> $LOG
+  fi
 
   if [ ! -d $ROOT/mysql.$OLDDATE ]
   then
