@@ -180,6 +180,7 @@
 # 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
 # 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
 # 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
+# 2018/11/06 - CS - Added a trailer note to confirm successful completion of the script run.
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -193,7 +194,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.271"
+VERSION="${BASENAME} v1.274"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -4925,6 +4926,8 @@ then
     printf "%b\n" "${RED}chkserver.input file not found${RESET}" >> "${LOG}"
   fi
 fi
+
+print "\n+++chkserver script run completed\n" >> "${LOG}"
 
 if [[ ! -z $1 ]]
 then
