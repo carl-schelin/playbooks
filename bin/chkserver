@@ -181,6 +181,7 @@
 # 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
 # 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
 # 2018/11/06 - CS - Added a trailer note to confirm successful completion of the script run.
+# 2018/11/07 - CS - Removed chksuid and chkguid checks for Sun systems. 'find' is getting 'lost'.
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -194,7 +195,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.274"
+VERSION="${BASENAME} v1.275"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1963,11 +1964,15 @@ check_guid() {
     echo "Entering check_guid(60)"
   fi
 
-  CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
+# find gets lost on some Sun boxes.
+  if [[ ${OS} != 'SunOS' ]]
+  then
+    CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
 
-  find / -user root -perm -2000 | sort > "${CHKGUID}"
+    find / -user root -perm -2000 | sort > "${CHKGUID}"
 
-  compare_files chkguid
+    compare_files chkguid
+  fi
 
   if [[ ${DEBUG} = '60' ]]
   then
@@ -4252,11 +4257,15 @@ check_suid() {
     echo "Entering check_suid(59)"
   fi
 
-  CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
+# find gets lost on some Sun boxes.
+  if [[ ${OS} != "SunOS" ]]
+  then
+    CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
 
-  find / -user root -perm -4000 | sort > "${CHKSUID}"
+    find / -user root -perm -4000 | sort > "${CHKSUID}"
 
-  compare_files chksuid
+    compare_files chksuid
+  fi
 
   if [[ ${DEBUG} = '59' ]]
   then
