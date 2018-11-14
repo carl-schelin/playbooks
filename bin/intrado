@@ -294,6 +294,9 @@ runscript lockuser
 # Check the server configuration
 runscript chkserver
 
+# back up the two mysql management servers; incojs01 and status. Ultimately both inventory and maybe lnmt1cuomrcs1 will be enabled.
+runscript mysql.backup
+
 # Update GECOS for all users if needed
 runscript update.gecos
 
