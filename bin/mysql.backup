@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # mysql.backup - 
 #  1. Dump the mysql databases
@@ -7,92 +7,179 @@
 #  4. Delete yesterday's directory
 #  5. E-mail report if there are changes
 
+# to verify database integrity:
+#for i in *.MYI
+#do
+#  myisamchk $i
+#  if [[ $? -gt 0 ]]
+#  then
+#    echo $i
+#  fi
+#done
+
 # set up variables
 ROOT="/var/tmp/mysql"
 DATE=`date +"%Y%m%d"`
 LOG="$ROOT/mysql.$DATE/mysql.report"
-LOC=/var/www/htdocs
-SECURE=/var/www/htsecure
-LINECOMP=0
+HTDOCS=/var/www/htdocs
+HTSECURE=/var/www/htsecure
+HOSTNAME=`hostname | cut -f1 -d.`
 WHOCARES="carl.schelin@intrado.com"
+PATH="/usr/local/bin:/opt/csw/mysql5/bin:$PATH"; export PATH
 
-# get old date if any
-OLDDATE=`ls -d $ROOT/mysql.* | egrep -v "(tar.gz|$DATE)" | tail -1 | cut -f2 -d.`
+if [[ ${HOSTNAME} = "incojs01" ]]
+then
+  DATABASES="information_schema calendar crmprod inventory msglog mysql phpmyadmin reports repository"
+  USER=root
+  PASSWORD="this4now!!"
+  OWNER="mysql:mysql"
+  ARCHIVE=7
+fi
+
+if [[ ${HOSTNAME} = "status" ]]
+then
+  DATABASES="information_schema mysql performance_schema status"
+  USER=root
+  PASSWORD="this4now!!"
+  OWNER="mysql:mysql"
+  ARCHIVE=7
+fi
+
+# parsing the database names through the localsettings.php file
+if [[ ${HOSTNAME} = "incowk01" ]]
+then
+  DATABASES="information_schema mysql "
+  for i in `ls -la ${HTDOCS} | grep "^d" | awk '{print $9}'`
+  do
+    if [[ -f ${HTDOCS}/${i}/LocalSettings.php ]]
+    then
+      DBNAME=`grep wgDBname ${HTDOCS}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+      DATABASES="${DATABASES} ${DBNAME}"
+    fi
+  done
+
+  for i in `ls -la ${HTSECURE} | grep "^d" | awk '{print $9}'`
+  do
+    if [[ -f ${HTSECURE}/${i}/LocalSettings.php ]]
+    then
+      DBNAME=`grep wgDBname ${SECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+      DATABASES="${DATABASES} ${DBNAME}"
+    fi
+  done
+  USER=root
+  PASSWORD="this4now!!"
+  OWNER="mysql:mysql"
+  ARCHIVE=7
+fi
+
+# parsing the database names through the localsettings.php file
+if [[ ${HOSTNAME} = "incowk02" ]]
+then
+  DATABASES="information_schema mysql "
+  for i in `ls -la ${HTDOCS} | grep "^d" | awk '{print $9}'`
+  do
+    if [[ -f ${HTDOCS}/${i}/LocalSettings.php ]]
+    then
+      DBNAME=`grep wgDBname ${HTDOCS}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+      DATABASES="${DATABASES} ${DBNAME}"
+    fi
+  done
+
+  for i in `ls -la ${HTSECURE} | grep "^d" | awk '{print $9}'`
+  do
+    if [[ -f ${HTSECURE}/${i}/LocalSettings.php ]]
+    then
+      DBNAME=`grep wgDBname ${SECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+      DATABASES="${DATABASES} ${DBNAME}"
+    fi
+  done
+  USER=root
+  PASSWORD="this4now!!"
+  OWNER="mysql:mysql"
+  ARCHIVE=7
+fi
+
+# the following two may eventually be backed up. Once inventory goes live, for sure.
+#if [[ ${HOSTNAME} = "inventory" ]]
+#then
+#  DATABASES="information_schema inventory mysql performance_schema"
+#  USER=root
+#  PASSWORD="this4now!!"
+#  OWNER="mysql:mysql"
+#  ARCHIVE=7
+#fi
+
+#if [[ ${HOSTNAME} = "lnmt1cuomrcs1" ]]
+#then
+#  DATABASES="information_schema inventory mysql performance_schema status"
+#  USER=root
+#  PASSWORD="this4now!!"
+#  OWNER="mysql:mysql"
+#  ARCHIVE=7
+#fi
+
+if [[ -z ${DATABASES} ]]
+then
+  echo "Not on a supported mysql server. Exiting..."
+  exit 0
+fi
+
+
+# remove current file if it exists. The idea being you can kick off another backup of the database at any time.
+if [[ -f ${ROOT}/mysql.${DATE}.tar.gz ]]
+then
+  rm ${ROOT}/mysql.${DATE}.tar.gz
+fi
 
 # create new directory for backups
-if [ ! -d $ROOT/mysql.$DATE ]
+if [[ ! -d ${ROOT}/mysql.${DATE} ]]
 then
-  mkdir $ROOT/mysql.$DATE
+  mkdir ${ROOT}/mysql.${DATE}
 fi
 
 # ensure mysql can actually write to the directory
-chmod 775 $ROOT/mysql.$DATE
-chown mysql:mysql $ROOT/mysql.$DATE
+chmod 775 ${ROOT}/mysql.${DATE}
+chown ${OWNER} ${ROOT}/mysql.${DATE}
+
 
 # dump the databases out
-echo "Beginning mysql report: $DATE" > $LOG
+echo "Beginning mysql report: ${DATE}" > ${LOG}
 
-# build the database list
-echo "Extracting database list" >> $LOG
-DBALL=""
-for i in `ls -la $LOC | grep "^d" | awk '{print $9}'`
-do
-  if [[ -f $LOC/$i/LocalSettings.php ]]
-  then
-    DB=`grep wgDBname $LOC/$i/LocalSettings.php | awk -F\" '{print $2}'`
-    DBALL="$DBALL $DB"
-  fi
-done
 
-# now the secure list of sites
-for i in `ls -la $SECURE | grep "^d" | awk '{print $9}'`
+for i in ${DATABASES}
 do
-  if [[ -f $SECURE/$i/LocalSettings.php ]]
-  then
-    DB=`grep wgDBname $SECURE/$i/LocalSettings.php | awk -F\" '{print $2}'`
-    DBALL="$DBALL $DB"
-  fi
-done
-
-for i in information_schema mysql $DBALL
-do
-  LINECOMP=$((LINECOMP + 2))
 # create new database directory for backups
-  if [ ! -d $ROOT/mysql.$DATE/$i ]
+  if [[ ! -d ${ROOT}/mysql.${DATE}/${i} ]]
   then
-    mkdir -p $ROOT/mysql.$DATE/$i
+    mkdir -p ${ROOT}/mysql.${DATE}/${i}
+  fi
 
 # ensure mysql can actually write to the database directory
-    chmod -R 775 $ROOT/mysql.$DATE
-    chown -R mysql:mysql $ROOT/mysql.$DATE
+  chmod -R 775 ${ROOT}/mysql.${DATE}
+  chown -R mysql:mysql ${ROOT}/mysql.${DATE}
 
-    echo "Dumping $i" >> $LOG
-    echo "Dumping $i"
-    /usr/bin/mysqldump --tab=$ROOT/mysql.$DATE/$i --opt $i --user=root --password=this4now!! >> $LOG
-  fi
+  echo "Dumping ${i}" >> ${LOG}
+  mysqldump --tab=${ROOT}/mysql.${DATE}/${i} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
 
-  if [ ! -d $ROOT/mysql.$OLDDATE ]
-  then
-    echo "First time creation of mysql backups (previous day's backup doesn't exist)" >> $LOG
-  fi
 done
-LINECOMP=$((LINECOMP + 1))
 
-# tar and compress today's files so it can be backed up to the remote server, but keep the current backup around.
-cd $ROOT
-tar cf mysql.$DATE.tar mysql.$DATE
-gzip -9 mysql.$DATE.tar
-
-# check to make sure old backup exists before removing yesterday's data directory
-if [ -f $ROOT/mysql.$OLDDATE.tar.gz ]
+# tar and compress today's files so it can be backed up to the remote server
+if [[ -d ${ROOT}/mysql.${DATE} ]]
 then
-  rm -rf $ROOT/mysql.$OLDDATE
-else
-  echo "Unable to archive $ROOT/mysql.$OLDDATE" | mailx -s "MySQL archive failure" $WHOCARES
+  cd ${ROOT}
+  tar cf mysql.${DATE}.tar mysql.${DATE}
+  if [[ $? -eq 0 ]]
+  then
+    gzip -9 mysql.${DATE}.tar
+    if [[ $? -eq 0 ]]
+    then
+      rm -rf mysql.${DATE}
+    fi
+  fi
 fi
 
-# finally, remove all old backups, pick 30 days as a start and let's see how long that works WRT available space.
-find $ROOT -name mysql.\*.gz -prune -atime +3 -exec rm {} \;
+# finally, remove all old backups
+find ${ROOT} -name mysql.\*.gz -prune -atime +${ARCHIVE} -exec rm {} \;
 
 exit 0
 
