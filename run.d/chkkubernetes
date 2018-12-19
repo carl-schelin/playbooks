@@ -49,10 +49,10 @@ if [[ -f /var/tmp/kubernetes/.config ]]
 then
   KUBEPATH=/var/tmp/kubernetes
   KUBE_CONTEXT=`grep "^CONTEXT=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
-  KUBE_ETCD_CERTS=`grep "^ETCD_CERTS=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
-  KUBE_KUBERNETES_CERTS=`grep "^KUBERNETES_CERTS=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
-  KUBE_API_SERVER=`grep "^EXTERNAL_IP=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
-  KUBE_API_SERVER_PORT=`grep "^EXTERNAL_PORT=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_ETCD_CERTS="/etc/etcd/tls"
+  KUBE_KUBERNETES_CERTS="/etc/kubernetes/tls"
+  KUBE_API_SERVER=`grep "^SERVICE_IP=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_API_SERVER_PORT="443"
   KUBE_CA_FILE="kube-ca.pem"
   KUBE_WORKER_FILE="worker.pem"
   KUBE_WORKER_KEY_FILE="worker-key.pem"
@@ -84,7 +84,7 @@ then
     --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} \
     --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} \
     --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} \
-    https://127.0.0.1:${KUBE_API_SERVER_PORT}/version > /dev/null 2>&1
+    https://${INTERNAL_IP}:${KUBE_API_SERVER_PORT}/version > /dev/null 2>&1
 
   if [[ $? -eq 0 ]]
   then
