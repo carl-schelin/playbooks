@@ -182,6 +182,7 @@
 # 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
 # 2018/11/06 - CS - Added a trailer note to confirm successful completion of the script run.
 # 2018/11/07 - CS - Removed chksuid and chkguid checks for Sun systems. 'find' is getting 'lost'.
+# 2018/12/19 - CS - Fixed kubernetes check for 1.2 clusters
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -2119,36 +2120,42 @@ check_kubernetes() {
   then
     echo "Entering check_kubernetes(11)"
   fi
+# if 1.9+:
   if [[ -f /opt/kubernetes/.config ]]
   then
     KUBE_ETCD_CERTS=`grep "^ETCD_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
     KUBE_KUBERNETES_CERTS=`grep "^KUBERNETES_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
     KUBE_API_SERVER=`grep "^EXTERNAL_IP=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
-# if 1.2
-    KUBE_CA_FILE="kube-ca.pem"
-    KUBE_WORKER_FILE="worker.pem"
-    KUBE_WORKER_KEY_FILE="worker-key.pem"
-# if 1.9+:
     KUBE_CA_FILE="ca.pem"
     KUBE_WORKER_FILE="kubernetes.pem"
     KUBE_WORKER_KEY_FILE="kubernetes-key.pem"
+  fi
+# if 1.2
+  if [[ -f /var/tmp/kubernetes/.config ]]
+  then
+    KUBE_ETCD_CERTS="/etc/etcd/tls"
+    KUBE_KUBERNETES_CERTS="/etc/kubernetes/tls"
+    KUBE_API_SERVER=`grep "^SERVICE_IP=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_CA_FILE="kube-ca.pem"
+    KUBE_WORKER_FILE="worker.pem"
+    KUBE_WORKER_KEY_FILE="worker-key.pem"
+  fi
 
 # on 1.2 it's in /bin, on 1.11 it's in /usr/local/bin.
-    if [[ -f /bin/etcdctl ]] || [[ -f /usr/local/bin/etcdctl ]]
+  if [[ -f /bin/etcdctl ]] || [[ -f /usr/local/bin/etcdctl ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
     then
-      if [[ ${DEBUG} = '11' ]]
-      then
-        echo "etcdctl found; etcdctl cluster-health"
-      fi
-      printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
+      echo "etcdctl found; etcdctl cluster-health"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
 
-      etcdctl --ca-file=${KUBE_ETCD_CERTS}/${KUBE_CA_FILE} --key-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_KEY_FILE} --cert-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_FILE} --endpoint=https://${INTERNAL_IP}:2379 cluster-health > /dev/null
-      if [[ $? -eq 0 ]]
-      then
-        printf "%b\n" "    ${GREEN}etcd cluster healthy${RESET}" >> "${LOG}"
-      else
-        printf "%b\n" "    ${RED}etcd cluster is not healthy${RESET}" >> "${LOG}"
-      fi
+    etcdctl --ca-file=${KUBE_ETCD_CERTS}/${KUBE_CA_FILE} --key-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_KEY_FILE} --cert-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_FILE} --endpoint=https://${INTERNAL_IP}:2379 cluster-health > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}etcd cluster healthy${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${RED}etcd cluster is not healthy${RESET}" >> "${LOG}"
     fi
   fi
 
