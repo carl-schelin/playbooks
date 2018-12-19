@@ -2160,7 +2160,7 @@ check_kubernetes() {
       echo "kube-apiserver found; kube-apiserver version check"
     fi
     printf "%b\n" "  ${GREEN}Checking Kubernetes local apiserver status${RESET}" >> "${LOG}"
-    curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://127.0.0.1/version > /dev/null 2>&1
+    curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://${INTERNAL_IP}/version > /dev/null 2>&1
     if [[ $? -eq 0 ]]
     then
       printf "%b\n" "    ${GREEN}Local apiserver query reply success${RESET}" >> "${LOG}"
