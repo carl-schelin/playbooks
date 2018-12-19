@@ -1,0 +1,101 @@
+#!/bin/ksh
+
+# chkmonagent - Check the status of OpenView and restart if it's down
+# Carl Schelin - 2/20/2008
+# Added verification that openview is installed and is enabled
+# changed path to ${SCRIPTS_DATA} to keep files in one directory structure
+# add the ability to stop and start the script monitoring by passing stop or start to the chkov script
+# 20180727 - Update to use opcagt and to also check for message buffering.
+
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+DATE=$(date)
+LOG=${SCRIPTS_LOGS}/openview.failed
+
+# only continue if openview is installed
+if [[ ! -f /opt/OV/bin/opcagt ]]
+then
+  echo 'Openview not installed'
+  exit 0
+fi
+
+# check the Openview status
+if [[ ! -z $1 ]]
+then
+  if [[ $1 = "stop" ]]
+  then
+    touch "${SCRIPTS_DATA}/openview.stop"
+# kills the agent then exits; don't need to remove the kill here as the kill process will remove it when killed
+    touch "${SCRIPTS_DATA}/openview.kill"
+  fi
+  if [[ $1 = "kill" ]]
+  then
+    touch "${SCRIPTS_DATA}/openview.kill"
+  fi
+  if [[ $1 = "start" ]]
+  then
+    if [[ -f "${SCRIPTS_DATA}/openview.stop" ]]
+    then
+      rm "${SCRIPTS_DATA}/openview.stop"
+    fi
+  fi
+fi
+
+# if the kill flag is in place, kill the agent and then let it restart in 5 minutes
+# gives us time to update configurations if necessary
+if [[ -f ${SCRIPTS_DATA}/openview.kill ]]
+then
+  /opt/OV/bin/ovc -kill
+  rm "${SCRIPTS_DATA}/openview.kill"
+  exit 0
+fi
+
+# check to see if Openview monitoring is disabled
+if [[ -f ${SCRIPTS_DATA}/openview.stop ]]
+then
+  echo "Openview configured to not auto-start"
+  exit 0
+fi
+
+# now run through checks to see if OpenView is working.
+for i in $(/opt/OV/bin/ovcstatus | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running)" | awk '{print $1}')
+do
+  echo "OpenView module ${i} has errored out and is not communicating - restarting ${i}"
+  /usr/bin/logger -p err -t "OpenView" "An OpenView module (${i}) has errored out (Aborted|Stopped|Starting|Isn't Running). Restarting ${i}."
+
+  echo "" >> "${LOG}"
+  echo "${DATE}" >> "${LOG}"
+  /opt/OV/bin/ovc -restart "${i}" >> "${LOG}"
+  /opt/OV/bin/opcagt -status >> "${LOG}"
+
+done
+
+# adding a check for message buffering. If the agent is buffering, there's a problem with communications with the server. Restart the agent.
+OUTPUT=$(/opt/OV/bin/opcagt -status | grep -i "Could not contact Message Agent to query buffering state.")
+if [[ ! -z ${OUTPUT} ]]
+then
+  echo "" >> "${LOG}"
+  echo "${DATE}" >> "${LOG}"
+  /opt/OV/bin/opcagt -status >> "${LOG}"
+  /opt/OV/bin/opcagt -kill >> "${LOG}"
+fi
+
+# this takes about 15 seconds and restarts
+
+/opt/OV/bin/opcagt -status > /dev/null 2>&1
+if [[ $? = 1 ]]
+then
+  echo "OpenView is not running - restarting"
+  /usr/bin/logger -p err -t "OpenView" "OpenView is not running. Restarting OpenView."
+  /opt/OV/bin/opcagt -start
+fi
+
