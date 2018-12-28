@@ -17,6 +17,7 @@
 # 20140516 - Added omreport for Dell systems and Perc controllers
 # 20160l20 - Removed -s flag from sautil, need logical volume information (jschroet)
 # 20170126 - Added hpssacli Smart Array Controller utility
+# 20181228 - Updated path for omreport from /usr/bin to /opt/dell/srvadmin/bin
 
 #BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -58,7 +59,7 @@ fi
 # /usr/sbin/hpacucli - HP controller
 # /usr/sbin/hpssacli - HP Super Smart Array Controller
 # /usr/sbin/sautil - HP Smart Array Controller
-# /usr/bin/omreport - Dell Open Manage utility
+# /opt/dell/srvadmin/bin/omreport - Dell Open Manage utility
 
 for CONTENT in metastat metadb megarc raidctl arcconf hpacucli hpssacli sautil omreport
 do
@@ -116,20 +117,26 @@ do
   then
     /usr/sbin/$CONTENT $FLAGS > ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
     PID=$!
-
-# If using arcconf (adaptec) append to raidctl output file
   else
-    if [[ -f /opt/StorMan/$CONTENT ]]
+# If using omreport look in /opt/dell/srvadmin/bin
+    if [[ -f /opt/dell/srvadmin/bin/$CONTENT ]]
     then
-      /opt/StorMan/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+      /opt/dell/srvadmin/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
       PID=$!
+# If using arcconf (adaptec) append to raidctl output file
     else
-      if [[ -f /usr/bin/$CONTENT ]]
+      if [[ -f /opt/StorMan/$CONTENT ]]
       then
-        /usr/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+        /opt/StorMan/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
         PID=$!
       else
-        echo "RAID: $CONTENT binary is not installed" > ${SCRIPTS_LOGS}/$CONTENT.output
+        if [[ -f /usr/bin/$CONTENT ]]
+        then
+          /usr/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+          PID=$!
+        else
+          echo "RAID: $CONTENT binary is not installed" > ${SCRIPTS_LOGS}/$CONTENT.output
+        fi
       fi
     fi
   fi
