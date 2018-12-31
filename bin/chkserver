@@ -3901,8 +3901,12 @@ check_routetable() {
 
 
 ######################
-### Doc: Function: check_rrdtool(23) - 1 check
+### Doc: Function: check_rrdtool(23) - 5 checks
+### Doc: * is runstat running
 ### Doc: * is updaterrd running
+### Doc: * is iostat running
+### Doc: * is vmstat running
+### Doc: * is mpstat running
 ######################
 
 check_rrdtool() {
@@ -3912,11 +3916,21 @@ check_rrdtool() {
   fi
   if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
   then
-    UPDATERRD=$(ps -ef | grep updaterrd)
-    if [[ -z $UPDATERRD ]]
-    then
-      printf "%b\n" "  ${YELLOW}rrdtool is not configured or running${RESET}" >> "${LOG}"
-    fi
+# check to see if more than one copy of the RRDTool library is running and call it out
+# also call out if the main runstats script is _not_ running as it means it's either 
+# not enabled or the system hasn't been installed yet.
+    for i in runstat updaterrd iostat vmstat mpstat
+    do
+      RUNSTATS=$(ps -e | grep ${i} | wc -s | awk '{print $1}')
+      if [[ ${RUNSTATS} -eq 0 ]]
+      then
+        printf "%b\n" "  ${YELLOW}rrdtool is not configured or ${i} is not running${RESET}" >> "${LOG}"
+      fi
+      if [[ ${RUNSTATS} -gt 1 ]]
+      then
+        printf "%b\n" "  ${RED}Multiple copies of ${i} are running. There should only be one.${RESET}" >> "${LOG}"
+      fi
+    done
   fi
   if [[ ${DEBUG} = '23' ]]
   then
