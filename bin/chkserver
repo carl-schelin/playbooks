@@ -3921,7 +3921,7 @@ check_rrdtool() {
 # not enabled or the system hasn't been installed yet.
     for i in runstat updaterrd iostat vmstat mpstat
     do
-      RUNSTATS=$(ps -e | grep ${i} | wc -s | awk '{print $1}')
+      RUNSTATS=$(ps -e | grep ${i} | wc -l | awk '{print $1}')
       if [[ ${RUNSTATS} -eq 0 ]]
       then
         printf "%b\n" "  ${YELLOW}rrdtool is not configured or ${i} is not running${RESET}" >> "${LOG}"
