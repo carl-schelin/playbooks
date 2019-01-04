@@ -1,6 +1,0 @@
-#!/bin/ksh
-
-WHOCARES="carl.schelin@intrado.com,escott@regmail.west.com"
-
-echo "Testing from `hostname`" | mailx -s "Calling: `hostname`" $WHOCARES
-

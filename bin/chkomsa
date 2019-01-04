@@ -1,9 +1,0 @@
-#!/bin/ksh
-
-INTRADO="/opt/intrado"
-OMSABIN="/opt/dell/srvadmin/bin/omreport"
-
-if [[ -x ${OMSABIN} ]];
- then
-   $OMSABIN about > ${INTRADO}/etc/chkomsa.out 2>&1
-fi

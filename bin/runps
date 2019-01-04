@@ -1,9 +1,0 @@
-#!/bin/ksh
-
-# run ps output for checking of the running processes on the nead e911 ap servers.
-# servers are crashing and David is looking for a better idea of what java process 
-# is taking up ram.
-
-date >> /opt/intrado/log/psef.output
-ps -ef >> /opt/intrado/log/psef.output 
-
