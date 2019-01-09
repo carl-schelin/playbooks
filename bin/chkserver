@@ -183,6 +183,7 @@
 # 2018/11/06 - CS - Added a trailer note to confirm successful completion of the script run.
 # 2018/11/07 - CS - Removed chksuid and chkguid checks for Sun systems. 'find' is getting 'lost'.
 # 2018/12/19 - CS - Fixed kubernetes check for 1.2 clusters
+# 2019/01/09 - CS - added a check_routes function which just checks basic routes vs something more complicated
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -196,7 +197,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.275"
+VERSION="${BASENAME} v1.276"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3764,6 +3765,7 @@ check_routes() {
 
   if [[ ${CHECK_ROUTES} = 'Yes' ]]
   then
+    printf "%b\n" "  ${GREEN}Checking general route entries.${RESET}" >> "${LOG}"
     for i in ${ROUTE_SERVERS}
     do
       ROUTE_NAME=$(echo $i | cut -f1 -d:)
