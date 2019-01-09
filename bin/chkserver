@@ -3781,7 +3781,7 @@ check_routes() {
       else
         printf "%b\n" "      ${RED}Server ${i} is not pingable.${RESET}" >> "${LOG}"
       fi
-    fi
+    done
   fi
 
   if [[ ${DEBUG} = '66' ]]
