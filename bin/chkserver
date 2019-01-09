@@ -3751,6 +3751,47 @@ check_resolver() {
 
 
 ######################
+### Doc: Function: check_routes(66) - 
+### Doc: * Just check an IP address to make sure it uses the management interface
+### Doc: * Check to see if the IP is pingable
+######################
+
+check_routes() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_routes(66)"
+  fi
+
+  if [[ ${CHECK_ROUTES} = 'Yes' ]]
+  then
+    for i in ${ROUTE_SERVERS}
+    do
+      ROUTE_NAME=$(echo $i | cut -f1 -d:)
+      ROUTE_IP=$(echo $i | cut -f2 -d:)
+
+      check_management_route ${ROUTE_IP}
+      if [[ ${DEBUG} = 0 ]]
+      then
+        echo "  ping check of server: ${ROUTE_IP}"
+      fi
+      ping ${ROUTE_IP} ${PINGCT} > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "      ${GREEN}Server ${i} is pingable.${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "      ${RED}Server ${i} is not pingable.${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+
+  if [[ ${DEBUG} = '66' ]]
+  then
+    echo "Exiting check_routes()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_routetable(22) - 
 ### Doc: *
 ######################
@@ -4831,7 +4872,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
