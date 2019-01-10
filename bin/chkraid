@@ -98,10 +98,6 @@ do
   then
     FLAGS="/dev/ciss*"
   fi
-  if [[ $CONTENT = "omreport" ]]
-  then
-    FLAGS="storage adisk controller=0 vdisk=0"
-  fi
 
 # Delete the old output file. This lets us know if there's a problem 
 # with the tool completing
@@ -121,7 +117,8 @@ do
 # If using omreport look in /opt/dell/srvadmin/bin
     if [[ -f /opt/dell/srvadmin/bin/$CONTENT ]]
     then
-      /opt/dell/srvadmin/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+      /opt/dell/srvadmin/bin/$CONTENT storage pdisk controller=0 >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+      /opt/dell/srvadmin/bin/$CONTENT storage vdisk controller=0 >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
       PID=$!
 # If using arcconf (adaptec) append to raidctl output file
     else
