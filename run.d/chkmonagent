@@ -18,6 +18,14 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+if [[ -f ${SCRIPTS_DATA}/chkmonagent.* ]]
+then
+  echo "chkmonagent script is running. Exiting."
+  exit 1
+fi
+
+touch ${SCRIPTS_DATA}/chkmonagent.$$
+
 DATE=$(date)
 LOG=${SCRIPTS_LOGS}/openview.failed
 
@@ -97,5 +105,10 @@ then
   echo "OpenView is not running - restarting"
   /usr/bin/logger -p err -t "OpenView" "OpenView is not running. Restarting OpenView."
   /opt/OV/bin/opcagt -start
+fi
+
+if [[ -f ${SCRIPTS_DATA}/chkmonagent.$$ ]]
+then
+  rm ${SCRIPTS_DATA}/chkmonagent.$$
 fi
 
