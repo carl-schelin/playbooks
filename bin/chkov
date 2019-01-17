@@ -17,6 +17,14 @@ fi
 DATE=$(date)
 LOG=${SCRIPTS_LOGS}/openview.failed
 
+if [[ -f ${SCRIPTS_DATA}/chkov.* ]]
+then
+  echo "chkov is already running. Exiting"
+  exit 1
+fi
+
+touch ${SCRIPTS_DATA}/chkov.$$
+
 # permit immediate running of scripts (within 5 minutes) if needed
 # always delete it after one run
 if [[ -f ${SCRIPTS_BINS}/runonce ]]
@@ -34,4 +42,10 @@ for i in `ls ${SCRIPTS_RUND}`
 do
   "${SCRIPTS_RUND}"/$i
 done
+
+# only delete the one we created
+if [[ -f ${SCRIPTS_DATA}/chkov.$$ ]]
+then
+  rm ${SCRIPTS_DATA}/chkov.$$
+fi
 
