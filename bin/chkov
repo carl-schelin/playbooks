@@ -17,7 +17,13 @@ fi
 DATE=$(date)
 LOG=${SCRIPTS_LOGS}/openview.failed
 
-if [[ -f ${SCRIPTS_DATA}/chkov.* ]]
+FLAG="no"
+for i in `ls ${SCRIPTS_DATA}/chkov.*`
+do
+  FLAG="yes"
+done
+
+if [[ ${FLAG} = 'yes' ]]
 then
   echo "chkov is already running. Exiting"
   exit 1
