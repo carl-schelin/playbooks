@@ -18,7 +18,13 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-if [[ -f ${SCRIPTS_DATA}/chkmonagent.* ]]
+FLAG="no"
+for i in `ls ${SCRIPTS_DATA}/chkmonagent.*`
+do
+  FLAG="yes"
+done
+
+if [[ ${FLAG} = 'yes' ]]
 then
   echo "chkmonagent script is running. Exiting."
   exit 1
