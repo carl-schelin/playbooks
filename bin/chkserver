@@ -270,7 +270,13 @@ if [[ $OS = 'SunOS' ]] && [[ ! -z $1 ]]
 then
   NETCAT=''
 else
-  NETCAT='nc'
+  OUTPUT=`which nc | awk '{print $1}'`
+  if [[ $OUTPUT = 'no' ]]
+  then
+    NETCAT=''
+  else
+    NETCAT='nc'
+  fi
 fi
 
 # The ping count flags are different on the three OSs'
