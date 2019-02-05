@@ -18,6 +18,14 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# only check every 15 minutes; so on 0, 15, 30, and 45.
+TIMECHK=`date +"%M"`
+if [[ ${TIMECHK} -ne 0 ]] && [[ ${TIMECHK} -ne 15 ]] && [[ ${TIMECHK} -ne 30 ]] && [[ ${TIMECHK} -ne 45 ]]
+then
+  echo "Not time for a check yet."
+  exit 1
+fi
+
 FLAG="no"
 for i in `ls ${SCRIPTS_DATA}/chkmonagent.*`
 do
@@ -30,8 +38,6 @@ then
   exit 1
 fi
 
-touch ${SCRIPTS_DATA}/chkmonagent.$$
-
 DATE=$(date)
 LOG=${SCRIPTS_LOGS}/openview.failed
 
@@ -41,6 +47,9 @@ then
   echo 'Openview not installed'
   exit 0
 fi
+
+# make sure only one script is running
+touch ${SCRIPTS_DATA}/chkmonagent.$$
 
 # check the Openview status
 if [[ ! -z $1 ]]
@@ -61,6 +70,12 @@ then
     then
       rm "${SCRIPTS_DATA}/openview.stop"
     fi
+    if [[ -f "${SCRIPTS_DATA}/openview.disabled" ]]
+    then
+      rm "${SCRIPTS_DATA}/openview.check1"
+      rm "${SCRIPTS_DATA}/openview.check2"
+      rm "${SCRIPTS_DATA}/openview.disabled"
+    fi
   fi
 fi
 
@@ -79,6 +94,17 @@ then
   echo "Openview configured to not auto-start"
   exit 0
 fi
+
+# check to see if Openview monitoring is disabled
+if [[ -f ${SCRIPTS_DATA}/openview.disabled ]]
+then
+  echo "Openview checking has been automatically disabled."
+  exit 0
+fi
+
+############################
+### All the validations are done, now check the agent.
+############################
 
 # now run through checks to see if OpenView is working.
 for i in $(/opt/OV/bin/ovcstatus | egrep -v "^(ttd|perfalarm|perfd)" | egrep -i "(Aborted|Stopped|Starting|Isn't Running)" | awk '{print $1}')
@@ -101,6 +127,21 @@ then
   echo "${DATE}" >> "${LOG}"
   /opt/OV/bin/opcagt -status >> "${LOG}"
   /opt/OV/bin/opcagt -kill >> "${LOG}"
+
+  if [[ ! -f ${SCRIPTS_DATA}/openview.check1 ]]
+  then
+    touch "${SCRIPTS_DATA}/openview.check1"
+  else
+    if [[ ! -f ${SCRIPTS_DATA}/openview.check2 ]]
+    then
+      touch "${SCRIPTS_DATA}/openview.check2"
+    else
+      if [[ ! -f ${SCRIPTS_DATA}/openview.disabled ]]
+      then
+        touch "${SCRIPTS_DATA}/openview.disabled"
+      fi
+    fi
+  fi
 fi
 
 # this takes about 15 seconds and restarts
