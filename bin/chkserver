@@ -3975,7 +3975,8 @@ check_rrdtool() {
       then
         printf "%b\n" "  ${YELLOW}rrdtool is not configured or ${i} is not running${RESET}" >> "${LOG}"
       fi
-      if [[ ${RUNSTATS} -gt 1 ]]
+# occasionally it reports 2 due to catching it during transition. Since it's only a problem at a much larger number, we'll report if there are more than 3 running.
+      if [[ ${RUNSTATS} -gt 3 ]]
       then
         printf "%b\n" "  ${RED}Multiple copies of ${i} are running. There should only be one.${RESET}" >> "${LOG}"
       fi
