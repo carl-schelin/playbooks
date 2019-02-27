@@ -3190,25 +3190,39 @@ check_openview() {
         then
           printf "%b\n" "    ${RED}Configuration: eaagt OPC_IP_ADDRESS=${RESULT} is not ${EXPECTED_IP}${RESET}" >> "${LOG}"
         fi
+
         RESULT=$(/opt/OV/bin/ovconfget eaagt OPC_MGMT_SERVER)
+        NEW_MONITOR="omiagenttraffic.gb3.intrado.com"
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
+          if [[ ! ${NEW_MONITOR} = ${RESULT} ]]
+          then
+            printf "%b\n" "    ${RED}Configuration: eaagt OPC_MGMT_SERVER=${RESULT} is not ${EXPECTED_MONITOR} or ${NEW_MONITOR}.${RESET}" >> "${LOG}"
+          fi
         fi
         RESULT=$(/opt/OV/bin/ovconfget eaagt OPC_PRIMARY_MGR)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
+          if [[ ! ${NEW_MONITOR} = ${RESULT} ]]
+          then
+            printf "%b\n" "    ${RED}Configuration: eaagt OPC_PRIMARY_MGR=${RESULT} is not ${EXPECTED_MONITOR} or ${NEW_MONITOR}.${RESET}" >> "${LOG}"
+          fi
         fi
         RESULT=$(/opt/OV/bin/ovconfget sec.cm.client CERTIFICATE_SERVER)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
+          if [[ ! ${NEW_MONITOR} = ${RESULT} ]]
+          then
+            printf "%b\n" "    ${RED}Configuration: sec.cm.client CERTIFICATE_SERVER=${RESULT} is not ${EXPECTED_MONITOR} or ${NEW_MONITOR}.${RESET}" >> "${LOG}"
+          fi
         fi
         RESULT=$(/opt/OV/bin/ovconfget sec.core.auth MANAGER)
         if [[ ! ${EXPECTED_MONITOR} = ${RESULT} ]]
         then
-          printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR}${RESET}" >> "${LOG}"
+          if [[ ! ${NEW_MONITOR} = ${RESULT} ]]
+          then
+            printf "%b\n" "    ${RED}Configuration: sec.core.auth MANAGER=${RESULT} is not ${EXPECTED_MONITOR} or ${NEW_MONITOR}.${RESET}" >> "${LOG}"
+          fi
         fi
       fi
 
@@ -3975,8 +3989,8 @@ check_rrdtool() {
       then
         printf "%b\n" "  ${YELLOW}rrdtool is not configured or ${i} is not running${RESET}" >> "${LOG}"
       fi
-# occasionally it reports 2 due to catching it during transition. Since it's only a problem at a much larger number, we'll report if there are more than 3 running.
-      if [[ ${RUNSTATS} -gt 3 ]]
+# occasionally it reports 2 due to catching it during transition. Since it's only a problem at a much larger number, we'll report if there are more than 2 running.
+      if [[ ${RUNSTATS} -gt 2 ]]
       then
         printf "%b\n" "  ${RED}Multiple copies of ${i} are running. There should only be one.${RESET}" >> "${LOG}"
       fi
