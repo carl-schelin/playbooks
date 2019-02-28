@@ -136,6 +136,12 @@ then
   chmod 770 ${SCRIPTS_DATA}
 fi
 
+if [[ -d /opt/kubernetes ]]
+then
+  chmod -R 775 /opt/kubernetes
+  chown -R unixsvc:sysadmin /opt/kubernetes
+fi
+
 echo "`date` intrado script started" >> $LOG
 
 # First ensure the /opt/intrado directory structure is owned properly so data files can be written
