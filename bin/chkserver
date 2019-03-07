@@ -197,7 +197,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.276"
+VERSION="${BASENAME} v1.278"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3504,7 +3504,7 @@ check_redhat_subscription() {
     printf "%b\n" "    ${GREEN}Skipping Satellite Check${RESET}" >> "${LOG}"
     return
   fi
-  if [[ -f /etc/redhat-release ]]
+  if [[ ${DISTRO} = "Red Hat" ]]
   then
     if [[ ${DEBUG} = '19' ]]
     then
