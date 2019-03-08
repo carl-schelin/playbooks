@@ -199,7 +199,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.279"
+VERSION="${BASENAME} v1.280"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -3092,7 +3092,7 @@ check_openview() {
     then
       printf "%b\n" "    ${RED}OpenView agent is not running${RESET}" >> "${LOG}"
     else
-      /opt/OV/bin/opcagt status > ${SCRIPTS_LOGS}/opcagt.status.output
+      /opt/OV/bin/opcagt -status > ${SCRIPTS_LOGS}/opcagt.status.output
       ABORT=$(grep -ci abort ${SCRIPTS_LOGS}/opcagt.status.output)
       RUNNING=$(grep -ci running ${SCRIPTS_LOGS}/opcagt.status.output)
       STOPPED=$(grep -ci stopped ${SCRIPTS_LOGS}/opcagt.status.output)
