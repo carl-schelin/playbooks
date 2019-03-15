@@ -24,6 +24,10 @@ do
   then
     rm /var/www/html/kubernetes/$i-admin.kubeconfig.zip
   fi
+  if [[ -f /var/www/html/kubernetes/$i-serviceaccount.kubeconfig.zip ]]
+  then
+    rm /var/www/html/kubernetes/$i-serviceaccount.kubeconfig.zip
+  fi
   if [[ -f /var/www/html/kubernetes/$i.kubeconfig.zip ]]
   then
     rm /var/www/html/kubernetes/$i.kubeconfig.zip
