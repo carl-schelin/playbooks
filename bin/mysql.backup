@@ -148,18 +148,18 @@ echo "Beginning mysql report: ${DATE}" > ${LOG}
 
 for i in ${DATABASES}
 do
-# create new database directory for backups
+# create new database directory for backups. don't dump a database if it's already there
   if [[ ! -d ${ROOT}/mysql.${DATE}/${i} ]]
   then
     mkdir -p ${ROOT}/mysql.${DATE}/${i}
-  fi
 
 # ensure mysql can actually write to the database directory
-  chmod -R 775 ${ROOT}/mysql.${DATE}
-  chown -R mysql:mysql ${ROOT}/mysql.${DATE}
+    chmod -R 775 ${ROOT}/mysql.${DATE}
+    chown -R mysql:mysql ${ROOT}/mysql.${DATE}
 
-  echo "Dumping ${i}" >> ${LOG}
-  mysqldump --tab=${ROOT}/mysql.${DATE}/${i} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
+    echo "Dumping ${i}" >> ${LOG}
+    mysqldump --tab=${ROOT}/mysql.${DATE}/${i} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
+  fi
 
 done
 
