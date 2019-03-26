@@ -62,7 +62,7 @@ then
   do
     if [[ -f ${HTSECURE}/${i}/LocalSettings.php ]]
     then
-      DBNAME=`grep wgDBname ${SECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+      DBNAME=`grep wgDBname ${HTSECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
       DATABASES="${DATABASES} ${DBNAME}"
     fi
   done
