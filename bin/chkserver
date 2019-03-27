@@ -586,7 +586,7 @@ check_apa() {
 
   CHKAPA="${SCRIPTS_LOGS}/chkapa.review"
 
-  if [[ ${OS} = 'HP=UX' ]]
+  if [[ ${OS} = 'HP-UX' ]]
   then
     if [[ -s /etc/lanmon/lanconfig.ascii ]]
     then
@@ -1974,12 +1974,12 @@ check_grpck() {
     echo "Entering check_grpck(67)"
   fi
 
+  CHKGRPCK="${SCRIPTS_LOGS}/chkgrpck.review"
+
+  grpck > "${CHKGRPCK}"
+
   if [[ ${CHECK_GRPCK} = 'Yes' ]]
   then
-    CHKGRPCK="${SCRIPTS_LOGS}/chkgrpck.review"
-
-    grpck > "${CHKGRPCK}"
-
     compare_files chkgrpck
   fi
 
@@ -2001,17 +2001,17 @@ check_guid() {
     echo "Entering check_guid(60)"
   fi
 
+# find gets lost on some Sun boxes.
+  if [[ ${OS} != 'SunOS' ]]
+  then
+    CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
+
+    find / -user root -perm -2000 | sort > "${CHKGUID}"
+  fi
+
   if [[ ${CHECK_GUID} = 'Yes' ]]
   then
-# find gets lost on some Sun boxes.
-    if [[ ${OS} != 'SunOS' ]]
-    then
-      CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
-
-      find / -user root -perm -2000 | sort > "${CHKGUID}"
-
-      compare_files chkguid
-    fi
+    compare_files chkguid
   fi
 
   if [[ ${DEBUG} = '60' ]]
@@ -3386,41 +3386,41 @@ check_packages() {
     echo "Entering check_packages(65)"
   fi
 
+  CHKPACKAGES="${SCRIPTS_LOGS}/chkpackages.review"
+
+  if [[ $OS = "Linux" ]]
+  then
+    if [[ -f /etc/redhat-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/centos-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/debian_version ]]
+    then
+      /usr/bin/dpkg-query -l | grep "^ii " | awk '{print $2"-"$3}' > "${CHKPACKAGES}"
+    fi
+  fi
+
+  if [[ $OS = "SunOS" ]]
+  then
+    /usr/bin/pkginfo -l > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "HP-UX" ]]
+  then
+    /usr/sbin/swlist | grep "^ " | awk '{print $1"-"$2}' > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "OSF1" ]]
+  then
+    /usr/sbin/swlist > "${CHKPACKAGES}"
+  fi
+
   if [[ ${CHECK_PACKAGES} = 'Yes' ]]
   then
-    CHKPACKAGES="${SCRIPTS_LOGS}/chkpackages.review"
-
-    if [[ $OS = "Linux" ]]
-    then
-      if [[ -f /etc/redhat-release ]]
-      then
-        /bin/rpm -qa | sort > "${CHKPACKAGES}"
-      fi
-      if [[ -f /etc/centos-release ]]
-      then
-        /bin/rpm -qa | sort > "${CHKPACKAGES}"
-      fi
-      if [[ -f /etc/debian_version ]]
-      then
-        /usr/bin/dpkg-query -l | grep "^ii " | awk '{print $2"-"$3}' > "${CHKPACKAGES}"
-      fi
-    fi
-
-    if [[ $OS = "SunOS" ]]
-    then
-      /usr/bin/pkginfo -l > "${CHKPACKAGES}"
-    fi
-
-    if [[ $OS = "HP-UX" ]]
-    then
-      /usr/sbin/swlist | grep "^ " | awk '{print $1"-"$2}' > "${CHKPACKAGES}"
-    fi
-
-    if [[ $OS = "OSF1" ]]
-    then
-      /usr/sbin/swlist > "${CHKPACKAGES}"
-    fi
-
     compare_files chkpackages
   fi
 
@@ -3442,12 +3442,12 @@ check_passwd() {
     echo "Entering check_passwd(62)"
   fi
 
+  CHKPWCK="${SCRIPTS_LOGS}/chkpwck.review"
+
+  pwck > "${CHKPWCK}"
+
   if [[ ${CHECK_PWCK} = 'Yes' ]]
   then
-    CHKPWCK="${SCRIPTS_LOGS}/chkpwck.review"
-
-    pwck > "${CHKPWCK}"
-
     compare_files chkpwck
   fi
 
@@ -4264,34 +4264,33 @@ check_services() {
     echo "Entering check_services(64)"
   fi
 
-  if [[ ${CHECK_SERVICES} = 'Yes' ]]
-  then
-    CHKSERVICES="${SCRIPTS_LOGS}/chkservices.review"
+  CHKSERVICES="${SCRIPTS_LOGS}/chkservices.review"
 
-    if [[ ${OS} = 'Linux' ]]
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${DEBUG} = '64' ]]
+    then
+      echo "  Linux system. Checking config"
+    fi
+# both 7 and lower have chkconfig to show services and status
+    chkconfig > "${CHKSERVICES}"
+    if [[ ${DEBUG} = '64' ]]
+    then
+      echo "  chkconfig output generated"
+    fi
+    if [[ ${OSMAJOR} = '7' ]]
     then
       if [[ ${DEBUG} = '64' ]]
       then
-        echo "  Linux system. Checking config"
+        echo "  RH7, systemctl output"
       fi
-# both 7 and lower have chkconfig to show services and status
-      chkconfig > "${CHKSERVICES}"
-      if [[ ${DEBUG} = '64' ]]
-      then
-        echo "  chkconfig output generated"
-      fi
-      if [[ ${OSMAJOR} = '7' ]]
-      then
-        if [[ ${DEBUG} = '64' ]]
-        then
-          echo "  RH7, systemctl output"
-        fi
-        systemctl list-unit-files >> "${CHKSERVICES}"
-      fi
-
-# for now, just in the if statement. once sun and hp are figured out, move it outside the check or in each of the other checks
-      compare_files chkservices
+      systemctl list-unit-files >> "${CHKSERVICES}"
     fi
+  fi
+
+  if [[ ${CHECK_SERVICES} = 'Yes' ]]
+  then
+      compare_files chkservices
   fi
 
   if [[ ${DEBUG} = '64' ]]
@@ -4381,17 +4380,17 @@ check_suid() {
     echo "Entering check_suid(59)"
   fi
 
+# find gets lost on some Sun boxes.
+  if [[ ${OS} != "SunOS" ]]
+  then
+    CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
+
+    find / -user root -perm -4000 | sort > "${CHKSUID}"
+  fi
+
   if [[ ${CHECK_SUID} = 'Yes' ]]
   then
-# find gets lost on some Sun boxes.
-    if [[ ${OS} != "SunOS" ]]
-    then
-      CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
-
-      find / -user root -perm -4000 | sort > "${CHKSUID}"
-
-      compare_files chksuid
-    fi
+    compare_files chksuid
   fi
 
   if [[ ${DEBUG} = '59' ]]
