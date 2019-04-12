@@ -23,9 +23,12 @@ DATE=`date +"%Y%m%d"`
 LOG="$ROOT/mysql.$DATE/mysql.report"
 HTDOCS=/var/www/htdocs
 HTSECURE=/var/www/htsecure
+HTML=/var/www/html
 HOSTNAME=`hostname | cut -f1 -d.`
 WHOCARES="carl.schelin@intrado.com"
 PATH="/usr/local/bin:/opt/csw/mysql5/bin:$PATH"; export PATH
+
+chown -R mysql:mysql ${ROOT}
 
 if [[ ${HOSTNAME} = "incojs01" ]]
 then
@@ -99,6 +102,33 @@ then
   ARCHIVE=7
 fi
 
+# parsing the database names through the localsettings.php file
+if [[ ${HOSTNAME} = "lnmt1cuaswiki1" ]]
+then
+  DATABASES=" information_schema mysql"
+
+  for i in `ls -la ${HTML} | grep "^d" | awk '{print $9}'`
+  do
+    if [[ -f ${HTML}/${i}/LocalSettings.php ]]
+    then
+      DBNAME=`grep wgDBname ${HTML}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
+
+      echo "${DATABASES}" | grep " ${DBNAME} " > /dev/null
+      if [[ $? -eq 1 ]]
+      then
+        DATABASES="${DATABASES} ${DBNAME}"
+      else
+        echo "Found: ${DBNAME}"
+      fi
+    fi
+  done
+
+  USER=root
+  PASSWORD="this4now!!"
+  OWNER="mysql:mysql"
+  ARCHIVE=7
+fi
+
 # the following two may eventually be backed up. Once inventory goes live, for sure.
 #if [[ ${HOSTNAME} = "inventory" ]]
 #then
@@ -157,8 +187,12 @@ do
     chmod -R 775 ${ROOT}/mysql.${DATE}
     chown -R mysql:mysql ${ROOT}/mysql.${DATE}
 
+    cd ${ROOT}/mysql.${DATE}/${i}
+
     echo "Dumping ${i}" >> ${LOG}
-    mysqldump --tab=${ROOT}/mysql.${DATE}/${i} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
+    echo "Dumping ${i}"
+    echo "mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user=\"${USER}\" --password=\"${PASSWORD}\""
+    mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
   fi
 
 done
@@ -167,18 +201,22 @@ done
 if [[ -d ${ROOT}/mysql.${DATE} ]]
 then
   cd ${ROOT}
+  echo "Archive directory."
   tar cf mysql.${DATE}.tar mysql.${DATE}
   if [[ $? -eq 0 ]]
   then
+    echo "Compress Archive."
     gzip -9 mysql.${DATE}.tar
     if [[ $? -eq 0 ]]
     then
+      echo "Remove directory."
       rm -rf mysql.${DATE}
     fi
   fi
 fi
 
 # finally, remove all old backups
+echo "Remove old compressed archives."
 find ${ROOT} -name mysql.\*.gz -prune -atime +${ARCHIVE} -exec rm {} \;
 
 exit 0
