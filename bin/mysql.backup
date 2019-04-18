@@ -29,6 +29,7 @@ WHOCARES="carl.schelin@intrado.com"
 PATH="/usr/local/bin:/opt/csw/mysql5/bin:$PATH"; export PATH
 
 chown -R mysql:mysql ${ROOT}
+chmod -R 775 ${ROOT}
 
 if [[ ${HOSTNAME} = "incojs01" ]]
 then
