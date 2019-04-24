@@ -5062,7 +5062,7 @@ then
   fi
 fi
 
-print "\n+++chkserver script run completed\n" >> "${LOG}"
+print "\n+++chkserver script run completed: `date +\"%Y%m%d %H%M%S\"`\n" >> "${LOG}"
 
 if [[ ! -z $1 ]]
 then
