@@ -278,6 +278,10 @@ else
     NETCAT=''
   else
     NETCAT='nc'
+    if [[ $(${NETCAT} --help | grep -- --zero | wc -l) -gt 0 ]]
+    then
+      NETCAT='nc -z'
+    fi
   fi
 fi
 
