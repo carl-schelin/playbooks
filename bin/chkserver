@@ -186,6 +186,7 @@
 # 2019/01/09 - CS - added a check_routes function which just checks basic routes vs something more complicated
 # 2019/03/06 - CS - Added satellite check for Red Hat so it doesn't check CentOS or Debian systems for access to Satellite
 # 2019/03/07 - CS - Set up disable options for various functions, added check_grpck function
+# 2019/05/06 - CS - Set up disable options for various functions, added check_grpck function
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -199,7 +200,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.280"
+VERSION="${BASENAME} v1.281"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2282,7 +2283,11 @@ check_kubernetes() {
             printf "%b\n" "    ${RED}Namespace ${i} is reporting errors:${RESET}" >> "${LOG}"
             FLAG=1
           fi
-          printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> "${LOG}"
+# normally you should see 3/3 however if the ERROR is Completed, the output is 0/1 and is fine.
+          if [[ ${ERROR} != 'Completed' ]]
+          then
+            printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> "${LOG}"
+          fi
         fi
       done
     done
