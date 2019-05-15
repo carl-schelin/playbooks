@@ -18,7 +18,7 @@ PASSWD=`which passwd`
 ADMIN=/opt/intrado
 LOGFILE=$ADMIN/etc/lockuser.log
 # List of users that will be excluded, sysadmins will need to be removed from this list in order to be locked.
-EXCLUDE="root unixsvc cschelin escott kzupan jnoyes tcooper"
+EXCLUDE="root unixsvc cschelin kzupan jnoyes tcooper"
 
 # if a changefreeze is in effect, stop the execution of the script.
 if [[ -f $ADMIN/etc/changefreeze ]]
