@@ -82,6 +82,9 @@ then
   RED="\033[31m"
   YELLOW="\033[33m"
   RESET="\033[0m"
+# not showing color on all systems so disable for now
+  RED=""
+  RESET=""
   YEAR=`date +"%Y"`
   MONTH=`date +"%m"`
   DAY=`date +"%d"`
