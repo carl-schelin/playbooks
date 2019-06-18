@@ -89,14 +89,15 @@ then
   MONTH=`date +"%m"`
   DAY=`date +"%d"`
 
-  HWSUPPORT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+# making the variable match 
+  HWSPRT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
 
-  EOLHW=`grep "^Hardware EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+  EOLHARDWARE=`grep "^Hardware EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
   HWYEAR=`echo $EOLHW | cut -f1 -d-`
   HWMONTH=`echo $EOLHW | cut -f2 -d-`
   HWDAY=`echo $EOLHW | cut -f3 -d-`
 
-  EOLSW=`grep "^Software EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+  EOLSOFTWARE=`grep "^Software EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
   SWYEAR=`echo $EOLSW | cut -f1 -d-`
   SWMONTH=`echo $EOLSW | cut -f2 -d-`
   SWDAY=`echo $EOLSW | cut -f3 -d-`
@@ -106,29 +107,29 @@ then
 # if before this year, report an error
     if [[ $SWYEAR -lt $YEAR ]]
     then
-      echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-      echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-      echo "    ${RED}========= Operating System Software has reached End of Life: ==========${RESET}" >> /etc/motd
-      echo "    ${RED}=========                      ${EOLSW}                    ==========${RESET}" >> /etc/motd
-      echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+      echo "    =======================================================================" >> /etc/motd
+      echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+      echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+      echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+      echo "    =======================================================================" >> /etc/motd
     else
 # if this year and before this month, report an error
       if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -lt $MONTH ]]
       then
-        echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-        echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-        echo "    ${RED}========= Operating System Software has reached End of Life: ==========${RESET}" >> /etc/motd
-        echo "    ${RED}=========                      ${EOLSW}                    ==========${RESET}" >> /etc/motd
-        echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+        echo "    =======================================================================" >> /etc/motd
+        echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+        echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+        echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+        echo "    =======================================================================" >> /etc/motd
       else
 # if it's this year and this month and less than _or_ equal to today, report an error
         if [[ $SWMONTH -eq $MONTH ]] && [[ $SWDAY -le $DAY ]]
         then
-           echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-           echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-           echo "    ${RED}========= Operating System Software has reached End of Life: ==========${RESET}" >> /etc/motd
-           echo "    ${RED}=========                      ${EOLSW}                    ==========${RESET}" >> /etc/motd
-           echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+          echo "    =======================================================================" >> /etc/motd
+          echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+          echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+          echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+          echo "    =======================================================================" >> /etc/motd
         fi
       fi
     fi
@@ -139,38 +140,39 @@ then
   then
     if [[ $HWSUPPORT = 'No' ]]
     then
-      echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-      echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-      echo "    ${RED}=========   System Hardware is not currently under support   ==========${RESET}" >> /etc/motd
-      echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+      echo "    =====================================================================" >> /etc/motd
+      echo "    =========  Lifecycle Notification from the Unix Team       ==========" >> /etc/motd
+      echo "    =========  Status: CRITICAL                                ==========" >> /etc/motd
+      echo "    =========  System Hardware is not currently under support  ==========" >> /etc/motd
+      echo "    =====================================================================" >> /etc/motd
     fi
     if [[ ! $EOLHW = '0000-00-00' ]]
     then
       if [[ $HWYEAR -lt $YEAR ]]
       then
-        echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-        echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-        echo "    ${RED}=========      System Hardware has reached End of Life:      ==========${RESET}" >> /etc/motd
-        echo "    ${RED}=========                      ${EOLHW}                    ==========${RESET}" >> /etc/motd
-        echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+        echo "    ======================================================================" >> /etc/motd
+        echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+        echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+        echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+        echo "    ======================================================================" >> /etc/motd
       else
 # if this year and before this month, report an error
         if [[ $HWYEAR -eq $YEAR ]] && [[ $HWMONTH -lt $MONTH ]]
         then
-          echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-          echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-          echo "    ${RED}=========      System Hardware has reached End of Life:      ==========${RESET}" >> /etc/motd
-          echo "    ${RED}=========                      ${EOLHW}                    ==========${RESET}" >> /etc/motd
-          echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+          echo "    ======================================================================" >> /etc/motd
+          echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+          echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+          echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+          echo "    ======================================================================" >> /etc/motd
         else
 # if it's this year and this month and less than _or_ equal to today, report an error
           if [[ $HWMONTH -eq $MONTH ]] && [[ $HWDAY -le $DAY ]]
           then
-             echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
-             echo "    ${RED}=========                       CRITICAL                     ==========${RESET}" >> /etc/motd
-             echo "    ${RED}=========      System Hardware has reached End of Life:      ==========${RESET}" >> /etc/motd
-             echo "    ${RED}=========                      ${EOLHW}                    ==========${RESET}" >> /etc/motd
-             echo "    ${RED}=======================================================================${RESET}" >> /etc/motd
+            echo "    ======================================================================" >> /etc/motd
+            echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+            echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+            echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+            echo "    ======================================================================" >> /etc/motd
           fi
         fi
       fi
