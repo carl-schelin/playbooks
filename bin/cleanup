@@ -90,19 +90,19 @@ then
   DAY=`date +"%d"`
 
 # making the variable match 
-  HWSPRT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+  HARDWARESUPPORT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
 
   EOLHARDWARE=`grep "^Hardware EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
-  HWYEAR=`echo $EOLHW | cut -f1 -d-`
-  HWMONTH=`echo $EOLHW | cut -f2 -d-`
-  HWDAY=`echo $EOLHW | cut -f3 -d-`
+  HWYEAR=`echo $EOLHARDWARE | cut -f1 -d-`
+  HWMONTH=`echo $EOLHARDWARE | cut -f2 -d-`
+  HWDAY=`echo $EOLHARDWARE | cut -f3 -d-`
 
   EOLSOFTWARE=`grep "^Software EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
-  SWYEAR=`echo $EOLSW | cut -f1 -d-`
-  SWMONTH=`echo $EOLSW | cut -f2 -d-`
-  SWDAY=`echo $EOLSW | cut -f3 -d-`
+  SWYEAR=`echo $EOLSOFTWARE | cut -f1 -d-`
+  SWMONTH=`echo $EOLSOFTWARE | cut -f2 -d-`
+  SWDAY=`echo $EOLSOFTWARE | cut -f3 -d-`
 
-  if [[ ! $EOLSW = '0000-00-00' ]]
+  if [[ ! $EOLSOFTWARE = '0000-00-00' ]]
   then
 # if before this year, report an error
     if [[ $SWYEAR -lt $YEAR ]]
@@ -136,9 +136,9 @@ then
   fi
 
 # if before this year, report an error
-  if [[ ! $HWSUPPORT = "N/A" ]]
+  if [[ ! $HARDWARESUPPORT = "N/A" ]]
   then
-    if [[ $HWSUPPORT = 'No' ]]
+    if [[ $HARDWARESUPPORT = 'No' ]]
     then
       echo "    =====================================================================" >> /etc/motd
       echo "    =========  Lifecycle Notification from the Unix Team       ==========" >> /etc/motd
@@ -146,7 +146,7 @@ then
       echo "    =========  System Hardware is not currently under support  ==========" >> /etc/motd
       echo "    =====================================================================" >> /etc/motd
     fi
-    if [[ ! $EOLHW = '0000-00-00' ]]
+    if [[ ! $EOLHARDWARE = '0000-00-00' ]]
     then
       if [[ $HWYEAR -lt $YEAR ]]
       then
