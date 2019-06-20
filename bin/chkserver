@@ -200,7 +200,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.281"
+VERSION="${BASENAME} v1.282"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -4538,7 +4538,7 @@ check_time() {
     else
       T_CONFIG='/etc/ntp.conf'
     fi
-    T_RUNNING=$(ps -ef | egrep "(xntpd|ntpd)")
+    T_RUNNING=$(ps -ef | egrep "(xntpd|ntpd)" | grep -v egrep)
   fi
 
 # is it installed?
