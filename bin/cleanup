@@ -77,6 +77,8 @@ if [[ -f ${SCRIPTS_DATA}/motd ]]
 then
   cp ${SCRIPTS_DATA}/motd /etc/motd
   cp ${SCRIPTS_DATA}/motd /etc/issue
+  chmod 644 /etc/motd
+  chmod 644 /etc/issue
 
   GREEN="\033[32m"
   RED="\033[31m"
