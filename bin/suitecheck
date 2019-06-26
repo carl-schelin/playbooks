@@ -1,0 +1,54 @@
+#!/bin/ksh
+
+# suitecheck - Run scripts in the run.d directory every 5 minutes
+# Carl Schelin - 12/19/2018
+
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+FLAG="no"
+for i in `ls ${SCRIPTS_DATA}/suitecheck.*`
+do
+  FLAG="yes"
+done
+
+if [[ ${FLAG} = 'yes' ]]
+then
+  echo "suitecheck is already running. Exiting"
+  exit 1
+fi
+
+touch ${SCRIPTS_DATA}/suitecheck.$$
+
+# permit immediate running of scripts (within 5 minutes) if needed
+# always delete it after one run
+if [[ -f ${SCRIPTS_BINS}/runonce ]]
+then
+  "${SCRIPTS_BINS}/runonce"
+  rm "${SCRIPTS_BINS}/runonce"
+fi
+
+if [[ ! -d ${SCRIPTS_RUND} ]]
+then
+  mkdir -p ${SCRIPTS_RUND}
+fi
+
+for i in `ls ${SCRIPTS_RUND}`
+do
+  "${SCRIPTS_RUND}"/${i}
+done
+
+# only delete the one we created
+if [[ -f ${SCRIPTS_DATA}/suitecheck.$$ ]]
+then
+  rm ${SCRIPTS_DATA}/suitecheck.$$
+fi
+
