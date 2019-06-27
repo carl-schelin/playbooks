@@ -347,3 +347,15 @@ do
   fi
 done
 
+# being ready for unixsuite scripts
+if [[ ! -f /opt/unixsuite ]]
+then
+  mkdir /opt/unixsuite
+  mkdir /opt/unixsuite/bin
+  mkdir /opt/unixsuite/etc
+  mkdir /opt/unixsuite/var
+  mkdir /opt/unixsuite/server.d
+  mkdir /opt/unixsuite/run.d
+  chown -R unixsvc:sysadmin /opt/unixsuite
+fi
+
