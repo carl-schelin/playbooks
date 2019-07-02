@@ -16,6 +16,7 @@
 # 02/01/13 - Updated all GECOS= entries to pull from chkusers.dat file to get centrify information. - KSZ
 # 01/20/16 - added sfw sudoers check - TCS
 # 01/31/18 - Added debugging code to better identify where account issues pop up
+# 07/02/19 - Fixed checking sudoers for (user) access. Had to run the check 4 times so if more than 4 entries are found on a line, it won't check the remaining 4.
 
 #BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -137,7 +138,38 @@ do
   do
 
 # check to see if a group is root accessible and set the yes/no flag
-    ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1)
+#    ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1)
+
+# could have a specific user called out in parens to restrict access. "(username) ALL" just means the group can run any command as 'username' so ALL isn't bad here.
+# need to split on parens and check to see if something is returend
+# first get the commands
+    COMMANDS=$(grep -v "^#" "${SUDOERS}" | grep "^%${i}" | cut -f2 -d=)
+
+
+# then get the individual sections separated by commas; section 1
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f1 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
     if [[ -z $ROOT ]]
     then
       TMPROOT="no"
@@ -152,6 +184,128 @@ do
     then
       echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
     fi
+
+
+# then get the individual sections separated by commas; section 2
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f2 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+# then get the individual sections separated by commas; section 3
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f3 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+# then get the individual sections separated by commas; section 4
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f4 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
   done
 
   if [[ $DEBUG = 'yes' ]]
