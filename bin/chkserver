@@ -1981,7 +1981,7 @@ check_grpck() {
 
   CHKGRPCK="${SCRIPTS_LOGS}/chkgrpck.review"
 
-  grpck > "${CHKGRPCK}"
+  grpck -r > "${CHKGRPCK}"
 
   if [[ ${CHECK_GRPCK} = 'Yes' ]]
   then
@@ -3453,7 +3453,7 @@ check_passwd() {
 
   CHKPWCK="${SCRIPTS_LOGS}/chkpwck.review"
 
-  pwck > "${CHKPWCK}"
+  pwck -r > "${CHKPWCK}"
 
   if [[ ${CHECK_PWCK} = 'Yes' ]]
   then
