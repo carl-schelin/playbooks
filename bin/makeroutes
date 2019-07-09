@@ -18,6 +18,14 @@ then
   exit 1
 fi
 
+echo "Verifying route information"
+for i in `cat routes | sed -e "s/    Route to //g" -e "s/ missing.//g"`
+do
+  grep $i /opt/intrado/.config
+done
+
+echo ""
+echo "Listing route definitions"
 for i in `cat routes | sed -e "s/    Route to //g" -e "s/ missing.//g"`
 do
   echo "route add -host $i/32 gw $1 dev $2; echo \"$i/32 via $1 dev $2\" >> /etc/sysconfig/network-scripts/route-$2"
