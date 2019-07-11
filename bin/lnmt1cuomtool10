@@ -18,7 +18,7 @@ fi
 
 WHOCARES=carl.schelin@intrado.com
 
-for i in `cat /usr/local/admin/kubernetes/userlist | cut -f1 -d:`
+for i in `cat /usr/local/admin/kubernetes/users/userlist | cut -f1 -d:`
 do
   if [[ -f /var/www/html/kubernetes/$i-admin.kubeconfig.zip ]]
   then
