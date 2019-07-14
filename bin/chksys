@@ -658,103 +658,96 @@ function network_iface {
         fi
         logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
       done
-    fi
-
-# loopback interface
-    IP=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
-    MASK=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
-    NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
-    logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0,"
-
-    if [[ -f /usr/sbin/lanscan ]]
-    then
-
-      if [[ -f /etc/lanmon/lanconfig.ascii ]]
+    else
+      if [[ -f /usr/sbin/lanscan ]]
       then
-        IP6=0
-        for i in `egrep -v "^(#|$)" /etc/lanmon/lanconfig.ascii | egrep "(FAILOVER_GROUP|PRIMARY|STANDBY)" | awk '{print $1":"$2}'`
-        do
-          KEY=`echo $i | cut -f1 -d:`
-          VALUE=`echo $i | cut -f2 -d:`
-          PARENT=''
 
-          if [[ $KEY = 'FAILOVER_GROUP' ]]
-          then
-            MAC=`lanscan | grep $VALUE | awk '{ printf "%s:%s:%s:%s:%s:%s",
-                                         substr($2,3,2),
-                                         substr($2,5,2),
-                                         substr($2,7,2),
-                                         substr($2,9,2),
-                                         substr($2,11,2),
-                                         substr($2,13,2)}`
-	    IP=`ifconfig $VALUE 2>1 | awk '/inet /{print $2}'`
-            MASK=`ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}'`
-            NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
-            PARENTALUNIT=$VALUE
-          fi
+        if [[ -f /etc/lanmon/lanconfig.ascii ]]
+        then
+          IP6=0
+          for i in `egrep -v "^(#|$)" /etc/lanmon/lanconfig.ascii | egrep "(FAILOVER_GROUP|PRIMARY|STANDBY)" | awk '{print $1":"$2}'`
+          do
+            KEY=`echo $i | cut -f1 -d:`
+            VALUE=`echo $i | cut -f2 -d:`
+            PARENT=''
 
-          if [[ $KEY = 'PRIMARY' ]] || [[ $KEY = 'STANDBY' ]]
-          then
-# first, see if it's in the output of lanscan in order to get the MAC
-            LANSCAN=`lanscan | grep $VALUE`
-            MAC=""
-            if [[ ! -z $LANSCAN ]]
+            if [[ $KEY = 'FAILOVER_GROUP' ]]
             then
-              MAC=`lanscan | grep $VALUE | '{ printf "%s:%s:%s:%s:%s:%s",
+              MAC=`lanscan | grep $VALUE | awk '{ printf "%s:%s:%s:%s:%s:%s",
                                          substr($2,3,2),
                                          substr($2,5,2),
                                          substr($2,7,2),
                                          substr($2,9,2),
                                          substr($2,11,2),
                                          substr($2,13,2)}`
+              IP=`ifconfig $VALUE 2>1 | awk '/inet /{print $2}'`
+              MASK=`ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}'`
+              NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
+              PARENTALUNIT=$VALUE
             fi
 
-            ISTATUS=`ifconfig $VALUE 2>1 | grep -v "no such interface"`
-            if [[ ! -z $ISTATUS ]]
+            if [[ $KEY = 'PRIMARY' ]] || [[ $KEY = 'STANDBY' ]]
             then
-	      IP=`ifconfig $VALUE 2>1 | awk '/inet /{print $2}'`
-              MASK=`ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}'`
-              NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| ed 's/../0x& /g')`
-            else
-              INSTANCE=`egrep "^INTERFACE_NAME.*${VALUE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
-              IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-              MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-
-# some are 0xffff, some are 255.255.255
-              echo $MASK | grep "0x" > /dev/null 2>&1
-              if [[ $? -eq 0 ]]
+# first, see if it's in the output of lanscan in order to get the MAC
+              LANSCAN=`lanscan | grep $VALUE`
+              MAC=""
+              if [[ ! -z $LANSCAN ]]
               then
-                NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed -e "s/0x//g" | sed 's/../0x& /g')`
-              else
-                NETMASK=$MASK
+                MAC=`lanscan | grep $VALUE | '{ printf "%s:%s:%s:%s:%s:%s",
+                                         substr($2,3,2),
+                                         substr($2,5,2),
+                                         substr($2,7,2),
+                                         substr($2,9,2),
+                                         substr($2,11,2),
+                                         substr($2,13,2)}`
               fi
 
-              GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-              PARENT=$PARENTALUNIT
+              ISTATUS=`ifconfig $VALUE 2>1 | grep -v "no such interface"`
+              if [[ ! -z $ISTATUS ]]
+              then
+                IP=`ifconfig $VALUE 2>1 | awk '/inet /{print $2}'`
+                MASK=`ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}'`
+                NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| ed 's/../0x& /g')`
+              else
+                INSTANCE=`egrep "^INTERFACE_NAME.*${VALUE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
+                IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+                MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+
+# some are 0xffff, some are 255.255.255
+                echo $MASK | grep "0x" > /dev/null 2>&1
+                if [[ $? -eq 0 ]]
+                then
+                  NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed -e "s/0x//g" | sed 's/../0x& /g')`
+                else
+                  NETMASK=$MASK
+                fi
+
+                GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+                PARENT=$PARENTALUNIT
+              fi
             fi
-          fi
 
       # found the default gateway information
-          if [[ $DEFDEV = $VALUE ]]; then
-            OUTGATE=${DEFGATE}
-            OUTROUTE=${DEFROUTE}
-          else
+            if [[ $DEFDEV = $VALUE ]]; then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
+            else
 # where to get route information for apa interfaces? from the interface returned above?
-            OUTGATE=${GATEWAY}
-            OUTROUTE=0
-          fi
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
   
-          logit "network" "interface" "${VALUE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
+            logit "network" "interface" "${VALUE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
 
-        done
-      fi
+          done
+        fi
 
-      IP6=0
-      for i in `/usr/sbin/lanscan | egrep -v "^(Hardware|Path|LinkAgg)" | grep -v DOWN | awk '{print $5":"$2}'`
-      do
-        INTERFACE=`echo $i | cut -f1 -d:`
-        # converting 0x123456789ABC to 12:34:56:78:9A:BC
-        MAC=`echo $i | awk -F: '{ printf "%s:%s:%s:%s:%s:%s",
+        IP6=0
+        for i in `/usr/sbin/lanscan | egrep -v "^(Hardware|Path|LinkAgg)" | grep -v DOWN | awk '{print $5":"$2}'`
+        do
+          INTERFACE=`echo $i | cut -f1 -d:`
+          # converting 0x123456789ABC to 12:34:56:78:9A:BC
+          MAC=`echo $i | awk -F: '{ printf "%s:%s:%s:%s:%s:%s",
                                          substr($2,3,2),
                                          substr($2,5,2),
                                          substr($2,7,2),
@@ -764,52 +757,50 @@ function network_iface {
 
 # we have to get IP information from the netconf file if it returns 'no such interface'.
 # Otherewise it's an apa interface and we can get it from ifconfig (or hp_apaconf)
-        ISTATUS=`ifconfig $INTERFACE 2>&1 | grep -v "no such interface`
-	if [[ -n $ISTATUS ]]
-	then
-	  IP=`ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}'`
-	  MASK=`ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}'`
-          NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
-        else
-          INSTANCE=`egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
-          IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-          MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-
-# some are 0xffff, some are 255.255.255
-          echo $MASK | grep "0x" > /dev/null 2>&1
-          if [[ $? -eq 0 ]]
+          ISTATUS=`ifconfig $INTERFACE 2>&1 | grep -v "no such interface`
+          if [[ -n $ISTATUS ]]
           then
+            IP=`ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}'`
+            MASK=`ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}'`
             NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
           else
-            NETMASK=$MASK
+            INSTANCE=`egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\]`
+            IP=`egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+            MASK=`egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
+
+# some are 0xffff, some are 255.255.255
+            echo $MASK | grep "0x" > /dev/null 2>&1
+            if [[ $? -eq 0 ]]
+            then
+              NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
+            else
+              NETMASK=$MASK
+            fi
+
+            GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
           fi
 
-          GATEWAY=`egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g"`
-	fi
-
       # found the default gateway information
-        if [[ $DEFDEV = $INTERFACE ]]; then
-          OUTGATE=${DEFGATE}
-          OUTROUTE=${DEFROUTE}
-        else
+          if [[ $DEFDEV = $INTERFACE ]]; then
+            OUTGATE=${DEFGATE}
+            OUTROUTE=${DEFROUTE}
+          else
 # where to get route information for apa interfaces? from the interface returned above?
-          OUTGATE=${GATEWAY}
-          OUTROUTE=0
-        fi
+            OUTGATE=${GATEWAY}
+            OUTROUTE=0
+          fi
 
-        logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},"
-      done
+          logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},"
+        done
+      fi
     fi
 
+# loopback interface
+    IP=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
+    MASK=`/usr/sbin/ifconfig lo0 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
+    NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
+    logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0,"
 
-#    lanscan | grep UP | while read MYLINE
-#    do
-#      INTERFACE=`echo $MYLINE | awk '{print $5}'`
-#      ISTATUS=`ifconfig $INTERFACE 2>&1 | grep -v 'no such interface'`
-#      if [[ -n $ISTATUS ]]; then
-#        IP=`/usr/sbin/ifconfig $INTERFACE 2>1 | /usr/bin/grep 'inet ' | /usr/bin/awk '{print $2}'`
-#        MASK=`/usr/sbin/ifconfig $INTERFACE 2>1 | /usr/bin/grep ' netmask ' | /usr/bin/awk '{print $4}'`
-#        NETMASK=`printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g')`
   ;;
   esac
 }
