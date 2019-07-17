@@ -3485,7 +3485,7 @@ check_privileged_access() {
   if [[ -f ${SCRIPTS_DATA}/chksudo.dat ]]
   then
     printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> "${LOG}"
-    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS_LOGS}/chksudoers.output)
+    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS_LOGS}/chksudoers.dat)
     do
       SERVER=$(echo $j | cut -f1 -d:)
       USER=$(echo $j | cut -f2 -d:)
