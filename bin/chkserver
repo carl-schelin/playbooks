@@ -391,8 +391,25 @@ EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
 
 check_management_route() {
   IPADDRESS=${1}
+  CHECKED=${2}
 
-  MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+  if [[ ${CHECKED} = 'Backups' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:BackupInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+# use the default management interface if backup isn't defined
+    if [[ ${MANAGEMENT_INTERFACE} = '' ]]
+    then
+      CHECKED="Management"
+    fi
+  fi
+  if [[ ${CHECKED} = 'Monitoring' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:MonitoringInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+  fi
+  if [[ ${CHECKED} = 'Management' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:ManagementInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+  fi
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
   then
@@ -666,7 +683,7 @@ check_artifactory() {
       then
         echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
       fi
-      check_management_route ${CA_IP}
+      check_management_route ${CA_IP} Management
       ping ${CA_IP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
       then
@@ -1468,7 +1485,7 @@ check_data_palette() {
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
-        check_management_route ${DPIP}
+        check_management_route ${DPIP} Management
         ping ${DPIP} ${PINGCT} > /dev/null
         if [[ $? -eq 0 ]]
         then
@@ -1764,7 +1781,7 @@ check_email() {
       then
         echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
       fi
-      check_management_route ${EMAILIP}
+      check_management_route ${EMAILIP} Management
       ping ${EMAILIP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
       then
@@ -2398,7 +2415,7 @@ check_management() {
       then
         echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
       fi
-      check_management_route ${MGTIP}
+      check_management_route ${MGTIP} Management
       ping ${MGTIP} ${PINGCT} > /dev/null
       if [[ $? -eq 0 ]]
       then
@@ -2510,7 +2527,7 @@ check_netbackup() {
       then
         echo "  Checking management route ${NBLIST}"
       fi
-      check_management_route ${NBLIST}
+      check_management_route ${NBLIST} Backups
     done
 
 # 13724 is vnetd
@@ -3128,7 +3145,7 @@ check_openview() {
           then
             echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
           fi
-          check_management_route ${MONIP}
+          check_management_route ${MONIP} Monitoring
           ping ${MONIP} ${PINGCT} > /dev/null
           if [[ $? -eq 0 ]]
           then
@@ -3350,7 +3367,7 @@ check_opnet() {
       if [[ "${APPROVED}" = "" ]]
       then
         echo "  Beginning check of OpNet Server: ${OPNETSITE}:${OPNETIP}:${OPNETPORTS}"
-        check_management_route ${OPNETIP}
+        check_management_route ${OPNETIP} Management
         ping ${OPNETIP} ${PINGCT} > /dev/null
         if [[ $? -eq 0 ]]
         then
@@ -3565,7 +3582,7 @@ check_redhat_subscription() {
       SATPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
 
       printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATSITE}:${SATIP}${RESET}" >> "${LOG}"
-      check_management_route ${SATIP}
+      check_management_route ${SATIP} Management
       if [[ ${DEBUG} = 19 ]]
       then
         echo "  ping check of Red Hat Satellite Server: ${SATIP}"
@@ -3726,7 +3743,7 @@ check_resolver() {
           for i in $(awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf)
           do
             printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> "${LOG}"
-            check_management_route ${i}
+            check_management_route ${i} Management
             if [[ ${DEBUG} = 21 ]]
             then
               echo "  ping check of nameserver: ${i}"
@@ -3838,7 +3855,7 @@ check_routes() {
       ROUTE_NAME=$(echo $i | cut -f1 -d:)
       ROUTE_IP=$(echo $i | cut -f2 -d:)
 
-      check_management_route ${ROUTE_IP}
+      check_management_route ${ROUTE_IP} Management
       if [[ ${DEBUG} = 0 ]]
       then
         echo "  ping check of server: ${ROUTE_IP}"
@@ -4073,7 +4090,7 @@ check_scanners() {
       then
         if [[ ${SERVER_ZONE} = ${SECZONE} ]]
         then
-          check_management_route ${SECIP}
+          check_management_route ${SECIP} Management
         fi
       fi
     done
@@ -4557,7 +4574,7 @@ check_time() {
         TIME_PROTOCOL=$(echo $i | cut -f2 -d:)
         TIME_PORT=$(echo $i | cut -f2 -d:)
 
-        check_management_route ${TIME_IP}
+        check_management_route ${TIME_IP} Management
         if [[ ${DEBUG} = 26 ]]
         then
           echo "  ping check of time server: ${TIME_IP}"
@@ -4733,7 +4750,7 @@ check_vpn_route() {
   printf "%b\n" "  ${GREEN}Checking VPN Routes.${RESET}" >> "${LOG}"
   for routes in ${VPN_ROUTES}
   do
-    check_management_route ${routes}
+    check_management_route ${routes} Management
   done
   if [[ ${DEBUG} = '46' ]]
   then
