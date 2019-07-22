@@ -3214,8 +3214,8 @@ check_openview() {
 # check the configuration for Openview.
 # the chkserver.input file should have entries identifying 
 # the ip and management bits
-      EXPECTED_IP=$(grep "^${HOSTNAME}:IPAddressMonitored:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
-      EXPECTED_INTERFACE=$(grep "^${HOSTNAME}:InterfaceMonitored:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
+      EXPECTED_IP=$(grep "^${HOSTNAME}:MonitoringIPAddress:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
+      EXPECTED_INTERFACE=$(grep "^${HOSTNAME}:MonitoringInterface:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
       EXPECTED_MONITOR=$(grep "^${HOSTNAME}:MonitoringServer:" ${SCRIPTS_DATA}/chkserver.input | cut -f3 -d:)
 
       if [[ ${DEBUG} = 16 ]]
