@@ -5094,7 +5094,7 @@ if [[ ! -z $1 ]]
 then
   if [[ $1 = 'p' ]]
   then
-    ${SCRIPTS_BIN}/profile
+    ${SCRIPTS_BINS}/profile
   else
     cat "${LOG}"
   fi
