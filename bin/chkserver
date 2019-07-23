@@ -200,7 +200,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.282"
+VERSION="${BASENAME} v1.283"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -2023,16 +2023,16 @@ check_guid() {
     echo "Entering check_guid(60)"
   fi
 
-# find gets lost on some Sun boxes.
-  if [[ ${OS} != 'SunOS' ]]
-  then
-    CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
-
-    find / -user root -perm -2000 | sort > "${CHKGUID}"
-  fi
-
   if [[ ${CHECK_GUID} = 'Yes' ]]
   then
+# find gets lost on some Sun boxes.
+    if [[ ${OS} != 'SunOS' ]]
+    then
+      CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
+
+      find / -user root -perm -2000 | sort > "${CHKGUID}"
+    fi
+
     compare_files chkguid
   fi
 
@@ -4406,16 +4406,16 @@ check_suid() {
     echo "Entering check_suid(59)"
   fi
 
-# find gets lost on some Sun boxes.
-  if [[ ${OS} != "SunOS" ]]
-  then
-    CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
-
-    find / -user root -perm -4000 | sort > "${CHKSUID}"
-  fi
-
   if [[ ${CHECK_SUID} = 'Yes' ]]
   then
+# find gets lost on some Sun boxes.
+    if [[ ${OS} != "SunOS" ]]
+    then
+      CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
+
+      find / -user root -perm -4000 | sort > "${CHKSUID}"
+    fi
+
     compare_files chksuid
   fi
 
@@ -5092,6 +5092,11 @@ print "\n+++chkserver script run completed: `date +\"%Y%m%d %H%M%S\"`\n" >> "${L
 
 if [[ ! -z $1 ]]
 then
-  cat "${LOG}"
+  if [[ $1 = 'p' ]]
+  then
+    ${SCRIPTS_BIN}/profile
+  else
+    cat "${LOG}"
+  fi
 fi
 
