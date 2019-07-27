@@ -557,6 +557,9 @@ check_active_employees() {
               then
                 LOCKED="LK"
               fi
+# untrusted so check normally
+            else
+              LOCKED=$(passwd -s ${j} | awk '{print $2}')
             fi
           else
             if [[ ${OS} = 'FreeBSD' ]]
