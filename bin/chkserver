@@ -200,7 +200,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.283"
+VERSION="${BASENAME} v1.284"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -4648,7 +4648,7 @@ check_time() {
           printf "%b\n" "      ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> "${LOG}"
         fi
       else
-        printf "%b\n" "      ${RED}${T_MSG} drift file path (${DRIFTPATH}) does not exist.${RESET}" >> "${LOG}"
+        printf "%b\n" "      ${RED}${T_MSG} drift path (${DRIFTPATH}) does not exist.${RESET}" >> "${LOG}"
       fi
     else
       printf "%b\n" "    ${RED}Time service is not running.${RESET}" >> "${LOG}"
