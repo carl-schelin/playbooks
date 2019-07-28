@@ -1033,9 +1033,15 @@ check_config_enabled() {
   then
     echo "Entering check_config_enabled(50)"
   fi
+# able to be specific about the OS. Specific for ntp/chrony since ntp is <7 and chrony is 7> but some 7 systems are running ntp
+# so *:Enabled:chronyd:7 makes sense and still can set some systems like the jenkins one which is 7 but running ntpd.
+  if [[ ${FIELD4} == '' ]]
+  then
+    FIELD4=${OSMAJOR}
+  fi
   if [[ ${OS} = 'Linux' ]]
   then
-    if [[ ${OSMAJOR} = '7' ]]
+    if [[ ${OSMAJOR} = '7' ]] || [[ ${FIELD4} = '7' ]]
     then
       systemctl is-enabled "$FIELD3" > /dev/null 2>&1
       if [[ $? -eq 0 ]]
