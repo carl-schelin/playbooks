@@ -1286,7 +1286,7 @@ check_config_service() {
         then
           printf "%b\n" "    ${RED}Password must be changed${RESET}" >> "${LOG}"
         else
-          if [[ ${FIELD4} = 'Update' ]]
+          if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
           then
             printf "%b\n" "    ${GREEN}Setting Password to not expire${RESET}" >> "${LOG}"
             chage -E -1 -M -1 -I -1 ${FIELD3}
@@ -1301,7 +1301,7 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> "${LOG}"
       else
-        if [[ ${FIELD4} = 'Update' ]]
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
           printf "%b\n" "    ${GREEN}Setting Account to not expire${RESET}" >> "${LOG}"
           chage -E -1 -M -1 -I -1 ${FIELD3}
@@ -1319,7 +1319,7 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        if [[ ${FIELD4} = 'Update' ]]
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
           if [[ -f "/tcb/files/auth/system/default" ]]
           then
@@ -1353,7 +1353,7 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        if [[ ${FIELD4} = 'Update' ]]
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
           passwd -x -1 ${FIELD3}
           echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
@@ -1376,7 +1376,7 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        if [[ ${FIELD4} = 'Update' ]]
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
           passwd -x -1 ${FIELD3}
           echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
@@ -1396,7 +1396,7 @@ check_config_service() {
     printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> "${LOG}"
 # if FIELD4 == 'Update', the account is created.
 # lock the account, set to not expire
-    if [[ ${FIELD4} = 'Update' ]]
+    if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
     then
 # check the valid.email file for the GECOS field for this account
       GECOS=$(grep ${FIELD3} ${SCRIPTS_DATA}/valid.email | cut -f2 -d:)
