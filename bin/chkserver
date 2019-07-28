@@ -200,7 +200,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.284"
+VERSION="${BASENAME} v1.285"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1286,7 +1286,14 @@ check_config_service() {
         then
           printf "%b\n" "    ${RED}Password must be changed${RESET}" >> "${LOG}"
         else
-          printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+          if [[ ${FIELD4} = 'Update' ]]
+          then
+            printf "%b\n" "    ${GREEN}Setting Password to not expire${RESET}" >> "${LOG}"
+            chage -E -1 -M -1 -I -1 ${FIELD3}
+            echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+          fi
         fi
       fi
       ACCOUNT=$(chage -l "${FIELD3}" | egrep -i "account expires.*never")
@@ -1294,7 +1301,14 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+        if [[ ${FIELD4} = 'Update' ]]
+        then
+          printf "%b\n" "    ${GREEN}Setting Account to not expire${RESET}" >> "${LOG}"
+          chage -E -1 -M -1 -I -1 ${FIELD3}
+          echo "Set account to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        else
+          printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+        fi
       fi
     fi
 
@@ -1305,17 +1319,28 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        if [[ ${PASSWORD} = 'password must be changed' ]]
+        if [[ ${FIELD4} = 'Update' ]]
         then
-          printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> "${LOG}"
-        else
-# if a trusted system:
-# /usr/lbin/modprpw -l -m mintm=0,exptm=0 username
           if [[ -f "/tcb/files/auth/system/default" ]]
           then
-            printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> "${LOG}"
+            /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}
           else
-            printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+            passwd -x -1 ${FIELD3}
+          fi
+          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        else
+          if [[ ${PASSWORD} = 'password must be changed' ]]
+          then
+            printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> "${LOG}"
+          else
+# if a trusted system:
+# /usr/lbin/modprpw -l -m mintm=0,exptm=0 username
+            if [[ -f "/tcb/files/auth/system/default" ]]
+            then
+              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+            fi
           fi
         fi
       fi
@@ -1328,12 +1353,18 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        PASSWORD=$(passwd -s | awk '{print $3}')
-        if [[ ${PASSWORD} = '00/00/00' ]]
+        if [[ ${FIELD4} = 'Update' ]]
         then
-          printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          passwd -x -1 ${FIELD3}
+          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
-          printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          PASSWORD=$(passwd -s | awk '{print $3}')
+          if [[ ${PASSWORD} = '00/00/00' ]]
+          then
+            printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          fi
         fi
       fi
     fi
@@ -1345,18 +1376,70 @@ check_config_service() {
       then
         printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
       else
-        PASSWORD=$(passwd -s | awk '{print $3}')
-        if [[ ${PASSWORD} = '00/00/00' ]]
+        if [[ ${FIELD4} = 'Update' ]]
         then
-          printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          passwd -x -1 ${FIELD3}
+          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
-          printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          PASSWORD=$(passwd -s | awk '{print $3}')
+          if [[ ${PASSWORD} = '00/00/00' ]]
+          then
+            printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          fi
         fi
       fi
     fi
 
   else
     printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> "${LOG}"
+# if FIELD4 == 'Update', the account is created.
+# lock the account, set to not expire
+    if [[ ${FIELD4} = 'Update' ]]
+    then
+# check the valid.email file for the GECOS field for this account
+      GECOS=$(grep ${FIELD3} ${SCRIPTS_DATA}/valid.email | cut -f2 -d:)
+      if [[ ${OS} = 'Linux' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+# prevent password and account from expiring
+        chage -E -1 -M -1 -I -1 ${FIELD3}
+        echo "Created account ${FIELD3}, locked, set account and password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      fi
+      if [[ ${OS} = 'HP-UX' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+# if trusted
+        if [[ -f "/tcb/files/auth/system/default" ]]
+        then
+          /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}
+        else
+          passwd -x -1 ${FIELD3}
+        fi
+        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      fi
+      if [[ ${OS} = 'SunOS' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+        passwd -x -1 ${FIELD3}
+        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      fi
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+# add and lock the user
+        adduser -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+        passwd -x -1 ${FIELD3}
+        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      fi
+    fi
   fi
 
 # special checks for special accounts.
