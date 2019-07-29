@@ -254,19 +254,23 @@ UPDATEGROUPS
 if [[ -z $USERTOLOCK ]]; then
   echo "No users to be archived on this system."
   exit 1
+else
+  echo "Locking: $USERTOLOCK"
 fi
 
 # if a centrify system, users are removed at the central location
-if [[ -f /usr/bin/adquery ]]; then
-  # returns 0 if joined
-  # returns 10 if not joined
-  /usr/bin/adinfo > /dev/null 2>&1
-  if [[ $? -eq 0 ]]
-  then
-    echo "Centrify managed system. Exiting."
-    exit 1
-  fi
-fi
+# the lockuser script only parses the /etc/passwd file. Centrify users aren't in 
+# /etc/passwd. If a user is in /etc/passwd and in the lockuser.dat file, process them normally.
+#if [[ -f /usr/bin/adquery ]]; then
+#  # returns 0 if joined
+#  # returns 10 if not joined
+#  /usr/bin/adinfo > /dev/null 2>&1
+#  if [[ $? -eq 0 ]]
+#  then
+#    echo "Centrify managed system. Exiting."
+#    exit 1
+#  fi
+#fi
 
 LOCKUSERS
 
