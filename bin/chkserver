@@ -2808,6 +2808,11 @@ check_netbackup() {
             if [[ $? -ne 0 ]]
             then
               printf "%b\n" "    ${RED}The Master server inveri01-gig0.scc911.com is not the first SERVER entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+# the first line could be just the hostname and not the fqdn. Basically just create /var/tmp/bp.conf with the first line corrected, then filter out inveri01 to /var/tmp/bp.conf
+              echo "SERVER = inveri01-gig0.scc911.com" > /var/tmp/bp.conf
+              grep -v "inveri01" /usr/openv/netbackup/bp.conf >> /var/tmp/bp.conf
+              cp /var/tmp/bp.conf /usr/openv/netbackup/bp.conf
+              echo "Corrected 'SERVER = inveri01-gig0.scc911.com' as line 1 in /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
             fi
             for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
             do
@@ -2815,6 +2820,8 @@ check_netbackup() {
               if [[ $? -ne 0 ]]
               then
                 printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+                echo "SERVER = ${chksvr}" >> /usr/openv/netbackup/bp.conf
+                echo "Added 'SERVER = ${chksvr}' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
               fi
             done
             grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
@@ -2824,6 +2831,11 @@ check_netbackup() {
               if [[ $? -ne 0 ]]
               then
                 printf "%b\n" "    ${YELLOW}There is no \"SERVER = lmntcoecmma10.corp.intrado.pri\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
+# again, the hostname might be in the file but not the fqdn. copy to /var/tmp then add the missing line
+                grep -v "lmntcoecmma10" /usr/openv/netbackup/bp.conf > /var/tmp/bp.conf
+                echo "SERVER = lmntcoecmma10.corp.intrado.pri" >> /var/tmp/bp.conf
+                cp /var/tmp/bp.conf /usr/openv/netbackup/bp.conf
+                echo "Corrected 'SERVER = lmntcoecmma10.corp.intrado.pri' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
               fi
             fi
           fi
