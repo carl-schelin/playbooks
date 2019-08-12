@@ -938,18 +938,43 @@ check_config_cron() {
 # if cron.allow exists, cron.deny is ignored
   if [[ -f ${CRONALLOW} ]]
   then
-    grep -i "${FIELD3}" "${CRONALLOW}" > /dev/null
+    grep -i "${FIELD3}" "^${CRONALLOW}$" > /dev/null
     if [[ $? -eq 1 ]]
     then
-      printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
+      if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+      then
+        TICKET=""
+        if [[ ! -z ${FIELD5} ]]
+        then
+          TICKET=" per ticket: ${FIELD5}"
+        fi
+        printf "%b\n" "    ${GREEN}Adding ${FIELD3} to ${CRONALLOW}${TICKET}${RESET}" >> "${LOG}"
+        echo "${FIELD3}" >> "${CRONALLOW}"
+        echo "Added ${FIELD3} to ${CRONALLOW}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+      else
+        printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
+      fi
     fi
   else
     if [[ -f ${CRONDENY} ]]
     then
-      grep -i "${FIELD3}" "${CRONDENY}" > /dev/null
+      grep -i "${FIELD3}" "^${CRONDENY}$" > /dev/null
       if [[ $? -eq 0 ]]
       then
-        printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          printf "%b\n" "    ${GREEN}Removing ${FIELD3} from ${CRONDENY}${TICKET}${RESET}" >> "${LOG}"
+          grep -v "^${FIELD3}$" "${CRONDENY}" > /var/tmp/cron.deny
+          cp /var/tmp/cron.deny "${CRONDENY}"
+          echo "Removed ${FIELD3} from ${CRONDENY}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        else
+          printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
+        fi
       fi
     fi
   fi
@@ -1288,9 +1313,14 @@ check_config_service() {
         else
           if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
           then
-            printf "%b\n" "    ${GREEN}Setting Password to not expire${RESET}" >> "${LOG}"
+            TICKET=""
+            if [[ ! -z ${FIELD5} ]]
+            then
+              TICKET=" per ticket: ${FIELD5}"
+            fi
+            printf "%b\n" "    ${GREEN}Setting Password to not expire${TICKET}${RESET}" >> "${LOG}"
             chage -E -1 -M -1 -I -1 ${FIELD3}
-            echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
           else
             printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
           fi
@@ -1303,9 +1333,14 @@ check_config_service() {
       else
         if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
-          printf "%b\n" "    ${GREEN}Setting Account to not expire${RESET}" >> "${LOG}"
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          printf "%b\n" "    ${GREEN}Setting Account to not expire${TICKET}${RESET}" >> "${LOG}"
           chage -E -1 -M -1 -I -1 ${FIELD3}
-          echo "Set account to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          echo "Set account to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
           printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
         fi
@@ -1321,13 +1356,18 @@ check_config_service() {
       else
         if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
           if [[ -f "/tcb/files/auth/system/default" ]]
           then
             /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}
           else
             passwd -x -1 ${FIELD3}
           fi
-          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
           if [[ ${PASSWORD} = 'password must be changed' ]]
           then
@@ -1355,8 +1395,13 @@ check_config_service() {
       else
         if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
           passwd -x -1 ${FIELD3}
-          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
           PASSWORD=$(passwd -s | awk '{print $3}')
           if [[ ${PASSWORD} = '00/00/00' ]]
@@ -1378,8 +1423,13 @@ check_config_service() {
       else
         if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
         then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
           passwd -x -1 ${FIELD3}
-          echo "Set password to not expire for service account ${FIELD3}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
         else
           PASSWORD=$(passwd -s | awk '{print $3}')
           if [[ ${PASSWORD} = '00/00/00' ]]
@@ -1398,6 +1448,11 @@ check_config_service() {
 # lock the account, set to not expire
     if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
     then
+      TICKET=""
+      if [[ ! -z ${FIELD5} ]]
+      then
+        TICKET=" per ticket: ${FIELD5}"
+      fi
 # check the valid.email file for the GECOS field for this account
       GECOS=$(grep ${FIELD3} ${SCRIPTS_DATA}/valid.email | cut -f2 -d:)
       if [[ ${OS} = 'Linux' ]]
@@ -1407,7 +1462,7 @@ check_config_service() {
         passwd -l ${FIELD3}
 # prevent password and account from expiring
         chage -E -1 -M -1 -I -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set account and password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        echo "Created account ${FIELD3}, locked, set account and password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
       fi
       if [[ ${OS} = 'HP-UX' ]]
       then
@@ -1421,7 +1476,7 @@ check_config_service() {
         else
           passwd -x -1 ${FIELD3}
         fi
-        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
       fi
       if [[ ${OS} = 'SunOS' ]]
       then
@@ -1429,7 +1484,7 @@ check_config_service() {
         useradd -c "${GECOS}" -m ${FIELD3}
         passwd -l ${FIELD3}
         passwd -x -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
       fi
       if [[ ${OS} = 'FreeBSD' ]]
       then
@@ -1437,7 +1492,7 @@ check_config_service() {
         adduser -c "${GECOS}" -m ${FIELD3}
         passwd -l ${FIELD3}
         passwd -x -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set password to not expire" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
       fi
     fi
   fi
@@ -5097,6 +5152,8 @@ then
       FIELD2=$(echo "${j}" | cut -f2 -d:)
       FIELD3=$(echo "${j}" | cut -f3 -d:)
       FIELD4=$(echo "${j}" | cut -f4 -d:)
+      FIELD5=$(echo "${j}" | cut -f5 -d:)
+      FIELD6=$(echo "${j}" | cut -f6 -d:)
 
       if [[ ${FIELD2} = 'CPU' ]]
       then
