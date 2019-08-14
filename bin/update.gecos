@@ -38,8 +38,11 @@ do
     then
       echo "--Needs updating"
       usermod -c "${VALIDGECOS}" "${i}"
-      echo "Changelog sent"
-      echo "Updated ${i} to correct their GECOS field" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      if [[ $? -eq 0 ]]
+      then
+        echo "Changelog sent"
+        echo "Updated ${i} to correct their GECOS field" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      fi
     fi
   fi
 done
