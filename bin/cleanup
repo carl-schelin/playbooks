@@ -368,3 +368,9 @@ then
   fi
 fi
 
+# remove this file:
+if [[ -f /opt/intrado/etc/Unix_Backups_Last_7Days.html ]]
+then
+  rm /opt/intrado/etc/Unix_Backups_Last_7Days.html
+fi
+
