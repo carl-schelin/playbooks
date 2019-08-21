@@ -39,7 +39,13 @@ do
   OUTPUT=`grep -v "^#" /opt/intrado/.config | grep $i`
   echo "#"
   echo "# $OUTPUT"
-  echo "route add -host $i/32 gw $ROUTE dev $MANAGEMENT; echo \"$i/32 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
+# this is the vpn and is a network, not a static route
+  if [[ $i = '10.104.64.0' ]]
+  then
+    echo "route add -net 10.104.4.0/18 gw $ROUTE dev $MANAGEMENT; echo \"10.104.64.0/18 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
+  else
+    echo "route add -host $i/32 gw $ROUTE dev $MANAGEMENT; echo \"$i/32 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
+  fi
 done
 
 rm routes
