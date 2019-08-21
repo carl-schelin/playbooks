@@ -359,3 +359,12 @@ then
   chown -R unixsvc:sysadmin /opt/unixsuite
 fi
 
+# standardizing rsync to /usr/local/bin/rsync so the intrado scripts can be rsync'd instead of just copied.
+if [[ ! -f /usr/local/bin/rsync ]]
+then
+  if [[ -f /usr/bin/rsync ]]
+  then
+    ln /usr/bin/rsync /usr/local/bin/rsync
+  fi
+fi
+
