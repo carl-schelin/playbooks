@@ -374,3 +374,17 @@ then
   rm /opt/intrado/etc/Unix_Backups_Last_7Days.html
 fi
 
+# clean up old crash dump files
+if [[ -f /var/crash ]]
+then
+  find /var/crash -atime +32 -exec rm -f {} \;
+
+# delete any empty directories now
+  cd /var/crash
+  for i in `find . -maxdepth 1 -type d -empty`
+  do
+    rmdir $i
+  done
+
+fi
+
