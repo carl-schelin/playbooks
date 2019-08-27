@@ -4862,15 +4862,39 @@ check_vmware_agent() {
         OUTPUT=$(systemctl status ctrl-alt-del.target | grep "Loaded: masked")
         if [[ -z ${OUTPUT} ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            systemctl mask ctrl-alt-del.target > /dev/null
+            echo "Masked ctrl-alt-del.target to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            printf "%b\n" "  ${GREEN}Masked Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
+          fi
         fi
       fi
+# RH6 uses a control-alt-delete.override file to bypass this check. let's check for that first, then check for it being updated even though it's not supposed to be changed.
       if [[ ${OSMAJOR} = '6' ]]
       then
-        OUTPUT=$(egrep "^(start|exec)" /etc/init/control-alt-delete.conf)
-        if [[ ! -z ${OUTPUT} ]]
+        if [[ ! -f /etc/init/control-alt-delete.override ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del target is enabled${RESET} egrep '^(start|exec)' /etc/init/control-alt-delete.conf" >> "${LOG}"
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
+            echo "exec true" >> /etc/init/control-alt-delete.override
+            echo "Overrode control-alt-delete.conf to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del override file does not exist so target is enabled${RESET}" >> "${LOG}"
+          fi
+        fi
+# and fix an override file if it's incorrect
+        OUTPUT=$(egrep "^exec true" /etc/init/control-alt-delete.override)
+        if [[ -z ${OUTPUT} ]]
+        then
+          echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
+          echo "exec true" >> /etc/init/control-alt-delete.override
+          echo "Corrected control-alt-delete.override to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+          printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
         fi
       fi
       if [[ ${OSMAJOR} = '5' ]]
@@ -4878,7 +4902,14 @@ check_vmware_agent() {
         OUTPUT=$(grep "^ca::ctrlaltdel" /etc/inittab)
         if [[ ! -z ${OUTPUT} ]]
         then
-          printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            sed -i -e "s/^ca::ctrlaltdel/#ca::ctrlaltdel/g" /etc/inittab
+            echo "Commented out ca::ctrlaltdel in /etc/inittab prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
+          fi
         fi
       fi
     fi
