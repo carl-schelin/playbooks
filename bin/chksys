@@ -251,7 +251,7 @@ function system_uuid {
 
 
 function software {
-  for pkg in datapal httpd informix mysqld netbackup:backup newrelic opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
+  for pkg in datapal httpd informix java mysqld netbackup:backup newrelic opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
   do
     if [[ -n "`echo $pkg | awk -F: '{print $2}'`" ]]; then
       sftpkg=`echo $pkg | awk -F: '{print $1}'` 
