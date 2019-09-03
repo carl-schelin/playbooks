@@ -229,4 +229,19 @@ then
   echo "Installed" > "${SCRIPTS_DATA}/wildfly.version"
 fi
 
+##############################################
+### Java - java.version
+##############################################
+
+# this is a check of running java processes. if running, get the version
+if [[ -f "${SCRIPTS_DATA}/java.version" ]]
+then
+  rm "${SCRIPTS_DATA}/java.version"
+fi
+
+OUTPUT=$(ps -ef | grep java | grep -v grep)
+if [[ !-z $OUTPUT ]]
+then
+  java -version > "${SCRIPTS_DATA}/java.version"
+fi
 
