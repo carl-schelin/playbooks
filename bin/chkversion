@@ -247,11 +247,12 @@ fi
 #openjdk version "1.5.0_17"
 # need to create a java.version or openjdk.version file
 # and parse out the quotes.
+# redirect ERROUT since some java -version commands output to ERROUT and not STDOUT
 
 OUTPUT=$(ps -ef | grep java | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
-  java -version > "${SCRIPTS_DATA}/java.output"
+  java -version > "${SCRIPTS_DATA}/java.output" 2>&1
   FILENAME=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $1}')
   VERSION=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $3}' | sed -e "s/\"//g")
   echo "${VERSION}" > ${SCRIPTS_DATA}/${FILENAME}.version
