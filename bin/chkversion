@@ -240,7 +240,7 @@ then
 fi
 
 OUTPUT=$(ps -ef | grep java | grep -v grep)
-if [[ !-z $OUTPUT ]]
+if [[ ! -z $OUTPUT ]]
 then
   java -version > "${SCRIPTS_DATA}/java.version"
 fi
