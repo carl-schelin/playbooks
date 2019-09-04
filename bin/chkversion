@@ -239,9 +239,21 @@ then
   rm "${SCRIPTS_DATA}/java.version"
 fi
 
+#looks like this
+#java version "1.5.0_17"
+#Java(TM) Platform, Standard Edition for Business (build 1.5.0_17-b04)
+#Java HotSpot(TM) Server VM (build 1.5.0_17-b04, mixed mode)
+# or
+#openjdk version "1.5.0_17"
+# need to create a java.version or openjdk.version file
+# and parse out the quotes.
+
 OUTPUT=$(ps -ef | grep java | grep -v grep)
 if [[ ! -z $OUTPUT ]]
 then
-  java -version > "${SCRIPTS_DATA}/java.version"
+  java -version > "${SCRIPTS_DATA}/java.output"
+  FILENAME=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $1}')
+  VERSION=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $3}' | sed -e "s/\"//g")
+  echo "${VERSION}" > ${SCRIPTS_DATA}/${FILENAME}.version
 fi
 
