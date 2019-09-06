@@ -187,6 +187,7 @@
 # 2019/03/06 - CS - Added satellite check for Red Hat so it doesn't check CentOS or Debian systems for access to Satellite
 # 2019/03/07 - CS - Set up disable options for various functions, added check_grpck function
 # 2019/05/06 - CS - Set up disable options for various functions, added check_grpck function
+# 2019/09/06 - CS - Added a check_inode function to return errors if inode usage is 85 or 95%
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -200,7 +201,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.285"
+VERSION="${BASENAME} v1.286"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -687,7 +688,12 @@ check_artifactory() {
         echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
       fi
       check_management_route ${CA_IP} Management
-      ping ${CA_IP} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${CA_IP} > /dev/null
+      else
+        ping ${CA_IP} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Artifactory site ${CA_SITE}:${CA_IP} is pingable${RESET}" >> "${LOG}"
@@ -847,7 +853,12 @@ check_config_addresses() {
       printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> "${LOG}"
     else
       echo "  ping check of the gateway: ${FIELD4}"
-      ping ${FIELD4} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${FIELD4} > /dev/null
+      else
+        ping ${FIELD4} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> "${LOG}"
@@ -1633,7 +1644,12 @@ check_data_palette() {
       then
         echo "  Beginning check of Data Palette Nerve Center: ${DPSITE}:${DPIP}:${DPPORTS}"
         check_management_route ${DPIP} Management
-        ping ${DPIP} ${PINGCT} > /dev/null
+        if [[ ${OS} = 'FreeBSD' ]]
+        then
+          ping ${PINGCT} ${DPIP} > /dev/null
+        else
+          ping ${DPIP} ${PINGCT} > /dev/null
+        fi
         if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}Data Palette Nerve Center ${DPSITE}:${DPIP} is pingable${RESET}" >> "${LOG}"
@@ -1772,6 +1788,117 @@ check_defunct_processes() {
   if [[ ${DEBUG} = '42' ]]
   then
     echo "Exiting check_defunct_processes()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_inode_usage(68) - 3 checks
+### Doc: Depending on the OS, checks the inode usage for standard file systems
+### Doc: Reports a warning if over 85%
+### Doc: Reports an error if over 95%
+######################
+
+check_inode_usage() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_inode_usage(68)"
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking inode usage${RESET}" >> "${LOG}"
+  INODES=${SCRIPTS_LOGS}/inode.output
+# for the solaris output
+  DISKSPACE=${SCRIPTS_LOGS}/diskspace.output
+  if [[ $OS = "HP-UX" ]]
+  then
+# example:
+#Filesystem          kbytes    used   avail %used  iused  ifree %iuse Mounted on
+#/dev/vx/dsk/dg00/e911
+#                   104857600 15466530 83804197   16% 210416 22347764    1% /e911
+    bdf -il > ${INODES}
+  fi
+  if [[ $OS = "Linux" ]]
+  then
+# example:
+#Filesystem             Inodes  IUsed   IFree IUse% Mounted on
+#/dev/mapper/vg00-tmp   262144     42  262102    1% /tmp
+    df -klPi > ${INODES}
+  fi
+  if [[ $OS = "SunOS" ]]
+  then
+# Solaris is odd. You have to run the normal df -k to get the list of file systems, 
+# parse them out, and then run a df -g [filesystem] and grep out total files and 
+# free files, then calculate the percentage.
+# this process will rebuild the output to show inodes instead of space
+#
+# example:
+#$ df -g /export/home/kzupan/san
+#/export/home/kzupan/san(sanpool/kzupan    ):   131072 block size           512 frag size
+#6308757504 total blocks 2347049175 free blocks 2347049175 available       2347175746 total files
+#2347049175 free files     47513607 filesys id
+
+# I only need the first and last columns. The rest will be rebuilt to fit the expected format
+    echo "Filesystem            inodes    used   avail capacity  Mounted on" > ${INODES}
+    df -kl > ${DISKSPACE}
+    for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $1":"$NF}')
+    do
+      DEVICE=$(echo $j | cut -f1 -d:)
+      FILESYSTEM=$(echo $j | cut -f2 -d:)
+
+      TOTALINODES=$(df -g ${FILESYSTEM} | grep "total files" | awk '{print $9}')
+      FREEINODES=$(df -g ${FILESYSTEM} | grep "free files" | awk '{print $1}')
+      USEDINODES=$(echo $(( ${TOTALINODES} - ${FREEINODES} )) )
+      CAPACITY=$( echo "${USEDINODES} / ${TOTALINODES} * 100" | bc -l | cut -f1 -d.)
+      if [[ -z ${CAPACITY} ]]
+      then
+        CAPACITY=0
+      fi
+
+      echo "${DEVICE}   ${TOTALINODES}   ${USEDINODES}   ${FREEINODES}   ${CAPACITY}%   ${FILESYSTEM}" >> ${INODES}
+
+    done
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+# freebsd adds the inode information to the line vs replacing so I need to process the output to remove the extra columns and add an itotal column
+# example:
+# /dev/da0s1h    5062880 1574924 3082928    34%   18368 298430    6%   /home
+    df -kli > ${DISKSPACE}
+    echo "Filesystem  itotal  iused  ifree %iused  Mounted on" > ${INODES}
+    for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $1":"$6":"$7":"$8":"$9}')
+    do
+      DEVICE=$(echo $j | cut -f1 -d:)
+      USEDINODES=$(echo $j | cut -f2 -d:)
+      FREEINODES=$(echo $j | cut -f3 -d:)
+      CAPACITY=$(echo $j | cut -f4 -d:)
+      FILESYSTEM=$(echo $j | cut -f5 -d:)
+
+      TOTALINODES=$(( ${USEDINODES} + ${FREEINODES} ))
+
+      echo "${DEVICE}   ${TOTALINODES}   ${USEDINODES}   ${FREEINODES}   ${CAPACITY}   ${FILESYSTEM}" >> ${INODES}
+    done
+  fi
+
+  for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${INODES} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}')
+  do
+    FILESYSTEM=$(echo $j | cut -f1 -d:)
+    USAGE=$(echo $j | cut -f2 -d: | cut -f1 -d%)
+    WARNING=85
+    ERROR=95
+
+    if [[ $SPACE -ge $ERROR ]]
+    then
+      printf "%b\n" "    ${RED}${FILESYSTEM} inode usage has reached or exceeded 95% (${USAGE})%${RESET}" >> "${LOG}"
+    else
+      if [[ $SPACE -ge $WARNING ]]
+      then
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} inode usage has reached or exceeded 85% (${USAGE})%${RESET}" >> "${LOG}"
+      fi
+    fi
+  done
+  if [[ ${DEBUG} = '68' ]]
+  then
+    echo "Exiting check_inode_usage()"
   fi
 }
 
@@ -1929,7 +2056,12 @@ check_email() {
         echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
       fi
       check_management_route ${EMAILIP} Management
-      ping ${EMAILIP} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${EMAILIP} > /dev/null
+      else
+        ping ${EMAILIP} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Email server ${EMAILSITE}:${EMAILIP} is pingable${RESET}" >> "${LOG}"
@@ -2563,7 +2695,12 @@ check_management() {
         echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
       fi
       check_management_route ${MGTIP} Management
-      ping ${MGTIP} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${MGTIP} > /dev/null
+      else
+        ping ${MGTIP} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP} is pingable${RESET}" >> "${LOG}"
@@ -3131,7 +3268,8 @@ check_netbackup() {
           then
             BPCONF="Blank"
           fi
-          printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}${RESET}" >> "${LOG}"
+          printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}. Updating${RESET}" >> "${LOG}"
+          echo "CLIENT_NAME = ${BPHOSTNAME}" >> /usr/openv/netbackup/bp.conf
         fi
       fi
     fi
@@ -3305,7 +3443,12 @@ check_openview() {
             echo "  Beginning check of Monitoring Server: ${MONSITE}:${MONIP}:${MONPORTS}"
           fi
           check_management_route ${MONIP} Monitoring
-          ping ${MONIP} ${PINGCT} > /dev/null
+          if [[ ${OS} = 'FreeBSD' ]]
+          then
+            ping ${PINGCT} ${MONIP} > /dev/null
+          else
+            ping ${MONIP} ${PINGCT} > /dev/null
+          fi
           if [[ $? -eq 0 ]]
           then
             printf "%b\n" "    ${GREEN}Monitoring site ${MONSITE}:${MONIP} is pingable${RESET}" >> "${LOG}"
@@ -3527,7 +3670,12 @@ check_opnet() {
       then
         echo "  Beginning check of OpNet Server: ${OPNETSITE}:${OPNETIP}:${OPNETPORTS}"
         check_management_route ${OPNETIP} Management
-        ping ${OPNETIP} ${PINGCT} > /dev/null
+        if [[ ${OS} = 'FreeBSD' ]]
+        then
+          ping ${PINGCT} ${OPNETIP} > /dev/null
+        else
+          ping ${OPNETIP} ${PINGCT} > /dev/null
+        fi
         if [[ $? -eq 0 ]]
         then
           printf "%b\n" "    ${GREEN}OpNet site ${OPNETSITE}:${OPNETIP} is pingable${RESET}" >> "${LOG}"
@@ -3746,7 +3894,12 @@ check_redhat_subscription() {
       then
         echo "  ping check of Red Hat Satellite Server: ${SATIP}"
       fi
-      ping ${SATIP} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${SATIP} > /dev/null
+      else
+        ping ${SATIP} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Satellite Server ${SATSITE}:${SATIP} is pingable${RESET}" >> "${LOG}"
@@ -3907,7 +4060,12 @@ check_resolver() {
             then
               echo "  ping check of nameserver: ${i}"
             fi
-            ping ${i} ${PINGCT} > /dev/null
+            if [[ ${OS} = 'FreeBSD' ]]
+            then
+              ping ${PINGCT} ${i} > /dev/null
+            else
+              ping ${i} ${PINGCT} > /dev/null
+            fi
             if [[ $? -eq 0 ]]
             then
               printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> "${LOG}"
@@ -4019,7 +4177,12 @@ check_routes() {
       then
         echo "  ping check of server: ${ROUTE_IP}"
       fi
-      ping ${ROUTE_IP} ${PINGCT} > /dev/null
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${ROUTE_IP} > /dev/null
+      else
+        ping ${ROUTE_IP} ${PINGCT} > /dev/null
+      fi
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "      ${GREEN}Server ${i} is pingable.${RESET}" >> "${LOG}"
@@ -4738,7 +4901,12 @@ check_time() {
         then
           echo "  ping check of time server: ${TIME_IP}"
         fi
-        ping ${TIME_IP} ${PINGCT} > /dev/null
+        if [[ ${OS} = 'FreeBSD' ]]
+        then
+          ping ${PINGCT} ${TIME_IP} > /dev/null
+        else
+          ping ${TIME_IP} ${PINGCT} > /dev/null
+        fi
         if [[ $? -eq 0 ]]
         then
           printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is pingable.${RESET}" >> "${LOG}"
@@ -5152,7 +5320,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
