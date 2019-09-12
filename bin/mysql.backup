@@ -27,6 +27,8 @@ HTML=/var/www/html
 HOSTNAME=`hostname | cut -f1 -d.`
 WHOCARES="carl.schelin@intrado.com"
 PATH="/usr/local/bin:/opt/csw/mysql5/bin:$PATH"; export PATH
+# some servers the mysqldump command to dump individual files isn't working. This lets us still get backups but not the individual ones we normally get.
+SETTAB="Yes"
 
 chown -R mysql:mysql ${ROOT}
 chmod -R 775 ${ROOT}
@@ -128,6 +130,7 @@ then
   PASSWORD="this4now!!"
   OWNER="mysql:mysql"
   ARCHIVE=7
+  SETTAB="No"
 fi
 
 # the following two may eventually be backed up. Once inventory goes live, for sure.
@@ -182,6 +185,12 @@ do
 # create new database directory for backups. don't dump a database if it's already there
   if [[ ! -d ${ROOT}/mysql.${DATE}/${i} ]]
   then
+    TABVAR=""
+    if [[ ${SETTAB} = 'Yes' ]]
+    then
+      TABVAR="--tab=${ROOT}/mysql.${DATE}/${i}/"
+    fi
+
     mkdir -p ${ROOT}/mysql.${DATE}/${i}
 
 # ensure mysql can actually write to the database directory
@@ -192,8 +201,8 @@ do
 
     echo "Dumping ${i}" >> ${LOG}
     echo "Dumping ${i}"
-    echo "mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user=\"${USER}\" --password=\"${PASSWORD}\""
-    mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
+    echo "mysqldump ${TABVAR} --opt ${i} --user=\"${USER}\" --password=\"${PASSWORD}\""
+    mysqldump ${TABVAR} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
   fi
 
 done
