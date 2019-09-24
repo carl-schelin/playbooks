@@ -1886,11 +1886,11 @@ check_inode_usage() {
     WARNING=85
     ERROR=95
 
-    if [[ $SPACE -ge $ERROR ]]
+    if [[ $USAGE -ge $ERROR ]]
     then
       printf "%b\n" "    ${RED}${FILESYSTEM} inode usage has reached or exceeded 95% (${USAGE})%${RESET}" >> "${LOG}"
     else
-      if [[ $SPACE -ge $WARNING ]]
+      if [[ $USAGE -ge $WARNING ]]
       then
         printf "%b\n" "    ${YELLOW}${FILESYSTEM} inode usage has reached or exceeded 85% (${USAGE})%${RESET}" >> "${LOG}"
       fi
