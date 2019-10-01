@@ -9,9 +9,9 @@ then
   ROUTE=$1
 fi
 
-if [[ -z $ROUTE ]]
+if [[ -z $ROUTE ]] || [[ $ROUTE = '0.0.0.0' ]]
 then
-  echo "Need to pass in the management route"
+  echo "Need to pass in the management route; ROUTE = \"$ROUTE\""
   exit 1
 fi
 
