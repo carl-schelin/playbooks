@@ -3269,7 +3269,9 @@ check_netbackup() {
             BPCONF="Blank"
           fi
           printf "%b\n" "    ${YELLOW}The CLIENT_NAME in /usr/openv/netbackup/bp.conf is ${BPCONF} and should be ${BPHOSTNAME}. Updating${RESET}" >> "${LOG}"
-          echo "CLIENT_NAME = ${BPHOSTNAME}" >> /usr/openv/netbackup/bp.conf
+          grep -v CLIENT_NAME /usr/openv/netbackup/bp.conf > /var/tmp/bp.conf
+          echo "CLIENT_NAME = ${BPHOSTNAME}" >> /var/tmp/bp.conf
+          cp /var/tmp/bp.conf /usr/openv/netbackup/bp.conf
         fi
       fi
     fi
