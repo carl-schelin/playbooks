@@ -188,6 +188,7 @@
 # 2019/03/07 - CS - Set up disable options for various functions, added check_grpck function
 # 2019/05/06 - CS - Set up disable options for various functions, added check_grpck function
 # 2019/09/06 - CS - Added a check_inode function to return errors if inode usage is 85 or 95%
+# 2019/10/11 - CS - Added a check_config_versionlock function to return errors if a lock isn't in place
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -201,7 +202,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.286"
+VERSION="${BASENAME} v1.287"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1561,6 +1562,35 @@ check_config_sudoers() {
   if [[ ${DEBUG} = '55' ]]
   then
     echo "Exiting check_config_sudoers()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_versionlock(69) - 1 check
+### Doc: * Note if the requested bit is in the file
+######################
+
+check_config_versionlock() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_versionlock(69)"
+  fi
+  if [[ -f /etc/yum/pluginconf.d/versionlock.list ]]
+  then
+    grep ":${FIELD3}$" /etc/yum/pluginconf.d/versionlock.list > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "  ${GREEN}${FIELD3} lock exists${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "  ${RED}Unable to locate %${FIELD3} in /etc/yum/pluginconf.d/versionlock.list${RESET}" >> "${LOG}"
+    fi
+  else
+    printf "%b\n" "  ${RED}/etc/yum/pluginconf.d/versionlock.list doesn't exist.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '69' ]]
+  then
+    echo "Exiting check_config_versionlock()"
   fi
 }
 
@@ -5444,6 +5474,12 @@ then
       if [[ ${FIELD2} = 'Running' ]]
       then
         check_config_running
+      fi
+
+# check for versionlock requirements
+      if [[ ${FIELD2} = 'Versionlock' ]]
+      then
+        check_config_versionlock
       fi
 
     done
