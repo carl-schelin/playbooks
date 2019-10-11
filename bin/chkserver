@@ -4669,6 +4669,12 @@ check_sudoers() {
     then
       echo "  Found ${SUDOERS}"
     fi
+# check the status of the sudoers file. -c check -s strict
+    visudo -c -s > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${RED}sudoers file has errors${RESET} visudo -c -s" >> "${LOG}"
+    fi
     grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
     if [[ $? -eq 1 ]]
     then
