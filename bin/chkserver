@@ -4813,6 +4813,12 @@ check_swap() {
 
 # try this with free instead
       SWAP=$(free | awk '/Swap/{print $2}')
+
+      if [[ ${SWAP} = '' ]]
+      then
+        SWAP=0
+      fi
+
       ADDED=$(echo "${SWAP} / 1024 / 1024" | bc)
       SIZE=$(echo "(${SWAP} / 1024 + ${ADDED}) / 1024" | bc)
 
