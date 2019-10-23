@@ -1291,7 +1291,7 @@ check_config_running() {
 
 
 ######################
-### Doc: Function: check_config_service(45) - 6 checks
+### Doc: Function: check_config_service_account(45) - 6 checks
 ### Doc: * determine if an account exists
 ### Doc: * verifies if an account password expires
 ### Doc: * verifies if an account expires
@@ -1301,7 +1301,7 @@ check_config_running() {
 ### Doc: ** check log rights
 ######################
 
-check_config_service() {
+check_config_service_account() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
     echo "Entering check_config_service(45)"
@@ -5407,9 +5407,9 @@ then
         check_config_addresses
       fi
 
-      if [[ ${FIELD2} = 'Service' ]]
+      if [[ ${FIELD2} = 'ServiceAccount' ]]
       then
-        check_config_service
+        check_config_service_account
       fi
     
       if [[ ${FIELD2} = 'Group' ]]
