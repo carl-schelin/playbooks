@@ -189,6 +189,9 @@
 # 2019/05/06 - CS - Set up disable options for various functions, added check_grpck function
 # 2019/09/06 - CS - Added a check_inode function to return errors if inode usage is 85 or 95%
 # 2019/10/11 - CS - Added a check_config_versionlock function to return errors if a lock isn't in place
+# 2019/10/23 - CS - Fixed swap to return 0 even if swap isn't found
+# 2019/10/24 - CS - Updated to better check for enabled servers and to use the pipe for or'd services (ntp or chrony). 
+# 2019/10/24 - CS - Fixed the timecheck to check for the running service since both ntp and chrony could be installed
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -202,7 +205,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.287"
+VERSION="${BASENAME} v1.288"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1070,30 +1073,52 @@ check_config_enabled() {
   then
     echo "Entering check_config_enabled(50)"
   fi
-# able to be specific about the OS. Specific for ntp/chrony since ntp is <7 and chrony is 7> but some 7 systems are running ntp
-# so *:Enabled:chronyd:7 makes sense and still can set some systems like the jenkins one which is 7 but running ntpd.
-  if [[ ${FIELD4} = '' ]]
-  then
-    FIELD4=${OSMAJOR}
-  fi
   if [[ ${OS} = 'Linux' ]]
   then
-    if [[ ${OSMAJOR} = '7' ]] || [[ ${FIELD4} = '7' ]]
+# Use the '|' check for services where it could be one or the other but not both.
+    MATCH1=$(echo ${FIELD3} | cut -f1 -d\|)
+    MATCH2=$(echo ${FIELD3} | cut -f2 -d\|)
+
+# if a Red Hat system with systemctl is installed; it's 7 or 8
+    if [[ -f /bin/systemctl ]]
     then
-      systemctl is-enabled "$FIELD3" > /dev/null 2>&1
+      systemctl is-enabled "$MATCH1" > /dev/null 2>&1
       if [[ $? -eq 0 ]]
       then
-        printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
+        printf "%b\n" "  ${GREEN}${MATCH1} is enabled${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
+# check for the second one in case it's a pair check
+        if [[ ! -z ${MATCH2} ]]
+        then
+          systemctl is-enabled "$MATCH2" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${MATCH2} is not enabled${RESET}" >> "${LOG}"
+          fi
+        else
+          printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
+        fi
       fi
     else
-      chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+      chkconfig "${MATCH1}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
       if [[ $? -eq 0 ]]
       then
-        printf "%b\n" "  ${GREEN}${FIELD3} is enabled${RESET}" >> "${LOG}"
+        printf "%b\n" "  ${GREEN}${MATCH1} is enabled${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
+        if [[ ! -z ${MATCH2} ]]
+        then
+          chkconfig "${MATCH2}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${MATCH2} is not enabled${RESET}" >> "${LOG}"
+          fi
+        else
+          printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
+        fi
       fi
     fi
   fi
@@ -4902,7 +4927,8 @@ check_time() {
   T_CONFIG=''
   T_RUNNING=''
 # if chrony is running (Red Hat 7 mostly)
-  if [[ -f /bin/chronyc ]]
+  ps -e | grep chronyd > /dev/null
+  if [[ $? -eq 0 ]]
   then
     T_MSG='chrony'
     T_COMMAND='/bin/chronyc -n sources'
@@ -4911,7 +4937,8 @@ check_time() {
   fi
 
 # everything else; Sun and older Red Hat
-  if [[ -f /usr/sbin/ntpq ]]
+  ps -e | egrep "(xntpd|ntpd)" > /dev/null
+  if [[ $? -eq 0 ]]
   then
     T_MSG='ntp'
     T_COMMAND='/usr/sbin/ntpq -pn'
@@ -4921,7 +4948,7 @@ check_time() {
     else
       T_CONFIG='/etc/ntp.conf'
     fi
-    T_RUNNING=$(ps -ef | egrep "(xntpd|ntpd)" | grep -v egrep)
+    T_RUNNING=$(ps -e | egrep "(xntpd|ntpd)")
   fi
 
 # is it installed?
