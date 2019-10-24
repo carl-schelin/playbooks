@@ -1095,7 +1095,7 @@ check_config_enabled() {
           then
             printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "  ${RED}${MATCH2} is not enabled${RESET}" >> "${LOG}"
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
           fi
         else
           printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
@@ -1114,7 +1114,7 @@ check_config_enabled() {
           then
             printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
           else
-            printf "%b\n" "  ${RED}${MATCH2} is not enabled${RESET}" >> "${LOG}"
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
           fi
         else
           printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
