@@ -322,7 +322,7 @@ runscript chkpolicy
 runscript cleanup
 
 # run spectre-meltdown
-${SCRIPT_BINS}/spectre_meltdown.sh > ${SCRIPT_LOGS}/spectre_meltdown.output 2>&1
+${SCRIPTS_BINS}/spectre_meltdown.sh > ${SCRIPTS_LOGS}/spectre_meltdown.output 2>&1
 
 # testing
 #runscript mailcarl
