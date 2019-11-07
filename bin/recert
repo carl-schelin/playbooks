@@ -8,6 +8,18 @@
 # interface, otherwise pass the IP of the interface and 2nd_nic will be run.
 # 2014-12-03 TCS Added a target server variable so it can be modified if necessary
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 SECONDARY_NIC=$1
 OPENVIEW=ovo-cl1.lgmt.trdo
 OPENVIEW=lnmtcodcom1vip.scc911.com
@@ -24,7 +36,7 @@ then
   exit 0
 fi
 
-LOG=/opt/intrado/var
+LOG=${SCRIPTS_LOGS}
 
 echo "Starting..."
 echo "==================" >> $LOG/recert.log
@@ -34,7 +46,7 @@ echo "" >> $LOG/recert.log
 
 # disable openview monitoring
 echo "Disable restart"
-/opt/intrado/bin/chkov stop >> $LOG/recert.log
+${SCRIPTS_RUND}/chkmonagent stop >> $LOG/recert.log
 
 # kill the agent
 echo "Killing agent"
@@ -91,8 +103,8 @@ then
 fi
 
 # restart the openview monitor
-echo "Starting Openview Agent"
-/opt/intrado/bin/chkov start >> $LOG/recert.log
+echo "Starting Monitoring Agent"
+${SCRIPTS_RUND}/chkmonagent start >> $LOG/recert.log
 
 # and note that it's complete
 echo "Openview Recertification completed" >> $LOG/recert.log
