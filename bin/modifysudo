@@ -19,7 +19,7 @@ fi
 
 HOSTNAME=$(hostname | cut -f1 -d. | tr '[:lower:]' '[:upper:]')
 SUDOTMP=${SCRIPTS_LOGS}/sudoers.unixsvc
-WHOCARES="carl.schelin@intrado.com"
+WHOCARES="${CARLCARES}"
 
 # if a changefreeze is in effect, stop the execution of the script.
 if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
