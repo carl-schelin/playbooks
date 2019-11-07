@@ -308,17 +308,17 @@ done
 
 for i in group.master.backup 
 do
-  if [[ -f /opt/intrado/etc/$i ]]
+  if [[ -f ${SCRIPTS_DATA}/$i ]]
   then
-    rm /opt/intrado/etc/$i
+    rm ${SCRIPTS_DATA}/$i
   fi
 done
 
 # extra bits found when checking to make sure things are clean
 
-if [[ -f /opt/intrado/var/enwdcoecuta1b.log ]]
+if [[ -f ${SCRIPTS_VARS}/enwdcoecuta1b.log ]]
 then
-  rm /opt/intrado/var/enwdcoecuta1b.log
+  rm ${SCRIPTS_VARS}/enwdcoecuta1b.log
 fi
 
 for i in opctrapi.failed openview.stop vxprint.output
@@ -329,21 +329,21 @@ do
   fi
 done
 
-if [[ -d /opt/intrado/bin/scripts ]]
+if [[ -d ${SCRIPTS_BINS}/scripts ]]
 then
-  rm -rf /opt/intrado/bin/scripts
+  rm -rf ${SCRIPTS_BINS}/scripts
 fi
 
-if [[ -d /opt/intrado/bin/decommissioned ]]
+if [[ -d ${SCRIPTS_BINS}/decommissioned ]]
 then
-  rm -rf /opt/intrado/bin/decommissioned
+  rm -rf ${SCRIPTS_BINS}/decommissioned
 fi
 
 for i in chkconfig incomsu1 yodo ntpd.output oracle.output enwdcoecuta1b STDOUT nohup.out culali01 1 culali03 elmali01 elmali03
 do
-  if [[ -f /opt/intrado/bin/$i ]]
+  if [[ -f ${SCRIPTS_BINS}/$i ]]
   then
-    rm /opt/intrado/bin/$i
+    rm ${SCRIPTS_BINS}/$i
   fi
 done
 
@@ -369,9 +369,9 @@ then
 fi
 
 # remove this file:
-if [[ -f /opt/intrado/etc/Unix_Backups_Last_7Days.html ]]
+if [[ -f ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html ]]
 then
-  rm /opt/intrado/etc/Unix_Backups_Last_7Days.html
+  rm ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html
 fi
 
 # clean up old crash dump files
