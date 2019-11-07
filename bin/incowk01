@@ -20,7 +20,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-WHOCARES=carl.schelin@intrado.com
+WHOCARES="${CARLCARES}"
 
 #
 # ensure wiki permissions are correctly set
