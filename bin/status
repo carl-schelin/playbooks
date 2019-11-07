@@ -82,7 +82,7 @@ else
 fi
 
 
-WHOCARES=carl.schelin@intrado.com
+WHOCARES="${CARLCARES}"
 
 #
 # validate the databases and report any errors
