@@ -4,7 +4,18 @@
 # Full reset of a user on HP-UX
 # 2014-12-05 - Initial
 
-OS=`uname`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 # by default reset the user's password too.
 RESET='yes'
 OPTIONS="uid bootpw audid audflg mintm maxpwln exptm lftm spwchg upwchg acctexp llog expwarn usrpick syspnpw rstrpw "
@@ -67,7 +78,7 @@ done
 
 if [[ $RESETPW = 'yes' ]]
 then
-  /opt/intrado/bin/password
+  ${SCRIPTS_BINS}/password
   /usr/bin/passwd $1
 
   /usr/lbin/modprpw -v $1
