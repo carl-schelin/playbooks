@@ -16,7 +16,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-WHOCARES=carl.schelin@intrado.com
+WHOCARES="${CARLCARES}"
 
 for i in `cat /usr/local/admin/kubernetes/users/userlist | cut -f1 -d:`
 do
