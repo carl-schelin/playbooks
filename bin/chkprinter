@@ -20,7 +20,6 @@ fi
 
 LPSTAT=$(/usr/bin/lpstat -p |grep disabled)
 MAIL="/bin/mailx"
-EMAIL="UnixAdmins@intrado.com"
 PROC=$(ps -ef |grep lpstat |grep -v grep)
 
 # Check for hung lpstat processes, kill any that are found
@@ -40,7 +39,7 @@ if [ ! -z "$LPSTAT" ]; then
   echo "One or more printers are disabled on ${HOSTNAME}! Manual intervention is required." >> "${SCRIPTS_DATA}/${BASENAME}.output"
   echo "Please run the command \"sudo /usr/sbin/cupsenable \[PRINTER\]\" on each disabled printer." >> "${SCRIPTS_DATA}/${BASENAME}.output"
   echo "See \"https://incowk01/wiki/index.php/Fixing_disabled_printers_in_CUPS\"." for details. >> "${SCRIPTS_DATA}/${BASENAME}.output"
-  ${MAIL} -s "${HOSTNAME}: Printer Disabled!!" ${EMAIL} < "${SCRIPTS_DATA}/${BASENAME}.output"
+  ${MAIL} -s "${HOSTNAME}: Printer Disabled!!" ${WHOCARES} < "${SCRIPTS_DATA}/${BASENAME}.output"
  else
   date > "${SCRIPTS_DATA}/${BASENAME}.output"
   hostname > "${SCRIPTS_DATA}/${BASENAME}.output"
