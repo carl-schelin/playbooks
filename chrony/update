@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# Update the chrony information on all servers
+
+HOSTFILE=/usr/local/admin/etc/hosts
+
+function usage() {
+  echo "Usage:"
+  echo "update -ehs [site] "
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s product - Product to modify, replace spaces with underscores"
+  echo "    Ptolemy, NEAD, IEN_Voice, LVF-UI"
+  echo "    icl-0, bldr0-0, gldn0-0, cabo0-0, hell0-0, alde0-0, tato0-1, lnmt1-2, miam1-1"
+}
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+OPTSITE=''
+while getopts "ehs:" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 0
+fi
+
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Update chrony.conf information"
+  ansible-playbook -i ${HOSTFILE} --extra-vars "site=${OPTSITE}" ${OPTCHECK} chrony.yaml -s
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTFILE} hosts file"
+fi
+
