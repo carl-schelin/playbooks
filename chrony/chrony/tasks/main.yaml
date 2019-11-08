@@ -1,0 +1,16 @@
+---
+- name: Remove bad lines (anything that doesn't list the existing time servers)
+  lineinfile:
+    dest: /etc/chrony.conf
+    state: absent
+    regexp: '^server {?!10\.100\.228\.31|192\.168\.200\.20}'
+
+- name: add in good lines
+  lineinfile:
+    dest: /etc/chrony.conf
+    line: "{{ item.line }}"
+    insertbefore: bof 
+  with_items:
+    - { line: "server 192.168.200.20" }
+    - { line: "server 10.100.228.31" }
+
