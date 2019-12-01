@@ -1,0 +1,25 @@
+---
+- name: Check for the 11-cgroups.conf file
+  stat: path=/lib/systemd/system/kubelet.service.d/11-cgroups.conf
+  register: foobar
+
+- name: Don't run it again if it already exists. Assumption is the other files exist as well.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.stat.exists
+
+- name: Copy the 11-cgroups.conf kernel settings to the server
+  copy:
+    src: ../files/11-cgroups.conf
+    dest: /lib/systemd/system/kubelet.service.d/11-cgroups.conf
+
+- name: Restart kubelet
+  systemd:
+    daemon_reload: yes
+    name: kubelet
+    state: restarted
+
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted
+
