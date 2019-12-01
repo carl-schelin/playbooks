@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# Update the bridge information on all workers
+
+HOSTFILE=/usr/local/admin/etc/hosts
+
+function usage() {
+  echo "Usage:"
+  echo "bridge -cdehs [site] "
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s site - Site to modify"
+  echo "    Dev sites: bldr0-0 gldn0-0"
+  echo "    SQA sites: cabo0-0 hell0-0"
+  echo "    CIL sites: alde0-0 tato0-1"
+  echo "    Production sites: lnmt1-2 miam1-1"
+}
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+OPTSITE=''
+while getopts "cdehs:mw" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 0
+fi
+
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Update bridge information"
+  ansible-playbook -i ${HOSTFILE} --extra-vars "site=${OPTSITE}" ${OPTCHECK} bridge.yaml -s
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTFILE} hosts file"
+fi
+
