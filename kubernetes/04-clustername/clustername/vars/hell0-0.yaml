@@ -1,0 +1,9 @@
+# Author: Carl Schelin
+# Purpose:
+# Central location for variables that can be used for different clusters.
+# this keeps you from having to make changes to the scripts used to create clusters
+# plus keeps the configurations consistent.
+---
+cluster_name: "kubecluster-hell0-0"
+etcd_cluster: "etcd-cluster"
+
