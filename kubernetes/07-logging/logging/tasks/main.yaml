@@ -1,0 +1,26 @@
+---
+- name: Check for the dameon.json file
+  stat: path=/etc/docker/daemon.json
+  register: foobar
+
+- name: Don't run it again if it already exists.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.stat.exists
+
+# now add the correct file for docker logging
+- name: Add daemon.json
+  copy:
+    src: ../files/daemon.json
+    dest: /etc/docker/daemon.json
+
+- name: Correct the docker file
+  replace:
+    path: /etc/sysconfig/docker
+    regexp: '--log-driver=journald'
+    replace: ''
+
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted
+
