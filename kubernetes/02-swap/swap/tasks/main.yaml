@@ -1,0 +1,28 @@
+---
+- name: Remove swap from the fstab flie
+  lineinfile:
+    state: absent
+    dest: /etc/fstab
+    regexp: "^/dev/mapper/vg00-swap.*"
+
+- name: Remove swap from the grub command line
+  replace:
+    path: /etc/default/grub
+    regexp: ' rd.lvm.lv=vg00/swap'
+    replace: ''
+
+- name: Rebuild the grub2.cfg file
+  command: /usr/sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Unmount swap
+  mount:
+    path: /dev/mapper/vg00-swap
+    state: unmounted
+
+- name: Remove the swap volume.
+  lvol:
+    vg: vg00
+    lv: swap
+    state: absent
+    force: yes
+
