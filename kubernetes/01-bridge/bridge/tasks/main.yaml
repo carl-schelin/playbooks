@@ -1,0 +1,31 @@
+---
+- name: Check for the kuberrnetes.conf file
+  stat: path=/etc/sysctl.d/kubernetes.conf
+  register: foobar
+
+- name: Don't run it again if it already exists. Assumption is the other files exist as well.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.stat.exists
+
+- name: Copy the kubernetes.conf kernel settings to the server
+  copy:
+    src: ../files/kubernetes.conf 
+    dest: /etc/sysctl.d/kubernetes.conf
+
+- name: To ensure the br_netfilter.conf file exists, touch it
+  file:
+    path: /etc/modules-load.d/br_netfilter.conf
+    state: touch
+
+- name: Update the /etc/modules-load.d/br_netfilter.conf file to add the kubernetes comment
+  lineinfile:
+    path: /etc/modules-load.d/br_netfilter.conf
+    regexp: '^# Load bridge netfilter'
+    line: "# Load bridge netfilter module at boot. This is required by Kubernetes to allow bridging for iptables address translation."
+
+- name: Update the /etc/modules-load.d/br_netfilter.conf file to activate the bridge module
+  lineinfile:
+    path: /etc/modules-load.d/br_netfilter.conf
+    regexp: '^br_netfilter'
+    line: "br_netfilter"
+
