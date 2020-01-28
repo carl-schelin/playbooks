@@ -80,13 +80,38 @@ then
   chmod 644 /etc/motd
   chmod 644 /etc/issue
 
-  GREEN="\033[32m"
-  RED="\033[31m"
-  YELLOW="\033[33m"
-  RESET="\033[0m"
-# not showing color on all systems so disable for now
-  RED=""
-  RESET=""
+# update motd with system information
+  IMPORT="${SCRIPTS_DATA}/chksys.import"
+  FINGERPRINT="${SCRIPTS_DATA}/fingerprint"
+
+  echo "=========================================================================" >> /etc/motd
+  printf "Name: %-30s %36s\n" $(hostname|cut -f1 -d.) "Status: $(grep 'Status:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "Location: %-30s %32s\n" $(grep 'Location:' ${FINGERPRINT} | awk '{print $2}') "Network Zone: $(grep 'Zone:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "Product: %-30s %33s\n" $(grep 'Product:' ${FINGERPRINT} | awk '{print $2}') "Project: $(grep 'Project:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  grep "System Custodian:" ${FINGERPRINT} >> /etc/motd
+  grep "Primary Application Custodian:" ${FINGERPRINT} >> /etc/motd
+  echo "" >> /etc/motd
+
+  echo "OS Version: $(grep 'software,os' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
+
+  echo "RAM: $(grep 'hardware,memory' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
+
+  CPUS=$(grep -c cpu ${IMPORT})
+  echo "CPU: ${CPUS}x $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f4 -d,), $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f5 -d,)" >> /etc/motd
+
+  printf "Disks(s): " >> /etc/motd
+  printf "%s " $(grep 'hardware,hard disk' ${IMPORT} | cut -f4 -d, | sed -e "s/GB/GB,/g") >> /etc/motd
+  printf "\n" >> /etc/motd
+
+  for i in $(grep 'network,interface' ${IMPORT} | cut -f4 -d, | grep -v 'lo')
+  do
+    printf "Interface: %s %s/%s (%s)\n" $i $(grep "network,interface,$i" ${IMPORT} | cut -f5 -d,) $(grep "network,interface,$i" ${IMPORT} | cut -f7 -d,) $(grep "network,interface,$i" ${IMPORT} | cut -f8 -d,) >> /etc/motd
+  done
+
+  echo "=========================================================================" >> /etc/motd
+
+  echo "" >> /etc/motd
+
   YEAR=`date +"%Y"`
   MONTH=`date +"%m"`
   DAY=`date +"%d"`
