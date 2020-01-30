@@ -1,0 +1,15 @@
+---
+- name: Enable the new Satellite RHSM repository
+  shell: '/sbin/subscription-manager repos --enable=rhel-7-server-satellite-tools-6.5-rpms'
+
+- name: Upgrade the server to get the new 6.5 packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Restart the docker service as it's upgraded
+  systemd:
+    daemon_reload: yes
+    state: restarted
+    name: docker
+
