@@ -19,4 +19,9 @@ Note you can run the `searchansible` script to list all the available headers an
 all the servers associated with that tag.
 
 
+### Playbook Notes ###
+
+satellite - Upgrades satellite repos for 6.5
+
+snmpd - Installs a common snmpd.conf file to /etc/snmp
 
