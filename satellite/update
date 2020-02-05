@@ -59,6 +59,6 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-echo "Upgrade Satellite to 6.5"
+echo "Enable the Satellite 6.5 repo"
 ansible-playbook -i /usr/local/admin/etc/hosts ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
 
