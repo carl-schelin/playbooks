@@ -1,0 +1,6 @@
+---
+- name: Upgrade the server
+  yum:
+    name: '*'
+    state: latest
+
