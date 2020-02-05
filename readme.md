@@ -21,7 +21,12 @@ all the servers associated with that tag.
 
 ### Playbook Notes ###
 
+kubernetes - see the Kubernetes directory for notes
+
 satellite - Upgrades satellite repos for 6.5
 
 snmpd - Installs a common snmpd.conf file to /etc/snmp
+
+yumupgrade - Basically runs a 'yum upgrade -y'
+
 
