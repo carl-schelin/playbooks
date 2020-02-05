@@ -13,7 +13,8 @@ Playbook 08 is a security update, making sure files and directories are correct.
 
 Playbook 09 is used to tear down a kubernetes cluster that was created by kubeadm. Deletes all directories, etc.
 
-Playbook 10-11 is used to upgrade the cluster to 1.15.7. It replaces the versionlock settings and upgrades all the packages.
-
-Playbook 12 is used to activate the new 6.5 satellite repo, update, and then restart docker. This should be part of Playbook 10-11 as it was done after the upgrade.
+Playbooks 10-11 is used to upgrade the cluster binaries to 1.15.7. After the upgrade, log in to the first master and as root upgrade the server to 1.15.7. Then run playbook 11 which restarts both kubelet and docker
+  * Removes the 1.14.7 versionlock
+  * Adds the 1.15.7 versionlock
+  * Upgrades kubelet, kubectl, and kubeadm
 
