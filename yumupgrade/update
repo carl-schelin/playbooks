@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# update the satellite info for the new agents
+
+function usage() {
+  echo "Usage:"
+  echo "update -ehs [site]"
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s site - Site to attach"
+  echo "    sandbox site: icl-0"
+  echo "    Dev site: gldn0-0 bldr0-0"
+  echo "    SQA site: cabo0-0 hell0-0"
+  echo "    CIL site: alde0-0 tato0-1"
+  echo "    Production sites: lnmt1-2 miam1-1"
+}
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+OPTCHECK=''
+OPTSITE=''
+OPTUSER=''
+while getopts "ehs:" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 1
+fi
+
+if [[ ! -z ${OPTCHECK} ]]
+then
+  echo "Validation enabled. No changes will be made to the systems."
+fi
+
+echo "WARNING!!! This playbook runs a 'yum upgrade -y' on the server."
+echo "           If this isn't what you want to do, Ctrl-C now!!!"
+read
+
+echo "WARNING!!! Just in case, if you're sure you want to upgrade the server,"
+echo             hit ENTER, otherwise Ctrl-C out now!"
+read
+
+echo "Upgrading ${OPTSITE}"
+ansible-playbook -i /usr/local/admin/etc/hosts ${OPTCHECK} -e site=${OPTSITE} yum.yaml -s 
+
