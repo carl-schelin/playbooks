@@ -25,6 +25,7 @@
   template:
     src: templates/kibana.yml
     dest: /etc/kibana/kibana.yml
+  with_items: "{{ server }}"
 
 - name: Enable kibana
   systemd:
