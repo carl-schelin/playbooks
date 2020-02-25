@@ -1,0 +1,34 @@
+---
+- name: Copy kibana repo file 
+  copy:
+    src: ../files/kibana.repo
+    dest: /etc/yum.repos.d/kibana.repo
+
+- name: Copy elasticsearch GPG Key
+  copy:
+    src: ../files/GPG-KEY-elasticsearch
+    dest: /var/tmp/GPG-KEY-elasticsearch
+
+- name: Install GPG Key
+  script: "/bin/rpm --import /var/tmp/GPG-KEY-elasticsearch"
+
+- name: Install kibana
+  yum:
+    name: kibana
+    state: latest
+
+- name: Copy kibana configuration 
+  template:
+    src: templates/kibana.yml
+    dest: /etc/kibana/kibana.yml
+
+- name: Enable kibana
+  systemd:
+    name: kibana
+    enabled: yes
+
+- name: Start kibana
+  systemd:
+    name: kibana
+    state: restarted
+
