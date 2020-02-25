@@ -1,4 +1,8 @@
 ---
+- name: Include site variables for "{{ site }}"
+  include_vars:
+    file: "vars/{{ site }}.yaml"
+
 - name: Copy kibana repo file 
   copy:
     src: ../files/kibana.repo
