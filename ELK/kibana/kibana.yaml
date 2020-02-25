@@ -4,9 +4,6 @@
   become_user: root
   gather_facts: yes
 
-  include_vars:
-    file: "vars/{{ site }}.yaml"
-
   roles:
     - kibana
 
