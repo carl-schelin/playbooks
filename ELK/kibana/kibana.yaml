@@ -1,5 +1,5 @@
 ---
-- hosts: {{ site }}-kibana
+- hosts: "{{ site }}-kibana"
   become: true
   become_user: root
   gather_facts: yes
