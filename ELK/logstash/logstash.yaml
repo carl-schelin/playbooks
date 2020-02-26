@@ -1,0 +1,9 @@
+---
+- hosts: "{{ site }}-logstash"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - logstash
+
