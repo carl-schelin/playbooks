@@ -1,0 +1,6 @@
+# Elastic Search
+---
+
+server:
+  - {cluster: "longmont", master1: "10.32.10.114", master2: "10.32.10.115"}
+
