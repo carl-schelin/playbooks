@@ -71,6 +71,6 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-echo "Create Elasticsearch Master nodes"
+echo "Create Elasticsearch Data nodes"
 ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} data.yaml -s 
 
