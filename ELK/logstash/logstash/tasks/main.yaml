@@ -1,0 +1,64 @@
+---
+- name: Include site variables for "{{ site }}"
+  include_vars:
+    file: "vars/{{ site }}.yaml"
+
+- name: Install Java
+  yum:
+    name: java
+    state: latest
+
+- name: Copy logstash repo file 
+  copy:
+    src: ../files/logstash.repo
+    dest: /etc/yum.repos.d/logstash.repo
+
+- name: Copy elasticsearch GPG Key
+  copy:
+    src: ../files/GPG-KEY-elasticsearch
+    dest: /var/tmp/GPG-KEY-elasticsearch
+
+- name: Install GPG Key
+  script: "/bin/rpm --import /var/tmp/GPG-KEY-elasticsearch"
+
+- name: Install logstash
+  yum:
+    name: logstash
+    state: latest
+
+- name: Copy logstash configuration
+  template:
+    src: templates/logstash.yml
+    dest: /etc/logstash/logstash.yml
+  with_items: "{{ server }}"
+
+- name: Copy Java configuration 
+  copy:
+    src: ../files/jvm.options
+    dest: /etc/logstash/jvm.options
+
+- name: Install rsyslog redirection
+  template:
+    src: templates/60-output.conf
+    dest: /etc/rsyslog.d/60-output.conf
+
+- name: Install json-template
+  copy:
+    src: ../files/01-json-template.conf
+    dest: /etc/rsyslog.d/01-json-template.conf
+
+- name: Restart the rsyslog service
+  systemd:
+    name: rsyslog
+    state: restarted
+
+- name: Enable logstash
+  systemd:
+    name: logstash
+    enabled: yes
+
+- name: Start logstash
+  systemd:
+    name: logstash
+    state: restarted
+
