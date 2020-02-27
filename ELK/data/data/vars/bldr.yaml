@@ -1,0 +1,6 @@
+# Elastic Search
+---
+
+server:
+  - {cluster: "boulder", master1: "10.105.145.223", master2: "10.105.145.243"}
+
