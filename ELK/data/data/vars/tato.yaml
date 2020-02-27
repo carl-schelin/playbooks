@@ -1,0 +1,6 @@
+# Elastic Search
+---
+
+server:
+  - {cluster: "tatooine", master1: "10.39.6.102", master2: "10.39.6.103"}
+
