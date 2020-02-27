@@ -72,5 +72,5 @@ then
 fi
 
 echo "Create Logstash Node"
-ansible-playbook -i ${SERVERS} ${OPTCHECK} -e ${OPTSITE} logstash.yaml -s
+ansible-playbook -i ${SERVERS} ${OPTCHECK} -e site=${OPTSITE} logstash.yaml -s
 
