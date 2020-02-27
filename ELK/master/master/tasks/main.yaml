@@ -1,0 +1,49 @@
+---
+- name: Include site variables for "{{ site }}"
+  include_vars:
+    file: "vars/{{ site }}.yaml"
+
+- name: Install Java
+  yum:
+    name: java
+    state: latest
+
+- name: Copy elasticsearch repo file 
+  copy:
+    src: ../files/elasticsearch.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
+
+- name: Copy elasticsearch GPG Key
+  copy:
+    src: ../files/GPG-KEY-elasticsearch
+    dest: /var/tmp/GPG-KEY-elasticsearch
+
+- name: Install GPG Key
+  script: "/bin/rpm --import /var/tmp/GPG-KEY-elasticsearch"
+
+- name: Install elasticsearch
+  yum:
+    name: elasticsearch
+    state: latest
+
+- name: Copy elasticsearch master configuration
+  template:
+    src: templates/elasticsearch.yml
+    dest: /etc/elasticsearch/elasticsearch.yml
+  with_items: "{{ server }}"
+
+- name: Copy Java configuration 
+  copy:
+    src: ../files/{{ ansible_hostname }}.jvm
+    dest: /etc/elasticsearch/jvm.options
+
+- name: Enable elasticsearch
+  systemd:
+    name: elasticsearch
+    enabled: yes
+
+- name: Start the elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted
+
