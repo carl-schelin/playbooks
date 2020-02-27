@@ -26,6 +26,14 @@
     name: elasticsearch
     state: latest
 
+- name: Create the elasticsearch directory 
+  file:
+    path: /opt/elasticsearch
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+
 - name: Copy elasticsearch data configuration
   template:
     src: templates/elasticsearch.yml
