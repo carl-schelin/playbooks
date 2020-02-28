@@ -2,5 +2,10 @@
 ---
 
 users:
-  - {name: jowen, gecos: 'Josh Owen,josh.owen@intrado.com', group: 'sysadmin', locked: no}
+  - {name: cschelin, gecos: 'Carl Schelin,carl.schelin@intrado.com',       group: 'sysadmin'}
+  - {name: jnoyes,   gecos: 'James Noyes,james.noyes@intrado.com',         group: 'sysadmin'}
+  - {name: kzupan,   gecos: 'Kevin Zupan,kzupan@west.com',                 group: 'sysadmin'}
+  - {name: tcooper,  gecos: 'Tom Cooper,tom.cooper@intrado.com',           group: 'sysadmin'}
+  - {name: jowen,    gecos: 'Josh Owen,josh.owen@intrado.com',             group: 'sysadmin'}
+  - {name: unixsvc,  gecos: 'Unix Service Account,unixadmins@intrado.com', group: 'sysadmin'}
 
