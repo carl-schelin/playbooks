@@ -10,7 +10,7 @@
 
 - name: Delete the logstash repo file if it exists
   file:
-    src: /etc/yum.repos.d/logstash.repo
+    path: /etc/yum.repos.d/logstash.repo
     state: absent
 
 - name: Copy elasticsearch GPG Key
