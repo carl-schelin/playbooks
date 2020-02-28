@@ -42,7 +42,7 @@
 
 - name: Copy Java configuration 
   copy:
-    src: ../files/{{ ansible_hostname }}.jvm
+    src: ../files/jvm.options
     dest: /etc/elasticsearch/jvm.options
 
 - name: Enable elasticsearch
