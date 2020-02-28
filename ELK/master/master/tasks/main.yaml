@@ -10,7 +10,7 @@
 
 - name: Delete the elasticsearch repo file if it exists
   file:
-    src: /etc/yum.repos.d/elasticsearch.repo
+    path: /etc/yum.repos.d/elasticsearch.repo
     state: absent
 
 - name: Copy elasticsearch GPG Key
