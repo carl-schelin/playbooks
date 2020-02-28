@@ -2,7 +2,7 @@ cluster.name: {{ item.cluster }}
 node.name: {{ ansible_hostname }}
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
-network.host: [_local_, "{{ item.master1 }}"]
+network.host: [_local_, "{{ ansible_default_ipv4.address }}"]
 discovery.seed_hosts: ["{{ item.master1 }}", "{{ item.master2 }}"]
 cluster.initial_master_nodes: ["{{ item.master1 }}", "{{ item.master2 }}"]
 node.master: true
