@@ -5,7 +5,7 @@
 
 - name: Delete the kibana repo file if it exists
   file:
-    src: /etc/yum.repos.d/kibana.repo
+    path: /etc/yum.repos.d/kibana.repo
     state: absent
 
 - name: Copy elasticsearch GPG Key
