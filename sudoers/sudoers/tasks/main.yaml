@@ -18,9 +18,9 @@
 
 - name: Ensure Admins have access and are a member of the sysadmin group
   user:
-    name: "{{ user.name }}"
-    comment: "{{ user.gecos }}"
-    password_lock: "{{ user.locked }}"
-    group: "{{ user.group }}"
+    name: "{{ item.name }}"
+    comment: "{{ item.gecos }}"
+    password_lock: "{{ item.locked }}"
+    group: "{{ item.group }}"
   with_items: "{{ users }}"
 
