@@ -8,10 +8,10 @@
     name: java
     state: latest
 
-- name: Copy elasticsearch repo file 
-  copy:
-    src: ../files/elasticsearch.repo
-    dest: /etc/yum.repos.d/elasticsearch.repo
+- name: Delete the elasticsearch repo file if it exists
+  file:
+    src: /etc/yum.repos.d/elasticsearch.repo
+    state: absent
 
 - name: Copy elasticsearch GPG Key
   copy:
@@ -20,6 +20,14 @@
 
 - name: Install GPG Key
   script: "/bin/rpm --import /var/tmp/GPG-KEY-elasticsearch"
+
+- name: Install versionlock
+  yum:
+    name: yum-plugin-versionlock
+    state: latest
+
+- name: Lock elasticsearch at 7.5.0-1
+  command: /usr/bin/yum versionlock "elasticsearch-7.5.0-1.*"
 
 - name: Install elasticsearch
   yum:
