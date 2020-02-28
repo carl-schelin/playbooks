@@ -1,0 +1,43 @@
+# sudoers file.
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# See the sudoers man page for the details on how to write a sudoers file.
+#
+
+# Host alias specification
+Host_Alias      {{ ansible_hostname|upper }} = {{ ansible_fqdn }}, {{ ansible_hostname }}
+
+# User alias specification
+
+# Cmnd alias specification
+Cmnd_Alias      TMPSU = /bin/su -, /bin/su
+
+# Defaults specification
+Defaults        group_plugin=system_group.so
+
+# User privilege specification
+root            ALL=(ALL) ALL
+
+# Uncomment to allow people in group wheel to run all commands
+# %wheel        ALL=(ALL)       ALL
+%sysadmin       {{ ansible_hostname|upper }} = (ALL) ALL
+%tmproot        {{ ansible_hostname|upper }} = LOG_INPUT:LOG_OUTPUT: TMPSU
+
+# Same thing without a password
+# %wheel        ALL=(ALL)       NOPASSWD: ALL
+
+# Samples
+# %users  ALL=/sbin/mount /cdrom,/sbin/umount /cdrom
+# %users  localhost=/sbin/shutdown -h now
+
+# Logging definitions: No line wraps, logfile, log the host and year, turn off syslog sudo logging
+Defaults compress_io
+Defaults loglinelen=0
+Defaults logfile=/var/log/sudo.log
+Defaults log_host
+Defaults log_year
+Defaults !syslog
+
+unixsvc         {{ ansible_hostname|upper }} = (%ansgrp) NOPASSWD: /usr/bin/sh -c *
+
