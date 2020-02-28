@@ -1,0 +1,9 @@
+# deploy the correct sudoers file
+---
+- hosts: "{{ site }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - sudoers
