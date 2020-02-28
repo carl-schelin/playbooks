@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# Defining the master Elastic Stack servers
+
+function usage() {
+  echo "Usage:"
+  echo "update -ehs [site]"
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s site - Site to attach"
+  echo "    Sandbox site: icl-0"
+  echo "    Dev site: bldr0-0 gldn0-0"
+  echo "    SQA site: cabo0-0 hell0-0"
+  echo "    CIL site: tato0-1 alde0-0"
+  echo "    Production sites: lnmt1-2 miam1-1"
+}
+
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+HOSTS="/usr/local/admin/etc/hosts"
+OPTCHECK=''
+OPTSITE=''
+while getopts "ehrs:l" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 1
+fi
+
+if [[ ! -z ${OPTCHECK} ]]
+then
+  echo "Validation enabled. No changes will be made to the systems."
+fi
+
+echo "Update sudoers and users"
+ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} sudoers.yaml -s 
+
