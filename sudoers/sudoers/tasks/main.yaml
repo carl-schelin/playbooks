@@ -20,7 +20,10 @@
   user:
     name: "{{ item.name }}"
     comment: "{{ item.gecos }}"
-    password_lock: "{{ item.locked }}"
-    group: "{{ item.group }}"
+    groups: "{{ item.group }}"
+  with_items: "{{ users }}"
+
+- name: Unlock the admin account if locked.
+  command: "/bin/passwd -u {{ item.name }}"
   with_items: "{{ users }}"
 
