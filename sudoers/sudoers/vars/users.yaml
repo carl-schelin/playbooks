@@ -1,0 +1,6 @@
+# User management
+---
+
+user:
+  - {name: jowen, gecos: 'Josh Owen,josh.owen@regmail.west.com', group: 'sysadmin', locked: no}
+
