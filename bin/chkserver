@@ -741,20 +741,25 @@ check_bigfix() {
     echo "Entering check_bigfix(69)"
   fi
 
-  if [[ -d /opt/BESClient ]]
+  if [[ ! $OS = 'HP-UX' ]]
   then
-    printf "%b\n" "    ${GREEN}Bigfix Client is installed${RESET}" >> "${LOG}"
 
-    ps -e | grep BESClient > /dev/null
-    if [[ $? -eq 1 ]]
+    if [[ -d /opt/BESClient ]]
     then
-      printf "%b\n" "    ${RED}Bigfix Client is not running${RESET}" >> "${LOG}"
+      printf "%b\n" "    ${GREEN}Bigfix Client is installed${RESET}" >> "${LOG}"
+
+      ps -e | grep BESClient > /dev/null
+      if [[ $? -eq 1 ]]
+      then
+        printf "%b\n" "    ${RED}Bigfix Client is not running${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${GREEN}Bigfix Client is running${RESET}" >> "${LOG}"
+      fi
+
     else
-      printf "%b\n" "    ${GREEN}Bigfix Client is running${RESET}" >> "${LOG}"
+      printf "%b\n" "    ${RED}Bigfix Client is not installed in /opt/BESClient${RESET}" >> "${LOG}"
     fi
 
-  else
-    printf "%b\n" "    ${RED}Bigfix Client is not installed in /opt/BESClient${RESET}" >> "${LOG}"
   fi
 
   if [[ ${DEBUG} = '69' ]]
