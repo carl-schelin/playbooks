@@ -730,6 +730,40 @@ check_artifactory() {
 
 
 ######################
+### Doc: Function: check_bigfix(69) - Check to see if the bigfix client is installed and running
+### Doc: *
+######################
+
+check_bigfix() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_bigfix(69)"
+  fi
+
+  if [[ -d /opt/BESClient ]]
+  then
+    printf "%b\n" "    ${GREEN}Bigfix Client is installed${RESET}" >> "${LOG}"
+
+    ps -e | grep BESClient > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${RED}Bigfix Client is not running${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${GREEN}Bigfix Client is running${RESET}" >> "${LOG}"
+    fi
+
+  else
+    printf "%b\n" "    ${RED}Bigfix Client is not installed in /opt/BESClient${RESET}" >> "${LOG}"
+  fi
+
+  if [[ ${DEBUG} = '69' ]]
+  then
+    echo "Exiting check_bigfix()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_centrify(2) - 3 checks
 ### Doc: * Checks to see if Centrify is installed
 ### Doc: * Checks to see if Centrify is running
@@ -5391,7 +5425,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68 check_bigfix:69
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
