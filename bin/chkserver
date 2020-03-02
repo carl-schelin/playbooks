@@ -192,6 +192,7 @@
 # 2019/10/23 - CS - Fixed swap to return 0 even if swap isn't found
 # 2019/10/24 - CS - Updated to better check for enabled servers and to use the pipe for or'd services (ntp or chrony). 
 # 2019/10/24 - CS - Fixed the timecheck to check for the running service since both ntp and chrony could be installed
+# 2020/03/02 - CS - Added a bigfix client check
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -205,7 +206,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.288"
+VERSION="${BASENAME} v1.289"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
