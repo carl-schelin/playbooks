@@ -32,6 +32,7 @@ then
 fi
 
 HOSTS="/usr/local/admin/etc/hosts"
+OPTCHECK=''
 OPTSITE=''
 while getopts "ehs:" arg
 do
@@ -76,7 +77,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update Certificates"
-  ansible-playbook -i /usr/local/admin/etc/hosts ${OPTCHECK} -e site=${OPTSITE} certificates.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} certificates.yaml -s 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
