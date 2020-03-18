@@ -4,8 +4,6 @@
 # update:
 # Update the permissions for all files
 
-HOSTFILE=/usr/local/admin/etc/hosts
-
 function usage() {
   echo "Usage:"
   echo "update -ehs [site] "
@@ -72,8 +70,8 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Set permissions per the CIS Kubernetes Benchmark v1.5.0 Document"
-  ansible-playbook -i ${HOSTFILE} --extra-vars "site=${OPTSITE}" ${OPTCHECK} permissions.yaml -s
+  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} permissions.yaml -s
 else
-  echo "Unable to locate ${OPTSITE} in the ${HOSTFILE} hosts file"
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
 
