@@ -4,11 +4,9 @@
 # update:
 # Update the bridge information on all workers
 
-HOSTFILE=/usr/local/admin/etc/hosts
-
 function usage() {
   echo "Usage:"
-  echo "bridge -cdehs [site] "
+  echo "update -ehs [site] "
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
@@ -19,12 +17,20 @@ function usage() {
   echo "    Production sites: lnmt1-2 miam1-1"
 }
 
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
 if [[ -z $1 ]]
 then
   usage
   exit 0
 fi
 
+HOSTS="/usr/local/admin/etc/hosts"
 OPTSITE=''
 while getopts "cdehs:mw" arg
 do
@@ -45,6 +51,13 @@ then
   rm *.retry
 fi
 
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
+fi
+
 if [[ -z ${OPTSITE} ]]
 then
   echo "Error: No configured site: ${OPTSITE}"
@@ -57,8 +70,8 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update bridge information"
-  ansible-playbook -i ${HOSTFILE} --extra-vars "site=${OPTSITE}" ${OPTCHECK} bridge.yaml -s
+  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} bridge.yaml -s
 else
-  echo "Unable to locate ${OPTSITE} in the ${HOSTFILE} hosts file"
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
 
