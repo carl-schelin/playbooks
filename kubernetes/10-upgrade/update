@@ -2,7 +2,7 @@
 
 # Carl Schelin
 # update:
-# update the cluster name and other variables for the kubernetes servers
+# update the cluster to 1.15.7
 
 function usage() {
   echo "Usage:"
@@ -10,7 +10,6 @@ function usage() {
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
-  echo " -l DISABLE log file; output is to the screen"
   echo " -s site - Site to attach"
   echo "    sandbox site: icl-0"
   echo "    Dev site: gldn0-0 bldr0-0"
@@ -19,24 +18,28 @@ function usage() {
   echo "    Production sites: lnmt1-2 miam1-1"
 }
 
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
 if [[ -z $1 ]]
 then
   usage
   exit 0
 fi
 
+HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTSITE=''
-OPTUSER=''
-OPTLOG="clustername.log"
-while getopts "ehs:l" arg
+while getopts "ehs:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
     s) OPTSITE="${OPTARG}"
-       ;;
-    l) OPTLOG="/dev/stdout"
        ;;
     h) usage
        exit 0
@@ -48,6 +51,13 @@ done
 if [[ -f *.retry ]]
 then
   rm *.retry
+fi
+
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
 fi
 
 if [[ -z ${OPTSITE} ]]
@@ -63,6 +73,12 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-echo "Upgrade Kubernetes to 1.15.7"
-ansible-playbook -i /usr/local/admin/etc/hosts ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Upgrade Kubernetes to 1.15.7"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+fi
 
