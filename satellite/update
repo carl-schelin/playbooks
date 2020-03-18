@@ -18,15 +18,22 @@ function usage() {
   echo "    Production sites: lnmt1-2 miam1-1"
 }
 
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
 if [[ -z $1 ]]
 then
   usage
   exit 0
 fi
 
+HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTSITE=''
-OPTUSER=''
 while getopts "ehs:" arg
 do
   case $arg in
@@ -46,6 +53,13 @@ then
   rm *.retry
 fi
 
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
+fi
+
 if [[ -z ${OPTSITE} ]]
 then
   echo "Error: No configured site: ${OPTSITE}"
@@ -59,6 +73,12 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-echo "Enable the Satellite 6.5 repo"
-ansible-playbook -i /usr/local/admin/etc/hosts ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Enable the Satellite 6.5 repo"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+fi
 
