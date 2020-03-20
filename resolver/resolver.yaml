@@ -4,5 +4,8 @@
   become_user: root
   gather_facts: no
 
+  include_vars:
+    file: vars/vars.yaml
+
   roles:
     - resolver
