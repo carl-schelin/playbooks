@@ -1,3 +1,4 @@
+# Note this file is updated via Ansible. Do not update this manually
 domain {{ item.domain }}
 search {{ item.search }}
 nameserver {{ item.nameserver1 }}
