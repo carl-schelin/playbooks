@@ -1,0 +1,6 @@
+# resolv.conf file
+---
+
+cluster:
+  - {domain: "scc911.com", search: "scc911.com e911zone.intrado.pri a911net.net", nameserver1: "10.168.40.132", nameserver2: "10.168.104.132", nameserver3: "10.168.168.132" }
+
