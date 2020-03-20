@@ -1,4 +1,4 @@
 ---
 - name: Enable the new Satellite RHSM repository
-  shell: '/sbin/subscription-manager repos --enable=rhel-7-server-satellite-tools-6.5-rpms'
+  shell: '/sbin/subscription-manager repos --enable=*"
 
