@@ -1,4 +1,8 @@
 ---
+- name: Include variables
+  include_vars:
+    file: vars/vars.yaml
+
 - name: Install a resolv.conf file to the servers
   template:
     src: templates/resolv.yaml
