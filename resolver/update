@@ -77,7 +77,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Replace the resolv.conf file"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} resolve.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} resolver.yaml -s 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
