@@ -1,12 +1,12 @@
 ---
-- name: Delete versionlock for kubelet at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubelet-1.16.8-0.*"
+- name: Delete versionlock for kubelet at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubelet-1.15.7-0.*"
 
-- name: Delete versionlock for kubectl at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubectl-1.16.8-0.*"
+- name: Delete versionlock for kubectl at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubectl-1.15.7-0.*"
 
-- name: Delete versionlock for kubeadm at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubeadm-1.16.8-0.*"
+- name: Delete versionlock for kubeadm at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubeadm-1.15.7-0.*"
 
 - name: Lock kubelet at 1.16.8
   command: /usr/bin/yum versionlock add "kubelet-1.16.8-0.*"
