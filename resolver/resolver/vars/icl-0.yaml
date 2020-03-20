@@ -1,0 +1,6 @@
+# resolv.conf file
+---
+
+cluster:
+  - {domain: "intrado.sqa", search: "intrado.sqa", nameserver1: "10.168.40.132", nameserver2: "10.168.104.132", nameserver3: "10.168.168.132" }
+
