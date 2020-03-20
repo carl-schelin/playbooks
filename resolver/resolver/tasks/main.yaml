@@ -1,9 +1,7 @@
 ---
-- name: Copy the resolv.conf file to the servers
-  copy:
-    src: ../files/resolv.conf
+- name: Install a resolv.conf file to the servers
+  template:
+    src: templates/resolv.yaml
     dest: /etc/resolv.conf
-    owner: root
-    group: root
-    mode: '0644'
+  with_items: "{{ site }}"
 
