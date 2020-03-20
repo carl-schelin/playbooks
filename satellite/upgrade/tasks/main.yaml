@@ -1,4 +1,4 @@
 ---
 - name: Enable the new Satellite RHSM repository
-  shell: '/sbin/subscription-manager repos --enable=*"
+  shell: '/sbin/subscription-manager repos --enable=*'
 
