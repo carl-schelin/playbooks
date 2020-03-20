@@ -1,0 +1,9 @@
+---
+- name: Copy the resolv.conf file to the servers
+  copy:
+    src: ../files/resolv.conf
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: '0644'
+
