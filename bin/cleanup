@@ -75,16 +75,24 @@ fi
 # process to provide more detail to the MOTD presentation
 if [[ -f ${SCRIPTS_DATA}/motd ]]
 then
-  cp ${SCRIPTS_DATA}/motd /etc/motd
+# the issue file is presented prior to login so should have the disclaimer about logging into a server
+  if [[ -f /etc/issue ]]
+  then
+    rm /etc/issue
+  fi
   cp ${SCRIPTS_DATA}/motd /etc/issue
-  chmod 644 /etc/motd
-  chmod 644 /etc/issue
+
+  if [[ -f /etc/motd ]]
+  then
+    rm /etc/motd
+  fi
+  cp ${SCRIPTS_DATA}/motd /etc/motd
 
 # update motd with system information
   IMPORT="${SCRIPTS_DATA}/chksys.import"
   FINGERPRINT="${SCRIPTS_DATA}/fingerprint"
 
-  echo "    =======================================================================" >> /etc/motd
+  echo "    =======================================================================" > /etc/motd
   printf "    Name: %-30s %34s\n" $(hostname|cut -f1 -d.) "Status: $(grep 'Status:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
   printf "    Location: %-30s %30s\n" $(grep 'Location:' ${FINGERPRINT} | awk '{print $2}') "Network Zone: $(grep 'Zone:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
   printf "    Product: %-30s %31s\n" $(grep 'Product:' ${FINGERPRINT} | awk '{print $2}') "Project: $(grep 'Project:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
@@ -203,6 +211,9 @@ then
       fi
     fi
   fi
+
+  chmod 644 /etc/issue
+  chmod 644 /etc/motd
 
 fi
 
