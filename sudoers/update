@@ -34,7 +34,7 @@ fi
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTSITE=''
-while getopts "ehrs:l" arg
+while getopts "ehs:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
@@ -73,6 +73,12 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-echo "Update sudoers and users"
-ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} sudoers.yaml -s 
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Update sudoers and users"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} sudoers.yaml -s 
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+fi
 
