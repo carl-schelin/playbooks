@@ -1,0 +1,11 @@
+- name: Touch /etc/motd
+  hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: no
+
+  tasks:
+    - name: Touch /etc/motd
+      file: path=/etc/motd state=touch
+
