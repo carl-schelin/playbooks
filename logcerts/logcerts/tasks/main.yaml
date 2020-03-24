@@ -1,0 +1,46 @@
+---
+- name: Check for IntradoCA.pem
+  stat: path=/etc/pki/ca-trust/source/anchors/IntradoCA.pem
+  register: foobar
+
+- name: Don't run it again if it already exists. Assumption is the other files exist as well.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.stat.exists
+
+- name: Add IntradoCA.pem
+  copy:
+    src: ../files/IntradoCA.pem
+    dest: /etc/pki/ca-trust/source/anchors/IntradoCA.pem
+    mode: "0644"
+
+- name: Add unixsystems.key
+  copy:
+    src: ../files/unixsystems.key
+    dest: /etc/pki/tls/certs/unixsystems.key
+    mode: "0200"
+
+- name: Create a symbolic link
+  file:
+    src: /etc/pki/tls/certs/unixsystems.key
+    dest: /etc/pki/tls/certs/server.key
+    owner: root
+    group: root
+    state: link
+
+- name: Add unixsysetms.cer  
+  copy:
+    src: ../files/unixsystems.cer  
+    dest: /etc/pki/tls/certs/unixsystems.cer
+    mode: "0644"
+
+- name: Create a symbolic link
+  file:
+    src: /etc/pki/tls/certs/unixsystems.cer
+    dest: /etc/pki/tls/certs/server.cer
+    owner: root
+    group: root
+    state: link
+
+- name: Trust the new certificates
+  command: /usr/bin/update-ca-trust
+
