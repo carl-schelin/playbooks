@@ -70,7 +70,7 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTSITE}-k8slogs > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
   echo "Update rSyslog Certificates"
