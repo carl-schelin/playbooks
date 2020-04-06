@@ -1,0 +1,4 @@
+---
+- name: Upgrade kubernetes
+  command: "kubeadm upgrade apply v1.16.8"
+
