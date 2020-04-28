@@ -193,6 +193,7 @@
 # 2019/10/24 - CS - Updated to better check for enabled servers and to use the pipe for or'd services (ntp or chrony). 
 # 2019/10/24 - CS - Fixed the timecheck to check for the running service since both ntp and chrony could be installed
 # 2020/03/02 - CS - Added a bigfix client check
+# 2020/04/28 - CS - Added a tanium client check, ciscoamp, and logrhythm
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -206,7 +207,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.289"
+VERSION="${BASENAME} v1.290"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -746,6 +747,7 @@ check_bigfix() {
     if [[ ! $OS = 'HP-UX' ]]
     then
 
+      printf "%b\n" "  ${GREEN}Checking Bigfix Client${RESET}" >> "${LOG}"
       if [[ -d /opt/BESClient ]]
       then
         printf "%b\n" "    ${GREEN}Bigfix Client is installed${RESET}" >> "${LOG}"
@@ -852,6 +854,39 @@ check_cfg2html() {
   if [[ ${DEBUG} = '28' ]]
   then
     echo "Exiting check_cfg2html()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_ciscoamp(71) - Check to see if Cisco Amp is installed and running
+### Doc: *
+######################
+
+check_ciscoamp() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_ciscoamp(71)"
+  fi
+
+  if [[ ${CHECK_CISCOAMP} = 'Yes' ]]
+  then
+    if [[ ${OS} = 'Linux' ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking Cisco Amp${RESET}" >> "${LOG}"
+      rpm -qa | grep -i ciscoampconnector > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Cisco Amp is installed${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}Cisco Amp is not installed${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+
+  if [[ ${DEBUG} = '71' ]]
+  then
+    echo "Exiting check_ciscoamp()"
   fi
 }
 
@@ -2688,6 +2723,39 @@ check_kubernetes() {
   if [[ ${DEBUG} = '11' ]]
   then
     echo "Exiting check_kubernetes()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_logrhythm(72) - Check to see if LogRhythm is installed and running
+### Doc: *
+######################
+
+check_logrhythm() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_logrhythm(72)"
+  fi
+
+  if [[ ${CHECK_LOGRHYTHM} = 'Yes' ]]
+  then
+    if [[ ${OS} = 'Linux' ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking LogRhythm${RESET}" >> "${LOG}"
+      rpm -qa | grep -i scsm > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}LogRhythm is installed${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}LogRhythm is not installed${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+
+  if [[ ${DEBUG} = '72' ]]
+  then
+    echo "Exiting check_logrhythm()"
   fi
 }
 
@@ -4921,6 +4989,44 @@ check_swap() {
 
 
 ######################
+### Doc: Function: check_tanium(70) - Check to see if the Tanium client is installed and running
+### Doc: *
+######################
+
+check_tanium() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_tanium(70)"
+  fi
+
+  if [[ ${CHECK_TANIUM} = 'Yes' ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking Tanium Client${RESET}" >> "${LOG}"
+    if [[ -d /opt/Tanium ]]
+    then
+      printf "%b\n" "    ${GREEN}Tanium Client is installed${RESET}" >> "${LOG}"
+
+      ps -e | grep Tanium > /dev/null
+      if [[ $? -eq 1 ]]
+      then
+        printf "%b\n" "    ${RED}Tanium Client is not running${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${GREEN}Tanium Client is running${RESET}" >> "${LOG}"
+      fi
+
+    else
+      printf "%b\n" "    ${RED}Tanium Client is not installed in /opt/Tanium${RESET}" >> "${LOG}"
+    fi
+  fi
+
+  if [[ ${DEBUG} = '70' ]]
+  then
+    echo "Exiting check_tanium()"
+  fi
+}
+
+
+######################
 ### Doc: Function: check_techops(30) - 1 check
 ### Doc: * Do one of the techops installation directories exist
 ######################
@@ -5433,7 +5539,7 @@ do
   fi
 done
 
-for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68 check_bigfix:69
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68 check_bigfix:69 check_tanium:70 check_ciscoamp:71 check_logrhythm:72
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
