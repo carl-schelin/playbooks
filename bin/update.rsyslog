@@ -27,8 +27,11 @@ if [[ -d /etc/rsyslog.d ]]
 then
   if [[ ! -f /etc/rsyslog.d/LogRhythm.conf ]]
   then
-    echo "authpriv.*                 @oma00lrdc.west.com:514" > /etc/rsyslog.d/LogRhythm.conf
-    echo "cron.*                     @oma00lrdc.west.com:514" > /etc/rsyslog.d/LogRhythm.conf
+    echo "authpriv.*                 @oma00lrdc.west.com:514"  > /etc/rsyslog.d/LogRhythm.conf
+    echo "cron.*                     @oma00lrdc.west.com:514" >> /etc/rsyslog.d/LogRhythm.conf
+
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to add the LogRhythm.conf file to /etc/rsyslog.d" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
   fi
 fi
 
