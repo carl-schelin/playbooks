@@ -2740,15 +2740,13 @@ check_logrhythm() {
 
   if [[ ${CHECK_LOGRHYTHM} = 'Yes' ]]
   then
-    if [[ ${OS} = 'Linux' ]]
+    if [[ -d /etc/rsyslog.d ]]
     then
-      printf "%b\n" "  ${GREEN}Checking LogRhythm${RESET}" >> "${LOG}"
-      rpm -qa | grep -i scsm > /dev/null
-      if [[ $? -eq 0 ]]
+      if [[ -f /etc/rsyslog.d/LogRhythm.conf ]]
       then
-        printf "%b\n" "    ${GREEN}LogRhythm is installed${RESET}" >> "${LOG}"
+        printf "%b\n" "    ${GREEN}rsyslog file LogRhythm.conf is installed in /etc/rsyslog.d${RESET}" >> "${LOG}"
       else
-        printf "%b\n" "    ${RED}LogRhythm is not installed${RESET}" >> "${LOG}"
+        printf "%b\n" "    ${RED}rsyslog file LogRhythm.conf is not installed in /etc/rsyslog.d${RESET}" >> "${LOG}"
       fi
     fi
   fi
