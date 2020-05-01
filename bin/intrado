@@ -309,6 +309,9 @@ runscript update.gecos
 # Update /etc/groups based on the group.master file
 runscript update.groups
 
+# Update /etc/rsyslog.d/LogRhythm.conf
+runscript update.rsyslog
+
 # get the openview configuration
 runscript getovconf
 
