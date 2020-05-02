@@ -2740,6 +2740,7 @@ check_logrhythm() {
 
   if [[ ${CHECK_LOGRHYTHM} = 'Yes' ]]
   then
+    printf "%b\n" "  ${GREEN}Checking LogRhythm rsyslog configuration${RESET}" >> "${LOG}"
     if [[ -d /etc/rsyslog.d ]]
     then
       if [[ -f /etc/rsyslog.d/LogRhythm.conf ]]
@@ -2748,7 +2749,42 @@ check_logrhythm() {
       else
         printf "%b\n" "    ${RED}rsyslog file LogRhythm.conf is not installed in /etc/rsyslog.d${RESET}" >> "${LOG}"
       fi
+    else
+# since there's a separate installation for rsyslog, this checks the older syslog.conf files
+      grep oma00lrdc.west.com /etc/syslog.conf > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}LogRhythm server oma00lrdc.west.com is in /etc/syslog.conf${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}LogRhythm server oma00lrdc.west.com is not in /etc/syslog.conf${RESET}" >> "${LOG}"
+      fi
     fi
+
+    for i in ${LOGRHYTHM_SERVERS}
+    do
+      LOG_SITE=$(echo $i | cut -f1 -d:)
+      LOG_IP=$(echo $i | cut -f2 -d:)
+      LOG_PROTOCOL=$(echo $i | cut -f2 -d:)
+      LOG_PORT=$(echo $i | cut -f2 -d:)
+
+      check_management_route ${LOG_IP} Management
+      if [[ ${DEBUG} = 26 ]]
+      then
+        echo "  ping check of logrhythm server: ${LOG_IP}"
+      fi
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${LOG_IP} > /dev/null
+      else
+        ping ${LOG_IP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "      ${GREEN}LogRhythm Server ${LOG_IP} is pingable.${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "      ${RED}LogRhythm Server ${LOG_IP} is not pingable.${RESET}" >> "${LOG}"
+      fi
+    done
   fi
 
   if [[ ${DEBUG} = '72' ]]
