@@ -315,6 +315,9 @@ runscript update.groups
 # Update /etc/rsyslog.d/LogRhythm.conf
 runscript update.rsyslog
 
+# Update root's .forward
+runscript update.forward
+
 # get the openview configuration
 runscript getovconf
 
