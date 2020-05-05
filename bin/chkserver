@@ -194,6 +194,7 @@
 # 2019/10/24 - CS - Fixed the timecheck to check for the running service since both ntp and chrony could be installed
 # 2020/03/02 - CS - Added a bigfix client check
 # 2020/04/28 - CS - Added a tanium client check, ciscoamp, and logrhythm
+# 2020/05/05 - CS - Updated cisco amp to check for the daemons
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -207,7 +208,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.290"
+VERSION="${BASENAME} v1.291"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -874,10 +875,27 @@ check_ciscoamp() {
     if [[ ${OS} = 'Linux' ]]
     then
       printf "%b\n" "  ${GREEN}Checking Cisco Amp${RESET}" >> "${LOG}"
-      rpm -qa | grep -i ciscoampconnector > /dev/null
+      rpm -qa | grep ciscoampconnector > /dev/null
       if [[ $? -eq 0 ]]
       then
         printf "%b\n" "    ${GREEN}Cisco Amp is installed${RESET}" >> "${LOG}"
+
+        ps -e | grep ampdaemon > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+          printf "%b\n" "    ${RED}Cisco Amp Daemon is not running${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "    ${GREEN}Cisco Amp Daemon is running${RESET}" >> "${LOG}"
+        fi
+
+        ps -e | grep ampscansvc > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+          printf "%b\n" "    ${RED}Cisco Amp Scan Service is not running${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "    ${GREEN}Cisco Amp Scan Service is running${RESET}" >> "${LOG}"
+        fi
+
       else
         printf "%b\n" "    ${RED}Cisco Amp is not installed${RESET}" >> "${LOG}"
       fi
