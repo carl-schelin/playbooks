@@ -1,0 +1,86 @@
+#!/bin/ksh
+
+# update.ciscoamp
+# Carl Schelin
+# Install cisco amp if it's not installed
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
+# RPMs so only Red Hat/CentOS boxes
+if [[ ${OS} = 'Linux' ]]
+then
+  echo "Not a Linux system."
+  echo "Exiting."
+  exit 0
+fi
+
+# next easiest check. If it's already installed, exit
+rpm -qa | grep ciscoampconnector > /dev/null
+if [[ $? -eq 0 ]]
+then
+  echo "Cisco Amp is installed."
+  echo "Exiting"
+  exit 0
+fi
+
+# only install on non-appliances.
+grep "Appliance" ${SCRIPTS_DATA}/fingerprint > /dev/null
+if [[ $? -eq 1 ]]
+then
+  echo "Fingerprint file doesn't identify whether this server is an appliance."
+  echo "Exiting"
+  exit 1
+fi
+
+grep "Appliance: Yes" ${SCRIPTS_DATA}/fingerprint > /dev/null
+if [[ $? -eq 0 ]]
+then
+  echo "Server is an Appliance."
+  echo "Exiting"
+  exit 0
+fi
+
+# just to make sure, in case there's a blank Appliance line for some reason
+grep "Appliance: No" ${SCRIPTS_DATA}/fingerprint > /dev/null
+if [[ $? -eq 0 ]]
+then
+
+# need to check the version of Red Hat. It can only install on Red Hat 6 and Red Hat 7.
+  CISCOAMP=""
+  grep "release 6" /etc/redhat-release > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    CISCOAMP=amp_West_Corp_Linux_Servers_rhel-centos-6.rpm
+  fi
+  grep "release 7" /etc/redhat-release > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    CISCOAMP=amp_West_Corp_Linux_Servers_rhel-centos-7.rpm
+  fi
+
+# Last check, then install the rpm
+  if [[ -f ${SCRIPTS_DATA}/${CISCOAMP} ]]
+  then
+    rpm -ivh ${SCRIPTS_DATA}/${CISCOAMP}
+    
+    echo "Changelog sent"
+    echo "Installed Cisco Amp on ${HOSTNAME}" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
+fi
+
