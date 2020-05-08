@@ -31,7 +31,7 @@ do
   then
 # get the current and correct GECOS entry for the user
     echo "-Found: $i"
-    VALIDGECOS=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email" | cut -f2 -d:)
+    VALIDGECOS=$(egrep "^${i}:" "${SCRIPTS_DATA}/valid.email" | cut -f2 -d: | tail -1)
     GECOS=$(egrep "^${i}:" "/etc/passwd" | cut -f5 -d:)
     echo "Comparing valid.email: ${VALIDGECOS} and passwd: ${GECOS}"
     if [[ ! ${VALIDGECOS} = "${GECOS}" ]]
