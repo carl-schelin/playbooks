@@ -1,0 +1,31 @@
+---
+- name: Update the etcd imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/etcd.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-apiserver imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-controller-manager imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-scheduler imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-scheduler.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update kube-apiserver admission controller to add AlwaysPullImages
+  replace:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    - --enable-admission-plugins=NodeRestriction$'
+    replace: '    - --enable-admission-plugins=NodeRestriction,AlwaysPullImages$'
+
