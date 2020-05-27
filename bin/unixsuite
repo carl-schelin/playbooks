@@ -321,6 +321,9 @@ runscript update.forward
 # get the openview configuration
 runscript getovconf
 
+# get the yum history output
+runscript gethistory
+
 # show the policies
 runscript chkpolicy
 
