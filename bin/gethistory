@@ -19,16 +19,16 @@ fi
 if [[ -f /bin/yum ]]
 then
 
-  if [[ ! -d ${SCRIPTS_VAR}/history ]]
+  if [[ ! -d ${SCRIPTS_DATA}/history ]]
   then
-    mkdir ${SCRIPTS_VAR}/history
+    mkdir ${SCRIPTS_DATA}/history
   fi
 
   for i in `/bin/yum history list all | egrep -v "^(Loaded plugins|ID|history list|Uploading Enabled|----------|:)" | awk '{print $1}'`
   do
     if [[ $i != ':' ]]
     then
-      /bin/yum history info $i > ${SCRIPTS_VAR}/history/$i.output
+      /bin/yum history info $i > ${SCRIPTS_DATA}/history/$i.output
     fi
   done
 fi
