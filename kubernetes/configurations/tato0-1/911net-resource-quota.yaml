@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: 911net-resourcequota
+  namespace: 911net
+spec:
+  hard:
+    limits.cpu: "10500m"
+    limits.memory: 42Gi
+    requests.cpu: "5250m"
+    requests.memory: 21Gi
