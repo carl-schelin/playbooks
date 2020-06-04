@@ -27,7 +27,7 @@
   replace:
     dest: /etc/kubernetes/manifests/kube-apiserver.yaml
     regexp: '^    - --enable-admission-plugins=.*'
-    replace: '    - --enable-admission-plugins=NodeRestriction,AlwaysPullImages,ResourceQuota$'
+    replace: '    - --enable-admission-plugins=NodeRestriction,AlwaysPullImages,ResourceQuota'
 
 - name: Update the etcd image to point to the Artifactory Instance
   replace:
