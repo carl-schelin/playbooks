@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: crp-resourcequota
+  namespace: crp
+spec:
+  hard:
+    limits.cpu: "3000m"
+    limits.memory: 6Gi
+    requests.cpu: "1800m"
+    requests.memory: 4200Mi
