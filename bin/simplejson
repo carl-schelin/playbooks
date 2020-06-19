@@ -32,7 +32,7 @@ then
     PACKAGE='python-simplejson-2.0.9-8.el5.x86_64.rpm'
   fi
 
-  if [[ -f ${SCRIPTS_DATA}/${PACKAGE} ]]
+  if [[ -f ${SCRIPTS_INSTALL}/${PACKAGE} ]]
   then
 
 # potentially install only if the simplejson rpm is missing
@@ -48,7 +48,7 @@ then
       then
 
 # and install the missing rpm
-        rpm -ivh "$SCRIPTS_DATA}/${PACKAGE}"
+        rpm -ivh "${SCRIPTS_INSTALL}/${PACKAGE}"
 
         echo "Installed ${PACKAGE} to provide support for Ansible playbooks" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
 
