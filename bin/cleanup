@@ -382,7 +382,7 @@ do
 done
 
 # being ready for unixsuite scripts
-if [[ ! -f /opt/unixsuite ]]
+if [[ ! -d /opt/unixsuite ]]
 then
   mkdir /opt/unixsuite
   mkdir /opt/unixsuite/bin
@@ -421,4 +421,21 @@ then
   done
 
 fi
+
+# deleting rpms for hp-ux and solaris and moving them for linux into the install directory
+if [[ ! -f ${SCRIPTS_INSTALL}/linux-64 ]]
+then
+  mkdir -p ${SCRIPTS_INSTALL}/linux-64
+fi
+
+cd ${SCRIPTS_DATA}
+for i in `ls *.rpm`
+do
+  if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'SunOS' ]]
+  then
+    rm $i
+  else
+    mv $i ${SCRIPTS_INSTALL}/linux-64/
+  fi
+done
 
