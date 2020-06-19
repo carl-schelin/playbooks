@@ -596,6 +596,7 @@ then
 fi
 cd ${SCRIPTS_LOGS}
 tar cf ../etc.tar *
+gzip -9 ../etc.tar
 
 exit $EXITCODE
 
