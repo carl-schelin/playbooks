@@ -71,7 +71,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update snmpd.conf information"
-  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} snmpd.yaml -s
+  ansible-playbook -i ${HOSTS} --extra-vars "product=${OPTSITE}" ${OPTCHECK} snmpd.yaml -s
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
