@@ -1,0 +1,4 @@
+for the data servers, change ownership to elasticsearch:elasticsearch if /opt/elasticsearch exists
+
+for the servers, set the jvm.options memory settings to 50% of RAM
+
