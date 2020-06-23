@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# Defining the master Elastic Stack servers
+
+function usage() {
+  echo "Usage:"
+  echo "update -ehs [site]"
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s site - Site to attach"
+  echo "    Dev/SQA site: bldr"
+  echo "    CIL site: tato"
+  echo "    Production sites: lnmt miam"
+}
+
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+HOSTS="/usr/local/admin/etc/hosts"
+OPTCHECK=''
+OPTSITE=''
+while getopts "ehrs:l" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 1
+fi
+
+if [[ ! -z ${OPTCHECK} ]]
+then
+  echo "Validation enabled. No changes will be made to the systems."
+fi
+
+echo "Create Elasticsearch Master nodes"
+ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} master.yaml -s 
+
