@@ -1,0 +1,32 @@
+---
+- name: Install Java
+  yum:
+    name: java
+    state: latest
+
+- name: Install versionlock
+  yum:
+    name: yum-plugin-versionlock
+    state: latest
+
+- name: Remove logstash 7.5.0-1 lock
+  command: /usr/bin/yum versionlock delete "logstash-7.5.0-1.*"
+
+- name: Lock logstash at 7.8.0
+  command: /usr/bin/yum versionlock add "logstash-7.8.0"
+
+- name: Install logstash
+  yum:
+    name: logstash
+    state: latest
+
+- name: Enable logstash
+  systemd:
+    name: logstash
+    enabled: yes
+
+- name: Start logstash
+  systemd:
+    name: logstash
+    state: restarted
+
