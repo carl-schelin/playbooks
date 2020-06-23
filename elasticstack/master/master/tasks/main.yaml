@@ -1,0 +1,32 @@
+---
+- name: Install Java
+  yum:
+    name: java
+    state: latest
+
+- name: Install versionlock
+  yum:
+    name: yum-plugin-versionlock
+    state: latest
+
+- name: Remove elasticsearch 7.5.0-1 lock
+  command: /usr/bin/yum versionlock delete "elasticsearch-7.5.0-1.*"
+
+- name: Lock elasticsearch at 7.8.0
+  command: /usr/bin/yum versionlock add "elasticsearch-7.8.0*"
+
+- name: Install elasticsearch
+  yum:
+    name: elasticsearch
+    state: latest
+
+- name: Enable elasticsearch
+  systemd:
+    name: elasticsearch
+    enabled: yes
+
+- name: Start the elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted
+
