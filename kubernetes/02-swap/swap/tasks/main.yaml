@@ -1,4 +1,12 @@
 ---
+- name: Test if swap has been removed already
+  command: /bin/grep vg00-swap /etc/fstab
+  register: foobar
+
+- name: No point in doing this again if it's already been done.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.rc == 1
+
 - name: Remove swap from the fstab flie
   lineinfile:
     state: absent
@@ -13,6 +21,9 @@
 
 - name: Rebuild the grub2.cfg file
   command: /usr/sbin/grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Disable swap
+  command: /usr/sbin/swapoff -v /dev/mapper/vg00-swap
 
 - name: Unmount swap
   mount:
