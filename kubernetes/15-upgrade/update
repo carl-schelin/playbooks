@@ -75,8 +75,8 @@ fi
 /usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Lock docker at the current installed version"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} versionlock.yaml -s 
+  echo "Upgrading Kubernetes and Docker"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
