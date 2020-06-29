@@ -1,0 +1,11 @@
+---
+- hosts: "{{ site }}-master"
+  become: true
+  become_user: root
+  gather_facts: no
+
+  roles:
+    - clustername
+    - permissions
+    - images
+
