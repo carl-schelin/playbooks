@@ -156,7 +156,7 @@ then
         echo "    =======================================================================" >> /etc/motd
       else
 # if it's this year and this month and less than _or_ equal to today, report an error
-        if [[ $SWMONTH -eq $MONTH ]] && [[ $SWDAY -le $DAY ]]
+        if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -eq $MONTH ]] && [[ $SWDAY -le $DAY ]]
         then
           echo "    =======================================================================" >> /etc/motd
           echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
