@@ -75,9 +75,9 @@ spec:
         - name: ELASTICSEARCH_PORT
           value: "9200"
         - name: ELASTICSEARCH_USERNAME
-          value: elastic
+          value: ""
         - name: ELASTICSEARCH_PASSWORD
-          value: changeme
+          value: ""
         - name: ELASTIC_CLOUD_ID
           value:
         - name: ELASTIC_CLOUD_AUTH
