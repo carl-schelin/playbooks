@@ -24,8 +24,6 @@ data:
     processors:
       - add_cloud_metadata:
       - add_host_metadata:
-  # Add deployment environment field to every event to make it easier to sort between Dev and SQA logs.
-  # DEPLOY_ENV values: dev, sqa, staging, or prod
       - add_fields:
           target: ''
           fields:
