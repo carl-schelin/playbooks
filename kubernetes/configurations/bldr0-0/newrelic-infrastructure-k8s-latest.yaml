@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: newrelic
-  namespace: default
+  namespace: monitoring
 automountServiceAccountToken: true
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -35,13 +35,13 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: newrelic
-  namespace: default
+  namespace: monitoring
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: newrelic-infra
-  namespace: default
+  namespace: monitoring
   labels:
     app: newrelic-infra
 spec:
@@ -147,21 +147,3 @@ spec:
           effect: "NoSchedule"
         - operator: "Exists"
           effect: "NoExecute"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nri-default-integration-cfg # integrations config provided by default
-  namespace: default
-data:
-  nri-kubernetes-config.yml: |
-    integration_name: com.newrelic.kubernetes
-    instances:
-      - name: nri-kubernetes
-        command: metrics
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nri-integration-cfg # aimed to be safely overridden by users
-  namespace: default
