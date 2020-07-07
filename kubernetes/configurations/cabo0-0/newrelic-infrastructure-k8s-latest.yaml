@@ -79,10 +79,6 @@ spec:
               readOnly: true
             - mountPath: /var/run/docker.sock
               name: host-docker-socket
-            - mountPath: /var/db/newrelic-infra/integrations.d/
-              name: nri-default-integration-cfg-volume
-            - mountPath: /etc/newrelic-infra/integrations.d/
-              name: nri-integration-cfg-volume
           env:
             - name: "CLUSTER_NAME"
               value: "QA cabo0-0"
@@ -136,12 +132,6 @@ spec:
         - name: host-docker-socket
           hostPath:
             path: /var/run/docker.sock
-        - name: nri-default-integration-cfg-volume
-          configMap:
-            name: nri-default-integration-cfg
-        - name: nri-integration-cfg-volume
-          configMap:
-            name: nri-integration-cfg
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
