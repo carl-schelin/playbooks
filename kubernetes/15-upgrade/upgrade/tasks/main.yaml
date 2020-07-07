@@ -45,6 +45,8 @@
 - name: Lock kubeadm at 1.17.6
   command: /usr/bin/yum versionlock add "kubeadm-1.17.6-0.*"
 
+- name: Lock kubernetes-cni at 0.7.5
+  command: /usr/bin/yum versionlock add "kubernetes-cni-0.7.5-0*"
 
 - name: Lock docker at 1.13.1-161
   command: /usr/bin/yum versionlock "docker-1.13.1-161.*"
@@ -94,4 +96,5 @@
   yum:
     name: docker-rhel-push-plugin-1.13.1-161.git64e9980.el7_8.x86_64
     state: present
+  ignore_errors: yes
 
