@@ -56,7 +56,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: safety-systems.docker.west.com/elastic/beats/filebeat:7.8.0
+        image: safety-systems.docker.west.com/beats/filebeat:7.8.0
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
@@ -70,10 +70,6 @@ spec:
           value: ""
         - name: ELASTICSEARCH_PASSWORD
           value: ""
-        - name: ELASTIC_CLOUD_ID
-          value:
-        - name: ELASTIC_CLOUD_AUTH
-          value:
         - name: NODE_NAME
           valueFrom:
             fieldRef:
