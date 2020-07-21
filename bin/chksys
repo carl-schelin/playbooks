@@ -808,7 +808,7 @@ function network_iface {
 function filesystem {
   case $OS in
   'Linux')
-    for i in `/bin/df -kP | /bin/grep -v Filesystem | /bin/grep "^/" | /bin/awk '{print $1","$2","$6}'`
+    for i in `/bin/df -kP | /bin/grep -v Filesystem | /bin/grep "^/" | /bin/awk '{print $1","$2","$6","$3","$4","$5}'`
     do
       logit "system" "filesystem" "$i"
     done
@@ -821,10 +821,13 @@ function filesystem {
   
       DEVICE=`df -k $MOUNT | grep -v Filesystem | /bin/awk '{print $1}'`
       SPACE=`df -k $MOUNT | grep -v Filesystem | /bin/awk '{print $2}'`
+      AVAIL=`df -k $MOUNT | grep -v Filesystem | /bin/awk '{print $3}'`
+      USED=`df -k $MOUNT | grep -v Filesystem | /bin/awk '{print $4}'`
+      PERCENT=`df -k $MOUNT | grep -v Filesystem | /bin/awk '{print $5}'`
 
       if [[ ! $SPACE = 0 ]]
       then
-        logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT"
+        logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT,$AVAIL,$USED,$PERCENT"
       fi
     done
   ;;
@@ -840,7 +843,11 @@ function filesystem {
         SPACE=`echo $i|cut -f4 -d,`
       fi
 
-      logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT"
+      AVAIL=`df -kl $MOUNT | grep 'free allocated' | awk '{print $1}'`
+      USED=`df -kl $MOUNT | grep 'used allocated' | awk '{print $1}'`
+      PERCENT=`df -kl $MOUNT | grep 'allocation used' | awk '{print $1"%"}'`
+
+      logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT,$AVAIL,$USED,$PERCENT"
     done
   ;;
   esac
