@@ -422,6 +422,11 @@ then
 
 fi
 
+if [[ -f ${SCRIPTS_DATA}/chksudo.bak ]]
+then
+  rm ${SCRIPTS_DATA}/chksudo.bak
+fi
+
 # deleting rpms for hp-ux and solaris and moving them for linux into the install directory
 if [[ ! -f ${SCRIPTS_INSTALL}/linux-64 ]]
 then
