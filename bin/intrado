@@ -279,6 +279,9 @@ runscript chkcrash
 # pre-process the messages files
 runscript chkmessages
 
+# check yum if it exists
+runscript chkyum
+
 # Update the nessus key
 runscript nessus
 
