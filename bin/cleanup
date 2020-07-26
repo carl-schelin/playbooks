@@ -427,6 +427,12 @@ then
   rm ${SCRIPTS_DATA}/chksudo.bak
 fi
 
+ROOTHOME=`grep "^root:" /etc/passwd | cut -f6 -d:`
+if [[ -f ${ROOTHOME}/.forward ]]
+then
+  cp ${ROOTHOME}/.forward ${SCRIPTS_DATA}/root.forward
+fi
+
 # deleting rpms for hp-ux and solaris and moving them for linux into the install directory
 if [[ ! -f ${SCRIPTS_INSTALL}/linux-64 ]]
 then
