@@ -450,3 +450,13 @@ do
   fi
 done
 
+if [[ -f /opt/intrado/etc.tar ]]
+then
+  rm /opt/intrado/etc.tar
+fi
+
+if [[ -f /opt/unixsuite/etc.tar ]]
+then
+  rm /opt/unixsuite/etc.tar
+fi
+
