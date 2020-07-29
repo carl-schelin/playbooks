@@ -89,7 +89,7 @@ then
   cp ${SCRIPTS_DATA}/motd /etc/motd
 
 # update motd with system information
-  IMPORT="${SCRIPTS_DATA}/chksys.import"
+  IMPORT="${SCRIPTS_LOGS}/chksys.import"
   FINGERPRINT="${SCRIPTS_DATA}/fingerprint"
 
   echo "    =======================================================================" > /etc/motd
