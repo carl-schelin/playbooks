@@ -590,7 +590,7 @@ find ${SCRIPTS_LOGS} -type f -exec chmod 660 {} \;
 # Clean up the old data files in case they exist.
 find ${SCRIPTS_LOGS} -atime +1 -exec rm {} \;
 
-# Finally create a tar file of all the data in the etc directory. Give it 5 minutes before performing this step
+# Finally create a tar file of all the data. For the intrado scripts it's in etc. for the unixsuite scripts it's in var. Basically what SCRIPTS_LOGS points to. Give it 5 minutes before performing this step
 sleep 300
 if [[ -f ${SCRIPTS}/etc.tar.gz ]]
 then
