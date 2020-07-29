@@ -41,10 +41,19 @@
 
 ## Search for 'main function' to get to the meat
 
-HOSTNAME=`hostname|cut -f1 -d.`
-LOG=/opt/intrado/etc/chksys.import
-#LOG=`pwd`/chksystest.out
-OS=`uname`
+BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+LOG=${SCRIPTS_LOGS}/chksys.import
 TIMEZONE=`date +"%Z"`
 
 function logit {
@@ -261,8 +270,8 @@ function software {
       pkgname=$pkg
     fi
  
-    if [[ -f /opt/intrado/etc/${sftpkg}.version ]]; then
-      SFTWARE=`head -1 /opt/intrado/etc/${sftpkg}.version`
+    if [[ -f ${SCRIPTS_LOGS}/${sftpkg}.version ]]; then
+      SFTWARE=`head -1 ${SCRIPTS_LOGS}/${sftpkg}.version`
       if [[ -n "${SFTWARE}" ]]; then
         logit "software" "${pkgname}" "${SFTWARE}"
       fi
