@@ -5,7 +5,7 @@ metadata:
   namespace: crp
 spec:
   hard:
-    limits.cpu: "3000m"
-    limits.memory: 6Gi
-    requests.cpu: "1800m"
-    requests.memory: 4200Mi
+    limits.cpu: "2000m"
+    limits.memory: 4Gi
+    requests.cpu: "1200m"
+    requests.memory: 2800Mi
