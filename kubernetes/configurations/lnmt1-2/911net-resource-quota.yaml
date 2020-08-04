@@ -5,7 +5,7 @@ metadata:
   namespace: 911net
 spec:
   hard:
-    limits.cpu: "10500m"
-    limits.memory: 42Gi
-    requests.cpu: "5250m"
-    requests.memory: 21Gi
+    limits.cpu: "15600m"
+    limits.memory: "37696Mi"
+    requests.cpu: "13000m"
+    requests.memory: "26624Mi"
