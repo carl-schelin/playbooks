@@ -6,33 +6,33 @@
     state: latest
 
 
-- name: Delete versionlock for kubelet at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubelet-1.16.8-0.*"
+- name: Delete versionlock for kubelet
+  command: /usr/bin/yum versionlock delete "kubelet.*"
   ignore_errors: yes
 
-- name: Delete versionlock for kubectl at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubectl-1.16.8-0.*"
+- name: Delete versionlock for kubectl
+  command: /usr/bin/yum versionlock delete "kubectl.*"
   ignore_errors: yes
 
-- name: Delete versionlock for kubeadm at 1.16.8
-  command: /usr/bin/yum versionlock delete "kubeadm-1.16.8-0.*"
+- name: Delete versionlock for kubeadm
+  command: /usr/bin/yum versionlock delete "kubeadm.*"
   ignore_errors: yes
 
 
-- name: Delete versionlock for docker at 1.13.1-104
-  command: /usr/bin/yum versionlock delete "docker-1.13.1-104.*"
+- name: Delete versionlock for docker-rhel-push-plugin
+  command: /usr/bin/yum versionlock delete "docker-rhel-push-plugin.*"
   ignore_errors: yes
 
-- name: Delete versionlock for docker-common at 1.13.1-104
-  command: /usr/bin/yum versionlock delete "docker-common-1.13.1-104.*"
+- name: Delete versionlock for docker-common
+  command: /usr/bin/yum versionlock delete "docker-common.*"
   ignore_errors: yes
 
-- name: Delete versionlock for docker-client at 1.13.1-104
-  command: /usr/bin/yum versionlock delete "docker-client-1.13.1-104.*"
+- name: Delete versionlock for docker-client
+  command: /usr/bin/yum versionlock delete "docker-client.*"
   ignore_errors: yes
 
-- name: Delete versionlock for docker-rhel-push-plugin at 1.13.1-104
-  command: /usr/bin/yum versionlock delete "docker-rhel-push-plugin-1.13.1-104.*"
+- name: Delete versionlock for docker
+  command: /usr/bin/yum versionlock delete "docker.*"
   ignore_errors: yes
 
 
