@@ -1,0 +1,42 @@
+# Updating the sshd_config file for some common settings.
+# remote the ability for root to remotely log in
+# Remove the issue with the ssh_host_dsa_key file missing and no HostKey entries to properly define the available keys
+# Update to show /etc/issue when logging in
+---
+- name: Remove remote root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regex: '^PermitRootLogin no'
+    insertafter: "^#PermitRootLogin yes"
+    line: 'PermitRootLogin no'
+
+- name: Check for /etc/ssh/ssh_host_ecdsa_key
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_ecdsa_key'
+    line: 'HostKey /etc/ssh/ssh_host_ecdsa_key'
+
+- name: Check for /etc/ssh/ssh_host_ed25519_key
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_ed25519_key'
+    line: 'HostKey /etc/ssh/ssh_host_ed25519_key'
+
+- name: Check for /etc/ssh/ssh_host_rsa_key
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_rsa_key'
+    line: 'HostKey /etc/ssh/ssh_host_rsa_key'
+
+- name: Update the banner line to point to /etc/issue
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Banner /etc/issue'
+    line: 'Banner /etc/issue'
+
+- name: restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+
