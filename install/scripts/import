@@ -1,0 +1,209 @@
+#!/bin/bash
+
+DATE=`date +"%Y%m%d"`
+HERE=`pwd`
+HOSTNAME=`hostname|cut -f1 -d.`
+DATABASES="stnlocator inventory status"
+
+STAGE=/var/tmp/mysql/stage
+if [[ ! -d $STAGE ]]
+then
+  mkdir -p $STAGE
+fi
+
+
+while getopts ":s:d:h" opt
+do
+  case $opt in
+    s)
+      SOURCE=$OPTARG
+
+      ;;
+
+    d)
+      DATE=$OPTARG
+
+      ;;
+
+    h)
+      echo "Help:"
+      echo "import -s Source Database -d Alternate date -h"
+      echo "where:"
+      echo " -s - The database to import. Make sure you create the database first."
+      echo "    - stnlocator - STN Locator app"
+      echo "    - inventory - Intrado inventory app"
+      echo "    - status - Intrado status app"
+      echo " -d - An alternate date to load in case you want older data."
+      echo " -h - Help."
+      exit 1
+
+      ;;
+
+    \?)
+      echo "Invalid Parameter for the passed option: $OPTARG"
+      exit 1
+
+      ;;
+
+    :)
+      echo "The option requires a Parameter"
+      exit 1
+
+      ;;
+  esac
+
+done
+
+# in case just the database is passed
+for i in $DATABASES
+do
+  if [[ "$1" = "$i" ]]
+  then
+    SOURCE=$1
+  fi
+done
+
+if [[ -z $SOURCE ]]
+then
+  echo "Help:"
+  echo "import -s Source Database -d Alternate date -h"
+  echo "where:"
+  echo " -s - The database to import. Make sure you create the database first."
+  echo "    - stnlocator - STN Locator app"
+  echo "    - inventory - Intrado inventory app"
+  echo "    - status - Intrado status app"
+  echo " -d - An alternate date to load in case you want older data."
+  echo " -h - Help."
+  exit 1
+fi
+
+CURRENT=mysql.$DATE.tar.gz
+
+cd $STAGE
+echo $SOURCE
+
+if [[ $SOURCE = 'stnlocator' ]]
+then
+  echo "Importing the stnlocator mysql files"
+  if [[ -d $STAGE/guardian ]]
+  then
+    rm -rf $STAGE/guardian
+  fi
+
+  if [[ ! -z "`ls $STAGE/mysql.*.tar.gz`" ]]
+  then
+    rm $STAGE/mysql.*.tar.gz
+  fi
+
+  scp guardian:/var/tmp/mysql/mysql.$DATE.tar.gz .
+
+  gzip -dc $CURRENT | tar fvx -
+
+  mv mysql.$DATE guardian
+
+  cd $STAGE/guardian/$SOURCE
+
+  echo "Importing the SQL files"
+  for i in `ls *.sql`
+  do
+    echo $i
+    mysql --user=root --password='this4now!!' $SOURCE < $i
+  done
+
+  echo "Importing the data"
+  for i in `ls *.txt`
+  do
+    mysqlimport --local --user=root --password='this4now!!' $SOURCE `pwd`/$i
+  done
+
+fi
+
+
+if [[ $SOURCE = 'inventory' ]]
+then
+  echo "Importing the inventory mysql files"
+  if [[ -d $STAGE/inventory ]]
+  then
+    rm -rf $STAGE/inventory
+  fi
+
+  if [[ ! -z "`ls $STAGE/mysql.*.tar.gz`" ]]
+  then
+    rm $STAGE/mysql.*.tar.gz
+  fi
+
+  if [[ -f /opt/transfer/mysql.inventory.tar.gz ]]
+  then
+    cp /opt/transfer/mysql.inventory.tar.gz .
+    mv mysql.inventory.tar.gz $CURRENT
+  else
+    scp incojs01:/var/tmp/mysql/$CURRENT .
+  fi
+
+  gzip -dc $CURRENT | tar fvx -
+
+  mv mysql.$DATE inventory
+
+  cd inventory/inventory
+
+  echo "Importing the SQL files"
+  for i in `ls *.sql`
+  do
+    echo $i
+    mysql --user=root --password='53Rv!c3!' inventory < $i
+  done
+
+  echo "Importing the data"
+  for i in `ls *.txt`
+  do
+    mysqlimport --local --user=root --password='53Rv!c3!' inventory `pwd`/$i
+  done
+
+fi
+
+
+if [[ $SOURCE = 'status' ]]
+then
+  echo "Importing the status mysql files"
+  if [[ -d $STAGE/status ]]
+  then
+    rm -rf $STAGE/status
+  fi
+
+  if [[ ! -z "`ls $STAGE/mysql.*.tar.gz`" ]]
+  then
+    rm -rf $STAGE/mysql.*.tar.gz
+  fi
+
+  if [[ -f /opt/transfer/mysql.status.tar.gz ]]
+  then
+    cp /opt/transfer/mysql.status.tar.gz .
+    mv mysql.status.tar.gz $CURRENT
+  else
+    scp status.intrado.com:/var/tmp/mysql/$CURRENT .
+  fi
+
+  gzip -dc mysql.$DATE.tar.gz | tar fvx -
+
+  mv mysql.$DATE status
+
+  cd status/status
+
+  echo "Importing the Status SQL files"
+  for i in `ls *sql`
+  do
+    echo $i
+    mysql --user=root --password='this4now!!' status < $i
+  done
+
+  echo "Importing the Status data"
+  for i in `ls *txt`
+  do
+    mysqlimport --local --user=root --password='this4now!!' status `pwd`/$i
+  done
+fi
+
+cd $HERE
+
+echo "Done"
+
