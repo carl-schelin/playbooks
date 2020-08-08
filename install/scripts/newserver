@@ -1,0 +1,56 @@
+#!/bin/ksh
+
+# newserver
+# Carl Schelin
+# Initializes a server, copies the data from the server to the server directory, and imports the data.
+
+ADMIN=/usr/local/admin
+
+if [[ -z $1 ]]
+then
+  echo "Usage: newserver hostname"
+  echo ""
+  echo "hostname - The hostname of the new server entry"
+  echo ""
+  exit 1
+fi
+
+echo "This script assumes you've already run either the configure script"
+echo "or the chksys script on $1 prior to running this script. Break "
+echo "the script here and go configure the new system and then restart "
+echo "this script"
+echo ""
+read
+
+echo "Initializing $1"
+/usr/local/bin/inventory -f -z -d $1
+
+if [[ $? = 1 ]]
+then
+  echo "ERROR: Initializing the server has failed"
+  exit 1
+fi
+
+echo "Rebuilding servers file (this takes a minute or two)"
+/usr/local/httpd/bin/servers.list.php > /usr/local/httpd/htsecure/inventory/servers.unix
+
+if [[ ! -d $ADMIN/servers/$1 ]]
+then
+  mkdir $ADMIN/servers/$1
+fi
+
+echo "Retrieving the chksys.import file from $1"
+scp $i:/opt/intrado/etc/chksys.import $ADMIN/servers/$1/
+
+if [[ ! -f $ADMIN/servers/$1/chksys.import ]]
+then
+  echo "ERROR: Unable to locate $ADMIN/servers/$1/chksys.import"
+  exit 1
+fi
+
+echo "Importing the data into the inventory"
+/usr/local/bin/inventory -f -i -d $1
+
+echo "Here's the information for $1 from the inventory"
+/usr/local/bin/inventory -d $1
+
