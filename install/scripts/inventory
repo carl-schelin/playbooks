@@ -1,0 +1,170 @@
+#!/bin/ksh
+
+# invadm
+# By: Carl Schelin
+# Description: Wrapper over the inventory.php script to make it easier to pass info.
+# added wrapper to import.php script to permit importing data from chksys file
+# added wrapper to initialize.php to permit creating a new record on the fly.
+
+ADMIN=/usr/local/admin
+HTTPD=/usr/local/httpd
+IMPORT='NO'
+INITIALIZE='NO'
+#default is to query the inventory
+QUERY='YES'
+RETURN=0
+
+if [[ -z $1 ]]
+then
+  echo "Usage: inventory [Device | [-fhisncz [-p Project|-d Device|-a IP Address|-m MAC Address|-t Asset Tag|-v Serial/Service Number|-r Server ID]]"
+  echo ""
+  echo "Passing the Device name by itself returns the Core information about the Device or you can use the parameters below to get more information"
+  echo ""
+  echo "-a - IP Address Search."
+  echo "-c - Output is csv"
+  echo "-d - Device Search."
+  echo "-f - Include retired servers"
+  echo "-h - Core + Hardware"
+  echo "-i - Import server information - This executes the $HTTPD/bin/import.php script vs the $HTTPD/bin/inventory.php script."
+  echo "-m - MAC Address Search."
+  echo "-n - Core + Network"
+  echo "-p - Project listing. Pass project name."
+  echo "-r - Remove a server from the Inventory. You MUST pass the Server ID, not the Server NAME."
+  echo "-s - Core + Software"
+  echo "-t - Asset Tag search"
+  echo "-v - Serial Number or Dell Service Tag"
+  echo "-z - Initialize a new server, use with -d - This executes the $HTTPD/bin/initialize.php script vs the $HTTPD/bin/inventory.php script."
+  exit 1
+fi
+
+# if just one parameter passed (inventory incojs01 for example), assume it's a server name
+if [[ -z $2 ]]
+then
+  SERVER=$1
+else
+  while getopts "fhisnczp:r:d:a:m:t:v:" opt
+  do
+    case $opt in
+      a) IPADDR=$OPTARG
+        ;;
+      d) SERVER=$OPTARG
+        ;;
+      f) FORCE=yes
+        ;;
+      i) IMPORT='YES'
+         QUERY='NO'
+         INITIALIZE='NO'
+        ;;
+      m) MACADDR=$OPTARG
+        ;;
+      p) PROJECT=$OPTARG
+        ;;
+      r) SERVERID=$OPTARG
+        ;;
+      t) ASSET=$OPTARG
+        ;;
+      v) SERIAL=$OPTARG
+        ;;
+      z) INITIALIZE='YES'
+         QUERY='NO'
+         IMPORT='NO'
+        ;;
+    esac
+  done
+fi
+
+
+# add a search to get the server name from the servers file
+if [[ -z $FORCE ]] && [[ ! -z $SERVER ]] && [[ $QUERY = 'YES' ]]
+then
+  SVRNAME=`egrep "($SERVER:|,$SERVER,)" $ADMIN/etc/servers | cut -f1 -d: | grep $SERVER`
+else
+  if [[ ! -z $SERVER ]]
+  then
+    SVRNAME=$SERVER
+  fi
+  if [[ ! -z $PROJECT ]]
+  then
+    SVRNAME=$PROJECT
+  fi
+  if [[ ! -z $SERVERID ]]
+  then
+    SVRNAME=$SERVERID
+  fi
+fi
+
+if [[ ! -z "${SVRNAME}${IPADDR}${MACADDR}${SERIAL}${ASSET}" ]]
+then
+  if [[ $INITIALIZE = 'YES' ]]
+  then
+    if [[ -f $HTTPD/bin/initialize.php ]]
+    then
+      echo "This will create a new entry in the Inventory. Are you sure? (y/N) "
+      read INPUT
+      if [[ $INPUT = 'y' ]] 
+      then
+        cd $HTTPD/bin
+        /usr/local/bin/php initialize.php $SVRNAME
+
+        if [[ $? = 1 ]]
+        then
+          echo "Initialization failed."
+          exit 1
+        fi
+      else
+        echo "Aborting initialization"
+      fi
+    else
+      echo "Unable to locate $HTTPD/bin/initialize.php"
+    fi
+  fi
+
+  if [[ $IMPORT = 'YES' ]]
+  then
+    if [[ -f $HTTPD/bin/import.php ]]
+    then
+      if [[ -f $ADMIN/servers/$SVRNAME/chksys.import ]]
+      then
+        cd $HTTPD/bin
+        /usr/local/bin/php import.php $ADMIN/servers/$SVRNAME/chksys.import
+        echo "----------------------------------------------------------------------"
+        echo "if you receive: Sorry: Unable to locate miamfldcgrt20 in the database."
+        echo "  it means at least one interface must be entered with the name $SVRNAME "
+        echo "  in order for the import script to locate the server."
+        echo "----------------------------------------------------------------------"
+        echo "if you receive: ERROR: Unable to locate model: \"Intel(R) Xeon(R) CPU E5-2667 v3 @ 3.20GHz\" size: \"8 cores\""
+        echo "  it means that the model information isn't in the database. You can add it and the next time "
+        echo "  data is imported, it'll be added to the server."
+        echo "----------------------------------------------------------------------"
+      else
+        echo "----------------------------------------------------------------------"
+        echo "Unable to locate $ADMIN/servers/$SVRNAME/chksys.import file."
+        echo "You'll need to run the configure script or chksys script on the server"
+        echo "and copy it into $ADMIN/servers/$SVRNAME or pass the correct server "
+        echo "name on the command line: inventory -i -d [server name]"
+        echo "----------------------------------------------------------------------"
+      fi
+    else
+      echo "Unable to locate $HTTPD/bin/import.php"
+    fi
+  fi
+
+  if [[ $QUERY = 'YES' ]]
+  then
+    if [[ -f $HTTPD/bin/inventory.php ]]
+    then
+      cd $HTTPD/bin
+      /usr/local/bin/php inventory.php $1 $2 $3 $4 $5 $6 $7 $8 $9
+      RETURN=$?
+    else
+      echo "Unable to locate $HTTPD/bin/inventory.php"
+    fi
+  fi
+
+else
+  echo "Server name: $SERVER not found in $ADMIN/etc/servers!"
+  RETURN=1
+fi
+
+exit ${RETURN}
+
