@@ -1,0 +1,18 @@
+#!/bin/bash
+
+for i in `ls *php | grep -v settings.php`
+do
+  checkout $i
+  vi $i
+  checkin $i
+done
+
+for i in `ls *php`
+do
+  OUTPUT=`grep called $i`
+  if [[ -z $OUTPUT ]]
+  then
+    echo $i
+  fi
+done
+
