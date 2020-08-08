@@ -1,0 +1,122 @@
+#!/bin/ksh
+
+# script used to create the directory structure and copy all files located in 
+# the manifest into someone's home directory so they can manage source code files.
+
+usage() {
+  cat << EOF
+install creates the necessary directory structure and copies in the files so you can start updating code
+
+OPTIONS:
+  -h - This help - Default
+  -p - Product to install
+       admin
+       changelog - this should be a html directory such as /var/www/html
+       httpd
+       intrado
+       inventory - this should be a html directory such as /var/www/html
+       kubeadm - need to have a -v (version) flag
+       kubecerts - need to have a -v (version) flag
+       kubernetes - need to have a -v (version) flag
+       status
+  -v - If a kubernetes related install, pass the version.
+       2 - the current production 1.2.0 scripts
+       9 - the current production 1.9.0 scripts
+       10 - the current production 1.10.5 scripts
+       11 - the current production 1.11.2 scripts
+       13 - the current production 1.13.0 scripts
+EOF
+}
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 1
+fi
+
+VERSION=""
+while getopts hp:v: optchar
+do
+  case $optchar in
+    h) usage
+       exit 1
+      ;;
+    v) case $OPTARG in
+         2) VERSION="1.2.0"
+            ;;
+         9) VERSION="1.9.0"
+            ;;
+         10) VERSION="1.10.5"
+            ;;
+         11) VERSION="1.11.2"
+            ;;
+         13) VERSION="1.13"
+            ;;
+       esac
+      ;;
+    p) PRODUCT=$OPTARG
+       ;;
+    *) usage
+       exit 1
+       ;;
+  esac
+done
+
+CODE="/opt/code"
+SOURCE="${CODE}/${PRODUCT}"
+MANIFEST="manifest.$PRODUCT"
+CWD=`pwd`
+TARGET="$CWD/$PRODUCT"
+
+if [[ ${PRODUCT} = 'kubeadm' ]] || [[ ${PRODUCT} = 'kubecerts' ]] || [[ ${PRODUCT} = 'kubernetes' ]]
+then
+  if [[ -z ${VERSION} ]]
+  then
+    usage
+    exit 1
+  fi
+  MANIFEST="manifest.${PRODUCT}.${VERSION}"
+  TARGET="${CWD}/kubernetes/${VERSION}/${PRODUCT}"
+  SOURCE="${CODE}/kubernetes/${VERSION}/${PRODUCT}"
+fi
+
+if [[ ! -d ${TARGET} ]]
+then
+  mkdir -p ${TARGET}
+fi
+
+cd ${CODE}
+
+if [[ ! -f ${MANIFEST} ]]
+then
+  echo "The ${MANIFEST} file does not exist. Exiting..."
+  exit 1
+fi
+
+for i in `egrep -v "^(#|$)" ${MANIFEST}`
+do
+
+  OUTPUT=`echo $i | sed -e "s/_/ /"`
+  PLUS=`echo ${OUTPUT} | awk '{print $1}'`
+  REMAIN=`echo ${OUTPUT} | awk '{print $2}'`
+
+  if [[ "${PLUS}" = "^" ]]
+  then
+    echo ${OUTPUT}
+  else
+    if [[ ${PLUS} = "+" ]]
+    then
+      mkdir -p ${TARGET}/${REMAIN}/
+    else
+      cp ${SOURCE}/${i} ${TARGET}/${i}
+      if [[ ! -f ${TARGET}/${i} ]]
+      then
+        echo "Failed to copy ${SOURCE}/${i} to ${TARGET}/${i}"
+      fi
+    fi
+  fi
+
+done
+
+cd ${CWD}
+
