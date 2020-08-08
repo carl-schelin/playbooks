@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# checkin      - Check code in from the working directory (/opt/html) to the code repository (/opt/code)
+
+if [[ -z "${1}" ]]
+then
+  echo "Check in code from the working directory (htsecure) to the code repo (code)."
+  echo "Usage: checkin [file name]"
+  exit 1
+fi
+
+PROGRAM=$1
+
+if [[ ! -f "${PROGRAM}" ]]
+then
+  echo "ERROR: $PROGRAM not found"
+  exit 1
+fi
+
+TESTED="no"
+
+echo "==========================================================================================="
+echo "${PROGRAM}" | egrep ".php$" > /dev/null
+if [[ $? -eq 0 ]]
+then
+  TESTED="yes"
+  echo "Lint check of $PROGRAM"
+  php -l "${PROGRAM}" > /dev/null
+  if [[ $? -ne 0 ]]
+  then
+    echo "ERROR in $PROGRAM"
+    php -l "${PROGRAM}"
+    exit 1
+  else
+    echo "$PROGRAM passed"
+  fi
+fi
+
+file "${PROGRAM}" | egrep "(a /usr/bin/ksh script|Korn shell script)" > /dev/null
+if [[ $? -eq 0 ]]
+then
+  TESTED="yes"
+  echo "Shell Check check of $PROGRAM"
+  shellcheck "${PROGRAM}" > /dev/null
+  if [[ $? -ne 0 ]]
+  then
+    echo "ERROR in $PROGRAM"
+    shellcheck "${PROGRAM}"
+  else
+    echo "$PROGRAM passed"
+  fi
+fi
+
+if [[ "${TESTED}" = 'no' ]]
+then
+  echo "WARNING: $PROGRAM not checked"
+  file "${PROGRAM}"
+fi
+echo "==========================================================================================="
+
+# get the current directory name; replace htsecure with code and check it in
+CURRENT=$(pwd)
+BASENAME=$(basename "${CURRENT}")
+
+HTSECURE=$(echo "${CURRENT}" | grep htsecure)
+SCRIPTS=$(echo "${CURRENT}" | grep scripts)
+if [[ -d RCS ]]
+then
+  RCS=$(ls -d RCS)
+else
+  RCS=''
+fi
+if [[ -z $HTSECURE ]] && [[ -z $SCRIPTS ]] && [[ -z $RCS ]]
+then
+  echo "You are not in a code managed area (~/htsecure, ~/scripts, or ./RCS). Exiting."
+  exit 1
+fi
+
+if [[ ! -z $RCS ]]
+then
+  if [[ $BASENAME = 'code' ]] || [[ $BASENAME = 'stage' ]]
+  then
+    LOCATION=$CURRENT
+  else
+    echo "You are in a code managed area. Please work on scripts/code in your working directories."
+    exit
+  fi
+fi
+if [[ -z $SCRIPTS ]]
+then
+  LOCATION="${CURRENT//\/htsecure\///code/}"
+fi
+if [[ -z $HTSECURE ]]
+then
+  LOCATION="${CURRENT//\/scripts\///code/}"
+fi
+
+# okay, we know where we are. check to see if the code is checked out.
+cd "${LOCATION}"
+
+if [[ -f "${PROGRAM}" ]]
+then
+  STATUS=$(ls -l "${PROGRAM}" | grep rw)
+  if [[ -z $STATUS ]]
+  then
+    echo "$PROGRAM has not been checked out. Check the code out before checking it in."
+    cd "${CURRENT}"
+    echo "==========================================================================================="
+    echo "Difference between checked in stable and current code"
+    echo "==========================================================================================="
+    diff "${CURRENT}"/"${PROGRAM}" "${LOCATION}"/"${PROGRAM}"
+    echo "==========================================================================================="
+  else
+    if [[ $CURRENT != $LOCATION ]]
+    then
+      cp "${CURRENT}"/"${PROGRAM}" .
+    fi
+    echo "Difference between checked in stable and current code (for review and to help with checkin comments)."
+    echo "==========================================================================================="
+    rcsdiff "${PROGRAM}"
+    echo "==========================================================================================="
+    ci -u "${PROGRAM}"
+    cd "${CURRENT}"
+    echo "$PROGRAM checked in"
+  fi
+else
+  if [[ $CURRENT != $LOCATION ]]
+  then
+    cp "${CURRENT}"/"${PROGRAM}" .
+  fi
+  echo "New script being checked in..."
+  echo "==========================================================================================="
+  ci -u "${PROGRAM}"
+  cd "${CURRENT}"
+  echo "$PROGRAM checked in"
+fi
+
