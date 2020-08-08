@@ -1,0 +1,7 @@
+#!/bin/ksh
+
+cd /opt/code
+./makeplaybooks
+cd /opt/stage
+./syncplaybooks
+
