@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# checkout     - Check out code from the code repository (/opt/code) to the working directory (/opt/html)
+
+if [[ -z $1 ]]
+then
+  echo "Usage: checkout [file name]"
+  exit 1
+fi
+
+PROGRAM=$1
+
+# get the current directory, check for htsecure, replace htsecure with code
+
+CURRENT=`pwd`
+BASENAME=`basename $CURRENT`
+DIRNAME=`dirname $CURRENT`
+
+# are we in the website working directory (htsecure) or a scripting working directory?
+HTSECURE=`echo $CURRENT | grep htsecure`
+SCRIPTS=`echo $CURRENT | grep scripts`
+if [[ -d RCS ]]
+then
+  RCS=`ls -d RCS`
+else
+  RCS=''
+fi
+if [[ -z $HTSECURE ]] && [[ -z $SCRIPTS ]] && [[ -z $RCS ]]
+then
+  echo "You are not in a code managed area (~/htsecure or ~/scripts). Exiting."
+  exit 1
+fi
+
+if [[ ! -z $RCS ]]
+then
+  if [[ $BASENAME = 'code' ]] || [[ $BASENAME = 'stage' ]]
+  then
+    LOCATION=$CURRENT
+  else
+    echo "You are in a code managed area. Please work on scripts/code in your working directories (~/htsecure or ~/scripts)."
+    exit
+  fi
+fi
+if [[ -z $SCRIPTS ]]
+then
+  LOCATION=`echo $CURRENT | sed -e "s/\/htsecure\//\/code\//g"`
+fi
+if [[ -z $HTSECURE ]]
+then
+  LOCATION=`echo $CURRENT | sed -e "s/\/scripts\//\/code\//g"`
+fi
+
+# okay, we know where we are. change to the appropriate section and check the code status first
+cd $LOCATION
+
+if [[ ! -d RCS ]]
+then
+  echo "This area is not managed by RCS (no RCS directory)"
+  exit 1
+fi
+
+if [[ ! -f RCS/$PROGRAM,v ]]
+then
+  echo "This program has not been checked into RCS (no RCS/$PROGRAM,v)"
+  exit 1
+fi
+
+STATUS=`ls -l $PROGRAM | grep rw`
+if [[ ! -z $STATUS ]]
+then
+  echo "$PROGRAM has already been checked out. Check the code back in before checking it out again."
+  echo "==========================================================================================="
+  rcsdiff $PROGRAM
+  ls -l $PROGRAM
+  cd $CURRENT
+  echo "==========================================================================================="
+  echo "Difference between stable and current code. If no difference, then run checkin script. Otherwise manually check it in."
+  echo "==========================================================================================="
+  diff $CURRENT/$PROGRAM $LOCATION/$PROGRAM
+  echo "==========================================================================================="
+else
+  co -l $PROGRAM
+  cd $CURRENT
+  if [[ $CURRENT != $LOCATION ]]
+  then
+    cp $LOCATION/$PROGRAM .
+  fi
+  echo "$PROGRAM checked out"
+fi
+
