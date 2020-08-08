@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# checkrw      - Runs a filtered find command agains the passed code repo (/opt/code/[param]) for any .php scripts that have been checked out (rw-r--r--)
+CHECKED="no"
+
+if [[ -z $1 ]]
+then
+  echo "Usage: checkrw [ source site ]"
+  echo ""
+  echo "  Where source site is one of the following: "
+  echo ""
+  echo " - inventory"
+  echo " - status"
+  echo " - changelog"
+  echo " - httpd"
+  echo " - intrado"
+  echo " - kubernetes [ 1.2.0 | 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
+  echo " - kubeadm [ 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
+  echo " - kubecerts [ 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
+  echo " - admin"
+  exit 1
+fi
+
+echo "Checking the manifest and code directory for files that are still checked out."
+
+if [[ $1 = 'inventory' ]]
+then
+  find /opt/code/inventory -name \*php -exec ls -l {} \; | grep rw | egrep -v "(/research/|/settings.php|settings.backup.php)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'status' ]]
+then
+  find /opt/code/status -name \*php -exec ls -l {} \; | grep rw | egrep -v "(/research/|/settings.php)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'changelog' ]]
+then
+  find /opt/code/changelog -name \*php -exec ls -l {} \; | grep rw | egrep -v "(/research/|/settings.php)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'httpd' ]]
+then
+  find /opt/code/httpd -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|settings.php|RCS|README)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'intrado' ]]
+then
+  find /opt/code/intrado -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS|README|install)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'admin' ]]
+then
+  find /opt/code/admin -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS|README|bin|install)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'kubernetes' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Need to pass the version to check. 1.2.0, 1.9.0, 1.10.5, 1.11.2 or 1.13."
+    exit 1
+  fi
+  find /opt/code/kubernetes/$2/kubernetes -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'kubeadm' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Need to pass the version to check. 1.9.0, 1.10.5, 1.11.2 or 1.13."
+    exit 1
+  fi
+  find /opt/code/kubernetes/$2/kubeadm -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ $1 = 'kubecerts' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Need to pass the version to check. 1.9.0, 1.10.5, 1.11.2 or 1.13."
+    exit 1
+  fi
+  find /opt/code/kubernetes/$2/kubecerts -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS)" | sort -k 9
+  CHECKED="yes"
+fi
+
+if [[ ${CHECKED} = 'no' ]]
+then
+  echo "Site: $1 was not checked"
+fi
+
