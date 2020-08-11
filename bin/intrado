@@ -270,9 +270,6 @@ runscript chkbash
 # check for ghost vulnerabiity
 runscript chkghost
 
-# Get list of all packages
-runscript chkpackages
-
 # Check for crash dumps
 runscript chkcrash
 
