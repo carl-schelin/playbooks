@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: gisdirector-resourcequota
+  namespace: gisdirector
+spec:
+  hard:
+    limits.cpu: "9500m"
+    limits.memory: "17920Mi"
+    requests.cpu: "8500m"
+    requests.memory: "8960Mi"
