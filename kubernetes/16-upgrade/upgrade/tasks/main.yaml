@@ -40,14 +40,14 @@
   ignore_errors: yes
 
 
-- name: Lock kubelet at 1.18.6
-  command: /usr/bin/yum versionlock add "kubelet-1.18.6-0.*"
+- name: Lock kubelet at 1.18.8
+  command: /usr/bin/yum versionlock add "kubelet-1.18.8-0.*"
 
-- name: Lock kubectl at 1.18.6
-  command: /usr/bin/yum versionlock add "kubectl-1.18.6-0.*"
+- name: Lock kubectl at 1.18.8
+  command: /usr/bin/yum versionlock add "kubectl-1.18.8-0.*"
 
-- name: Lock kubeadm at 1.18.6
-  command: /usr/bin/yum versionlock add "kubeadm-1.18.6-0.*"
+- name: Lock kubeadm at 1.18.8
+  command: /usr/bin/yum versionlock add "kubeadm-1.18.8-0.*"
 
 - name: Lock kubernetes-cni at 0.8.6
   command: /usr/bin/yum versionlock add "kubernetes-cni-0.8.6-0*"
@@ -67,17 +67,17 @@
 
 - name: Install kubelet
   yum:
-    name: kubelet-1.18.6-0.x86_64
+    name: kubelet-1.18.8-0.x86_64
     state: present
 
 - name: Install kubectl
   yum:
-    name: kubectl-1.18.6-0.x86_64
+    name: kubectl-1.18.8-0.x86_64
     state: present
 
 - name: Install kubeadm
   yum:
-    name: kubeadm-1.18.6-0.x86_64
+    name: kubeadm-1.18.8-0.x86_64
     state: present
 
 - name: Install kubernetes-cni
