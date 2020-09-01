@@ -76,7 +76,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Upgrading Kubernetes and Docker"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} upgrade.yaml
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
