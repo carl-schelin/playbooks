@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/version: 1.9.7
     spec:
       containers:
-      - image: systems-and-platforms-kubernetes.docker.west.com/coreos/kube-state-metrics:v1.9.7
+      - image: systems-and-platforms-kubernetes.docker.west.com/kube-state-metrics:v1.9.7
         livenessProbe:
           httpGet:
             path: /healthz
