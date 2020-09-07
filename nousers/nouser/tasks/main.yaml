@@ -1,0 +1,9 @@
+---
+- name: Add the !mail_no_user to the Defaults
+  lineinfile:
+    dest: "/etc/sudoers"
+    line: 'Defaults !mail_no_user'
+    regexp: 'Defaults\s.*mail_no_user$'
+    insertafter: '^Defaults !syslog'
+    state: present
+
