@@ -1,0 +1,10 @@
+# Update the sudoers file
+---
+- hosts: "{{ site }}"
+  become: true
+  become_user: root
+  gather_facts: no
+
+  roles:
+    - nouser
+
