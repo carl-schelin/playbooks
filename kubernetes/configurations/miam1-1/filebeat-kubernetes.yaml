@@ -56,7 +56,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: filebeat
-        image: systems-and-platforms-kubernetes.docker.west.com/beats/filebeat:7.9.0
+        image: systems-and-platforms-kubernetes.docker.west.com/beats/filebeat:7.9.2
         args: [
           "-c", "/etc/filebeat.yml",
           "-e",
