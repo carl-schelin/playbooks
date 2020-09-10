@@ -60,7 +60,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: newrelic-infra
-          image: systems-and-platforms-kubernetes.docker.west.com/newrelic/infrastructure-k8s:1.26.1
+          image: systems-and-platforms-kubernetes.docker.west.com/newrelic/infrastructure-k8s:1.26.2
           securityContext:
             privileged: true
           resources:
