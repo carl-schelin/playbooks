@@ -1,0 +1,90 @@
+#!/bin/ksh
+
+VALUE=$(pvdisplay | grep "Free PE" | grep -v " 0" | awk '{print $3}' | tail -1)
+
+# if no space left to extend, bail out
+if [[ $VALUE = '' ]]
+then
+  echo "No space left to create the bigfix slice"
+  exit
+fi
+
+if [[ $VALUE -lt 1024 ]]
+then
+  echo "Insufficent space to create bigfix slice. Need 1024 PE and only have $VALUE PE"
+  pvdisplay | grep "Free PE"
+  exit
+fi
+
+if [[ ! -d /dev/mapper/vg00-bigfix ]]
+then
+  echo "Creating bigfix slice"
+  lvcreate -L4G -nbigfix vg00
+
+  echo "Creating ext4 file system"
+  mkfs -t ext4 /dev/mapper/vg00-bigfix
+fi
+
+echo "Mounting to /mnt"
+mount /dev/mapper/vg00-bigfix /mnt
+
+if [[ ! -d /mnt/lost+found ]]
+then
+  echo "/mnt doesn't have a lost+found directory"
+  exit
+fi
+
+echo "Stopping besclient"
+systemctl stop besclient
+
+if [[ ! -f /var/opt/BESClient/besclient.config ]]
+then
+  echo "besclient.config not found"
+  exit
+fi
+
+cd /var/opt
+echo "Backing up the files"
+tar cf BESClient.tar BESClient
+
+echo "Copying files from /var/opt/BESClient to /mnt"
+cd /var/opt/BESClient
+tar cf - . | (cd /mnt; tar fx -)
+
+if [[ ! -f /mnt/besclient.config ]]
+then
+  echo "Copy failed. Exiting"
+  exit
+fi
+
+echo "Cleaning up files"
+cd /var/opt/BESClient
+rm -rf *
+rm .BES*
+
+grep vg00-bigfix /etc/fstab > /dev/null
+if [[ $? -eq 1 ]]
+then
+  echo "Adding mount point to /etc/fstab"
+  echo "/dev/mapper/vg00-bigfix    /var/opt/BESClient                    ext4    defaults        1 2" >> /etc/fstab
+fi
+
+echo "Unmounting /mnt"
+umount /mnt
+
+cd
+
+echo "Mounting the new file system"
+mount -a
+
+if [[ ! -f /var/opt/BESClient/besclient.config ]]
+then
+  echo "Not all files are in /var/opt/BESClient, exiting"
+  exit
+fi
+
+echo "Starting besclient"
+systemctl start besclient
+
+systemctl status besclient
+
