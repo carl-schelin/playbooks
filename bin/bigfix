@@ -1,14 +1,17 @@
 #!/bin/ksh
 
-VALUE=$(pvdisplay | grep "Free PE" | grep -v " 0" | awk '{print $3}' | tail -1)
+# basically trying to get the biggest available value
+VALUE=$(pvdisplay | grep "Free PE" | grep -v " 0" | awk '{print $3}' | sort -n | tail -1)
 
-# if no space left to extend, bail out
+# if no value found, basically either LVM isn't installed or all PEs have been used, exit
 if [[ $VALUE = '' ]]
 then
   echo "No space left to create the bigfix slice"
+  pvdisplay | grep "Free PE"
   exit
 fi
 
+# a 4G FS is 1024 PEs. if the biggest slice doesn't have sufficient PEs, exit
 if [[ $VALUE -lt 1024 ]]
 then
   echo "Insufficent space to create bigfix slice. Need 1024 PE and only have $VALUE PE"
@@ -16,6 +19,7 @@ then
   exit
 fi
 
+# okay, create the FS and format it
 if [[ ! -d /dev/mapper/vg00-bigfix ]]
 then
   echo "Creating bigfix slice"
@@ -36,6 +40,13 @@ fi
 
 echo "Stopping besclient"
 systemctl stop besclient
+
+# if the bigfix agent doesn't stop, several errors may occur due to the agent having files open.
+if [[ $? -ne 0 ]]
+then
+  echo "Failed to stop the BigFix agent, exitint"
+  exit
+fi
 
 if [[ ! -f /var/opt/BESClient/besclient.config ]]
 then
@@ -85,6 +96,12 @@ fi
 
 echo "Starting besclient"
 systemctl start besclient
+
+if [[ $? -ne 0 ]]
+then
+  echo "The bigfix agent failed to start, exiting"
+  exit
+fi
 
 systemctl status besclient
 
