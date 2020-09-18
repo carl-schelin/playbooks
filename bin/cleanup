@@ -107,6 +107,7 @@ then
   printf "    Name: %-30s %34s\n" $(hostname|cut -f1 -d.) "Status: $(grep 'Status:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
   printf "    Location: %-30s %30s\n" $(grep 'Location:' ${FINGERPRINT} | awk '{print $2}') "Network Zone: $(grep 'Zone:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
   printf "    Product: %-30s %31s\n" $(grep 'Product:' ${FINGERPRINT} | awk '{print $2}') "Project: $(grep 'Project:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "    Service Class: %-30s %25s\n" $(grep 'Service Class:' ${FINGERPRINT} | awk '{print $3}') "911 Call Path: $(grep '911 Call Path:' ${FINGERPRINT} | awk '{print $4}')" >> /etc/motd
   printf "    System Custodian: %53s\n" "$(grep 'System Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
   printf "    Primary Application Custodian: %40s\n\n" "$(grep 'Primary Application Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
 
