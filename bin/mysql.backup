@@ -42,9 +42,9 @@ then
   ARCHIVE=7
 fi
 
-if [[ ${HOSTNAME} = "status" ]]
+if [[ ${HOSTNAME} = "lnmt1cuomtool10" ]] || [[ ${HOSTNAME} = "miam1cuomtool10" ]]
 then
-  DATABASES="information_schema mysql performance_schema status"
+  DATABASES="information_schema inventory mysql performance_schema"
   USER=root
   PASSWORD="this4now!!"
   OWNER="mysql:mysql"
@@ -52,61 +52,7 @@ then
 fi
 
 # parsing the database names through the localsettings.php file
-if [[ ${HOSTNAME} = "incowk01" ]]
-then
-  DATABASES="information_schema mysql "
-  for i in `ls -la ${HTDOCS} | grep "^d" | awk '{print $9}'`
-  do
-    if [[ -f ${HTDOCS}/${i}/LocalSettings.php ]]
-    then
-      DBNAME=`grep wgDBname ${HTDOCS}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
-      DATABASES="${DATABASES} ${DBNAME}"
-    fi
-  done
-
-  for i in `ls -la ${HTSECURE} | grep "^d" | awk '{print $9}'`
-  do
-    if [[ -f ${HTSECURE}/${i}/LocalSettings.php ]]
-    then
-      DBNAME=`grep wgDBname ${HTSECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
-      DATABASES="${DATABASES} ${DBNAME}"
-    fi
-  done
-  USER=root
-  PASSWORD="this4now!!"
-  OWNER="mysql:mysql"
-  ARCHIVE=7
-fi
-
-# parsing the database names through the localsettings.php file
-if [[ ${HOSTNAME} = "incowk02" ]]
-then
-  DATABASES="information_schema mysql "
-  for i in `ls -la ${HTDOCS} | grep "^d" | awk '{print $9}'`
-  do
-    if [[ -f ${HTDOCS}/${i}/LocalSettings.php ]]
-    then
-      DBNAME=`grep wgDBname ${HTDOCS}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
-      DATABASES="${DATABASES} ${DBNAME}"
-    fi
-  done
-
-  for i in `ls -la ${HTSECURE} | grep "^d" | awk '{print $9}'`
-  do
-    if [[ -f ${HTSECURE}/${i}/LocalSettings.php ]]
-    then
-      DBNAME=`grep wgDBname ${HTSECURE}/${i}/LocalSettings.php | awk -F\" '{print $2}'`
-      DATABASES="${DATABASES} ${DBNAME}"
-    fi
-  done
-  USER=root
-  PASSWORD="this4now!!"
-  OWNER="mysql:mysql"
-  ARCHIVE=7
-fi
-
-# parsing the database names through the localsettings.php file
-if [[ ${HOSTNAME} = "lnmt1cuaswiki1" ]]
+if [[ ${HOSTNAME} = "lnmt1cuaswiki1" ]] || [[ ${HOSTNAME} = "miam1cuaswiki1" ]]
 then
   DATABASES=" information_schema mysql"
 
@@ -120,8 +66,9 @@ then
       if [[ $? -eq 1 ]]
       then
         DATABASES="${DATABASES} ${DBNAME}"
+        echo "Found Unique Database, adding: ${DBNAME}"
       else
-        echo "Found: ${DBNAME}"
+        echo "Found Duplicate Database, skipping: ${DBNAME}"
       fi
     fi
   done
@@ -130,27 +77,8 @@ then
   PASSWORD="this4now!!"
   OWNER="mysql:mysql"
   ARCHIVE=7
-  SETTAB="No"
 fi
 
-# the following two may eventually be backed up. Once inventory goes live, for sure.
-#if [[ ${HOSTNAME} = "inventory" ]]
-#then
-#  DATABASES="information_schema inventory mysql performance_schema"
-#  USER=root
-#  PASSWORD="this4now!!"
-#  OWNER="mysql:mysql"
-#  ARCHIVE=7
-#fi
-
-#if [[ ${HOSTNAME} = "lnmt1cuomrcs1" ]]
-#then
-#  DATABASES="information_schema inventory mysql performance_schema status"
-#  USER=root
-#  PASSWORD="this4now!!"
-#  OWNER="mysql:mysql"
-#  ARCHIVE=7
-#fi
 
 if [[ -z ${DATABASES} ]]
 then
