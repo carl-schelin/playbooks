@@ -2,9 +2,8 @@
 - name: Update the mariadb.service file
   replace:
     path: /usr/lib/systemd/system/mariadb.service
-    state: present
     regex: '^PrivateTmp=true'
-    line: 'PrivateTmp=false'
+    replace: 'PrivateTmp=false'
 
 - name: restart mariadb
   systemd:
