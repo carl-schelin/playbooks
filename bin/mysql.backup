@@ -46,7 +46,7 @@ if [[ ${HOSTNAME} = "lnmt1cuomtool10" ]] || [[ ${HOSTNAME} = "miam1cuomtool10" ]
 then
   DATABASES="information_schema inventory mysql performance_schema"
   USER=root
-  PASSWORD="this4now!!"
+  PASSWORD="53Rv!c3!"
   OWNER="mysql:mysql"
   ARCHIVE=7
 fi
