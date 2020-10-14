@@ -65,6 +65,8 @@ function logit {
 
 function system {
   logit "system" "timezone" ${TIMEZONE}
+  logit "system" "hostname" ${HOSTNAME}
+  logit "system" "fqdn" ${FQDN}
 
   if [[ $OS = 'Linux' ]]; then
     KERNEL=`/bin/rpm -q kernel --queryformat '%{installtime}\n' | sort -n | tail -1`
