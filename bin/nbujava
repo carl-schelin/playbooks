@@ -34,7 +34,10 @@ then
     VERIFY=$(rpm -qa | grep -i VRTSnbjava)
     if [[ -z $VERIFY ]]
     then
-      echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      if [[ ${CHANGELOG} != '' ]]
+      then
+        echo "${JAVA} has been uninstalled to address security vulnerabilities related to this version." | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      fi
     fi
 
     service vxpbx_exchanged status > /dev/null
