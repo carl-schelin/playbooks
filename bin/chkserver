@@ -195,6 +195,7 @@
 # 2020/03/02 - CS - Added a bigfix client check
 # 2020/04/28 - CS - Added a tanium client check, ciscoamp, and logrhythm
 # 2020/05/05 - CS - Updated cisco amp to check for the daemons
+# 2020/10/15 - CS - Updated to not send a changelog if CHANGELOG is blank
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -208,7 +209,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-VERSION="${BASENAME} v1.291"
+VERSION="${BASENAME} v1.292"
 COUNT=0
 GATEWAY=''
 GWFLAG='no'
@@ -1060,7 +1061,10 @@ check_config_cron() {
         fi
         printf "%b\n" "    ${GREEN}Adding ${FIELD3} to ${CRONALLOW}${TICKET}${RESET}" >> "${LOG}"
         echo "${FIELD3}" >> "${CRONALLOW}"
-        echo "Added ${FIELD3} to ${CRONALLOW}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Added ${FIELD3} to ${CRONALLOW}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
       else
         printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
       fi
@@ -1081,7 +1085,10 @@ check_config_cron() {
           printf "%b\n" "    ${GREEN}Removing ${FIELD3} from ${CRONDENY}${TICKET}${RESET}" >> "${LOG}"
           grep -v "^${FIELD3}$" "${CRONDENY}" > /var/tmp/cron.deny
           cp /var/tmp/cron.deny "${CRONDENY}"
-          echo "Removed ${FIELD3} from ${CRONDENY}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Removed ${FIELD3} from ${CRONDENY}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
         else
           printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
         fi
@@ -1452,7 +1459,10 @@ check_config_service_account() {
             fi
             printf "%b\n" "    ${GREEN}Setting Password to not expire${TICKET}${RESET}" >> "${LOG}"
             chage -E -1 -M -1 -I -1 ${FIELD3}
-            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
           else
             printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
           fi
@@ -1472,7 +1482,10 @@ check_config_service_account() {
           fi
           printf "%b\n" "    ${GREEN}Setting Account to not expire${TICKET}${RESET}" >> "${LOG}"
           chage -E -1 -M -1 -I -1 ${FIELD3}
-          echo "Set account to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set account to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
         else
           printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
         fi
@@ -1499,7 +1512,10 @@ check_config_service_account() {
           else
             passwd -x -1 ${FIELD3}
           fi
-          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
         else
           if [[ ${PASSWORD} = 'password must be changed' ]]
           then
@@ -1533,7 +1549,10 @@ check_config_service_account() {
             TICKET=" per ticket: ${FIELD5}"
           fi
           passwd -x -1 ${FIELD3}
-          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
         else
           PASSWORD=$(passwd -s | awk '{print $3}')
           if [[ ${PASSWORD} = '00/00/00' ]]
@@ -1561,7 +1580,10 @@ check_config_service_account() {
             TICKET=" per ticket: ${FIELD5}"
           fi
           passwd -x -1 ${FIELD3}
-          echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
         else
           PASSWORD=$(passwd -s | awk '{print $3}')
           if [[ ${PASSWORD} = '00/00/00' ]]
@@ -1594,7 +1616,10 @@ check_config_service_account() {
         passwd -l ${FIELD3}
 # prevent password and account from expiring
         chage -E -1 -M -1 -I -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set account and password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set account and password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
       fi
       if [[ ${OS} = 'HP-UX' ]]
       then
@@ -1608,7 +1633,10 @@ check_config_service_account() {
         else
           passwd -x -1 ${FIELD3}
         fi
-        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
       fi
       if [[ ${OS} = 'SunOS' ]]
       then
@@ -1616,7 +1644,10 @@ check_config_service_account() {
         useradd -c "${GECOS}" -m ${FIELD3}
         passwd -l ${FIELD3}
         passwd -x -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
       fi
       if [[ ${OS} = 'FreeBSD' ]]
       then
@@ -1624,7 +1655,10 @@ check_config_service_account() {
         adduser -c "${GECOS}" -m ${FIELD3}
         passwd -l ${FIELD3}
         passwd -x -1 ${FIELD3}
-        echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
       fi
     fi
   fi
@@ -3221,7 +3255,10 @@ check_netbackup() {
               echo "SERVER = inveri01-gig0.scc911.com" > /var/tmp/bp.conf
               grep -v "inveri01" /usr/openv/netbackup/bp.conf >> /var/tmp/bp.conf
               cp /var/tmp/bp.conf /usr/openv/netbackup/bp.conf
-              echo "Corrected 'SERVER = inveri01-gig0.scc911.com' as line 1 in /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+              if [[ ${CHANGELOG} != '' ]]
+              then
+                echo "Corrected 'SERVER = inveri01-gig0.scc911.com' as line 1 in /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+              fi
             fi
             for chksvr in inveri01-gig0.scc911.com incobu01.corp.intrado.pri incobu02.corp.intrado.pri incobu03.corp.intrado.pri
             do
@@ -3230,7 +3267,10 @@ check_netbackup() {
               then
                 printf "%b\n" "    ${YELLOW}There is no \"SERVER = ${chksvr}\"  entry in /usr/openv/netbackup/bp.conf.${RESET}" >> "${LOG}"
                 echo "SERVER = ${chksvr}" >> /usr/openv/netbackup/bp.conf
-                echo "Added 'SERVER = ${chksvr}' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+                if [[ ${CHANGELOG} != '' ]]
+                then
+                  echo "Added 'SERVER = ${chksvr}' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+                fi
               fi
             done
             grep "^Zone: E911" ${SCRIPTS_DATA}/fingerprint > /dev/null
@@ -3244,7 +3284,10 @@ check_netbackup() {
                 grep -v "lmntcoecmma10" /usr/openv/netbackup/bp.conf > /var/tmp/bp.conf
                 echo "SERVER = lmntcoecmma10.corp.intrado.pri" >> /var/tmp/bp.conf
                 cp /var/tmp/bp.conf /usr/openv/netbackup/bp.conf
-                echo "Corrected 'SERVER = lmntcoecmma10.corp.intrado.pri' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+                if [[ ${CHANGELOG} != '' ]]
+                then
+                  echo "Corrected 'SERVER = lmntcoecmma10.corp.intrado.pri' to /usr/openv/netbackup/bp.conf" | mailx -s ${HOSTNAME} ${CHANGELOG}
+                fi
               fi
             fi
           fi
@@ -5304,7 +5347,10 @@ check_vmware_agent() {
           if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
           then
             systemctl mask ctrl-alt-del.target > /dev/null
-            echo "Masked ctrl-alt-del.target to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Masked ctrl-alt-del.target to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
             printf "%b\n" "  ${GREEN}Masked Ctrl-Alt-Del{RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
@@ -5320,7 +5366,10 @@ check_vmware_agent() {
           then
             echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
             echo "exec true" >> /etc/init/control-alt-delete.override
-            echo "Overrode control-alt-delete.conf to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Overrode control-alt-delete.conf to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
             printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}Ctrl-Alt-Del override file does not exist so target is enabled${RESET}" >> "${LOG}"
@@ -5332,7 +5381,10 @@ check_vmware_agent() {
         then
           echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
           echo "exec true" >> /etc/init/control-alt-delete.override
-          echo "Corrected control-alt-delete.override to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Corrected control-alt-delete.override to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
           printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
         fi
       fi
@@ -5344,7 +5396,10 @@ check_vmware_agent() {
           if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
           then
             sed -i -e "s/^ca::ctrlaltdel/#ca::ctrlaltdel/g" /etc/inittab
-            echo "Commented out ca::ctrlaltdel in /etc/inittab prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Commented out ca::ctrlaltdel in /etc/inittab prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
             printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
           else
             printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
