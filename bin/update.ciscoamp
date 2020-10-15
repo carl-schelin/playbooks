@@ -79,8 +79,11 @@ then
   then
     rpm -ivh ${SCRIPTS_INSTALL}/linux-64/${CISCOAMP}
     
-    echo "Changelog sent"
-    echo "Installed Cisco Amp on ${HOSTNAME}" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Changelog sent"
+      echo "Installed Cisco Amp on ${HOSTNAME}" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
   fi
 fi
 
