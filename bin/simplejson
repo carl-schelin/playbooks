@@ -50,7 +50,10 @@ then
 # and install the missing rpm
         rpm -ivh "${SCRIPTS_INSTALL}/linux-64/${PACKAGE}"
 
-        echo "Installed ${PACKAGE} to provide support for Ansible playbooks" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Installed ${PACKAGE} to provide support for Ansible playbooks" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+        fi
 
       fi
 
