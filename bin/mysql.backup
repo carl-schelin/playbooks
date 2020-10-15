@@ -17,6 +17,18 @@
 #  fi
 #done
 
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
 # set up variables
 ROOT="/var/tmp/mysql"
 DATE=`date +"%Y%m%d"`
@@ -24,9 +36,8 @@ LOG="$ROOT/mysql.$DATE/mysql.report"
 HTDOCS=/var/www/htdocs
 HTSECURE=/var/www/htsecure
 HTML=/var/www/html
-HOSTNAME=`hostname | cut -f1 -d.`
-WHOCARES="carl.schelin@intrado.com"
-PATH="/usr/local/bin:/opt/csw/mysql5/bin:$PATH"; export PATH
+PATH="/opt/csw/mysql5/bin:$PATH"; export PATH
+
 # some servers the mysqldump command to dump individual files isn't working. This lets us still get backups but not the individual ones we normally get.
 SETTAB="Yes"
 
@@ -37,7 +48,6 @@ if [[ ${HOSTNAME} = "incojs01" ]]
 then
   DATABASES="information_schema calendar crmprod inventory msglog mysql phpmyadmin reports repository"
   USER=root
-  PASSWORD="this4now!!"
   OWNER="mysql:mysql"
   ARCHIVE=7
 fi
@@ -46,7 +56,6 @@ if [[ ${HOSTNAME} = "lnmt1cuomtool10" ]] || [[ ${HOSTNAME} = "miam1cuomtool10" ]
 then
   DATABASES="information_schema inventory mysql performance_schema"
   USER=root
-  PASSWORD="53Rv!c3!"
   OWNER="mysql:mysql"
   ARCHIVE=7
 fi
@@ -74,7 +83,6 @@ then
   done
 
   USER=root
-  PASSWORD="this4now!!"
   OWNER="mysql:mysql"
   ARCHIVE=7
 fi
@@ -129,8 +137,8 @@ do
 
     echo "Dumping ${i}" >> ${LOG}
     echo "Dumping ${i}"
-    echo "mysqldump ${TABVAR} --opt ${i} --user=\"${USER}\" --password=\"${PASSWORD}\""
-    mysqldump ${TABVAR} --opt ${i} --user="${USER}" --password="${PASSWORD}" >> ${LOG}
+    echo "mysqldump ${TABVAR} --opt ${i} --user=\"${USER}\" --password=\"${MYSQL_PASSWORD}\""
+    mysqldump ${TABVAR} --opt ${i} --user="${USER}" --password="${MYSQL_PASSWORD}" >> ${LOG}
   fi
 
 done
