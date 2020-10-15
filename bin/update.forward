@@ -34,8 +34,11 @@ fi
 if [[ ! -f ${ROOTHOME}/.forward ]]
 then
   echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  echo "Changelog sent"
-  echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  if [[ ${CHANGELOG} != '' ]]
+  then
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
   exit 0
 fi
 
@@ -43,8 +46,11 @@ grep -i "jowen@intrado.com" ${ROOTHOME}/.forward > /dev/null
 if [[ $? -eq 0 ]]
 then
   echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  echo "Changelog sent"
-  echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  if [[ ${CHANGELOG} != '' ]]
+  then
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
   exit 0
 fi
   
@@ -52,8 +58,11 @@ grep -i "jowen@west.com" ${ROOTHOME}/.forward > /dev/null
 if [[ $? -eq 0 ]]
 then
   echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  echo "Changelog sent"
-  echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  if [[ ${CHANGELOG} != '' ]]
+  then
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
   exit 0
 fi
   
@@ -61,8 +70,11 @@ grep -i "unixlabsystemalerts@intrado.com" ${ROOTHOME}/.forward > /dev/null
 if [[ $? -eq 0 ]]
 then
   echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  echo "Changelog sent"
-  echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  if [[ ${CHANGELOG} != '' ]]
+  then
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
   exit 0
 fi
   
