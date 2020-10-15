@@ -179,17 +179,26 @@ then
   NEWGETPRPW_LOCKED=$(  /usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c6)
   if [[ $NEWGETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_LIFETIME = '1' ]]
   then
-    echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
     echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
   fi
   if [[ $NEWGETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_EXCEEDED = '1' ]]
   then
-    echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
     echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
   fi
   if [[ $NEWGETPRPW_LOCKED = '0' ]] && [[ $GETPRPW_LOCKED = '1' ]]
   then
-    echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
     echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
   fi
   if [[ $NEWGETPRPW_LIFETIME = '1' ]] || [[ $NEWGETPRPW_EXCEEDED = '1' ]] || [[ $NEWGETPRPW_LOCKED  = '1' ]]
@@ -205,7 +214,10 @@ then
   STATUS=$(passwd -S "${USER_LOCKED}" | awk '{print $2}')
   if [[ $STATUS = "PS" ]]
   then
-    echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
     echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
   else
     echo "Failed to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
@@ -220,7 +232,10 @@ then
   if [[ $STATUS = "PS" ]]
   then
     echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
-    echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
   else
     echo "Failed to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
     echo "Failed to unlock ${USER_LOCKED}'s account" | mailx -s "Account Unlock Failure on ${HOSTNAME}" "${WHOCARES}"
