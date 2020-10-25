@@ -1,0 +1,17 @@
+---
+- name: Install haproxy
+  yum:
+    name: haproxy
+    state: latest
+
+- name: Copy haproxy settings file 
+  copy:
+    src: ../files/{{ ansible_hostname }}.conf
+    dest: /etc/haproxy/haproxy.conf
+
+- name: restart haproxy
+  systemd:
+    name: haproxy
+    daemon-reload: yes
+    state: restarted
+
