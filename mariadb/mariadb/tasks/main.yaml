@@ -1,5 +1,4 @@
 ---
-<<<<<<< HEAD
 - name: Create the mariadb directory if missing
   file:
     path: /etc/systemd/system/mariadb.service.d
@@ -9,13 +8,6 @@
   copy:
     src: ../files/privatetmp.conf
     dest: /etc/systemd/system/mariadb.service.d/
-=======
-- name: Update the mariadb.service file
-  replace:
-    path: /usr/lib/systemd/system/mariadb.service
-    regexp: '^PrivateTmp=true'
-    replace: 'PrivateTmp=false'
->>>>>>> 18679870e6d977354ebf4401c4c69c5e298c59ea
 
 - name: restart mariadb
   systemd:
