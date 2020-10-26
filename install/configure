@@ -12,20 +12,6 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-SCRIPTS=/opt/unixsuite
-# where standalone scripts reside
-SCRIPTS_BINS=${SCRIPTS}/bin
-# installation files; rpms, etc
-SCRIPTS_INSTALL=${SCRIPTS}/install
-# where run.d scripts reside
-SCRIPTS_RUND=${SCRIPTS}/run.d
-# where server.d scripts reside
-SCRIPTS_SVRD=${SCRIPTS}/server.d
-# where to read data from
-SCRIPTS_DATA=${SCRIPTS}/etc
-# where to log output to
-SCRIPTS_LOGS=${SCRIPTS}/var
-
 PLATFORM=`uname -p`
 
 if [[ ! -f /usr/bin/ksh ]]
