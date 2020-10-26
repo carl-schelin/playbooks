@@ -1,8 +1,31 @@
 #!/bin/ksh
 
-INTRADO=/opt/intrado
-OS=`uname`
-HOSTNAME=`hostname|cut -f1 -d.`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+SCRIPTS=/opt/unixsuite
+# where standalone scripts reside
+SCRIPTS_BINS=${SCRIPTS}/bin
+# installation files; rpms, etc
+SCRIPTS_INSTALL=${SCRIPTS}/install
+# where run.d scripts reside
+SCRIPTS_RUND=${SCRIPTS}/run.d
+# where server.d scripts reside
+SCRIPTS_SVRD=${SCRIPTS}/server.d
+# where to read data from
+SCRIPTS_DATA=${SCRIPTS}/etc
+# where to log output to
+SCRIPTS_LOGS=${SCRIPTS}/var
+
 PLATFORM=`uname -p`
 
 if [[ ! -f /usr/bin/ksh ]]
@@ -10,10 +33,10 @@ then
   ln -s /bin/ksh /usr/bin/ksh
 fi
 
-if [[ -f $INTRADO/bin/chksys ]]
+if [[ -f ${SCRIPTS_BINS}/chksys ]]
 then
   echo "Running chksys to generate system data import file"
-  $INTRADO/bin/chksys > /dev/null 2>&1
+  ${SCRIPTS_BINS}/chksys > /dev/null 2>&1
 fi
 
 if [[ $OS = "Linux" ]]
@@ -82,14 +105,14 @@ then
     rm -rf sol10-sparc
   fi
 
-  if [[ ! -f $INTRADO/cfghtml/$HOSTNAME.html ]]
+  if [[ ! -f ${SCRIPTS}/cfghtml/$HOSTNAME.html ]]
   then
     echo "Installing and running cfg2html"
     tar fvx cfg2html/cfghtml.linux.tar
-    mv cfghtml $INTRADO
-    cd $INTRADO/cfghtml
+    mv cfghtml ${SCRIPTS}
+    cd ${SCRIPTS}/cfghtml
     ./cfg2html
-    cd $INTRADO/install
+    cd ${SCRIPTS}/install
   fi
 
   echo "Cleaning up cfg2html install"
@@ -99,15 +122,15 @@ then
   fi
 
   echo "Checking for an rrdtool installation"
-  if [[ ! -d $INTRADO/rrdtool ]]
+  if [[ ! -d ${SCRIPTS}/rrdtool ]]
   then
     echo "Installing rrdtool"
     tar fvx rrd/rrdtool.linux.tar
-    mv rrdtool $INTRADO
+    mv rrdtool ${SCRIPTS}
 
 # build interface variable
     SPACE=''
-    for i in `grep interface /opt/intrado/etc/chksys.import | egrep -v ',(lo|1),' | awk -F, '{print $4}'`
+    for i in `grep interface ${SCRIPTS_DATA}/chksys.import | egrep -v ',(lo|1),' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -123,7 +146,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $6}'`
+    for i in `grep filesystem ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
@@ -169,7 +192,7 @@ then
       echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
       echo "DISKS=\"$DISKS\"" >> config
       echo "" >> config
-      cp config $INTRADO/rrdtool/
+      cp config ${SCRIPTS}/rrdtool/
       echo "rrdtool config file updated and installed"
     else
       echo "#" >> config
@@ -184,14 +207,14 @@ then
       echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
       echo "DISKS=\"$DISKS\"" >> config
       echo "" >> config
-      echo "rrdtool config file updated but not installed ($INTRADO/install/config)"
-      echo "Once you make changes, copy the config file to $INTRADO/rrdtool."
+      echo "rrdtool config file updated but not installed (${SCRIPTS}/install/config)"
+      echo "Once you make changes, copy the config file to ${SCRIPTS}/rrdtool."
     fi
 
 
     COUNT=0
 # getting '2 cores' and breaking out the '2' as a count
-    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
+    for i in `grep 'hardware,cpu' ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
       COUNT=$(( $COUNT + $i ))
     done
@@ -235,14 +258,14 @@ then
       echo "# Set up the physical devices here" >> install.me
       echo "DEVICES=\"$INTME lo\"" >> install.me
       cat install.2 >> install.me
-      cp install.me $INTRADO/rrdtool/install/install
-      cd $INTRADO/rrdtool/install
+      cp install.me ${SCRIPTS}/rrdtool/install/install
+      cd ${SCRIPTS}/rrdtool/install
       ./install
       cp makerrd ..
       cp updaterrd ..
       cp makegraphs ..
       cp makethumbs ..
-      cd $INTRADO/rrdtool
+      cd ${SCRIPTS}/rrdtool
       ./makerrd
       echo "rrdtool configured, installed, and ready to run."
     else
@@ -268,11 +291,11 @@ then
   echo "The following lines need to be added to root's cron:"
   echo ""
 
-  echo "# Master intrado script which runs scripts that run daily or less often"
-  echo "0 1 * * * /opt/intrado/bin/intrado > /dev/null 2>&1"
+  echo "# Master script which runs scripts that run daily or less often"
+  echo "0 1 * * * ${SCRIPTS_BINS}/unixsuite > /dev/null 2>&1"
   echo ""
   echo "# Ensure OpenView continues to run"
-  echo "*/5 * * * * /opt/intrado/bin/chkov > /dev/null 2>&1"
+  echo "*/5 * * * * ${SCRIPTS_BINS}/suitecheck > /dev/null 2>&1"
   echo ""
   echo "# Processes the sendmail queue every 15 minutes"
   echo "*/15 * * * * /usr/sbin/sendmail -q"
@@ -282,10 +305,10 @@ then
   echo ""
 
   echo "# monitor rrdtool"
-  echo "*/5 * * * * /opt/intrado/rrdtool/watchrrd > /dev/null 2>&1"
+  echo "*/5 * * * * ${SCRIPTS}/rrdtool/watchrrd > /dev/null 2>&1"
   echo ""
   echo "# generate rrdtool graphs"
-  echo "*/15 * * * * /opt/intrado/rrdtool/makegraphs > /dev/null 2>&1"
+  echo "*/15 * * * * ${SCRIPTS}/rrdtool/makegraphs > /dev/null 2>&1"
   echo ""
 
 fi
@@ -315,7 +338,7 @@ then
   fi
 
   echo "Checking for rrdtool binaries and dependencies"
-  cd $INTRADO/install/$SUN
+  cd ${SCRIPTS}/install/$SUN
   for i in SMCftype SMClibart SMClibgcc SMCliconv SMClibpng SMCrrdt SMCzlib
   do
     OUTPUT=`pkginfo | grep $i`
@@ -356,7 +379,7 @@ then
       fi
     fi
   done
-  cd $INTRADO/install
+  cd ${SCRIPTS}/install
 
   echo "Cleaning up rrdtool rpm and package install"
   if [[ -d linux-32 ]]
@@ -376,14 +399,14 @@ then
     rm -rf sol10-sparc
   fi
 
-  if [[ ! -f $INTRADO/cfghtml/$HOSTNAME.html ]]
+  if [[ ! -f ${SCRIPTS}/cfghtml/$HOSTNAME.html ]]
   then
     echo "Installing and running cfg2html"
     tar fvx cfg2html/cfghtml.sun.tar
-    mv cfghtml $INTRADO
-    cd $INTRADO/cfghtml
+    mv cfghtml ${SCRIPTS}
+    cd ${SCRIPTS}/cfghtml
     ./cfg2html
-    cd $INTRADO/install
+    cd ${SCRIPTS}/install
   fi
 
   echo "Cleaning up cfg2html install"
@@ -393,15 +416,15 @@ then
   fi
 
   echo "Checking for an rrdtool installation"
-  if [[ ! -d $INTRADO/rrdtool ]]
+  if [[ ! -d ${SCRIPTS}/rrdtool ]]
   then
     echo "Installing rrdtool"
     tar fvx rrd/rrdtool.solaris.tar
-    mv rrdtool $INTRADO
+    mv rrdtool ${SCRIPTS}
 
 # build interface variable
     SPACE=''
-    for i in `grep interface /opt/intrado/etc/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $4}'`
+    for i in `grep interface ${SCRIPTS_DATA}/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -417,7 +440,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem $INTRADO/etc/chksys.import | awk -F, '{print $6}'`
+    for i in `grep filesystem ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
@@ -463,7 +486,7 @@ then
       echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
       echo "DISKS=\"$DISKS\"" >> config
       echo "" >> config
-      cp config $INTRADO/rrdtool/
+      cp config ${SCRIPTS}/rrdtool/
       echo "rrdtool config file updated and installed"
     else
       echo "#" >> config
@@ -478,14 +501,14 @@ then
       echo "# Disk Space configuration; file system name list as displayed in the graph label" >> config
       echo "DISKS=\"$DISKS\"" >> config
       echo "" >> config
-      echo "rrdtool config file updated but not installed ($INTRADO/install/config)"
-      echo "Once you make changes, copy the config file to $INTRADO/rrdtool."
+      echo "rrdtool config file updated but not installed (${SCRIPTS}/install/config)"
+      echo "Once you make changes, copy the config file to ${SCRIPTS}/rrdtool."
     fi
 
 
     COUNT=0
 # getting '2 cores' and breaking out the '2' as a count
-    for i in `grep 'hardware,cpu' $INTRADO/etc/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
+    for i in `grep 'hardware,cpu' ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
       COUNT=$(( $COUNT + $i ))
     done
@@ -529,14 +552,14 @@ then
       echo "# Set up the physical devices here" >> install.me
       echo "DEVICES=\"$INTME lo\"" >> install.me
       cat install.2 >> install.me
-      cp install.me $INTRADO/rrdtool/install/install
-      cd $INTRADO/rrdtool/install
+      cp install.me ${SCRIPTS}/rrdtool/install/install
+      cd ${SCRIPTS}/rrdtool/install
       ./install
       cp makerrd ..
       cp updaterrd ..
       cp makegraphs ..
       cp makethumbs ..
-      cd $INTRADO/rrdtool
+      cd ${SCRIPTS}/rrdtool
       ./makerrd
       echo "rrdtool configured, installed, and ready to run."
     else
@@ -562,20 +585,20 @@ then
   echo "The following lines need to be added to root's cron:"
   echo ""
 
-  echo "# Master intrado script which runs scripts that run daily or less often"
-  echo "0 1 * * * /opt/intrado/bin/intrado > /dev/null 2>&1"
+  echo "# Master script which runs scripts that run daily or less often"
+  echo "0 1 * * * ${SCRIPTS_BINS}/unixsuite > /dev/null 2>&1"
   echo ""
   echo "# Ensure OpenView continues to run"
-  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * /opt/intrado/bin/chkov > /dev/null 2>&1"
+  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * ${SCRIPTS_BINS}/suitecheck > /dev/null 2>&1"
   echo ""
   echo "# Processes the sendmail queue every 15 minutes"
   echo "0,15,30,45 * * * * /usr/sbin/sendmail -q"
   echo ""
   echo "# monitor rrdtool"
-  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * /opt/intrado/rrdtool/watchrrd > /dev/null 2>&1"
+  echo "0,5,10,15,20,25,30,35,40,45,50,55 * * * * ${SCRIPTS}/rrdtool/watchrrd > /dev/null 2>&1"
   echo ""
   echo "# generate rrdtool graphs"
-  echo "0,15,30,45 * * * * /opt/intrado/rrdtool/makegraphs > /dev/null 2>&1"
+  echo "0,15,30,45 * * * * ${SCRIPTS}/rrdtool/makegraphs > /dev/null 2>&1"
   echo ""
 
 fi
