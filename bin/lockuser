@@ -10,18 +10,27 @@
 # TCS: Added email to changelog
 # ECS: Updated script to remove users that are being locked from all secondary groups. HP-UX is a special case where the user will still be in the "users" group.
 # ECS: Updated script to run on FreeBSD
+# TCS: changed changelog to variable
 
-OS=`uname`
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+
 ID=`id | cut -f2 -d= | cut -f1 -d\(`
-HOSTNAME=`hostname|cut -f1 -d.`
 PASSWD=`which passwd`
-ADMIN=/opt/intrado
-LOGFILE=$ADMIN/etc/lockuser.log
-# List of users that will be excluded, sysadmins will need to be removed from this list in order to be locked.
-EXCLUDE="root unixsvc cschelin kzupan jnoyes tcooper jcorrea"
+LOGFILE=${SCRIPTS_DATA}/lockuser.log
 
 # if a changefreeze is in effect, stop the execution of the script.
-if [[ -f $ADMIN/etc/changefreeze ]]
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
 then
   echo "Changefreeze in effect" >> $LOGFILE
   exit 0
@@ -29,7 +38,7 @@ fi
 
 ########
 # EXCLUDEUSERS - Filters through the list of users to be locked.
-#       Removes users that should not be locked ($EXCLUDE) and
+#       Removes users that should not be locked ($SYSADMINS) and
 #       only retains users that have an account on this machine.
 ########
 EXCLUDEUSERS() {
@@ -40,8 +49,8 @@ EXCLUDEUSERS() {
     EML=`echo $i | cut -f2 -d:`
 
     FLAG=0
-    # change list here for new admins
-    for j in $EXCLUDE; do
+    # change list here for root, service accounts, and new admins
+    for j in root ${SYSADMINS}; do
       if [[ $UTL = $j ]]; then
         FLAG=1
       fi
@@ -101,8 +110,11 @@ LOCKUSERS() {
         LOCKED="${LOCKED} ${i}"
       fi
     done
-    if [[ ! -z $LOCKED ]]; then
-      echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
     fi
   fi
 
@@ -120,8 +132,11 @@ LOCKUSERS() {
         fi
       fi
     done
-    if [[ ! -z $LOCKED ]]; then
-      echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
     fi
   fi
 
@@ -136,8 +151,11 @@ LOCKUSERS() {
         LOCKED="${LOCKED} ${i}"
       fi
     done
-    if [[ ! -z $LOCKED ]]; then
-      echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
     fi
   fi
 
@@ -152,13 +170,16 @@ LOCKUSERS() {
         LOCKED="${LOCKED} ${i}"
       fi
     done
-    if [[ ! -z $LOCKED ]]; then
-      echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` changelog@incojs01.scc911.com
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
     fi
   fi
 
   if [[ ! -z $LOCKED ]]; then
-    echo "Locked $LOCKED account(s)" > $ADMIN/etc/locked.output
+    echo "Locked $LOCKED account(s)" > ${SCRIPTS_DATA}/locked.output
   fi
 }
 
@@ -218,17 +239,17 @@ UPDATEGROUPS() {
 ########
 # MAIN
 ########
-if [[ -f $ADMIN/etc/lockuser.output ]]
+if [[ -f ${SCRIPTS_DATA}/lockuser.output ]]
 then
-  rm $ADMIN/etc/lockuser.output
+  rm ${SCRIPTS_DATA}/lockuser.output
 fi
 
 if [[ -z $PASSWD ]]
 then
-  echo "Unable to locate passwd binary" > $ADMIN/etc/lockuser.output
+  echo "Unable to locate passwd binary" > ${SCRIPTS_DATA}/lockuser.output
 fi
 
-USERS=$ADMIN/etc/lockuser.dat
+USERS=${SCRIPTS_DATA}/lockuser.dat
 if [[ $OS = "Linux" ]]
 then
   USERTOLOCK=`/bin/grep -v "^#" $USERS`
