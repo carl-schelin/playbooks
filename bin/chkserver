@@ -404,7 +404,7 @@ check_management_route() {
 
   if [[ ${CHECKED} = 'Backups' ]]
   then
-    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:BackupInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:BackupInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
 # use the default management interface if backup isn't defined
     if [[ ${MANAGEMENT_INTERFACE} = '' ]]
     then
@@ -413,11 +413,11 @@ check_management_route() {
   fi
   if [[ ${CHECKED} = 'Monitoring' ]]
   then
-    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:MonitoringInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:MonitoringInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
   fi
   if [[ ${CHECKED} = 'Management' ]]
   then
-    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:ManagementInterface:" "${SCRIPTS_LOGS}/chkserver.input" | cut -f3 -d:)
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:ManagementInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
   fi
 
   if [[ ${MANAGEMENT_INTERFACE} = '' ]]
