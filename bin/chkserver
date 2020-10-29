@@ -6,7 +6,7 @@
 # 2013/05/21
 # Description: Run through the defined steps to quickly see what might need to be done
 #   on a system to complete the installation.
-# 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if intrado script hasn't been run yet
+# 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if unixsuite script hasn't been run yet
 # 2017/02/21 - CS - Checked in to RCS
 # 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
 # 2017/06/20 - CS - added chkserver.input validation steps.
@@ -521,7 +521,7 @@ compare_files() {
 ### Doc: ** If the user is not in the users.exclude file (consists of service and system accounts)
 ### Doc: ** Checks to see if the user account is locked.
 ### Doc: ** If the account is not locked, retrieve the email address from the GECOS field
-### Doc: ** If the email address is _not_ in the intrado.email file
+### Doc: ** If the email address is _not_ in the company.email file
 ### Doc: ** Report it as an error (missing user is not locked).
 ######################
 
@@ -531,7 +531,7 @@ check_active_employees() {
 # exclude users in the users.exclude file
 # exclude locked users
 # once passes, check gecos field for email
-# check intrado.email for email
+# check company.email for email
 # report error if it doesn't exist.
 # found == 0
   if [[ ! ${DEBUG} = 'no' ]]
@@ -589,10 +589,10 @@ check_active_employees() {
           EMAIL=$(grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,)
           if [[ ! -z $EMAIL ]]
           then
-            grep -i "^${EMAIL}$" ${SCRIPTS_DATA}/intrado.email > /dev/null
+            grep -i "^${EMAIL}$" ${SCRIPTS_DATA}/company.email > /dev/null
             if [[ $? -eq 1 ]]
             then
-              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS_DATA}/intrado.email file and the account isn't locked.${RESET}" >> "${LOG}"
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS_DATA}/company.email file and the account isn't locked.${RESET}" >> "${LOG}"
             fi
           fi
         fi
@@ -2575,28 +2575,28 @@ check_interfaces() {
 
 
 ######################
-### Doc: Function: check_intrado(8) - 2 checks
-### Doc: * Checks to see if the intrado script has run
-### Doc: * Checks to see if the intrado script is enabled in root's cron
+### Doc: Function: check_unixsuite(8) - 2 checks
+### Doc: * Checks to see if the unixsuite script has run
+### Doc: * Checks to see if the unixsuite script is enabled in root's cron
 ######################
 
-check_intrado() {
+check_unixsuite() {
   if [[ ! ${DEBUG} = 'no' ]]
   then
-    echo "Entering check_intrado(8)"
+    echo "Entering check_unixsuite(8)"
   fi
-  if [[ ! -f ${SCRIPTS_LOGS}/intrado.log ]]
+  if [[ ! -f ${SCRIPTS_LOGS}/unixsuite.log ]]
   then
-    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/intrado script hasn't run yet.${RESET}" >> "${LOG}"
+    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/unixsuite script hasn't run yet.${RESET}" >> "${LOG}"
   fi
-  CRON=$(crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/intrado")
+  CRON=$(crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/unixsuite")
   if [[ -z $CRON ]]
   then
-    printf "%b\n" "  ${RED}The intrado script is disabled in root's cron${RESET}" >> "${LOG}"
+    printf "%b\n" "  ${RED}The unixsuite script is disabled in root's cron${RESET}" >> "${LOG}"
   fi
   if [[ ${DEBUG} = '8' ]]
   then
-    echo "Exiting check_intrado()"
+    echo "Exiting check_unixsuite()"
   fi
 }
 
@@ -3656,8 +3656,8 @@ check_openview() {
   then
     rm ${SCRIPTS_LOGS}/chkopenview.output
   fi
-# check to see if chkov is uncommented
-  grep -v "^#" ${CRONTAB}/root | grep chkov > /dev/null
+# check to see if suitecheck is uncommented
+  grep -v "^#" ${CRONTAB}/root | grep suitecheck > /dev/null
   if [[ $? -eq 1 ]]
   then
     printf "%b\n" "  ${RED}The Openview restart script is not active in root's cron${RESET}" >> "${LOG}"
@@ -5635,7 +5635,7 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_intrado:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15
+for i in check_unixsuite:8 check_ksh:10 check_removeips:20 check_openview:16 check_netbackup:14 check_data_palette:3 check_opnet:17 check_nrpe:15
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
