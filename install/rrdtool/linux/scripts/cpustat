@@ -1,5 +1,8 @@
 #!/bin/ksh
 
+#                       U      N       S     W         I      F       L      T    
+# 01:26:40 PM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+
 . /opt/unixsuite/rrdtool/config
 
 case $2 in
