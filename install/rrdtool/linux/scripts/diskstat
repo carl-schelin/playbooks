@@ -1,5 +1,11 @@
 #!/bin/ksh
 
+# captures the disk space and inodes
+#                            AU      US
+# /dev/mapper/vg00-root   1998672  410940   1466492  22% /
+#                         AI      UI
+# /dev/mapper/vg00-root 131072   3088 127984    3% /
+
 . /opt/unixsuite/rrdtool/config
 
 case $1 in
