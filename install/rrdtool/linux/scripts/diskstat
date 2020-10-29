@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  AS) /bin/df -k | /bin/grep "${2}$" | /usr/bin/awk '{print $2}'
+     ;;
+  US) /bin/df -k | /bin/grep "${2}$" | /usr/bin/awk '{print $3}'
+     ;;
+  AI) /bin/df -i | /bin/grep "${2}$" | /usr/bin/awk '{print $2}'
+     ;;
+  UI) /bin/df -i | /bin/grep "${2}$" | /usr/bin/awk '{print $3}'
+     ;;
+esac
+
