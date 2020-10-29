@@ -1,0 +1,14 @@
+#!/bin/ksh
+
+# expecting $1 = interface
+#           $2 = RX or TX
+
+. /opt/unixsuite/rrdtool/config
+
+case $2 in
+ RX) /bin/netstat -i -n | /bin/grep "^$1 " | /bin/awk '{print $4}'
+     ;;
+ TX) /bin/netstat -i -n | /bin/grep "^$1 " | /bin/awk '{print $8}'
+     ;;
+esac
+
