@@ -1,0 +1,7 @@
+    
+    $RRD/rrdtool update $RRDDATA/cpu.rrd $CPU
+    echo "$DATE:$CPU" >> $DATA/rrdtool.cpu
+
+  } &
+  sleep 3;
+

@@ -1,0 +1,6 @@
+function cpug {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 100 \

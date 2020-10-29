@@ -1,0 +1,15 @@
+function loadr {
+  if [[ ! -f $RRDDATA/load.rrd ]]
+  then
+    echo "creating load.rrd"
+    $RRD/rrdtool create $RRDDATA/load.rrd --step $STEP \
+      DS:avg1:GAUGE:$HEARTBEAT:0:100   \
+      DS:avg5:GAUGE:$HEARTBEAT:0:100   \
+      DS:avg15:GAUGE:$HEARTBEAT:0:100   \
+      RRA:AVERAGE:0.5:$MINUTE:1440     \
+      RRA:AVERAGE:0.5:$HOUR:1440
+  else
+    echo "load.rrd already exists"
+  fi
+}
+

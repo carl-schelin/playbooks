@@ -1,0 +1,8 @@
+# Comment out the functions if you don't need the rrd database for it
+
+netr
+memoryr
+cpur
+hddr
+loadr
+

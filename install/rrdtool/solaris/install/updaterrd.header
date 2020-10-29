@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+RRDPIDFILE=/var/run/rrd.pid
+OLDTODAY="Apr  1 00:00"
+
+[ -e $RRDPIDFILE ] && kill -9 `cat $RRDPIDFILE`
+
+echo $$ > $RRDPIDFILE
+
+while true
+do 
