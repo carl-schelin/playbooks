@@ -13,7 +13,7 @@ The output can be parsed to review errors either on system or by using the **chk
 * Extract Script: incojs01:/usr/local/httpd/bin/login.report.php
 * Validation Script: [server]:/opt/intrado/bin/profile
 * Central Validation Script: incojs01:/opt/intrado/bin/profile - Note that you would pass a servername to the script and it would load the profile info from the /usr/local/admin/servers/[servername]/chkserver.output file.
-* Email List: [server]:/opt/intrado/etc/intrado.email
+* Email List: [server]:/opt/unixsuite/etc/company.email
 * Priority Management Dashboard: https://incojs01.scc911.com/inventory/manage/errors.php
 * Overall chkserver Dashboard: https://incojs01.scc911.com/inventory/manage/manage.php
 * Group Input: [server]:/opt/intrado/etc/group.master
@@ -97,7 +97,7 @@ Server:Keyword:Value[0]:Value[1]:...
 The following checks are run against all servers:
 
   * check_active_employees()
-    * Checks all valid user email addresses against the intrado.email data file and returns an error if missing. Valid == Not Locked and Not a Service Account.
+    * Checks all valid user email addresses against the company.email data file and returns an error if missing. Valid == Not Locked and Not a Service Account.
   * check_apa()
     * Comparison check of chkapa.review and chkapa.valid
   * check_artifactory()
