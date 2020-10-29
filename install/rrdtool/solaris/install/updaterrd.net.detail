@@ -1,0 +1,1 @@
+    NET="${NET}:`$SCRIPTS/netstat REPLACE RX`:`$SCRIPTS/netstat REPLACE TX`"

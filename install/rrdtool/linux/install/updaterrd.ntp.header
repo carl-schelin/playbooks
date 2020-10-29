@@ -1,0 +1,4 @@
+  # get ntp information
+  {
+    DATE=`date`
+    NTP="N"

@@ -1,0 +1,37 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+case $2 in
+  A) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $2}'
+     ;;
+  B) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $3}'
+     ;;
+  C) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $4}'
+     ;;
+  D) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $5}'
+     ;;
+  E) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $6}'
+     ;;
+  F) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $7}'
+     ;;
+  G) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $8}'
+     ;;
+  H) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $9}'
+     ;;
+  I) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $10}'
+     ;;
+  J) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $11}'
+     ;;
+  K) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $12}'
+     ;;
+  L) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $13}'
+     ;;
+  M) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $14}'
+     ;;
+  N) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $15}'
+     ;;
+  O) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $16}'
+     ;;
+esac
+

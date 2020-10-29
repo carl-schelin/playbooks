@@ -1,0 +1,7 @@
+    
+    $RRD/rrdtool update $RRDDATA/disk.rrd $DISK
+    echo "$DATE:$DISK" >> $DATA/rrdtool.disk
+  
+  } &
+  sleep 2;
+

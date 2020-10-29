@@ -1,0 +1,286 @@
+#!/bin/ksh
+
+# Installation script for the rrdtools package
+# Carl Schelin
+# named "install.me"
+# 1. Rename install.me to install
+# 2. Make edits as appropriate
+# 3. Run file
+# 4. If updates to the build source files are made, run the install script again.
+
+#
+### Definitions
+#
+
+# Set up the number of cpu's here.
+CPUS="0 1 2 3 4 5 6 7"
+# Set up the file systems here.
+DISKS="sd0 sd1"
+# Set up the physical devices here
+INTERFACES="e1000g2 nge0 lo"
+
+###
+### Don't forget to comment out any unnecessary CPUs!
+###
+
+#
+### Make the data directories if they don't exist
+
+if [[ ! -d /var/rrdtool/data ]]
+then
+
+  echo "Creating data directories"
+
+  mkdir -p /var/rrdtool/data
+  mkdir /var/rrdtool/graphs
+fi
+
+  #####################################
+#### Creation of the makerrd script. ####
+  #####################################
+
+if [[ -f makerrd.header ]]
+then
+
+  echo "Creating makerrd"
+
+  cat makerrd.header > makerrd
+
+# assemble network section
+  cat makerrd.net.header >> makerrd
+
+  for i in $INTERFACES
+  do
+    sed -e "s/FACE/$i/g" makerrd.net.detail >> makerrd
+  done
+
+  cat makerrd.net.footer >> makerrd
+
+# assemble memory section
+  cat makerrd.memory >> makerrd
+
+# assemble cpu section
+  cat makerrd.cpu.header >> makerrd
+
+  for i in $CPUS
+  do
+    sed -e "s/CPU/$i/g" makerrd.cpu.detail >> makerrd
+  done
+
+  cat makerrd.cpu.footer >> makerrd
+
+# assemble disk section
+  cat makerrd.hdd.header >> makerrd
+
+  for i in $DISKS
+  do
+    sed -e "s/HDD/$i/g" makerrd.hdd.detail >> makerrd
+  done
+
+  cat makerrd.hdd.footer >> makerrd
+
+# assemble load section
+  cat makerrd.load >> makerrd
+
+# finish it off
+  cat makerrd.footer >> makerrd
+else
+  echo "Unable to create makerrd"
+fi
+
+
+  #######################################
+#### Creation of the updaterrd script. ####
+  #######################################
+
+if [[ -f updaterrd.header ]]
+then
+
+  echo "Creating updaterrd"
+
+  cat updaterrd.header > updaterrd
+
+# assemble network section
+  cat updaterrd.net.header >> updaterrd
+
+  for i in $INTERFACES
+  do
+    sed -e "s/REPLACE/$i/g" updaterrd.net.detail >> updaterrd
+  done
+
+  cat updaterrd.net.footer >> updaterrd
+
+# assemble memory section
+  cat updaterrd.memory >> updaterrd
+
+# assemble cpu section
+  cat updaterrd.cpu.header >> updaterrd
+
+  for i in $CPUS
+  do
+    sed -e "s/REPLACE/$i/g" updaterrd.cpu.detail >> updaterrd
+  done
+
+  cat updaterrd.cpu.footer >> updaterrd
+
+# assemble disk section
+  cat updaterrd.hdd.header >> updaterrd
+
+  for i in $DISKS
+  do
+    sed -e "s/REPLACE/$i/g" updaterrd.hdd.detail >> updaterrd
+  done
+
+  cat updaterrd.hdd.footer >> updaterrd
+
+# assemble load section
+  cat updaterrd.load >> updaterrd
+
+# finish it off
+  cat updaterrd.footer >> updaterrd
+else
+  echo "Unable to create makerrd"
+fi
+
+  ########################################
+#### Creation of the makegraphs script. ####
+  ########################################
+
+if [[ -f makegraphs.header ]]
+then
+
+  echo "Creating makegraphs"
+
+# assemble header
+  cat makegraphs.header > makegraphs
+
+# assemble network section
+  cat makegraphs.net >> makegraphs
+
+# assemble memory section
+  cat makegraphs.memory >> makegraphs
+
+# assemble cpu section
+  cat makegraphs.cpu.header >> makegraphs
+
+  for i in $CPUS
+  do
+    sed -e "s/REPLACE/$i/g" makegraphs.cpu.def >> makegraphs
+  done
+
+  for i in $CPUS
+  do
+    sed -e "s/REPLACE/$i/g" makegraphs.cpu.cdef >> makegraphs
+  done
+
+# Comment out the ones that aren't needed
+  sed -e "s/REPLACE/0/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/660000/g" | sed -e "s/COLORUSR/FF6103/g" >> makegraphs
+  sed -e "s/REPLACE/1/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/458B00/g" | sed -e "s/COLORUSR/00FFAA/g" >> makegraphs
+  sed -e "s/REPLACE/2/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/4B0082/g" | sed -e "s/COLORUSR/FF1493/g" >> makegraphs
+  sed -e "s/REPLACE/3/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/0000CC/g" | sed -e "s/COLORUSR/0099FF/g" >> makegraphs
+  sed -e "s/REPLACE/4/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/CD8500/g" | sed -e "s/COLORUSR/FFCC11/g" >> makegraphs
+  sed -e "s/REPLACE/5/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/B3C95A/g" | sed -e "s/COLORUSR/ADFF2F/g" >> makegraphs
+  sed -e "s/REPLACE/6/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/0099CC/g" | sed -e "s/COLORUSR/00E5EE/g" >> makegraphs
+  sed -e "s/REPLACE/7/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/68228B/g" | sed -e "s/COLORUSR/CC00FF/g" >> makegraphs
+#  sed -e "s/REPLACE/8/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/660000/g" | sed -e "s/COLORUSR/FF6103/g" >> makegraphs
+#  sed -e "s/REPLACE/9/g" makegraphs.cpu.graph  | sed -e "s/COLORSYS/458B00/g" | sed -e "s/COLORUSR/00FFAA/g" >> makegraphs
+#  sed -e "s/REPLACE/10/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/4B0082/g" | sed -e "s/COLORUSR/FF1493/g" >> makegraphs
+#  sed -e "s/REPLACE/11/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/0000CC/g" | sed -e "s/COLORUSR/0099FF/g" >> makegraphs
+#  sed -e "s/REPLACE/12/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/CD8500/g" | sed -e "s/COLORUSR/FFCC11/g" >> makegraphs
+#  sed -e "s/REPLACE/13/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/B3C95A/g" | sed -e "s/COLORUSR/ADFF2F/g" >> makegraphs
+#  sed -e "s/REPLACE/14/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/0099CC/g" | sed -e "s/COLORUSR/00E5EE/g" >> makegraphs
+#  sed -e "s/REPLACE/15/g" makegraphs.cpu.graph | sed -e "s/COLORSYS/68228B/g" | sed -e "s/COLORUSR/CC00FF/g" >> makegraphs
+
+  cat makegraphs.cpu.footer >> makegraphs
+
+# add in the last bit for individual cpu graphs
+  cat makegraphs.cpu >> makegraphs
+
+# assemble disk section
+  cat makegraphs.hdd >> makegraphs
+
+# assemble the load section
+  cat makegraphs.load >> makegraphs
+
+# assemble the swap section
+  cat makegraphs.swap >> makegraphs
+
+# assemble the utilization section
+  cat makegraphs.util >> makegraphs
+
+# finish it off
+  cat makegraphs.footer >> makegraphs
+
+else
+  echo "Unable to create makerrd"
+fi
+
+  ########################################
+#### Creation of the makethumbs script. ####
+  ########################################
+
+if [[ -f makethumbs.header ]]
+then
+
+  echo "Creating makethumbs"
+
+# assemble header
+  cat makethumbs.header > makethumbs
+
+# assemble network section
+  cat makethumbs.net >> makethumbs
+
+# assemble memory section
+  cat makethumbs.memory >> makethumbs
+
+# assemble cpu section
+  cat makethumbs.cpu.header >> makethumbs
+
+  for i in $CPUS
+  do
+    sed -e "s/REPLACE/$i/g" makethumbs.cpu.def >> makethumbs
+  done
+
+  for i in $CPUS
+  do
+    sed -e "s/REPLACE/$i/g" makethumbs.cpu.cdef >> makethumbs
+  done
+
+# Comment out the ones that aren't needed
+  sed -e "s/REPLACE/0/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/660000/g" | sed -e "s/COLORUSR/FF6103/g" >> makethumbs
+  sed -e "s/REPLACE/1/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/458B00/g" | sed -e "s/COLORUSR/00FFAA/g" >> makethumbs
+  sed -e "s/REPLACE/2/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/4B0082/g" | sed -e "s/COLORUSR/FF1493/g" >> makethumbs
+  sed -e "s/REPLACE/3/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/0000CC/g" | sed -e "s/COLORUSR/0099FF/g" >> makethumbs
+  sed -e "s/REPLACE/4/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/CD8500/g" | sed -e "s/COLORUSR/FFCC11/g" >> makethumbs
+  sed -e "s/REPLACE/5/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/B3C95A/g" | sed -e "s/COLORUSR/ADFF2F/g" >> makethumbs
+  sed -e "s/REPLACE/6/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/0099CC/g" | sed -e "s/COLORUSR/00E5EE/g" >> makethumbs
+  sed -e "s/REPLACE/7/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/68228B/g" | sed -e "s/COLORUSR/CC00FF/g" >> makethumbs
+#  sed -e "s/REPLACE/8/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/660000/g" | sed -e "s/COLORUSR/FF6103/g" >> makethumbs
+#  sed -e "s/REPLACE/9/g" makethumbs.cpu.graph  | sed -e "s/COLORSYS/458B00/g" | sed -e "s/COLORUSR/00FFAA/g" >> makethumbs
+#  sed -e "s/REPLACE/10/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/4B0082/g" | sed -e "s/COLORUSR/FF1493/g" >> makethumbs
+#  sed -e "s/REPLACE/11/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/0000CC/g" | sed -e "s/COLORUSR/0099FF/g" >> makethumbs
+#  sed -e "s/REPLACE/12/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/CD8500/g" | sed -e "s/COLORUSR/FFCC11/g" >> makethumbs
+#  sed -e "s/REPLACE/13/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/B3C95A/g" | sed -e "s/COLORUSR/ADFF2F/g" >> makethumbs
+#  sed -e "s/REPLACE/14/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/0099CC/g" | sed -e "s/COLORUSR/00E5EE/g" >> makethumbs
+#  sed -e "s/REPLACE/15/g" makethumbs.cpu.graph | sed -e "s/COLORSYS/68228B/g" | sed -e "s/COLORUSR/CC00FF/g" >> makethumbs
+
+  cat makethumbs.cpu.footer >> makethumbs
+
+# assemble disk section
+  cat makethumbs.hdd >> makethumbs
+
+# assemble the load section
+  cat makethumbs.load >> makethumbs
+
+# assemble the swap section
+  cat makethumbs.swap >> makethumbs
+
+# assemble the utilization section
+  cat makethumbs.util >> makethumbs
+
+# finish it off
+  cat makethumbs.footer >> makethumbs
+else
+  echo "Unable to create makethumbs"
+fi
+

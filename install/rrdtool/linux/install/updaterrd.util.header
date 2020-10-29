@@ -1,0 +1,4 @@
+  # get hard disk information
+  {
+    DATE=`date`
+    HDD="N"

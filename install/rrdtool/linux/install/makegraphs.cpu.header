@@ -1,0 +1,8 @@
+function cpug {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "CPU usage" \
+    --vertical-label "load" \
+    --upper-limit 100 \

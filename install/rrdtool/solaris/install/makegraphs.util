@@ -1,0 +1,19 @@
+function utilg {
+  $RRD/rrdtool graph $GRAPHS/u${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "$6 ($1) Utilization" \
+    --vertical-label "%" \
+    --upper-limit 100 \
+    DEF:${1}u=$RRDDATA/hdd.rrd:${1}u:AVERAGE \
+    AREA:${1}u#48C3EB:"% Utilization " \
+      VDEF:maxU=${1}u,MAXIMUM \
+      VDEF:minU=${1}u,MINIMUM \
+      VDEF:avgU=${1}u,AVERAGE \
+      GPRINT:maxU:"Max %6.2lf %s" \
+      GPRINT:minU:"Min %6.2lf %s" \
+      GPRINT:avgU:"Avg %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+

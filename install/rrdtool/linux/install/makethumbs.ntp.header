@@ -1,0 +1,6 @@
+function ntpg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 16000 \

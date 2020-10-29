@@ -1,0 +1,135 @@
+function e1000g0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g0r=$RRDDATA/net.rrd:e1000g0r:AVERAGE \
+    DEF:e1000g0w=$RRDDATA/net.rrd:e1000g0w:AVERAGE \
+    AREA:e1000g0r#00B5E3: \
+    LINE1:e1000g0r#0085B3: \
+    LINE1:e1000g0w#E32D00:
+}
+
+function e1000g1g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g1r=$RRDDATA/net.rrd:e1000g1r:AVERAGE \
+    DEF:e1000g1w=$RRDDATA/net.rrd:e1000g1w:AVERAGE \
+    AREA:e1000g1r#00B5E3: \
+    LINE1:e1000g1r#0085B3: \
+    LINE1:e1000g1w#E32D00:
+}
+
+function e1000g2g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g2r=$RRDDATA/net.rrd:e1000g2r:AVERAGE \
+    DEF:e1000g2w=$RRDDATA/net.rrd:e1000g2w:AVERAGE \
+    AREA:e1000g2r#00B5E3: \
+    LINE1:e1000g2r#0085B3: \
+    LINE1:e1000g2w#E32D00:
+}
+
+function e1000g46g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g4r=$RRDDATA/net.rrd:e1000g4r:AVERAGE \
+    DEF:e1000g4w=$RRDDATA/net.rrd:e1000g4w:AVERAGE \
+    DEF:e1000g6r=$RRDDATA/net.rrd:e1000g6r:AVERAGE \
+    DEF:e1000g6w=$RRDDATA/net.rrd:e1000g6w:AVERAGE \
+    AREA:e1000g4r#48C3EB: \
+    AREA:e1000g4w#7648EB: \
+    CDEF:base=0,e1000g6r,e1000g6w,+,- \
+    LINE1:base \
+    AREA:e1000g6w#7648EB::STACK \
+    AREA:e1000g6r#48C3EB::STACK \
+    HRULE:0#000000
+}
+
+function e1000g57g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g5r=$RRDDATA/net.rrd:e1000g5r:AVERAGE \
+    DEF:e1000g5w=$RRDDATA/net.rrd:e1000g5w:AVERAGE \
+    DEF:e1000g7r=$RRDDATA/net.rrd:e1000g7r:AVERAGE \
+    DEF:e1000g7w=$RRDDATA/net.rrd:e1000g7w:AVERAGE \
+    AREA:e1000g5r#48C3EB: \
+    AREA:e1000g5w#7648EB: \
+    CDEF:base=0,e1000g7r,e1000g7w,+,- \
+    LINE1:base \
+    AREA:e1000g7w#7648EB::STACK \
+    AREA:e1000g7r#48C3EB::STACK \
+    HRULE:0#000000
+}
+
+function nge0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 30000000 \
+    DEF:nge0r=$RRDDATA/net.rrd:nge0r:AVERAGE \
+    DEF:nge0w=$RRDDATA/net.rrd:nge0w:AVERAGE \
+    AREA:nge0r#00B5E3: \
+    LINE1:nge0r#0085B3: \
+    LINE1:nge0w#E32D00:
+}
+ 
+function bge0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 30000000 \
+    DEF:bge0r=$RRDDATA/net.rrd:bge0r:AVERAGE \
+    DEF:bge0w=$RRDDATA/net.rrd:bge0w:AVERAGE \
+    AREA:bge0r#00B5E3: \
+    LINE1:bge0r#0085B3: \
+    LINE1:bge0w#E32D00:
+}
+ 
+function bge1g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 30000000 \
+    DEF:bge1r=$RRDDATA/net.rrd:bge1r:AVERAGE \
+    DEF:bge1w=$RRDDATA/net.rrd:bge1w:AVERAGE \
+    AREA:bge1r#00B5E3: \
+    LINE1:bge1r#0085B3: \
+    LINE1:bge1w#E32D00:
+}
+
+function log {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:lor=$RRDDATA/net.rrd:lor:AVERAGE \
+    DEF:low=$RRDDATA/net.rrd:low:AVERAGE \
+    AREA:lor#00B5E3: \
+    LINE1:lor#0085B3: \
+    LINE1:low#E32D00:
+}
+

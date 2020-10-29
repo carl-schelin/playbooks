@@ -1,0 +1,35 @@
+function diskg {
+  $RRD/rrdtool graph $GRAPHS/disk.${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "$1 Disk Usage" \
+    --vertical-label "% in use" \
+    --upper-limit 100 \
+    DEF:${1}as=$RRDDATA/disk.rrd:${1}as:AVERAGE \
+    DEF:${1}us=$RRDDATA/disk.rrd:${1}us:AVERAGE \
+    DEF:${1}ai=$RRDDATA/disk.rrd:${1}ai:AVERAGE \
+    DEF:${1}ui=$RRDDATA/disk.rrd:${1}ui:AVERAGE \
+    CDEF:totsp=${1}us,${1}as,+ \
+    CDEF:persp=${1}us,totsp,/,100,* \
+    CDEF:totin=${1}ui,${1}ai,+ \
+    CDEF:perin=${1}ui,totin,/,100,* \
+    AREA:persp#00FF00:"% Utilization " \
+      VDEF:maxU=${1}us,MAXIMUM \
+      VDEF:minU=${1}us,MINIMUM \
+      VDEF:avgU=${1}us,AVERAGE \
+      GPRINT:maxU:"Max %6.2lf %s" \
+      GPRINT:minU:"Min %6.2lf %s" \
+      GPRINT:avgU:"Avg %6.2lf %s\n" \
+    LINE1:perin#FF0000:"% Inodes      " \
+      VDEF:maxI=${1}ui,MAXIMUM \
+      VDEF:minI=${1}ui,MINIMUM \
+      VDEF:avgI=${1}ui,AVERAGE \
+      GPRINT:maxI:"Max %6.2lf %s" \
+      GPRINT:minI:"Min %6.2lf %s" \
+      GPRINT:avgI:"Avg %6.2lf %s\n" \
+    HRULE:95#ff0000 \
+    HRULE:85#0000ff \
+    COMMENT:"$DATE\r"
+}
+

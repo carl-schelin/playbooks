@@ -1,0 +1,39 @@
+function loadg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Load Average" \
+    --upper-limit 20 \
+    DEF:l1=$RRDDATA/load.rrd:avg1:AVERAGE \
+    DEF:l5=$RRDDATA/load.rrd:avg5:AVERAGE \
+    DEF:l15=$RRDDATA/load.rrd:avg15:AVERAGE \
+    CDEF:bo=l1,UN,0,l1,IF,0,GT,UNKN,INF,IF \
+    AREA:bo#DDDDDD: \
+    CDEF:bi=l1,UN,0,l1,IF,0,GT,INF,UNKN,IF \
+    AREA:bi#FEFEED: \
+    HRULE:1.0#44B5FF \
+    AREA:l15#FFEE00:"Last 15 min" \
+      VDEF:max15=l15,MAXIMUM \
+      VDEF:min15=l15,MINIMUM \
+      VDEF:avg15=l15,AVERAGE \
+      GPRINT:max15:"Max %6.2lf" \
+      GPRINT:min15:"Min %6.2lf" \
+      GPRINT:avg15:"Avg %6.2lf\n" \
+    LINE3:l5#FFCC00:"Last  5 min" \
+      VDEF:max5=l5,MAXIMUM \
+      VDEF:min5=l5,MINIMUM \
+      VDEF:avg5=l5,AVERAGE \
+      GPRINT:max5:"Max %6.2lf" \
+      GPRINT:min5:"Min %6.2lf" \
+      GPRINT:avg5:"Avg %6.2lf\n" \
+    LINE1:l1#FF0000:"Last  1 min" \
+      VDEF:max1=l1,MAXIMUM \
+      VDEF:min1=l1,MINIMUM \
+      VDEF:avg1=l1,AVERAGE \
+      GPRINT:max1:"Max %6.2lf" \
+      GPRINT:min1:"Min %6.2lf" \
+      GPRINT:avg1:"Avg %6.2lf\n" \
+    COMMENT:"$DATE\r"
+}
+

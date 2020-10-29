@@ -1,0 +1,42 @@
+#     minf            minor faults
+#     mjf             major faults
+#     xcal            inter-processor cross-calls
+#     intr            interrupts
+#     ithr            interrupts as threads  (not  counting  clock interrupt)
+#     csw             context switches
+#     icsw            involuntary context switches
+#     migr            thread migrations (to another processor)
+#     smtx            spins on mutexes (lock not acquired on first try)
+#     srw             spins  on  readers/writer  locks  (lock  not acquired on first try)
+#     syscl           system calls
+#     usr             percent user time
+#     sys             percent system time
+#     wt              the I/O wait time is no longer calculated as a percentage of CPU time, and this statistic will always return zero.
+#     idl             percent idle time
+#     sze             number of processors in the  requested  processor set
+#     set             processor set membership of each CPU
+#
+# mpstat
+#CPU minf mjf xcal  intr ithr  csw icsw migr smtx  srw syscl  usr sys  wt idl
+#  0  461   0 2271   557  200  376   12   45   59    0  3058   16  10   0  73
+#  1  327   0  530   243  112  242    3   63   33    0  2173   10   6   0  84
+#  2  169   0  312   134    3  243    2   58   23    0  1308    7   4   0  89
+#  3  122   0  240    93    2  158    1   49   15    0  1044    7   3   0  91
+#  4  183   0  477   296  158  269    4   53   22    0  1068    6   4   0  90
+#  5  176   0  535   304  160  283    4   50   24    0  1377   10   4   0  86
+#  6  142   0  361   160    6  300    3   47   21    0   745    3   3   0  94
+#  7  152   0  378    91    0  164    1   37   19    0  1094    7   3   0  89
+#  8  204   0  403   147   55  192    2   38   25    0  1369    8   4   0  88
+#  9  170   0  351    94    0  193    1   47   24    0  1144    7   3   0  89
+# 10  148   0  354    90    0  181    1   47   21    0  1078    8   3   0  89
+# 11  138   0  404   126    0  252    2   45   19    0   909    5   3   0  92
+# 12  205   0  358    96    0  189    2   46   22    0  1289    7   4   0  89
+# 13  170   0  346    94    0  180    2   43   22    0  1104    7   3   0  90
+# 14  148   0  344    89    0  168    1   38   20    0  1025    7   3   0  90
+# 15  147   0  379    82    1  154    1   33   18    0  1006    6   3   0  91
+
+function cpur {
+  if [[ ! -f $RRDDATA/cpu.rrd ]]
+  then
+    echo "creating cpu.rrd"
+    $RRD/rrdtool create $RRDDATA/cpu.rrd --step $STEP \

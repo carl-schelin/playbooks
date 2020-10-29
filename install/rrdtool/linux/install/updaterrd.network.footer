@@ -1,0 +1,7 @@
+
+    $RRD/rrdtool update $RRDDATA/net.rrd $NET
+    echo "$DATE:$NET" >> $DATA/rrdtool.net
+
+  } &
+  sleep 2;
+

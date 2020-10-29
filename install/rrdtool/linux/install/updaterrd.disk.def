@@ -1,0 +1,1 @@
+    DISK="${DISK}:`$SCRIPTS/diskstat AS /DRIVE`:`$SCRIPTS/diskstat US /DRIVE`:`$SCRIPTS/diskstat AI /DRIVE`:`$SCRIPTS/diskstat UI /DRIVE`"

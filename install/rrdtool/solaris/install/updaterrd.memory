@@ -1,0 +1,17 @@
+  # get general data; swap, queues and memory stats
+  { 
+    DATE=`date`
+    MEM="N"
+    MEM="${MEM}:`$SCRIPTS/procstat R`"
+    MEM="${MEM}:`$SCRIPTS/procstat B`"
+    MEM="${MEM}:`$SCRIPTS/swapstat I`"
+    MEM="${MEM}:`$SCRIPTS/swapstat O`"
+    MEM="${MEM}:`$SCRIPTS/swapstat M`"
+    MEM="${MEM}:`$SCRIPTS/swapstat U`"
+    
+    $RRD/rrdtool update $RRDDATA/memory.rrd $MEM
+    echo "$DATE:$MEM" >> $DATA/rrdtool.mem
+  
+  } &
+  sleep 3;
+
