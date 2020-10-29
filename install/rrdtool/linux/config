@@ -1,0 +1,55 @@
+#
+# How often to update the databases in seconds
+STEP=15
+
+#
+# The heartbeat value. Should be a little larger than STEP
+HEARTBEAT=$(($STEP + 5))
+
+#
+# Timing info.
+MINUTE=$((60 / $STEP))
+HOUR=$((3600 / $STEP))
+DAY=$((86400 / $STEP))
+WEEK=$((604800  / $STEP))
+
+# 
+# Location of the rrdtool binary
+RRD=/usr/bin
+
+#
+# Root directory of the core scripts
+RRDTOOL=/opt/unixsuite/rrdtool
+
+#
+# rrd databases
+RRDDATA=/var/rrdtool/data
+
+#
+# Data capture scripts
+SCRIPTS=$RRDTOOL/scripts
+
+#
+# Raw data files; output of vmstat, iostat, etc as well as log files
+DATA=/var/rrdtool/data
+
+#
+# rrd Graph directory
+GRAPHS=/var/rrdtool/graphs
+
+# 
+# Web directory for the graphs once done
+HTTPD=/usr/local/httpd/hgdocs/remote/rrd
+
+#
+# Interface configuration. Interface:Label to be used on the graph
+INTERFACES="bond0:bond0 bond1:bond1 eth0:eth0 eth1:eth1 eth2:eth2 eth3:eth3"
+
+#
+# Drive configuration. Drive:Label to be used on the graph
+DRIVES="sda:sda"
+
+#
+# Disk Space configuration; file system name list as displayed in the graph label
+DISKS="root home opt tmp usr var"
+
