@@ -21,7 +21,7 @@ fi
 . "${DIRNAME}"/../.config
 
 ADMIN=/usr/local/admin
-LOGS=${SCRIPTS_LOGS}/intrado.log
+LOGS=${SCRIPTS_LOGS}/unixsuite.log
 CHKSERVER=${SCRIPTS_LOGS}/chkserver.output
 
 # generally this will be run on a server when logging in
