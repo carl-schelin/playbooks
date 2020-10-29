@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  J) /usr/sbin/ntpq -pn | /bin/grep $2 | /usr/bin/awk '{print $NF}'
+     ;;
+  O) /usr/sbin/ntpq -pn | /bin/grep $2 | /usr/bin/awk '{print $9}'
+     ;;
+  D) /usr/sbin/ntpq -pn | /bin/grep $2 | /usr/bin/awk '{print $8}'
+     ;;
+esac
+
