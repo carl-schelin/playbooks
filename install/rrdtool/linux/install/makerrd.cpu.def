@@ -1,0 +1,8 @@
+      DS:cpu_usrNUMBER:GAUGE:$HEARTBEAT:0:100 \
+      DS:cpu_nicNUMBER:GAUGE:$HEARTBEAT:0:100 \
+      DS:cpu_sysNUMBER:GAUGE:$HEARTBEAT:0:100 \
+      DS:cpu_iowNUMBER:GAUGE:$HEARTBEAT:0:U   \
+      DS:cpu_irqNUMBER:GAUGE:$HEARTBEAT:0:U   \
+      DS:cpu_sftNUMBER:GAUGE:$HEARTBEAT:0:U   \
+      DS:cpu_idlNUMBER:GAUGE:$HEARTBEAT:0:100 \
+      DS:cpu_intNUMBER:GAUGE:$HEARTBEAT:0:U   \

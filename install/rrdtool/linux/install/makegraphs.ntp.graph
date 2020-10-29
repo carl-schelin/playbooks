@@ -1,0 +1,7 @@
+    LINE1:dispNUMBER#COLOR:"SERVER" \
+      VDEF:maxNUMBER=dispNUMBER,MAXIMUM \
+      VDEF:minNUMBER=dispNUMBER,MINIMUM \
+      VDEF:avgNUMBER=dispNUMBER,AVERAGE \
+      GPRINT:maxNUMBER:"Max %6.2lf" \
+      GPRINT:minNUMBER:"Min %6.2lf" \
+      GPRINT:avgNUMBER:"Avg %6.2lf\n" \

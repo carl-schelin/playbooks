@@ -1,0 +1,5 @@
+function ntpr {
+  if [[ ! -f $RRDDATA/ntp.rrd ]]
+  then
+    echo "creating ntp.rrd"
+    $RRD/rrdtool create $RRDDATA/ntp.rrd --step $STEP \

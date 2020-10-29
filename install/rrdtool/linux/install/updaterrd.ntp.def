@@ -1,0 +1,1 @@
+    NTP="${NTP}:`$SCRIPTS/ntpstat J TIME`:`$SCRIPTS/ntpstat O TIME`:`$SCRIPTS/ntpstat D TIME`"

@@ -1,0 +1,6 @@
+    HRULE:100#ff0000 \
+    HRULE:97#ffff00 \
+    HRULE:75#0000ff \
+    COMMENT:"$DATE\r"
+}
+

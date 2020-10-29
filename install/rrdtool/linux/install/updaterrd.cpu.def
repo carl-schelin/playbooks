@@ -1,0 +1,1 @@
+    CPU="${CPU}:`$SCRIPTS/cpustat NUMBER U`:`$SCRIPTS/cpustat NUMBER N`:`$SCRIPTS/cpustat NUMBER S`:`$SCRIPTS/cpustat NUMBER W`:`$SCRIPTS/cpustat NUMBER I`:`$SCRIPTS/cpustat NUMBER F`:`$SCRIPTS/cpustat NUMBER L`:`$SCRIPTS/cpustat NUMBER T`"

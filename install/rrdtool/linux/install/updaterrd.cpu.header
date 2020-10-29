@@ -1,0 +1,4 @@
+  # get cpu information
+  {
+    DATE=`date`
+    CPU="N"

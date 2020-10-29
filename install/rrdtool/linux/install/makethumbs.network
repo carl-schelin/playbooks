@@ -1,0 +1,14 @@
+#    --upper-limit 30000000 \
+function netg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --lower-limit 0 \
+    DEF:${1}r=$RRDDATA/net.rrd:${1}r:AVERAGE \
+    DEF:${1}w=$RRDDATA/net.rrd:${1}w:AVERAGE \
+    AREA:${1}r#00B5E3: \
+    LINE1:${1}r#0085B3: \
+    LINE1:${1}w#E32D00:
+}
+

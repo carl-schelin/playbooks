@@ -1,0 +1,33 @@
+function swapg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Swap" \
+    --vertical-label "swap" \
+    DEF:swap_avail=$RRDDATA/memory.rrd:swap_avail:AVERAGE \
+    DEF:swap_used=$RRDDATA/memory.rrd:swap_used:AVERAGE \
+    CDEF:total=swap_used,swap_avail,+ \
+    CDEF:crit=97,100,/,total,* \
+    CDEF:maj=94,100,/,total,* \
+    CDEF:warn=89,100,/,total,* \
+    AREA:swap_used#FF0000:"In Use   " \
+      VDEF:maxU=swap_used,MAXIMUM \
+      VDEF:minU=swap_used,MINIMUM \
+      VDEF:avgU=swap_used,AVERAGE \
+      GPRINT:maxU:"Max %6.2lf %s" \
+      GPRINT:minU:"Min %6.2lf %s" \
+      GPRINT:avgU:"Avg %6.2lf %s\n" \
+    AREA:swap_avail#339900:"Available":STACK \
+      VDEF:maxA=swap_avail,MAXIMUM \
+      VDEF:minA=swap_avail,MINIMUM \
+      VDEF:avgA=swap_avail,AVERAGE \
+      GPRINT:maxA:"Max %6.2lf %s" \
+      GPRINT:minA:"Min %6.2lf %s" \
+      GPRINT:avgA:"Avg %6.2lf %s\n" \
+    LINE1:crit#ff0000 \
+    LINE1:maj#ffff00 \
+    LINE1:warn#0000ff \
+    COMMENT:"$DATE\r"
+}
+

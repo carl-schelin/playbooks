@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+DATE=`date +"%Y/%m/%d %H\:%M\:%S %Z"`
+
+# ensure only one copy of makegraphs runs
+RRDGRAPHS=/var/run/rrdgraph.pid
+
+if [[ -f $RRDGRAPHS ]]
+then
+  exit 0
+fi
+
+echo $$ > $RRDGRAPHS
+
+. /opt/unixsuite/rrdtool/config
+

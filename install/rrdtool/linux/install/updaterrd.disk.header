@@ -1,0 +1,4 @@
+  # get disk stats; used space and inodes
+  { 
+    DATE=`date`
+    DISK="N"

@@ -1,0 +1,20 @@
+function diskg {
+  $RRD/rrdtool graph $GRAPHS/${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 100 \
+    DEF:${1}as=$RRDDATA/disk.rrd:${1}as:AVERAGE \
+    DEF:${1}us=$RRDDATA/disk.rrd:${1}us:AVERAGE \
+    DEF:${1}ai=$RRDDATA/disk.rrd:${1}ai:AVERAGE \
+    DEF:${1}ui=$RRDDATA/disk.rrd:${1}ui:AVERAGE \
+    CDEF:totsp=${1}us,${1}as,+ \
+    CDEF:persp=${1}us,totsp,/,100,* \
+    CDEF:totin=${1}ui,${1}ai,+ \
+    CDEF:perin=${1}ui,totin,/,100,* \
+    AREA:persp#00FF00: \
+    LINE1:perin#FF0000: \
+    HRULE:95#ff0000 \
+    HRULE:85#0000ff
+}
+

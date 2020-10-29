@@ -1,0 +1,34 @@
+function hddg {
+  $RRD/rrdtool graph $GRAPHS/xput.${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "$6 Throughput" \
+    --vertical-label "write - bytes/s - read" \
+    --rigid \
+    DEF:${1}r=$RRDDATA/hdd.rrd:${1}r:AVERAGE \
+    DEF:${1}w=$RRDDATA/hdd.rrd:${1}w:AVERAGE \
+    AREA:${1}r#00FF00:"Reads " \
+      VDEF:maxR=${1}r,MAXIMUM \
+      VDEF:minR=${1}r,MINIMUM \
+      VDEF:avgR=${1}r,AVERAGE \
+      VDEF:totR=${1}r,TOTAL \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Avg %6.2lf %s\n" \
+    CDEF:base=0,${1}w,0,+,- \
+    LINE1:base \
+    AREA:${1}w#008000:"Writes":STACK \
+      VDEF:maxW=${1}w,MAXIMUM \
+      VDEF:minW=${1}w,MINIMUM \
+      VDEF:avgW=${1}w,AVERAGE \
+      VDEF:totW=${1}w,TOTAL \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Avg %6.2lf %s\n" \
+    HRULE:0#000000 \
+    COMMENT:"$DATE\r"
+}
+

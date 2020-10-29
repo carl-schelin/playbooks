@@ -1,0 +1,7 @@
+      RRA:AVERAGE:0.5:$MINUTE:1440     \
+      RRA:AVERAGE:0.5:$HOUR:1440
+  else
+    echo "ntp.rrd already exists"
+  fi
+}
+
