@@ -9,7 +9,7 @@ The script:
 * If the 'towersvc' service account exists, adds the correct rule for Ansible Tower
 * Removes the Temporary File when done
 
-* Location: [server]:/opt/intrado/bin/modifysudo
-* Flag File: [server]:/opt/intrado/etc/changefreeze
-* Temporary File: [server]:/opt/intrado/var/sudoers.unixsvc
+* Location: [server]:bin/modifysudo
+* Flag File: [server]:etc/changefreeze
+* Temporary File: [server]:var/sudoers.unixsvc
 
