@@ -2,12 +2,12 @@ Description: The lockuser script is used to lock user accounts using system base
 
 Important Note: Make sure you don't add people who have simply moved to a different team or department.
 
-* Location: [server]:/opt/intrado/bin/lockuser
-* Data File: [server]:/opt/intrado/etc/lockuser.dat
-* Output File: [server]:/opt/intrado/etc/locked.output
-* Output File: [server]:/opt/intrado/etc/lockuser.output
-* Log File: [server]:/opt/intrado/etc/lockuser.log
-* Validation Script: incojs01:/usr/local/admin/bin/processetc
+* Location: [server]:bin/lockuser
+* Data File: [server]:etc/lockuser.dat
+* Output File: [server]:var/locked.output
+* Output File: [server]:var/lockuser.output
+* Log File: [server]:var/lockuser.log
+* Validation Script: admin directory, bin/processetc
 
 The lockuser script works as follows:
 
