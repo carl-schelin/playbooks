@@ -111,8 +111,7 @@ then
   if [[ ! -d ${SCRIPTS}/rrdtool ]]
   then
     echo "Installing rrdtool"
-    tar fvx rrd/rrdtool.linux.tar
-    mv rrdtool ${SCRIPTS}
+    mv rrdtool/linux ${SCRIPTS}/rrdtool
 
 # build interface variable
     SPACE=''
@@ -405,8 +404,7 @@ then
   if [[ ! -d ${SCRIPTS}/rrdtool ]]
   then
     echo "Installing rrdtool"
-    tar fvx rrd/rrdtool.solaris.tar
-    mv rrdtool ${SCRIPTS}
+    mv rrdtool/solaris ${SCRIPTS}/rrdtool
 
 # build interface variable
     SPACE=''
