@@ -2,12 +2,12 @@
 
 Description: The **chketh** script uses the dladm or ethtool commands to dump the configuration to a file. Primarily you'd want to know if a Link is Up or Down but you might also check for speeds (10mb/s for instance vs 100 or more) or other information.
 
-* Location: [server]:/opt/intrado/bin/chketh
-* Data File: [server]:/opt/intrado/etc/chketh.output
-* Comparison File: incojs01:/usr/local/admin/servers/[server]/chketh.good
-* Difference File: incojs01:/usr/local/admin/servers/[server]/chketh.diff
-* Validation Script: incojs01:/usr/local/admin/servers/chketh
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
+* Location: [server]:bin/chketh
+* Data File: [server]:var/chketh.output
+* Comparison File: [management server]:admin/servers/[server]/chketh.good
+* Difference File: [management server]:admin/servers/[server]/chketh.diff
+* Validation Script: [management server]:admin/servers/chketh
+* Reporting Script: [management server]:admin/bin/processetc
 
 This is a comparison script. Comparison scripts don't check for errors in that the output is diverse enough that it would take a great deal of effort to specifically identify the problem without missing another potential problem. The Data File is compared with the Comparison File using the diff utility which creates the Difference File. The output is then manually reviewed using the Validation Script or the Morning Report Dashboard for problems.
 
