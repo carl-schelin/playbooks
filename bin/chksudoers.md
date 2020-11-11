@@ -2,13 +2,13 @@ Description: The chksudoers script processes all entries in the sudoers file, co
 
 Important! The script has a dependencies on the output of chkusers (chkusers.dat).
 
-* Location: [server]:/opt/intrado/bin/chksudoers 
-* Data File: [server]:/opt/intrado/etc/chksudoers.output
-* Data File: [server]:/opt/intrado/etc/chksudoers.dat
-* Comparison File: incojs01:/usr/local/admin/servers/[server]/chksudoers.good
-* Difference File: incojs01:/usr/local/admin/servers/[server]/chksudoers.diff
-* Validation Script: incojs01:/usr/local/admin/servers/chksudoers
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
+* Location: [server]:bin/chksudoers 
+* Data File: [server]:var/chksudoers.output
+* Data File: [server]:var/chksudoers.dat
+* Comparison File: [management server]:admin/servers/[server]/chksudoers.good
+* Difference File: [management server]:admin/servers/[server]/chksudoers.diff
+* Validation Script: [management server]:admin/servers/chksudoers
+* Reporting Script: [management server]:admin/bin/processetc
 
 This is a comparison script. Comparison scripts don't check for errors in that the output is diverse enough that it would take a great deal of effort to specifically identify the problem without missing another potential problem. The Data File is compared with the Comparison File using the diff utility which creates the Difference File. The output is then manually reviewed using the Validation Script or the Morning Report Dashboard for problems.
 
