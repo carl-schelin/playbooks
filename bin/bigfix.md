@@ -1,6 +1,6 @@
 Description: The bigfix script creates a new filesystem for use by the BigFix team to install patches to servers.
 
-* Location: [server]:/opt/intrado/bin/bigfix
+* Location: [server]:bin/bigfix
 
 The bigfix agent is a tool used to apply patches. 
 
