@@ -11,16 +11,16 @@ Status of the user account
 
 Note that the last time the user was logged in line is not provided for HP-UX systems as it's from the output of finger and the wtmpx files aren't rolled on HP-UX systems so the delay was taking an extremely long time.
 
-* Location: [server]:/opt/intrado/bin/chkusers
-* Location: [server]:/opt/intrado/bin/chkusers.contrib (HP-UX specific)
-* Location: [server]:/opt/intrado/bin/chkusers.Q4 (HP-UX specific)
-* Data File: [server]:/opt/intrado/etc/chkusers.dat
-* Process File: incojs01:/usr/local/admin/bin/getusers
-* Full Listing: incojs01:/usr/local/admin/servers/chkusers.dat
+* Location: [server]:bin/chkusers
+* Location: [server]:bin/chkusers.contrib (HP-UX specific)
+* Location: [server]:bin/chkusers.Q4 (HP-UX specific)
+* Data File: [server]:var/chkusers.dat
+* Process File: [management server]:admin/bin/getusers
+* Full Listing: [management server]:admin/servers/chkusers.dat
 
 The chksudoers script uses the chkusers.dat file to pull information.
 
 The Process File retrieves the chkusers.dat file and concatenates it to a central complete Full Listing.
 
-Note: The reason for the two HP specific scripts are due to the locations of perl. The scripts haven't changed much over time and what really should happen is the calling script, intrado, should locate perl and call the script as "perl chkusers" vs having three scripts. Copious free time as always.
+Note: The reason for the two HP specific scripts are due to the locations of perl. The scripts haven't changed much over time and what really should happen is the calling script should locate perl and call the script as "perl chkusers" vs having three scripts. Copious free time as always.
 
