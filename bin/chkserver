@@ -40,7 +40,7 @@
 # 2017/07/06 - CS - Add a trailing $ to the IP check to keep from multiple hits due to single digit host IPs
 # 2017/07/06 - CS - Updated to add a message for the email check
 # 2017/07/10 - CS - Update warning messages with appropriate color
-# 2017/07/10 - CS - Added check for access to incojs01
+# 2017/07/10 - CS - Added check for access to the management server
 # 2017/07/10 - CS - Added check for time
 # 2017/07/11 - CS - Removed private networks from gateway ping test
 # 2017/07/11 - CS - updated to ping servers before checking functionality
