@@ -2,7 +2,10 @@
 
 # update.forward
 # Carl Schelin
-# Update root's .forward file to replace jowen@intrado.com with unixadmins@intrado.com
+# Update root's .forward file should an email address change
+# change the OLDFORWARD to WHOCARES email address as that's generally the Unix Admins email
+# OLDFORWARD is a space separated list in case there are more than one 
+# address that needs to be replaced.
 
 #BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
@@ -33,48 +36,29 @@ fi
 
 if [[ ! -f ${ROOTHOME}/.forward ]]
 then
-  echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
+  echo "${WHOCARES}" > ${ROOTHOME}/.forward
   if [[ ${CHANGELOG} != '' ]]
   then
     echo "Changelog sent"
-    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins email group" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
   fi
   exit 0
 fi
 
-grep -i "jowen@intrado.com" ${ROOTHOME}/.forward > /dev/null
-if [[ $? -eq 0 ]]
+if [[ ! -z ${OLDFORWARD} ]]
 then
-  echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  if [[ ${CHANGELOG} != '' ]]
-  then
-    echo "Changelog sent"
-    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
-  fi
-  exit 0
+  for i in ${OLDFORWARD}
+  do
+    grep -i "${i}" ${ROOTHOME}/.forward > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      echo "${WHOCARES}" > ${ROOTHOME}/.forward
+      if [[ ${CHANGELOG} != '' ]]
+      then
+        echo "Changelog sent"
+        echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      fi
+    fi
+  done
 fi
-  
-grep -i "jowen@west.com" ${ROOTHOME}/.forward > /dev/null
-if [[ $? -eq 0 ]]
-then
-  echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  if [[ ${CHANGELOG} != '' ]]
-  then
-    echo "Changelog sent"
-    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
-  fi
-  exit 0
-fi
-  
-grep -i "unixlabsystemalerts@intrado.com" ${ROOTHOME}/.forward > /dev/null
-if [[ $? -eq 0 ]]
-then
-  echo "unixadmins@intrado.com" > ${ROOTHOME}/.forward
-  if [[ ${CHANGELOG} != '' ]]
-  then
-    echo "Changelog sent"
-    echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
-  fi
-  exit 0
-fi
-  
+

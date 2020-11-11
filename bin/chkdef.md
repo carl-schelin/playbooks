@@ -5,14 +5,14 @@ with OpenView caused there to be 2 defunct processes. In the mean time, we found
 failed to exit cleanly leaving 45 or so defunct processes. A webpage report of the processes plus a report in the status email that count the 
 number of defunct processes is created. The status email also creates a status web page which lists all issues including a defunct process count.
 
-* Location: [server]:/opt/intrado/bin/chkdef
-* Data File: [server]:/opt/intrado/etc/defunct.data
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
-* Web Script: incojs01:/usr/local/admin/bin/showdef
-* Web Page: [https://incojs01.scc911.com/reports/defunct.php](https://incojs01.scc911.com/reports/defunct.php)
-* Email Script: incojs01:/usr/local/admin/bin/status.email
-* Email Script: incojs01:/usr/local/admin/bin/status.email.tandem
-* Status Web Page: [https://incojs01.scc911.com/status](https://incojs01.scc911.com/status)
+* Location: [server]:bin/chkdef
+* Data File: [server]:var/defunct.data
+* Reporting Script: [management server]:admin/bin/processetc
+* Web Script: [management server]:admin/bin/showdef
+* Web Page: https://[management server]/reports/defunct.php
+* Email Script: [management server]:admin/bin/status.email
+* Email Script: [management server]:admin/bin/status.email.[groupname]
+* Status Web Page: https://[management server]/status
 
 Note that the **chkserver** script does list a count of defunct processes but doesn't list them since there may be quite a few.
 

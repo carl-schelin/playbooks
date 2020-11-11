@@ -2,6 +2,6 @@ Description: The nbujava script checks to see if a changefreeze is in effect and
 
 Note that this is being done to satisfy a Vulnerability Scan issue regarding Java being installed by Netbackup.
 
-* Location: [server]:/opt/intrado/bin/nbujava
-* Flag File: [server]:/opt/intrado/etc/changefreeze
+* Location: [server]:bin/nbujava
+* Flag File: [server]:etc/changefreeze
 

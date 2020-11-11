@@ -28,12 +28,6 @@ fi
 
 touch ${SCRIPTS_DATA}/suitecheck.$$
 
-# quick cleanup of files
-if [[ -f /opt/intrado/etc.tar.gz ]]
-then
-  rm /opt/intrado/etc.tar.gz
-fi
-
 # permit immediate running of scripts (within 5 minutes) if needed
 # always delete it after one run
 if [[ -f ${SCRIPTS_BINS}/runonce ]]

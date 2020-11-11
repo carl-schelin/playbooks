@@ -6,11 +6,11 @@
 # Note: This script only runs the one-time only scripts. Anything that needs to run often 
 # during the day such as suitecheck or the rrdtool scripts should have their own entries in cron
 #
-# Note renamed from intrado to unixsuite
+# Note renamed to unixsuite
 #
 # Changelog:
 # 2011-07-18 - Add logic for processing tasks weekly or monthly.
-# 2011-07-19 - Add rrdtool and intrado.log rolling.
+# 2011-07-19 - Add rrdtool and unixsuite.log rolling.
 # 2011-08-17 - Correct chkusers.contrib to add bin to the path for the -f check. Added copy of anaconda-ks.cfg to etc if it exists.
 # 2011-08-18 - Correct script to run chkusers for all systems. Added a permissions change at the end of the script run as well.
 # 2011-08-20 - Added chkversion script, mainly to get openview version but others in the future.
@@ -30,9 +30,9 @@
 # 2011-11-11 - Changed the above section so that it's looking for the specific $HOSTNAME and runs that as the script
 # 2011-11-29 - Added a weekly server specific execution method. Add .weekly to the hostname filename to execute scripts on Sunday mornings.
 # 2011-12-01 - Added the chksecurity script to check system security
-# 2011-12-06 - Change log file to go to the /opt/intrado/var directory
-# 2011-12-06 - Added a find statement to delete /opt/intrado/etc files that are older than 24 hours. This ensures valid values in the event of a failed script.
-# 2011-12-07 - Added directory creation code for the /opt/intrado/var and /opt/intrado/etc directories in case they're not created during installation
+# 2011-12-06 - Change log file to go to the /opt/unixsuite/var directory
+# 2011-12-06 - Added a find statement to delete /opt/unixsuite/etc files that are older than 24 hours. This ensures valid values in the event of a failed script.
+# 2011-12-07 - Added directory creation code for the /opt/unixsuite/var and /opt/unixsuite/etc directories in case they're not created during installation
 # 2011-12-07 - Added chkarray for OSF1 systems (mainly lldb01)
 # 2012-01-21 - Added chksan for Sun and Linux systems.
 # 2012-02-27 - Added chkports to list the open ports and what program and owner has the port open
@@ -587,7 +587,7 @@ find ${SCRIPTS_LOGS} -type f -exec chmod 660 {} \;
 # Clean up the old data files in case they exist.
 find ${SCRIPTS_LOGS} -atime +1 -exec rm {} \;
 
-# Finally create a tar file of all the data. For the intrado scripts it's in etc. for the unixsuite scripts it's in var. Basically what SCRIPTS_LOGS points to. Give it 5 minutes before performing this step
+# Finally create a tar file of all the data. Basically what SCRIPTS_LOGS points to. Give it 5 minutes before performing this step
 sleep 300
 if [[ -f ${SCRIPTS}/etc.tar.gz ]]
 then

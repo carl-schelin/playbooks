@@ -3,29 +3,29 @@
 Description: The **chkserver** script checks numerous parts of the system to ensure the server is properly configured and ready to go into production. 
 The output can be parsed to review errors either on system or by using the **chkstatus** script located on the admin server.
 
-* Location: [server]:/opt/intrado/bin/chkserver
-* Config File: [server]:/opt/intrado/.config
-* Data Input: lnmt1cuomrcs1:/opt/static/intrado/etc/chkserver.merge
-* Data Input: [server]:/opt/intrado/etc/chkserver.input
-* Merge Script: incojs01:/export/home/unixsvc/chkserver/process
-* Data Output: [server]:/opt/intrado/etc/chkserver.output
-* Supporting Script: incojs01:/usr/local/admin/bin/chkstatus
-* Extract Script: incojs01:/usr/local/httpd/bin/login.report.php
-* Validation Script: [server]:/opt/intrado/bin/profile
-* Central Validation Script: incojs01:/opt/intrado/bin/profile - Note that you would pass a servername to the script and it would load the profile info from the /usr/local/admin/servers/[servername]/chkserver.output file.
-* Email List: [server]:/opt/unixsuite/etc/company.email
-* Priority Management Dashboard: https://incojs01.scc911.com/inventory/manage/errors.php
-* Overall chkserver Dashboard: https://incojs01.scc911.com/inventory/manage/manage.php
-* Group Input: [server]:/opt/intrado/etc/group.master
-* Backup Input: [server]:/opt/intrado/etc/backups.output
-* Exclude File: [server]:/opt/intrado/etc/chkserver.exclude
-* Privileged File: [server]:/opt/intrado/etc/chksuders.output
-* Privileged Management File: [server]:/opt/intrado/etc/chksudo.dat
-* Route Table: [server]:/opt/intrado/etc/routeable.output
-* Security Data: [server]:/opt/intrado/etc/chksecurity.output
-* Exclude File: [server]:/opt/intrado/etc/chkserver.exclude
-* Openview Completed File: [server]:/opt/intrado/etc/chkopenview.completed
-* Openview Blocked File: [server]:/opt/intrado/etc/chkopenview.block
+* Location: [server]:bin/chkserver
+* Config File: [server]:.config
+* Data Input: [source server]:/opt/static/[script]/etc/chkserver.merge
+* Data Input: [server]:etc/chkserver.input
+* Merge Script: [management server]:/export/home/unixsvc/chkserver/process
+* Data Output: [server]:var/chkserver.output
+* Supporting Script: [management server]:admin/bin/chkstatus
+* Extract Script: [management server]:/usr/local/httpd/bin/login.report.php
+* Validation Script: [server]:bin/profile
+* Central Validation Script: [management server]:bin/profile - Note that you would pass a servername to the script and it would load the profile info from the admin/servers/[servername]/chkserver.output file.
+* Email List: [server]:etc/company.email
+* Priority Management Dashboard: https://[inventory]/manage/errors.php
+* Overall chkserver Dashboard: https://[inventory]/manage/manage.php
+* Group Input: [server]:etc/group.master
+* Backup Input: [server]:var/backups.output
+* Exclude File: [server]:etc/chkserver.exclude
+* Privileged File: [server]:var/chksuders.output
+* Privileged Management File: [server]:etc/chksudo.dat
+* Route Table: [server]:var/routeable.output
+* Security Data: [server]:var/chksecurity.output
+* Exclude File: [server]:etc/chkserver.exclude
+* Openview Completed File: [server]:var/chkopenview.completed
+* Openview Blocked File: [server]:etc/chkopenview.block
 
 The .config file contains the configuration used by this script. You also have the ability to disable checks within the .config file.
 
@@ -192,9 +192,6 @@ Verifies that Value[1] service is running
     * Checks to make sure hostname is in /etc/hosts.
   * check_interfaces()
     * Report if a FAILED interface is found.
-  * check_intrado()
-    * Report if the intrado script hasn't run.
-    * Report if the intrado script isn't active in root's cron.
   * check_ksh()
     * Report if /usr/bin/ksh doesn't exist.
   * check_kubernetes()
@@ -302,6 +299,9 @@ Verifies that Value[1] service is running
     * Report if errors have occurred trying to reach a time server
     * Report if the drift directory doesn't exist.
     * Report if the drift file doesn't exist.
+  * check_unixsuite()
+    * Report if the unixsuite script hasn't run.
+    * Report if the unixsuite script isn't active in root's cron.
   * check_vmware_agent()
     * Is the VMWare agent installed?
     * Is the VMWare agent running?

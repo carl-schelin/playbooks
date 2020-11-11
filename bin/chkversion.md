@@ -17,9 +17,9 @@ Software currently checked and target file:
 * VMtoolsd - vmtoolsd.version
 * Wildfly - wildfly.version - Only notes that it's installed.
 
-* Location: [server]:/opt/intrado/bin/chkversion
-* Data File: [server]:/opt/intrado/etc/[software].version
-* Reporting Script: [server]:/opt/intrado/bin/chksys
+* Location: [server]:bin/chkversion
+* Data File: [server]:var/[software].version
+* Reporting Script: [server]:bin/chksys
 
 Note that I worked with SCM several years back to create a deployed software version file for products. At this time, I'm not importing that information but it is planned.
 

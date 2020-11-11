@@ -27,9 +27,9 @@ Description: The chksys script is a general data gathering script used to ensure
 * Filesystem Layout
 * Resolver Information
 
-* Location: [server]:/opt/intrado/bin/chksys
-* Data File: [server]:/opt/intrado/etc/chksys.import
-* Reporting Script: incojs01:/usr/local/httpd/bin/import.php
-* Version Script: [server]:/opt/intrado/bin/chkversion
-* Version Data File: [server]:/opt/intrado/etc/[software].version
+* Location: [server]:bin/chksys
+* Data File: [server]:var/chksys.import
+* Reporting Script: [management server]:/usr/local/httpd/bin/import.php
+* Version Script: [server]:bin/chkversion
+* Version Data File: [server]:var/[software].version
 

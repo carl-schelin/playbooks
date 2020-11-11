@@ -1,4 +1,4 @@
-## intrado/unixsuite Script
+## unixsuite Script
 
 The **script framework** is intended to be a wrapper around several other specific scripts. The primary purpose is to make updates to 
 the script and all subscripts in an efficient manner. The directory is user/group owned by the unix service account (unixsvc) and the sysadmin 

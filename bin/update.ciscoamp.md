@@ -2,7 +2,7 @@ Description: The update.ciscoamp script installs the Cisco Amp agent if it's mis
     
 If a changefreeze (file exists) is in effect, the script exits without checking. A changelog is sent when a record is updated.
 
-* Location: [server]:/opt/intrado/bin/update.ciscoamp
-# Binary RPMs: [server]:/opt/intrado/install/
-* Changefreeze File: [server]:/opt/intrado/etc/changefreeze
+* Location: [server]:bin/update.ciscoamp
+# Binary RPMs: [server]:install/
+* Changefreeze File: [server]:etc/changefreeze
 

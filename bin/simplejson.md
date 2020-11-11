@@ -6,8 +6,8 @@ Note that if there is a changefreeze, the changefreeze file is created and this 
 
 Changes will also send out a changelog email.
 
-* Location: [server]:/opt/intrado/bin/simplejson
-* Data File: [server]:/opt/intrado/etc/changefreeze
-* Data File: [server]:/opt/intrado/etc/python-simplejson-2.0.9-8.el5.i386.rpm
-* Data File: [server]:/opt/intrado/etc/python-simplejson-2.0.9-8.el5.x86_64.rpm
+* Location: [server]:bin/simplejson
+* Data File: [server]:etc/changefreeze
+* Data File: [server]:install/linux-64/python-simplejson-2.0.9-8.el5.i386.rpm
+* Data File: [server]:install/linux-64/python-simplejson-2.0.9-8.el5.x86_64.rpm
 

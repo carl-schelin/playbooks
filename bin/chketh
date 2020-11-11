@@ -18,7 +18,7 @@ fi
 
 CONTENT="chketh"
 TIMEOUT=40
-LOG=${SCRIPTS_LOGS}/intrado.log
+LOG=${SCRIPTS_LOGS}/unixsuite.log
 
 if [[ -f ${SCRIPTS_LOGS}/${CONTENT}.output ]]
 then

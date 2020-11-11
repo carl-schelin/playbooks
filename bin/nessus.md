@@ -2,6 +2,6 @@ Description: The nessus script ensures the nessus account has a .ssh directory i
 
 The nessus account is used by the Security Center software to perform a credentialed scan of a server.
 
-* Location: [server]:/opt/intrado/bin/nessus
-* Data File: [server]:/opt/intrado/etc/nessus.id_rsa.pub
+* Location: [server]:bin/nessus
+* Data File: [server]:etc/nessus.id_rsa.pub
 
