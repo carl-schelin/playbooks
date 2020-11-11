@@ -1,11 +1,11 @@
 Description: The chkmachinfo script is HP-UX specific and extracts the machinfo data to be reviewed. The intention is to be aware of any changes in the information about an HP-UX system.
 
-* Location: [server]:/opt/intrado/bin/chkmachinfo
-* Data File: [server]:/opt/intrado/etc/machinfo.output
-* Comparison File: incojs01:/usr/local/admin/servers/[server]/machinfo.good
-* Difference File: incojs01:/usr/local/admin/servers/[server]/machinfo.diff
-* Validation Script: incojs01:/usr/local/admin/servers/chkmachinfo
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
+* Location: [server]:bin/chkmachinfo
+* Data File: [server]:var/machinfo.output
+* Comparison File: [management server]:admin/servers/[server]/machinfo.good
+* Difference File: [management server]:admin/servers/[server]/machinfo.diff
+* Validation Script: [management server]:admin/servers/chkmachinfo
+* Reporting Script: [management server]:admin/bin/processetc
 
 This is a comparison script. Comparison scripts don't check for errors in that the output is diverse enough that it would take a great deal of effort to specifically identify the problem without missing another potential problem. The Data File is compared with the Comparison File using the diff utility which creates the Difference File. The output is then manually reviewed using the Validation Script or the Morning Report Dashboard for problems.
 
