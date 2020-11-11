@@ -1,7 +1,7 @@
 #!/bin/ksh
 
 HOSTNAME=`hostname|cut -f1 -d.`
-MANAGEMENT=`grep "^${HOSTNAME}:ManagementInterface" /opt/intrado/etc/chkserver.input  | cut -f3 -d:`
+MANAGEMENT=`grep "^${HOSTNAME}:ManagementInterface" /opt/unixsuite/etc/chkserver.input  | cut -f3 -d:`
 ROUTE=`netstat -rn | grep ${MANAGEMENT} | head -1 | awk '{print $2}'`
 
 if [[ ! -z $1 ]]
@@ -36,15 +36,10 @@ echo ""
 echo "Listing route definitions"
 for i in `cat routes | sed -e "s/    Route to //g" -e "s/ missing.//g"`
 do
-  OUTPUT=`grep -v "^#" /opt/intrado/.config | grep $i`
+  OUTPUT=`grep -v "^#" /opt/unixsuite/.config | grep $i`
   echo "#"
   echo "# $OUTPUT"
-# this is the vpn and is a network, not a static route
-  if [[ $i = '10.104.64.0' ]]
-  then
-    echo "route add -net 10.104.64.0/18 gw $ROUTE dev $MANAGEMENT; echo \"10.104.64.0/18 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
-  else
-    echo "route add -host $i/32 gw $ROUTE dev $MANAGEMENT; echo \"$i/32 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
+  echo "route add -host $i/32 gw $ROUTE dev $MANAGEMENT; echo \"$i/32 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
   fi
 done
 
