@@ -7,6 +7,6 @@ The ucmdb account is used by the Monitoring Team to sudo run several commands as
 * /usr/sbin/ifconfig
 * /usr/sbin/dmidecode
 
-* Location: [server]:/opt/intrado/bin/ucmdbsvc
-* Data File: [server]:/opt/intrado/etc/ucmdbsvc.id_rsa.pub
+* Location: [server]:bin/ucmdbsvc
+* Data File: [server]:etc/ucmdbsvc.id_rsa.pub
 
