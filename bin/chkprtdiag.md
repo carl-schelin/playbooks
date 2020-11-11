@@ -1,11 +1,11 @@
 Description: The chkprtdiag script runs the prtdiag command in order to get a status of Solaris systems. This report lists system specs plus reports if there are outages such as a fan failure. Review the output for changes in status indicating a warning or failure. The status of the lights are also displayed; color and if it's on or off.
 
-* Location: [server]:/opt/intrado/bin/chkprtdiag
-* Data File: [server]:/opt/intrado/etc/prtdiag.output
-* Comparison File: incojs01:/usr/local/admin/servers/[server]/prtdiag.good
-* Difference File: incojs01:/usr/local/admin/servers/[server]/prtdiag.diff
-* Validation Script: incojs01:/usr/local/admin/servers/chkprtdiag
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
+* Location: [server]:bin/chkprtdiag
+* Data File: [server]:var/prtdiag.output
+* Comparison File: [management server]:admin/servers/[server]/prtdiag.good
+* Difference File: [management server]:admin/servers/[server]/prtdiag.diff
+* Validation Script: [management server]:admin/servers/chkprtdiag
+* Reporting Script: [management server]:admin/bin/processetc
 
 This is a comparison script. Comparison scripts don't check for errors in that the output is diverse enough that it would take a great deal of effort to specifically identify the problem without missing another potential problem. The Data File is compared with the Comparison File using the diff utility which creates the Difference File. The output is then manually reviewed using the Validation Script or the Morning Report Dashboard for problems.
 
