@@ -21,12 +21,10 @@
 sub parsepwd {
 
   my ($pwlogin, $pwpasswd, $uid, $gid, $gecos, $dir, $shell);
-
   my ($shlogin, $shpasswd, $lastchg, $min, $max, $warn, $inactive, $expire, $flag);
-
   my %pwhash = ();
+  my $pwfile = '/opt/unixsuite/etc/passwd';
 
-  my $pwfile = '/opt/intrado/etc/passwd';
   open (PASSWD, "< $pwfile") or die "Can't open passwd file : $!";
 
   while (<PASSWD>) {
@@ -71,17 +69,24 @@ sub parsepwd {
 
 $os = `uname`;
 chop $os;
+$scripts="/opt/unixsuite";
+$scripts_data="/opt/unixsuite/etc";
+$scripts_logs="/opt/unixsuite/var";
+$ndays=time / (3600 * 24);
+
 
 # due to Centrify, we need to copy the passwd file to create a complete list and then update 
 # it with the output of the adquery user command. We'll also need to run through the output 
 # and parse whether the account is disabled or not.
-`cp /etc/passwd /opt/intrado/etc/`;
-`cp /etc/group /opt/intrado/etc/`;
+`cp /etc/passwd $scripts_logs/`;
+`cp /etc/group $scripts_logs/`;
+
+my $hash = parsepwd($os);
 
 if ( -e "/usr/bin/adquery") {
   $adinfo = `/usr/bin/adinfo --domain`;
   if ($adinfo ne "") {
-    open (OUTPUT, ">>/opt/intrado/etc/passwd");
+    open (OUTPUT, ">>$scripts_logs/passwd");
     open (INPUT, "/usr/bin/adquery user|");
     while (<INPUT>) {
       print OUTPUT $_;
@@ -89,7 +94,7 @@ if ( -e "/usr/bin/adquery") {
     close INPUT;
     close OUTPUT;
 
-    open (OUTPUT, ">>/opt/intrado/etc/group");
+    open (OUTPUT, ">>$scripts_logs/group");
     open (INPUT, "/usr/bin/adquery group|");
     while (<INPUT>) {
       print OUTPUT $_;
@@ -99,17 +104,12 @@ if ( -e "/usr/bin/adquery") {
   }
 }
 
-my $hash = parsepwd($os);
-
-$ndays=time / (3600 * 24);
-$intrado="/opt/intrado";
-
-@sortpasswd = `cat /opt/intrado/etc/passwd`;
+@sortpasswd = `cat $scripts_logs/passwd`;
 @passwd = sort @sortpasswd;
 if ($os eq "HP-UX") {
-  open (OUTPUT,">$intrado/etc/chkusers.dat");
+  open (OUTPUT,">$scripts_logs/chkusers.dat");
 } else {
-  open (OUTPUT,">$intrado/etc/chkusers.dat") or die("Unable to create $intrado/etc/chkusers.dat\n");
+  open (OUTPUT,">$scripts_logs/chkusers.dat") or die("Unable to create $scripts_logs/chkusers.dat\n");
 }
 $hostname = `hostname | cut -f1 -d.`;
 chop $hostname;
