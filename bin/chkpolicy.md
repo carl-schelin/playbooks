@@ -2,24 +2,24 @@ Description: The chkpolicy script retrieves a list of installed Openview policie
 
 Note that the Web Page lists several Openview specific items including the number of policies installed and if there are any disabled policies.
 
-As an example, in looking at the HP-UX systems, bhmali24 and bhmali32, I see the following:
+As an example, in looking at the HP-UX systems, [node1] and [node2], I see the following:
 
- bhmali24:
- le                "ALIMErrorLog_20170407"     enabled    0001.0002
+ [node1]:
+ le                "[policy 1]"                enabled    0001.0002
 
- bhmali32:
- le                "ALIMErrorLog_20170407"     disabled   0001.0002
+ [node2]:
+ le                "[policy 1]"                disabled   0001.0002
 
-I'd be curious about the reasons why it's disabled on the second server.
+I'd be curious about the reasons why it's disabled on node2.
 
-* Location: [server]:/opt/intrado/bin/chkpolicy
-* Data File: [server]:/opt/intrado/etc/chkpolicy.output
-* Comparison File: incojs01:/usr/local/admin/servers/[server]/chkpolicy.good
-* Difference File: incojs01:/usr/local/admin/servers/[server]/chkpolicy.diff
-* Validation Script: incojs01:/usr/local/admin/servers/chkpolicy
-* Reporting Script: incojs01:/usr/local/admin/bin/processetc
-* Web Script: incojs01:/usr/local/admin/bin/getovfail
-* Web Page: https://incojs01.scc911.com/reports/ovfailed.output
+* Location: [server]:bin/chkpolicy
+* Data File: [server]:var/chkpolicy.output
+* Comparison File: [management server]:admin/servers/[server]/chkpolicy.good
+* Difference File: [management server]:admin/servers/[server]/chkpolicy.diff
+* Validation Script: [management server]:admin/servers/chkpolicy
+* Reporting Script: [management server]:admin/bin/processetc
+* Web Script: [management server]:admin/bin/getovfail
+* Web Page: https://[management server]/reports/ovfailed.output
 
 This is a comparison script. Comparison scripts don't check for errors in that the output is diverse enough that it would take a great deal of effort to specifically identify the problem without missing another potential problem. The Data File is compared with the Comparison File using the diff utility which creates the Difference File. The output is then manually reviewed using the Validation Script or the Morning Report Dashboard for problems.
 
