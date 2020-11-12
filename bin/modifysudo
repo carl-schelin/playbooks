@@ -46,7 +46,7 @@ then
   SUDOERS='/etc/sudoers'
 fi
 
-# intrado custom install
+# custom installations
 if [[ -f /usr/local/etc/sudoers ]]
 then
   SUDOERS='/usr/local/etc/sudoers'
