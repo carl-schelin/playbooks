@@ -2,8 +2,8 @@
 
 # profile
 # Carl Schelin
-# usage: add to your .profile or .bash (/opt/intrado/bin/profile) so you see messages upon login
-# check the system to make sure the intrado script has run
+# usage: add to your .profile or .bash (bin/profile) so you see messages upon login
+# check the system to make sure the unixsuite script has run
 # check to see if the chkserver.output file exists
 # then check for errors in the chkserver.output file
 # then check for warnings in the chkserver.output file

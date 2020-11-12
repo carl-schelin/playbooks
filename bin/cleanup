@@ -18,30 +18,6 @@ then
   chmod -x /usr/openv/netbackup/bin/nbftclnt
 fi
 
-for i in chkdef chketh chkif chkov chkprinter chkraid chksan chkstack chksudo chksudoers chkusers chkusers.contrib chkversion logme
-do
-  if [[ -f /usr/local/bin/$i ]]
-  then
-    echo "Removing /usr/local/bin/$i"
-    rm /usr/local/bin/$i
-  fi
-done
-
-for i in arcconf.output chketh.output chkstack.output chksudo.output chkusers.dat defunct.data ifconfig.output megarc.output metadb.output metastat.output raidctl.output
-do
-  if [[ -f /usr/local/etc/$i ]]
-  then
-    echo "Removing /usr/local/etc/$i"
-    rm /usr/local/etc/$i
-  fi
-done
-
-if [[ -d /opt/cfghtml ]]
-then
-  echo "Moving /opt/cfghtml to ${SCRIPTS}/"
-  mv /opt/cfghtml ${SCRIPTS}/
-fi
-
 if [[ -d /opt/ov ]]
 then
   if [[ -f /opt/OV/bin/ovc ]]
@@ -58,175 +34,6 @@ then
     echo "Removing /opt/nbu"
     rm -rf /opt/nbu
   fi
-fi
-
-if [[ -f /var/tmp/openview.failed ]]
-then
-  echo "Moving openview.failed to ${SCRIPTS_LOGS}/"
-  mv /var/tmp/openview.failed ${SCRIPTS_LOGS}/
-fi
-
-if [[ -f /usr/local/patchdiag ]]
-then
-  echo "Removing /usr/local/patchdiag"
-  rm -rf /usr/local/patchdiag
-fi
-
-# process to provide more detail to the MOTD presentation
-if [[ -f ${SCRIPTS_DATA}/motd ]]
-then
-# the issue file is presented prior to login so should have the disclaimer about logging into a server
-  if [[ -f /etc/issue ]]
-  then
-    rm /etc/issue
-  fi
-  cp ${SCRIPTS_DATA}/motd /etc/issue
-
-# if the system is enrolled in IDM, add two lines to the file
-  if [[ -f /etc/krb5.conf ]]
-  then
-    grep UNIXIDM.INTRADO.PRI /etc/krb5.conf > /dev/null
-    if [[ $? -eq 0 ]]
-    then
-      echo "This system is IDM-enrolled." >> /etc/issue
-      echo "" >> /etc/issue
-    fi
-  fi
-
-  if [[ -f /etc/motd ]]
-  then
-    rm /etc/motd
-  fi
-  cp ${SCRIPTS_DATA}/motd /etc/motd
-
-# update motd with system information
-  IMPORT="${SCRIPTS_LOGS}/chksys.import"
-  FINGERPRINT="${SCRIPTS_DATA}/fingerprint"
-
-  echo "    =======================================================================" > /etc/motd
-  printf "    Name: %-30s %34s\n" $(hostname|cut -f1 -d.) "Status: $(grep 'Status:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
-  printf "    Location: %-30s %30s\n" $(grep 'Location:' ${FINGERPRINT} | awk '{print $2}') "Network Zone: $(grep 'Zone:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
-  printf "    Product: %-30s %31s\n" $(grep 'Product:' ${FINGERPRINT} | awk '{print $2}') "Project: $(grep 'Project:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
-  printf "    Service Class: %-30s %25s\n" $(grep 'Service Class:' ${FINGERPRINT} | awk '{print $3}') "911 Call Path: $(grep '911 Call Path:' ${FINGERPRINT} | awk '{print $4}')" >> /etc/motd
-  printf "    System Custodian: %53s\n" "$(grep 'System Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
-  printf "    Primary Application Custodian: %40s\n\n" "$(grep 'Primary Application Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
-
-  echo "    OS Version: $(grep 'software,os' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
-  echo "    RAM: $(grep 'hardware,memory' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
-
-  CPUS=$(grep -c cpu ${IMPORT})
-  echo "    CPU: ${CPUS}x $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f4 -d,), $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f5 -d,)" >> /etc/motd
-
-  printf "    Disks(s): " >> /etc/motd
-  printf "%s " $(grep 'hardware,hard disk' ${IMPORT} | cut -f4 -d, | sed -e "s/GB/GB,/g") >> /etc/motd
-  printf "\n" >> /etc/motd
-
-  for i in $(grep 'network,interface' ${IMPORT} | cut -f4 -d, | egrep -v ",(lo|lo0),")
-  do
-    printf "    Interface: %s %s/%s (%s)\n" $i $(grep "network,interface,$i," ${IMPORT} | cut -f5 -d,) $(grep "network,interface,$i," ${IMPORT} | cut -f7 -d,) $(grep "network,interface,$i," ${IMPORT} | cut -f8 -d,) >> /etc/motd
-  done
-
-  echo "    =======================================================================" >> /etc/motd
-
-  echo "" >> /etc/motd
-
-  YEAR=`date +"%Y"`
-  MONTH=`date +"%m"`
-  DAY=`date +"%d"`
-
-# making the variable match 
-  HARDWARESUPPORT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
-
-  EOLHARDWARE=`grep "^Hardware EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
-  HWYEAR=`echo $EOLHARDWARE | cut -f1 -d-`
-  HWMONTH=`echo $EOLHARDWARE | cut -f2 -d-`
-  HWDAY=`echo $EOLHARDWARE | cut -f3 -d-`
-
-  EOLSOFTWARE=`grep "^Software EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
-  SWYEAR=`echo $EOLSOFTWARE | cut -f1 -d-`
-  SWMONTH=`echo $EOLSOFTWARE | cut -f2 -d-`
-  SWDAY=`echo $EOLSOFTWARE | cut -f3 -d-`
-
-  if [[ ! $EOLSOFTWARE = '0000-00-00' ]]
-  then
-# if before this year, report an error
-    if [[ $SWYEAR -lt $YEAR ]]
-    then
-      echo "    =======================================================================" >> /etc/motd
-      echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
-      echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
-      echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
-      echo "    =======================================================================" >> /etc/motd
-    else
-# if this year and before this month, report an error
-      if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -lt $MONTH ]]
-      then
-        echo "    =======================================================================" >> /etc/motd
-        echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
-        echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
-        echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
-        echo "    =======================================================================" >> /etc/motd
-      else
-# if it's this year and this month and less than _or_ equal to today, report an error
-        if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -eq $MONTH ]] && [[ $SWDAY -le $DAY ]]
-        then
-          echo "    =======================================================================" >> /etc/motd
-          echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
-          echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
-          echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
-          echo "    =======================================================================" >> /etc/motd
-        fi
-      fi
-    fi
-  fi
-
-# if before this year, report an error
-  if [[ ! $HARDWARESUPPORT = "N/A" ]]
-  then
-    if [[ $HARDWARESUPPORT = 'No' ]]
-    then
-      echo "    =====================================================================" >> /etc/motd
-      echo "    =========  Lifecycle Notification from the Unix Team       ==========" >> /etc/motd
-      echo "    =========  Status: CRITICAL                                ==========" >> /etc/motd
-      echo "    =========  System Hardware is not currently under support  ==========" >> /etc/motd
-      echo "    =====================================================================" >> /etc/motd
-    fi
-    if [[ ! $EOLHARDWARE = '0000-00-00' ]]
-    then
-      if [[ $HWYEAR -lt $YEAR ]]
-      then
-        echo "    ======================================================================" >> /etc/motd
-        echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
-        echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
-        echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
-        echo "    ======================================================================" >> /etc/motd
-      else
-# if this year and before this month, report an error
-        if [[ $HWYEAR -eq $YEAR ]] && [[ $HWMONTH -lt $MONTH ]]
-        then
-          echo "    ======================================================================" >> /etc/motd
-          echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
-          echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
-          echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
-          echo "    ======================================================================" >> /etc/motd
-        else
-# if it's this year and this month and less than _or_ equal to today, report an error
-          if [[ $HWYEAR -eq $YEAR ]] && [[ $HWMONTH -eq $MONTH ]] && [[ $HWDAY -le $DAY ]]
-          then
-            echo "    ======================================================================" >> /etc/motd
-            echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
-            echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
-            echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
-            echo "    ======================================================================" >> /etc/motd
-          fi
-        fi
-      fi
-    fi
-  fi
-
-  chmod 644 /etc/issue
-  chmod 644 /etc/motd
-
 fi
 
 if [[ -f /tmp/newuser ]]
@@ -247,7 +54,7 @@ fi
 
 # change ownership of unixsvc authorized_keys file
 UNIXSVC=$(grep "^unixsvc:" /etc/passwd | cut -f6 -d:)
-if [[ ! -z $UNIXSVC ]]
+if [[ ! -z ${UNIXSVC} ]]
 then
   chown unixsvc:unixsvc "${UNIXSVC}"/.ssh/*
   chmod 600 "${UNIXSVC}"/.ssh/*
@@ -258,166 +65,47 @@ fi
 find ${SCRIPTS_LOGS} -name logfile.* -mtime +10 -exec rm {} \;
 
 # and remove old log files than 90 days (3 files)
-find ${SCRIPTS_LOGS} -name intrado.log.* -mtime +92 -exec rm {} \;
+find ${SCRIPTS_LOGS} -name unixsuite.log.* -mtime +92 -exec rm {} \;
 
-# remove runnow script if it exists. the chkov script deletes it after running but if chkov isn't enabled, it won't run or be removed. This auto-removes it.
-if [[ -f ${SCRIPTS_BINS}/runnow ]]
+
+# until rsync is working as expected, old files may not be removed.
+# this variable lets us identify files that have been deprecated 
+# and aren't needed any more. Add a deprecated file here and 
+# the file on the server will be removed if it exists
+
+DEPRECATED="chkapa chkapa.output chkarray chkarray.output chkems chkems.output chkipcs chkipcs.output chkomsa chkomsa.out"
+DEPRECATED="${DEPRECATED} chkprofile chkprofile.output chkpwck chkpwck.output chkroutetable chksecurity chksecurity.output"
+DEPRECATED="${DEPRECATED} chksudo chksudo.output chksync chktime chktime.output getsysinfo leaping leaping.log leaping.run"
+DEPRECATED="${DEPRECATED} ovhfchk ovupdate retired routetable.output runnow runonce runps setdate sync-clock chksudo.bak"
+DEPRECATED="${DEPRECATED} chkconfig yodo ntpd.output oracle.output STDOUT nohup.out carl chkopenview.completed"
+DEPRECATED="${DEPRECATED} lsof.output opcagt.status.output ovstatus.output Unix_Backups_Last_7Days.html group.master.backup"
+
+if [[ ! -z ${DEPRECATED} ]]
 then
-  rm ${SCRIPTS_BINS}/runnow
-fi
-if [[ -f ${SCRIPTS_BINS}/runonce ]]
-then
-  rm ${SCRIPTS_BINS}/runonce
-fi
-
-# delete any retired scripts and data files.
-
-for i in chkarray chkems chkipcs chkomsa chkroutetable chksudo sync-clock leaping ovhfchk ovupdate retired setdate chksudo chksecurity chksync chktime chkprofile runps getsysinfo chkapa chkpwck
-do
-  if [[ -f ${SCRIPTS_BINS}/$i ]]
-  then
-    rm ${SCRIPTS_BINS}/$i
-  fi
-done
-
-for i in chkarray.output chkems.output chkipcs.output chksudo.output leaping.run chkomsa.out routetable.output chksecurity.output chksudo.output chktime.output chkprofile.output chkapa.output chkpwck.output
-do
-  if [[ -f ${SCRIPTS_LOGS}/$i ]]
-  then
-    rm ${SCRIPTS_LOGS}/$i
-  fi
-done
-
-for i in leaping.log
-do
-  if [[ -f ${SCRIPTS_LOGS}/$i ]]
-  then
-    rm ${SCRIPTS_LOGS}/$i
-  fi
-done
-
-# server specific files that aren't needed any more
-
-SERVERS="coolcaecada11 coolcaecera11 coolcaecera1b coolcaecera21 coolcaecera2b coolcaecera31 enwdcoecada1b enwdcoecadb1b enwdcoecera1b enwdcoecera2b enwdcoecera3b enwdcoecerb1b "
-SERVERS="$SERVERS enwdcoecerb2b enwdcoecerb3b enwdcoecmpb1b enwdcoecutb1b lnmtcodccl20 miamfldctxb0 miamflecada1b miamflecadb1b miamflecera1b miamflecera2b miamflecera3b "
-SERVERS="$SERVERS miamflecerb1b miamflecerb2b miamflecerb3b miamflecuta1b miamflecutb1b incoov01 "
-
-for i in $SERVERS
-do
-  if [[ -f ${SCRIPTS_BINS}/$i ]]
-  then
-    rm ${SCRIPTS_BINS}/$i
-  fi
-done
-
-# transition stuff between /opt/intrado/var and /opt/intrado/etc
-INVAR="/opt/intrado/var"
-INETC="/opt/intrado/etc"
-
-for i in 2011 2012 2013 2014 2015 2016 2017
-do
-  if [[ -f ${INVAR}/logfile.${i}* ]]
-  then
-    rm ${INVAR}/logfile.${i}*
-  fi
-  if [[ -f ${INVAR}/intrado.log.${i}* ]]
-  then
-    rm ${INVAR}/intrado.log.${i}*
-  fi
-done
-
-mv ${INVAR}/logfile.* ${INETC}/
-mv ${INVAR}/intrado.log.* ${INETC}/
-
-for i in carl chkopenview.completed enwdcoecuta1b.log lsof.output opcagt.status.output ovstatus.output
-do
-  if [[ -f ${INVAR}/$i ]]
-  then
-    rm ${INVAR}/$i
-  fi
-done
-
-for i in openview.failed intrado.log recert.log
-do
-  if [[ -f ${INETC}/$i ]]
-  then
-    if [[ -f ${INVAR}/$i ]]
+  for i in ${DEPRECATED}
+  do
+    if [[ -f ${SCRIPTS_BINS}/$i ]]
     then
-      cat ${INETC}/$i >> ${INVAR}/$i
+      rm ${SCRIPTS_BINS}/$i
     fi
-  fi
-  if [[ -f ${INVAR}/$i ]]
-  then
-    mv ${INVAR}/$i ${INETC}/$i
-  fi
-done
-
-for i in group.master.backup 
-do
-  if [[ -f ${SCRIPTS_DATA}/$i ]]
-  then
-    rm ${SCRIPTS_DATA}/$i
-  fi
-done
-
-# extra bits found when checking to make sure things are clean
-
-if [[ -f ${SCRIPTS_VARS}/enwdcoecuta1b.log ]]
-then
-  rm ${SCRIPTS_VARS}/enwdcoecuta1b.log
+    if [[ -f ${SCRIPTS_DATA}/$i ]]
+    then
+      rm ${SCRIPTS_DATA}/$i
+    fi
+    if [[ -f ${SCRIPTS_LOGS}/$i ]]
+    then
+      rm ${SCRIPTS_LOGS}/$i
+    fi
+  done
 fi
 
-for i in opctrapi.failed openview.stop vxprint.output
-do
-  if [[ -f ${INVAR}/$i ]]
-  then
-    mv ${INVAR}/$i ${INETC}/$i
-  fi
-done
-
-if [[ -d ${SCRIPTS_BINS}/scripts ]]
-then
-  rm -rf ${SCRIPTS_BINS}/scripts
-fi
-
-if [[ -d ${SCRIPTS_BINS}/decommissioned ]]
-then
-  rm -rf ${SCRIPTS_BINS}/decommissioned
-fi
-
-for i in chkconfig incomsu1 yodo ntpd.output oracle.output enwdcoecuta1b STDOUT nohup.out culali01 1 culali03 elmali01 elmali03
-do
-  if [[ -f ${SCRIPTS_BINS}/$i ]]
-  then
-    rm ${SCRIPTS_BINS}/$i
-  fi
-done
-
-# being ready for unixsuite scripts
-if [[ ! -d /opt/unixsuite ]]
-then
-  mkdir /opt/unixsuite
-  mkdir /opt/unixsuite/bin
-  mkdir /opt/unixsuite/etc
-  mkdir /opt/unixsuite/var
-  mkdir /opt/unixsuite/server.d
-  mkdir /opt/unixsuite/run.d
-  chown -R unixsvc:sysadmin /opt/unixsuite
-fi
-
-# standardizing rsync to /usr/local/bin/rsync so the intrado scripts can be rsync'd instead of just copied.
+# standardizing rsync to /usr/local/bin/rsync so the unixsuite scripts can be rsync'd instead of just copied.
 if [[ ! -f /usr/local/bin/rsync ]]
 then
   if [[ -f /usr/bin/rsync ]]
   then
     ln /usr/bin/rsync /usr/local/bin/rsync
   fi
-fi
-
-# remove this file:
-if [[ -f ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html ]]
-then
-  rm ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html
 fi
 
 # clean up old crash dump files
@@ -432,46 +120,6 @@ then
     rmdir $i
   done
 
-fi
-
-if [[ -f ${SCRIPTS_DATA}/chksudo.bak ]]
-then
-  rm ${SCRIPTS_DATA}/chksudo.bak
-fi
-
-ROOTHOME=`grep "^root:" /etc/passwd | cut -f6 -d:`
-if [[ -f ${ROOTHOME}/.forward ]]
-then
-  cp ${ROOTHOME}/.forward ${SCRIPTS_DATA}/root.forward
-fi
-
-# deleting rpms for hp-ux and solaris and moving them for linux into the install directory
-if [[ ! -f ${SCRIPTS_INSTALL}/linux-64 ]]
-then
-  mkdir -p ${SCRIPTS_INSTALL}/linux-64
-fi
-
-cd ${SCRIPTS_DATA}
-for i in `ls *.rpm`
-do
-  if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'SunOS' ]]
-  then
-    rm $i
-  else
-    mv $i ${SCRIPTS_INSTALL}/linux-64/
-  fi
-done
-
-# this makes sure the other installation's files are gone
-if [[ -f /opt/intrado/etc.tar ]]
-then
-  rm /opt/intrado/etc.tar
-fi
-
-# this makes sure the other installation's files are gone
-if [[ -f /opt/unixsuite/etc.tar ]]
-then
-  rm /opt/unixsuite/etc.tar
 fi
 
 # install the /usr/local/bin scripts as required.

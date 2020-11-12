@@ -1,0 +1,171 @@
+#!/bin/ksh
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# process to provide more detail to the MOTD presentation
+if [[ -f ${SCRIPTS_DATA}/motd ]]
+then
+# the issue file is presented prior to login so should have the disclaimer about logging into a server
+  if [[ -f /etc/issue ]]
+  then
+    rm /etc/issue
+  fi
+  cp ${SCRIPTS_DATA}/motd /etc/issue
+
+# if the system is enrolled in IDM, add two lines to the file
+  if [[ -f /etc/krb5.conf ]]
+  then
+    grep ${IDM_DOMAIN} /etc/krb5.conf > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      echo "This system is IDM-enrolled." >> /etc/issue
+      echo "" >> /etc/issue
+    fi
+  fi
+
+  if [[ -f /etc/motd ]]
+  then
+    rm /etc/motd
+  fi
+  cp ${SCRIPTS_DATA}/motd /etc/motd
+
+# update motd with system information
+  IMPORT="${SCRIPTS_LOGS}/chksys.import"
+  FINGERPRINT="${SCRIPTS_DATA}/fingerprint"
+
+  echo "    =======================================================================" > /etc/motd
+  printf "    Name: %-30s %34s\n" $(hostname|cut -f1 -d.) "Status: $(grep 'Status:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "    Location: %-30s %30s\n" $(grep 'Location:' ${FINGERPRINT} | awk '{print $2}') "Network Zone: $(grep 'Zone:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "    Product: %-30s %31s\n" $(grep 'Product:' ${FINGERPRINT} | awk '{print $2}') "Project: $(grep 'Project:' ${FINGERPRINT} | awk '{print $2}')" >> /etc/motd
+  printf "    Service Class: %-30s %25s\n" $(grep 'Service Class:' ${FINGERPRINT} | awk '{print $3}') "911 Call Path: $(grep '911 Call Path:' ${FINGERPRINT} | awk '{print $4}')" >> /etc/motd
+  printf "    System Custodian: %53s\n" "$(grep 'System Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
+  printf "    Primary Application Custodian: %40s\n\n" "$(grep 'Primary Application Custodian: ' ${FINGERPRINT} | cut -f2 -d:)" >> /etc/motd
+
+  echo "    OS Version: $(grep 'software,os' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
+  echo "    RAM: $(grep 'hardware,memory' ${IMPORT} | cut -f4 -d,)" >> /etc/motd
+
+  CPUS=$(grep -c cpu ${IMPORT})
+  echo "    CPU: ${CPUS}x $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f4 -d,), $(grep 'hardware,cpu' ${IMPORT} | head -1 | cut -f5 -d,)" >> /etc/motd
+
+  printf "    Disks(s): " >> /etc/motd
+  printf "%s " $(grep 'hardware,hard disk' ${IMPORT} | cut -f4 -d, | sed -e "s/GB/GB,/g") >> /etc/motd
+  printf "\n" >> /etc/motd
+
+  for i in $(grep 'network,interface' ${IMPORT} | cut -f4 -d, | egrep -v ",(lo|lo0),")
+  do
+    printf "    Interface: %s %s/%s (%s)\n" $i $(grep "network,interface,$i," ${IMPORT} | cut -f5 -d,) $(grep "network,interface,$i," ${IMPORT} | cut -f7 -d,) $(grep "network,interface,$i," ${IMPORT} | cut -f8 -d,) >> /etc/motd
+  done
+
+  echo "    =======================================================================" >> /etc/motd
+
+  echo "" >> /etc/motd
+
+  YEAR=`date +"%Y"`
+  MONTH=`date +"%m"`
+  DAY=`date +"%d"`
+
+# making the variable match 
+  HARDWARESUPPORT=`grep "^Support Contract:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+
+  EOLHARDWARE=`grep "^Hardware EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+  HWYEAR=`echo $EOLHARDWARE | cut -f1 -d-`
+  HWMONTH=`echo $EOLHARDWARE | cut -f2 -d-`
+  HWDAY=`echo $EOLHARDWARE | cut -f3 -d-`
+
+  EOLSOFTWARE=`grep "^Software EOL:" ${SCRIPTS_DATA}/fingerprint | awk '{print $3}'`
+  SWYEAR=`echo $EOLSOFTWARE | cut -f1 -d-`
+  SWMONTH=`echo $EOLSOFTWARE | cut -f2 -d-`
+  SWDAY=`echo $EOLSOFTWARE | cut -f3 -d-`
+
+  if [[ ! $EOLSOFTWARE = '0000-00-00' ]]
+  then
+# if before this year, report an error
+    if [[ $SWYEAR -lt $YEAR ]]
+    then
+      echo "    =======================================================================" >> /etc/motd
+      echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+      echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+      echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+      echo "    =======================================================================" >> /etc/motd
+    else
+# if this year and before this month, report an error
+      if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -lt $MONTH ]]
+      then
+        echo "    =======================================================================" >> /etc/motd
+        echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+        echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+        echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+        echo "    =======================================================================" >> /etc/motd
+      else
+# if it's this year and this month and less than _or_ equal to today, report an error
+        if [[ $SWYEAR -eq $YEAR ]] && [[ $SWMONTH -eq $MONTH ]] && [[ $SWDAY -le $DAY ]]
+        then
+          echo "    =======================================================================" >> /etc/motd
+          echo "    =========  Lifecycle Notification from the Unix Team         ==========" >> /etc/motd
+          echo "    =========  Status: CRITICAL                                  ==========" >> /etc/motd
+          echo "    =========  Operating System Reached End of Life: ${EOLSOFTWARE}  ==========" >> /etc/motd
+          echo "    =======================================================================" >> /etc/motd
+        fi
+      fi
+    fi
+  fi
+
+# if before this year, report an error
+  if [[ ! $HARDWARESUPPORT = "N/A" ]]
+  then
+    if [[ $HARDWARESUPPORT = 'No' ]]
+    then
+      echo "    =====================================================================" >> /etc/motd
+      echo "    =========  Lifecycle Notification from the Unix Team       ==========" >> /etc/motd
+      echo "    =========  Status: CRITICAL                                ==========" >> /etc/motd
+      echo "    =========  System Hardware is not currently under support  ==========" >> /etc/motd
+      echo "    =====================================================================" >> /etc/motd
+    fi
+    if [[ ! $EOLHARDWARE = '0000-00-00' ]]
+    then
+      if [[ $HWYEAR -lt $YEAR ]]
+      then
+        echo "    ======================================================================" >> /etc/motd
+        echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+        echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+        echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+        echo "    ======================================================================" >> /etc/motd
+      else
+# if this year and before this month, report an error
+        if [[ $HWYEAR -eq $YEAR ]] && [[ $HWMONTH -lt $MONTH ]]
+        then
+          echo "    ======================================================================" >> /etc/motd
+          echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+          echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+          echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+          echo "    ======================================================================" >> /etc/motd
+        else
+# if it's this year and this month and less than _or_ equal to today, report an error
+          if [[ $HWYEAR -eq $YEAR ]] && [[ $HWMONTH -eq $MONTH ]] && [[ $HWDAY -le $DAY ]]
+          then
+            echo "    ======================================================================" >> /etc/motd
+            echo "    =========  Lifecycle Notification from the Unix Team        ==========" >> /etc/motd
+            echo "    =========  Status: CRITICAL                                 ==========" >> /etc/motd
+            echo "    =========  System Hardware Reached End of Life: ${EOLHARDWARE}  ==========" >> /etc/motd
+            echo "    ======================================================================" >> /etc/motd
+          fi
+        fi
+      fi
+    fi
+  fi
+
+  chmod 644 /etc/issue
+  chmod 644 /etc/motd
+
+fi
+
