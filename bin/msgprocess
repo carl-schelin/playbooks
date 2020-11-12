@@ -12,7 +12,9 @@
 # 2011/10/17 v1.1 - tcs - add timezone to server name so log time can be accurately determined
 # 2013/09/10 v1.2 - tcs - change to process local message files
 
-$intrado="/opt/intrado";
+$scripts="/opt/unixsuite";
+$scripts_data="/opt/unixsuite/etc";
+$scripts_logs="/opt/unixsuite/var";
 $hostname=`hostname|cut -f1 -d.`;
 chomp $hostname;
 
@@ -20,7 +22,7 @@ chomp $hostname;
 $date=sprintf("%4d%02d%02d", 1900+$year, $mon, $mday);
 
 # Retrieve the exclusion strings for the host and remove comments
-@exclude=`grep $hostname $intrado/etc/messages.exclude | grep -v "^#"`;
+@exclude=`grep $hostname $scripts_data/messages.exclude | grep -v "^#"`;
 
 # Remove the trailing \n's
 for ($i=0; $i<=$#exclude; $i++) {
@@ -28,7 +30,7 @@ for ($i=0; $i<=$#exclude; $i++) {
 }
 
 # Create the log file for today
-open (LOG, ">$intrado/var/logfile.$date") or die "Unable to open report file";
+open (LOG, ">$scripts_logs/logfile.$date") or die "Unable to open report file";
 
 # Set up the start of the log files
 print LOG "\n";
@@ -37,7 +39,7 @@ print LOG "BEGIN `date`";
 
 print LOG "\nProcessing $server\n";
 
-open (INPUT, "/var/tmp/messages.intrado") or print LOG "ERROR: Unable to open /var/tmp/messages.intrado\n";
+open (INPUT, "/var/tmp/messages.output") or print LOG "ERROR: Unable to open /var/tmp/messages.output\n";
 while (<INPUT>) {
   chomp;
 
