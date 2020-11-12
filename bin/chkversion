@@ -32,8 +32,6 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-ADMIN=/opt/intrado
-
 # clean up
 for i in datapal httpd informix mysqld netbackup newrelic omsa opnet oracle ovc postgres sudo vmtoolsd wildfly
 do
@@ -107,7 +105,7 @@ then
     OUTPUT=$(find /opt -name mysqld -print | sort | tail -1)
     if [[ -f $OUTPUT ]]
     then
-      $OUTPUT --version | head -1 > $ADMIN/etc/mysqld.version
+      $OUTPUT --version | head -1 > ${SCRIPTS_LOGS}/mysqld.version
     else
       echo "$OUTPUT running but can't get version" > "${SCRIPTS_DATA}/mysqld.version"
     fi
