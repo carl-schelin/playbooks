@@ -54,7 +54,7 @@ fi
 
 # change ownership of unixsvc authorized_keys file
 UNIXSVC=$(grep "^unixsvc:" /etc/passwd | cut -f6 -d:)
-if [[ ! -z $UNIXSVC ]]
+if [[ ! -z ${UNIXSVC} ]]
 then
   chown unixsvc:unixsvc "${UNIXSVC}"/.ssh/*
   chmod 600 "${UNIXSVC}"/.ssh/*
@@ -73,11 +73,12 @@ find ${SCRIPTS_LOGS} -name unixsuite.log.* -mtime +92 -exec rm {} \;
 # and aren't needed any more. Add a deprecated file here and 
 # the file on the server will be removed if it exists
 
-DEPRECATED="chkapa chkapa.output chkarray chkarray.output chkems chkems.output chkipcs chkipcs.output chkomsa chkomsa.out
-DEPRECATED="${DEPRECATED} chkprofile chkprofile.output chkpwck chkpwck.output chkroutetable chksecurity chksecurity.output
-DEPRECATED="${DEPRECATED} chksudo chksudo.output chksync chktime chktime.output getsysinfo leaping leaping.log leaping.run
+DEPRECATED="chkapa chkapa.output chkarray chkarray.output chkems chkems.output chkipcs chkipcs.output chkomsa chkomsa.out"
+DEPRECATED="${DEPRECATED} chkprofile chkprofile.output chkpwck chkpwck.output chkroutetable chksecurity chksecurity.output"
+DEPRECATED="${DEPRECATED} chksudo chksudo.output chksync chktime chktime.output getsysinfo leaping leaping.log leaping.run"
 DEPRECATED="${DEPRECATED} ovhfchk ovupdate retired routetable.output runnow runonce runps setdate sync-clock chksudo.bak"
-DEPRECATED="${DEPRECATED} chkconfig yodo ntpd.output oracle.output STDOUT nohup.out "
+DEPRECATED="${DEPRECATED} chkconfig yodo ntpd.output oracle.output STDOUT nohup.out carl chkopenview.completed"
+DEPRECATED="${DEPRECATED} lsof.output opcagt.status.output ovstatus.output Unix_Backups_Last_7Days.html group.master.backup"
 
 if [[ ! -z ${DEPRECATED} ]]
 then
@@ -98,100 +99,6 @@ then
   done
 fi
 
-# transition stuff between /opt/intrado/var and /opt/intrado/etc
-INVAR="/opt/intrado/var"
-INETC="/opt/intrado/etc"
-
-for i in 2011 2012 2013 2014 2015 2016 2017
-do
-  if [[ -f ${INVAR}/logfile.${i}* ]]
-  then
-    rm ${INVAR}/logfile.${i}*
-  fi
-  if [[ -f ${INVAR}/intrado.log.${i}* ]]
-  then
-    rm ${INVAR}/intrado.log.${i}*
-  fi
-done
-
-mv ${INVAR}/logfile.* ${INETC}/
-mv ${INVAR}/intrado.log.* ${INETC}/
-
-for i in carl chkopenview.completed enwdcoecuta1b.log lsof.output opcagt.status.output ovstatus.output
-do
-  if [[ -f ${INVAR}/$i ]]
-  then
-    rm ${INVAR}/$i
-  fi
-done
-
-for i in openview.failed intrado.log recert.log
-do
-  if [[ -f ${INETC}/$i ]]
-  then
-    if [[ -f ${INVAR}/$i ]]
-    then
-      cat ${INETC}/$i >> ${INVAR}/$i
-    fi
-  fi
-  if [[ -f ${INVAR}/$i ]]
-  then
-    mv ${INVAR}/$i ${INETC}/$i
-  fi
-done
-
-for i in group.master.backup 
-do
-  if [[ -f ${SCRIPTS_DATA}/$i ]]
-  then
-    rm ${SCRIPTS_DATA}/$i
-  fi
-done
-
-# extra bits found when checking to make sure things are clean
-
-if [[ -f ${SCRIPTS_VARS}/enwdcoecuta1b.log ]]
-then
-  rm ${SCRIPTS_VARS}/enwdcoecuta1b.log
-fi
-
-for i in opctrapi.failed openview.stop vxprint.output
-do
-  if [[ -f ${INVAR}/$i ]]
-  then
-    mv ${INVAR}/$i ${INETC}/$i
-  fi
-done
-
-if [[ -d ${SCRIPTS_BINS}/scripts ]]
-then
-  rm -rf ${SCRIPTS_BINS}/scripts
-fi
-
-if [[ -d ${SCRIPTS_BINS}/decommissioned ]]
-then
-  rm -rf ${SCRIPTS_BINS}/decommissioned
-fi
-
-do
-  if [[ -f ${SCRIPTS_BINS}/$i ]]
-  then
-    rm ${SCRIPTS_BINS}/$i
-  fi
-done
-
-# being ready for unixsuite scripts
-if [[ ! -d /opt/unixsuite ]]
-then
-  mkdir /opt/unixsuite
-  mkdir /opt/unixsuite/bin
-  mkdir /opt/unixsuite/etc
-  mkdir /opt/unixsuite/var
-  mkdir /opt/unixsuite/server.d
-  mkdir /opt/unixsuite/run.d
-  chown -R unixsvc:sysadmin /opt/unixsuite
-fi
-
 # standardizing rsync to /usr/local/bin/rsync so the unixsuite scripts can be rsync'd instead of just copied.
 if [[ ! -f /usr/local/bin/rsync ]]
 then
@@ -199,12 +106,6 @@ then
   then
     ln /usr/bin/rsync /usr/local/bin/rsync
   fi
-fi
-
-# remove this file:
-if [[ -f ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html ]]
-then
-  rm ${SCRIPTS_DATA}/Unix_Backups_Last_7Days.html
 fi
 
 # clean up old crash dump files
@@ -219,35 +120,6 @@ then
     rmdir $i
   done
 
-fi
-
-ROOTHOME=`grep "^root:" /etc/passwd | cut -f6 -d:`
-if [[ -f ${ROOTHOME}/.forward ]]
-then
-  cp ${ROOTHOME}/.forward ${SCRIPTS_DATA}/root.forward
-fi
-
-# deleting rpms for hp-ux and solaris and moving them for linux into the install directory
-if [[ ! -f ${SCRIPTS_INSTALL}/linux-64 ]]
-then
-  mkdir -p ${SCRIPTS_INSTALL}/linux-64
-fi
-
-cd ${SCRIPTS_DATA}
-for i in `ls *.rpm`
-do
-  if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'SunOS' ]]
-  then
-    rm $i
-  else
-    mv $i ${SCRIPTS_INSTALL}/linux-64/
-  fi
-done
-
-# this makes sure the other installation's files are gone
-if [[ -f /opt/unixsuite/etc.tar ]]
-then
-  rm /opt/unixsuite/etc.tar
 fi
 
 # install the /usr/local/bin scripts as required.
