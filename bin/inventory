@@ -1,42 +1,0 @@
-#!/bin/ksh
-
-# Carl Schelin
-# system specific script to run system unique commands
-#  update script to show the commands to be run (making it easier to repair)
-
-#BASENAME=$(basename "${0}")
-DIRNAME=$(dirname "${0}")
-
-if [[ ! -f ${DIRNAME}/../.config ]]
-then
-  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
-  exit 1
-fi
-
-# Source the configuration file
-. "${DIRNAME}"/../.config
-
-WHOCARES="${CARLCARES}"
-
-#
-# validate the databases and report any errors
-#
-/usr/bin/mysqlcheck --user=root --password='this4now!!' -A > ${SCRIPTS_LOGS}/mysql.output
-
-OUTPUT=`grep -v "OK$" ${SCRIPTS_LOGS}/mysql.output | grep -v "The storage engine for the table doesn't support check" | egrep -v "(^warning|^error|hitcounter)"`
-
-if [[ ! -z $OUTPUT ]]
-then
-  BODY="Wiki Mysql Errors Found"
-  for i in $OUTPUT
-  do
-    DIR=`echo $i|cut -f1 -d.`
-    INDEX=`echo $i|cut -f2 -d.`.MYI
-
-    BODY="${BODY}cd /var/lib/mysql/$DIR"
-    BODY="${BODY}myisamchk -r $INDEX"
-  done
-
-  echo $BODY | mail -s "Wiki Mysql Errors Found" "${WHOCARES}"
-fi
-
