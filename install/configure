@@ -115,7 +115,7 @@ then
 
 # build interface variable
     SPACE=''
-    for i in `grep interface ${SCRIPTS_DATA}/chksys.import | egrep -v ',(lo|1),' | awk -F, '{print $4}'`
+    for i in `grep interface ${SCRIPTS_LOGS}/chksys.import | egrep -v ',(lo|1),' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -131,7 +131,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $6}'`
+    for i in `grep filesystem ${SCRIPTS_LOGS}/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
@@ -199,7 +199,7 @@ then
 
     COUNT=0
 # getting '2 cores' and breaking out the '2' as a count
-    for i in `grep 'hardware,cpu' ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
+    for i in `grep 'hardware,cpu' ${SCRIPTS_LOGS}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
       COUNT=$(( $COUNT + $i ))
     done
@@ -408,7 +408,7 @@ then
 
 # build interface variable
     SPACE=''
-    for i in `grep interface ${SCRIPTS_DATA}/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $4}'`
+    for i in `grep interface ${SCRIPTS_LOGS}/chksys.import | grep -v ',lo,' | grep -v ',1,' | awk -F, '{print $4}'`
     do
       INTERFACES="${INTERFACES}${SPACE}${i}:${i}"
       INTME="${INTME}${SPACE}${i}"
@@ -424,7 +424,7 @@ then
     done
 
     SPACE=''
-    for i in `grep filesystem ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $6}'`
+    for i in `grep filesystem ${SCRIPTS_LOGS}/chksys.import | awk -F, '{print $6}'`
     do
       if [[ $i = '/' ]]
       then
@@ -492,7 +492,7 @@ then
 
     COUNT=0
 # getting '2 cores' and breaking out the '2' as a count
-    for i in `grep 'hardware,cpu' ${SCRIPTS_DATA}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
+    for i in `grep 'hardware,cpu' ${SCRIPTS_LOGS}/chksys.import | awk -F, '{print $NF}' | awk '{print $1}'`
     do
       COUNT=$(( $COUNT + $i ))
     done
