@@ -309,6 +309,9 @@ runscript mysql.backup
 # Update GECOS for all users if needed
 runscript update.gecos
 
+# Update motd and issue file
+runscript update.motd
+
 # Update /etc/groups based on the group.master file
 runscript update.groups
 
