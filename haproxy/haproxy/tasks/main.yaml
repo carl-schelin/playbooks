@@ -6,8 +6,8 @@
 
 - name: Copy haproxy settings file 
   copy:
-    src: ../files/{{ ansible_hostname }}.conf
-    dest: /etc/haproxy/haproxy.conf
+    src: ../files/{{ ansible_hostname }}.cfg
+    dest: /etc/haproxy/haproxy.cfg
 
 - name: restart haproxy
   systemd:
