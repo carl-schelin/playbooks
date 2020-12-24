@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Carl Schelin
+# update:
+# update the cluster name and other variables for the kubernetes servers
+
+function usage() {
+  echo "Usage:"
+  echo "update -ehs [site]"
+  echo "where:"
+  echo " -h help"
+  echo " -e enable check - Enable --check to validate task"
+  echo " -s site - Site to attach"
+  echo "    sandbox site: icl-0"
+  echo "    Dev site: gldn0-0 bldr0-0"
+  echo "    SQA site: cabo0-0 hell0-0"
+  echo "    CIL site: alde0-0 tato0-1"
+  echo "    Production sites: lnmt1-2 miam1-1"
+}
+
+if [[ $(id -u) -ne 5000 ]]
+then
+  echo "This script must be run by the unixsvc account."
+  echo ""
+  exit 1
+fi
+
+if [[ -z $1 ]]
+then
+  usage
+  exit 0
+fi
+
+HOSTS="/usr/local/admin/etc/hosts"
+OPTSITE=''
+while getopts "ehs:" arg
+do
+  case $arg in
+    e) OPTCHECK="--check"
+       ;;
+    s) OPTSITE="${OPTARG}"
+       ;;
+    h) usage
+       exit 0
+       ;;
+  esac
+done
+
+# remove *.retry files
+if [[ -f *.retry ]]
+then
+  rm *.retry
+fi
+
+if [[ ! -f ${HOSTS} ]]
+then
+  echo "You are not on an ansible server. ${HOSTS} not found."
+  echo ""
+  exit 1
+fi
+
+if [[ -z ${OPTSITE} ]]
+then
+  echo "Error: No configured site: ${OPTSITE}"
+  echo ""
+  usage
+  exit 1
+fi
+
+if [[ ! -z ${OPTCHECK} ]]
+then
+  echo "Validation enabled. No changes will be made to the systems."
+fi
+
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+if [[ $? -eq 0 ]]
+then
+  echo "Lock docker at the current installed version"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} versionlock.yaml 
+else
+  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+fi
+
