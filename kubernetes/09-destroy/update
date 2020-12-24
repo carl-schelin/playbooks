@@ -84,7 +84,7 @@ read
 /usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} destroy.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} destroy.yaml 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
