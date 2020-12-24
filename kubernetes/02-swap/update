@@ -70,7 +70,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update swap information"
-  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} swap.yaml -s
+  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} swap.yaml
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
