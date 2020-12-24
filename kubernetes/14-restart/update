@@ -77,7 +77,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Restart kubelet and docker"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} restart.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} restart.yaml
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
