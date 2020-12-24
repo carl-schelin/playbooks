@@ -76,7 +76,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update Docker logging"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} logging.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} logging.yaml 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
