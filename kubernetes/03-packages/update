@@ -76,7 +76,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Install docker and kubernetes packages"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} packages.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} packages.yaml 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
