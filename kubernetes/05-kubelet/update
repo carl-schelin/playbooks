@@ -76,7 +76,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Update cluster names"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} kubelet.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} kubelet.yaml 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
