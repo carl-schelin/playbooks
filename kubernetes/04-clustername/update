@@ -76,7 +76,7 @@ fi
 if [[ $? -eq 0 ]]
 then
   echo "Set clusternames"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} clustername.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} clustername.yaml 
 else
   echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
 fi
