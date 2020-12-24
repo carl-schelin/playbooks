@@ -1,0 +1,117 @@
+# ignoring errors in case the lock isn't in place yet. It will error and fail without it
+---
+- name: Install versionlock
+  yum:
+    name: yum-plugin-versionlock
+    state: latest
+
+
+- name: Delete versionlock for kubelet
+  command: /usr/bin/yum versionlock delete "kubelet.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for kubectl
+  command: /usr/bin/yum versionlock delete "kubectl.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for kubeadm
+  command: /usr/bin/yum versionlock delete "kubeadm.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for kubernetes-cni
+  command: /usr/bin/yum versionlock delete "kubernetes-cni.*"
+  ignore_errors: yes
+
+
+- name: Delete versionlock for docker-rhel-push-plugin
+  command: /usr/bin/yum versionlock delete "docker-rhel-push-plugin.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for docker-common
+  command: /usr/bin/yum versionlock delete "docker-common.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for docker-client
+  command: /usr/bin/yum versionlock delete "docker-client.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for docker
+  command: /usr/bin/yum versionlock delete "docker.*"
+  ignore_errors: yes
+
+
+- name: Lock kubelet at 1.19.6
+  command: /usr/bin/yum versionlock add "kubelet-1.19.6-0.*"
+
+- name: Lock kubectl at 1.19.6
+  command: /usr/bin/yum versionlock add "kubectl-1.19.6-0.*"
+
+- name: Lock kubeadm at 1.19.6
+  command: /usr/bin/yum versionlock add "kubeadm-1.19.6-0.*"
+
+- name: Lock kubernetes-cni at 0.8.6
+  command: /usr/bin/yum versionlock add "kubernetes-cni-0.8.7-0*"
+
+- name: Lock docker at 1.13.1-203
+  command: /usr/bin/yum versionlock "docker-1.13.1-203.*"
+
+- name: Lock docker-common at 1.13.1-203
+  command: /usr/bin/yum versionlock "docker-common-1.13.1-203.*"
+
+- name: Lock docker-client at 1.13.1-203
+  command: /usr/bin/yum versionlock "docker-client-1.13.1-203.*"
+
+- name: Lock docker-rhel-push-plugin at 1.13.1-203
+  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-203.*"
+
+
+- name: Install kubelet
+  yum:
+    name: kubelet-1.19.6-0.x86_64
+    state: present
+    disable_gpg_check: yes
+
+- name: Install kubectl
+  yum:
+    name: kubectl-1.19.6-0.x86_64
+    state: present
+    disable_gpg_check: yes
+
+- name: Install kubeadm
+  yum:
+    name: kubeadm-1.19.6-0.x86_64
+    state: present
+    disable_gpg_check: yes
+
+- name: Install kubernetes-cni
+  yum:
+    name: kubernetes-cni-0.8.7-0.x86_64
+    state: present
+    disable_gpg_check: yes
+
+
+- name: Install docker
+  yum:
+    name: docker-1.13.1-203.git0be3e21.el7*
+    state: present
+    disable_gpg_check: yes
+
+- name: Install docker-common
+  yum:
+    name: docker-common-1.13.1-203.git0be3e21.el7*
+    state: present
+    disable_gpg_check: yes
+
+- name: Install docker-client
+  yum:
+    name: docker-client-1.13.1-203.git0be3e21.el7*
+    state: present
+    disable_gpg_check: yes
+
+- name: Install docker-rhel-push-plugin
+  yum:
+    name: docker-rhel-push-plugin-1.13.1-203.git0be3e21.el7*
+    state: present
+    disable_gpg_check: yes
+  ignore_errors: yes
+
