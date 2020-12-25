@@ -60,7 +60,7 @@ fi
 
 if [[ -z ${OPTSITE} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: you must pass a tag value"
   echo ""
   usage
   exit 0
