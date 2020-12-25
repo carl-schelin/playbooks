@@ -6,16 +6,12 @@
 
 function usage() {
   echo "Usage:"
-  echo "update -ehs [site]"
+  echo "update -eht [tag]"
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
-  echo " -s site - Site to attach"
-  echo "    sandbox site: icl-0"
-  echo "    Dev site: gldn0-0 bldr0-0"
-  echo "    SQA site: cabo0-0 hell0-0"
-  echo "    CIL site: alde0-0 tato0-1"
-  echo "    Production sites: lnmt1-2 miam1-1"
+  echo " -t the tag which identifies the cluster to update"
+  echo "    use 'searchansible' to list possible tags"
 }
 
 if [[ $(id -u) -ne 5000 ]]
@@ -32,13 +28,13 @@ then
 fi
 
 HOSTS="/usr/local/admin/etc/hosts"
-OPTSITE=''
-while getopts "ehs:l" arg
+OPTTAG=''
+while getopts "eht:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
-    s) OPTSITE="${OPTARG}"
+    t) OPTTAG="${OPTARG}"
        ;;
     h) usage
        exit 0
@@ -59,9 +55,9 @@ then
   exit 1
 fi
 
-if [[ -z ${OPTSITE} ]]
+if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: you must pass a tag value"
   echo ""
   usage
   exit 1
@@ -72,12 +68,12 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
   echo "Set clusternames"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} clustername.yaml 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTTAG} clustername.yaml 
 else
-  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+  echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
 
