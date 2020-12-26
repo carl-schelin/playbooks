@@ -1,0 +1,11 @@
+---
+- name: Upgrade the server
+  yum:
+    name: '*'
+    state: latest
+    disable_gpg_check: yes
+
+- name: Reboot the server
+  reboot:
+    post_reboot_delay: 5
+
