@@ -1,0 +1,35 @@
+#!/bin/ksh
+
+# Carl Schelin
+# The intention is to loop through the worker nodes and upgrade the sytems as we go
+# There should be a check of the server, to see if it's Ready
+# Then removing it from the pool before patching and rebooting
+# Once done, uncordon the worker node 
+# Then verify that a server is again Ready before moving on to the next server.
+
+OPTTAG=kube-bldr0-0-worker
+
+echo "Starting OS upgrades"
+for i in $(/usr/local/bin/searchansible ${OPTTAG} | egrep -v "(Searching|\[${OPTTAG}\])")
+do
+  NODE=$(kubectl get nodes | grep $i | awk '{print $1}')
+
+  echo "Checking $NODE status"
+  kubectl get node $NODE | grep NotReady
+  if [[ $? -gt 0 ]]
+  then
+    echo "Node $NODE is Ready, removing from pool"
+    kubectl drain $NODE --delete-local-data --ignore-daemonsets
+    ansible-playbook -i $i, upgrade.yaml
+  fi
+  kubectl uncordon $NODE
+  echo "Five second pause for node to get back into the pool"
+  sleep 5
+  kubectl get node $NODE | grep NotReady
+  if [[ $? -eq 0 ]]
+  then
+    echo "Node $i is not working, exiting"
+    exit 1
+  fi
+done
+
