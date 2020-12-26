@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  gather_facts: no
+
+  roles:
+    - upgrade
