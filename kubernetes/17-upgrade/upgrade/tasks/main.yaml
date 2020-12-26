@@ -49,7 +49,7 @@
 - name: Lock kubeadm at 1.19.6
   command: /usr/bin/yum versionlock add "kubeadm-1.19.6-0.*"
 
-- name: Lock kubernetes-cni at 0.8.6
+- name: Lock kubernetes-cni at 0.8.7
   command: /usr/bin/yum versionlock add "kubernetes-cni-0.8.7-0*"
 
 - name: Lock docker at 1.13.1-203
