@@ -18,6 +18,10 @@
   command: /usr/bin/yum versionlock delete "kubeadm.*"
   ignore_errors: yes
 
+- name: Delete versionlock for kubernetes-cni
+  command: /usr/bin/yum versionlock delete "kubernetes-cni.*"
+  ignore_errors: yes
+
 
 - name: Delete versionlock for docker-rhel-push-plugin
   command: /usr/bin/yum versionlock delete "docker-rhel-push-plugin.*"
@@ -36,65 +40,70 @@
   ignore_errors: yes
 
 
-- name: Lock kubelet at 1.17.6
-  command: /usr/bin/yum versionlock add "kubelet-1.17.6-0.*"
+- name: Lock kubelet at 1.18.8
+  command: /usr/bin/yum versionlock add "kubelet-1.18.8-0.*"
 
-- name: Lock kubectl at 1.17.6
-  command: /usr/bin/yum versionlock add "kubectl-1.17.6-0.*"
+- name: Lock kubectl at 1.18.8
+  command: /usr/bin/yum versionlock add "kubectl-1.18.8-0.*"
 
-- name: Lock kubeadm at 1.17.6
-  command: /usr/bin/yum versionlock add "kubeadm-1.17.6-0.*"
+- name: Lock kubeadm at 1.18.8
+  command: /usr/bin/yum versionlock add "kubeadm-1.18.8-0.*"
 
-- name: Lock kubernetes-cni at 0.7.5
-  command: /usr/bin/yum versionlock add "kubernetes-cni-0.7.5-0*"
+- name: Lock kubernetes-cni at 0.8.6
+  command: /usr/bin/yum versionlock add "kubernetes-cni-0.8.6-0*"
 
-- name: Lock docker at 1.13.1-161
-  command: /usr/bin/yum versionlock "docker-1.13.1-161.*"
+- name: Lock docker at 1.13.1-162
+  command: /usr/bin/yum versionlock "docker-1.13.1-162.*"
 
-- name: Lock docker-common at 1.13.1-161
-  command: /usr/bin/yum versionlock "docker-common-1.13.1-161.*"
+- name: Lock docker-common at 1.13.1-162
+  command: /usr/bin/yum versionlock "docker-common-1.13.1-162.*"
 
-- name: Lock docker-client at 1.13.1-161
-  command: /usr/bin/yum versionlock "docker-client-1.13.1-161.*"
+- name: Lock docker-client at 1.13.1-162
+  command: /usr/bin/yum versionlock "docker-client-1.13.1-162.*"
 
-- name: Lock docker-rhel-push-plugin at 1.13.1-161
-  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-161.*"
+- name: Lock docker-rhel-push-plugin at 1.13.1-162
+  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-162.*"
 
 
 - name: Install kubelet
   yum:
-    name: kubelet-1.17.6-0.x86_64
+    name: kubelet-1.18.8-0.x86_64
     state: present
 
 - name: Install kubectl
   yum:
-    name: kubectl-1.17.6-0.x86_64
+    name: kubectl-1.18.8-0.x86_64
     state: present
 
 - name: Install kubeadm
   yum:
-    name: kubeadm-1.17.6-0.x86_64
+    name: kubeadm-1.18.8-0.x86_64
+    state: present
+
+- name: Install kubernetes-cni
+  yum:
+    name: kubernetes-cni-0.8.6-0.x86_64
     state: present
 
 
 - name: Install docker
   yum:
-    name: docker-1.13.1-161.git64e9980.el7_8.x86_64
+    name: docker-1.13.1-162.git64e9980.el7_8.x86_64
     state: present
 
 - name: Install docker-common
   yum:
-    name: docker-common-1.13.1-161.git64e9980.el7_8.x86_64
+    name: docker-common-1.13.1-162.git64e9980.el7_8.x86_64
     state: present
 
 - name: Install docker-client
   yum:
-    name: docker-client-1.13.1-161.git64e9980.el7_8.x86_64
+    name: docker-client-1.13.1-162.git64e9980.el7_8.x86_64
     state: present
 
 - name: Install docker-rhel-push-plugin
   yum:
-    name: docker-rhel-push-plugin-1.13.1-161.git64e9980.el7_8.x86_64
+    name: docker-rhel-push-plugin-1.13.1-162.git64e9980.el7_8.x86_64
     state: present
   ignore_errors: yes
 
