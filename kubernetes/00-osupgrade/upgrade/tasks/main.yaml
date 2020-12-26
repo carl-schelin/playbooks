@@ -7,5 +7,5 @@
 
 - name: Reboot the server
   reboot:
-    post_reboot_delay: 5
+    post_reboot_delay: 10
 
