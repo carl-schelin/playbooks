@@ -1,0 +1,35 @@
+#!/bin/ksh
+
+# Carl Schelin
+# The intention is to loop through the master servers and upgrade the sytems as we go
+# There should be a check of the server, to see if it's Ready before patching and rebooting
+# Then a verification that a server is again Ready before moving on to the next server.
+
+SITETAG=kube-bldr0-0-master
+
+echo "Starting OS upgrades"
+for i in $(/usr/local/bin/searchansible ${SITETAG} | egrep -v "(Searching|\[${SITETAG}\])")
+do
+  NODE=$(kubectl get nodes | grep $i | awk '{print $1}')
+
+  echo "Checking $NODE status"
+  kubectl get node $NODE | grep NotReady
+  if [[ $? -gt 0 ]]
+  then
+    echo "Node $NODE is Ready, starting upgrade"
+    ansible-playbook -i $i, upgrade.yaml
+  fi
+  echo "Five second pause for Kubernetes to get Ready"
+  sleep 5
+  kubectl get node $NODE | grep NotReady
+  if [[ $? -eq 0 ]]
+  then
+    echo "Node $NODE is not working, exiting"
+    exit 1
+  else
+    echo "Node $NODE is Ready, moving on."
+  fi
+done
+
+exit 0
+
