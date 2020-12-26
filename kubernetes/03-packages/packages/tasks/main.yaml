@@ -1,34 +1,83 @@
 ---
-- name: Delete versionlock for kubelet at 1.14.7
-  command: /usr/bin/yum versionlock delete "kubelet-1.14.7-0.*"
+- name: Delete versionlock for kubelet at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubelet-1.15.7-0.*"
 
-- name: Delete versionlock for kubectl at 1.14.7
-  command: /usr/bin/yum versionlock delete "kubectl-1.14.7-0.*"
+- name: Delete versionlock for kubectl at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubectl-1.15.7-0.*"
 
-- name: Delete versionlock for kubeadm at 1.14.7
-  command: /usr/bin/yum versionlock delete "kubeadm-1.14.7-0.*"
+- name: Delete versionlock for kubeadm at 1.15.7
+  command: /usr/bin/yum versionlock delete "kubeadm-1.15.7-0.*"
 
-- name: Lock kubelet at 1.15.7
-  command: /usr/bin/yum versionlock add "kubelet-1.15.7-0.*"
 
-- name: Lock kubectl at 1.15.7
-  command: /usr/bin/yum versionlock add "kubectl-1.15.7-0.*"
+- name: Delete versionlock for docker at 1.13.1-104
+  command: /usr/bin/yum versionlock delete "docker-1.13.1-104.*"
 
-- name: Lock kubeadm at 1.15.7
-  command: /usr/bin/yum versionlock add "kubeadm-1.15.7-0.*"
+- name: Delete versionlock for docker-common at 1.13.1-104
+  command: /usr/bin/yum versionlock delete "docker-common-1.13.1-104.*"
+
+- name: Delete versionlock for docker-client at 1.13.1-104
+  command: /usr/bin/yum versionlock delete "docker-client-1.13.1-104.*"
+
+- name: Delete versionlock for docker-rhel-push-plugin at 1.13.1-104
+  command: /usr/bin/yum versionlock delete "docker-rhel-push-plugin-1.13.1-104.*"
+
+
+- name: Lock kubelet at 1.16.8
+  command: /usr/bin/yum versionlock add "kubelet-1.16.8-0.*"
+
+- name: Lock kubectl at 1.16.8
+  command: /usr/bin/yum versionlock add "kubectl-1.16.8-0.*"
+
+- name: Lock kubeadm at 1.16.8
+  command: /usr/bin/yum versionlock add "kubeadm-1.16.8-0.*"
+
+
+- name: Lock docker at 1.13.1-161
+  command: /usr/bin/yum versionlock "docker-1.13.1-161.*"
+
+- name: Lock docker-common at 1.13.1-161
+  command: /usr/bin/yum versionlock "docker-common-1.13.1-161.*"
+
+- name: Lock docker-client at 1.13.1-161
+  command: /usr/bin/yum versionlock "docker-client-1.13.1-161.*"
+
+- name: Lock docker-rhel-push-plugin at 1.13.1-161
+  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-161.*"
+
 
 - name: Install kubelet
   yum:
-    name: kubelet-1.15.7-0.x86_64 
+    name: kubelet-1.16.8-0.x86_64 
     state: present
 
 - name: Install kubectl
   yum:
-    name: kubectl-1.15.7-0.x86_64 
+    name: kubectl-1.16.8-0.x86_64 
     state: present
 
 - name: Install kubeadm
   yum:
-    name: kubeadm-1.15.7-0.x86_64 
+    name: kubeadm-1.16.8-0.x86_64 
+    state: present
+
+
+- name: Install docker
+  yum:
+    name: docker-1.13.1-161.git64e9980.el7_8.x86_64
+    state: present
+
+- name: Install docker-common
+  yum:
+    name: docker-common-1.13.1-161.git64e9980.el7_8.x86_64
+    state: present
+
+- name: Install docker-client
+  yum:
+    name: docker-client-1.13.1-161.git64e9980.el7_8.x86_64
+    state: present
+
+- name: Install docker-rhel-push-plugin
+  yum:
+    name: docker-rhel-push-plugin-1.13.1-161.git64e9980.el7_8.x86_64
     state: present
 
