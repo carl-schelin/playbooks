@@ -1,5 +1,5 @@
 ---
-- hosts: "{{ site }}-elkmaster"
+- hosts: "elk-{{ site }}-master"
   become: true
   become_user: root
   gather_facts: yes
