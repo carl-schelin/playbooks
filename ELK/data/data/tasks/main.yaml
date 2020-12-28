@@ -1,7 +1,7 @@
 ---
-- name: Include site variables for "{{ site }}"
+- name: Include site variables for "{{ tag }}"
   include_vars:
-    file: "vars/{{ site }}.yaml"
+    file: "vars/{{ tag }}.yaml"
 
 - name: Install Java
   yum:
