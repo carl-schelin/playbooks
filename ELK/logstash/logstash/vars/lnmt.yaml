@@ -1,6 +1,0 @@
-# Elastic Search
----
-
-server:
-  - {elastic1: "http://10.32.10.114:9200", elastic2: "http://10.32.10.115:9200"}
-
