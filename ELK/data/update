@@ -29,12 +29,12 @@ fi
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTTAG=''
-while getopts "ehrs:l" arg
+while getopts "eht:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
-    s) OPTTAG="${OPTARG}"
+    t) OPTTAG="${OPTARG}"
        ;;
     h) usage
        exit 0
