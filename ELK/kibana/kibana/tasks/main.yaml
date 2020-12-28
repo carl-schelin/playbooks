@@ -1,7 +1,7 @@
 ---
-- name: Include site variables for "{{ site }}"
+- name: Include site variables for "{{ tag }}"
   include_vars:
-    file: "vars/{{ site }}.yaml"
+    file: "vars/{{ tag }}.yaml"
 
 - name: Delete the kibana repo file if it exists
   file:
@@ -21,8 +21,8 @@
     name: yum-plugin-versionlock
     state: latest
 
-- name: Lock kibana at 7.5.0-1
-  command: /usr/bin/yum versionlock "kibana-7.5.0-1.*"
+- name: Lock kibana at 7.10.0
+  command: /usr/bin/yum versionlock "kibana-7.10.0*"
 
 - name: Install kibana
   yum:
