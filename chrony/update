@@ -5,14 +5,13 @@
 # Update the chrony information on all servers
 
 function usage() {
+  echo "Ensure the local time server is in use"
   echo "Usage:"
-  echo "update -ehs [site] "
+  echo "update -eht [site] "
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
-  echo " -s product - Product to modify, replace spaces with underscores"
-  echo "    Ptolemy, NEAD, IEN_Voice, LVF-UI"
-  echo "    icl-0, bldr0-0, gldn0-0, cabo0-0, hell0-0, alde0-0, tato0-1, lnmt1-2, miam1-1"
+  echo " -t tag to apply this to. Replace spaces with underscores"
 }
 
 if [[ $(id -u) -ne 5000 ]]
@@ -30,13 +29,13 @@ fi
 
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
-OPTSITE=''
-while getopts "ehs:" arg
+OPTTAG=''
+while getopts "eht:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
-    s) OPTSITE="${OPTARG}"
+    t) OPTTAG="${OPTARG}"
        ;;
     h) usage
        exit 0
@@ -57,52 +56,20 @@ then
   exit 1
 fi
 
-if [[ -z ${OPTSITE} ]]
+if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: No tag found."
   echo ""
   usage
   exit 0
 fi
 
-/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
   echo "Update chrony.conf information"
-  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTSITE}" ${OPTCHECK} chrony.yaml -s
+  ansible-playbook -i ${HOSTS} --extra-vars "site=${OPTTAG}" ${OPTCHECK} chrony.yaml
 else
-  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
-fi
-
-
-
-done
-
-# remove *.retry files
-if [[ -f *.retry ]]
-then
-  rm *.retry
-fi
-
-if [[ -z ${OPTSITE} ]]
-then
-  echo "Error: No configured site: ${OPTSITE}"
-  echo ""
-  usage
-  exit 1
-fi
-
-if [[ ! -z ${OPTCHECK} ]]
-then
-  echo "Validation enabled. No changes will be made to the systems."
-fi
-
-/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
-if [[ $? -eq 0 ]]
-then
-  echo "Update sudoers and users"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} sudoers.yaml -s 
-else
-  echo "Unable to locate ${OPTSITE} in the ${HOSTS} hosts file"
+  echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
 
