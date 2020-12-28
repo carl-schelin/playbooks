@@ -12,8 +12,8 @@
 - name: Remove elasticsearch lock
   command: /usr/bin/yum versionlock delete "elasticsearch.*"
 
-- name: Lock elasticsearch at 7.8.0
-  command: /usr/bin/yum versionlock add "elasticsearch-7.9.2*"
+- name: Lock elasticsearch at 7.10.0
+  command: /usr/bin/yum versionlock add "elasticsearch-7.10.0*"
 
 - name: Install elasticsearch
   yum:
