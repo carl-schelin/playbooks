@@ -1,6 +1,0 @@
-# Elastic Search
----
-
-server:
-  - {cluster: "miami", master1: "10.32.138.114", master2: "10.32.138.115" }
-
