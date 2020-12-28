@@ -1,7 +1,7 @@
 ---
-- name: Include site variables for "{{ site }}"
+- name: Include site variables for "{{ tag }}"
   include_vars:
-    file: "vars/{{ site }}.yaml"
+    file: "vars/{{ tag }}.yaml"
 
 - name: Install Java
   yum:
@@ -26,8 +26,8 @@
     name: yum-plugin-versionlock
     state: latest
 
-- name: Lock logstash at 7.5.0-1
-  command: /usr/bin/yum versionlock "logstash-7.5.0-1.*"
+- name: Lock logstash at 7.10.0
+  command: /usr/bin/yum versionlock "logstash-7.10.0*"
 
 - name: Install logstash
   yum:
