@@ -26,8 +26,8 @@
     name: yum-plugin-versionlock
     state: latest
 
-- name: Lock elasticsearch at 7.5.0-1
-  command: /usr/bin/yum versionlock "elasticsearch-7.5.0-1.*"
+- name: Lock elasticsearch at 7.10.0
+  command: /usr/bin/yum versionlock "elasticsearch-7.10.0*"
 
 - name: Install elasticsearch
   yum:
