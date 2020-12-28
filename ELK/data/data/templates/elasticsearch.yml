@@ -3,7 +3,7 @@ node.name: {{ ansible_hostname }}
 path.data: /opt/elasticsearch
 path.logs: /var/log/elasticsearch
 network.host: [_local_, _site_]
-discovery.seed_hosts: ["{{ item.master1 }}", "{{ item.master2 }}"]
-cluster.initial_master_nodes: ["{{ item.master1 }}", "{{ item.master2 }}"]
+discovery.seed_hosts: ["{{ item.master1 }}", "{{ item.master2 }}", "{{ item.master3 }}"]
+cluster.initial_master_nodes: ["{{ item.master1 }}", "{{ item.master2 }}", "{{ item.master3 }}"]
 node.master: false
 node.data: true
