@@ -19,7 +19,9 @@
     dest: /var/tmp/GPG-KEY-elasticsearch
 
 - name: Install GPG Key
-  script: "/bin/rpm --import /var/tmp/GPG-KEY-elasticsearch"
+  rpm_key:
+    state: present
+    key: /var/tmp/GPG-KEY-elasticsearch
 
 - name: Install versionlock
   yum:
