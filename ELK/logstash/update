@@ -6,14 +6,11 @@
 
 function usage() {
   echo "Usage:"
-  echo "elastic -ehs [site]"
+  echo "elastic -eht [tag]"
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
-  echo " -s site - Site to attach"
-  echo "    Dev/SQA site: bldr"
-  echo "    CIL site: tato"
-  echo "    Production sites: lnmt miam"
+  echo " -t tag to use"
 }
 
 if [[ $(id -u) -ne 5000 ]]
@@ -31,13 +28,13 @@ fi
 
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
-OPTSITE=''
-while getopts "ehs:" arg
+OPTTAG=''
+while getopts "eht:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
-    s) OPTSITE="${OPTARG}"
+    t) OPTTAG="${OPTARG}"
        ;;
     h) usage
        exit 0
@@ -51,9 +48,9 @@ then
   rm *.retry
 fi
 
-if [[ -z ${OPTSITE} ]]
+if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: No tag configured"
   echo ""
   usage
   exit 1
@@ -72,5 +69,5 @@ then
 fi
 
 echo "Create Logstash Node"
-ansible-playbook -i ${HOSTS} ${OPTCHECK} -e site=${OPTSITE} logstash.yaml -s
+ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} logstash.yaml
 
