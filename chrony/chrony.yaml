@@ -1,15 +1,10 @@
 # Carl Schelin
-# remove bad entries;
-# server gpsntp1.scc911.com
-# server gpsntp2.scc911.com
-# add correct entries;
-# server 10.100.228.31
-# server 192.168.200.20
+# server 192.168.1.254
 ---
 - hosts: "{{ product }}"
   become: true
   become_user: root
-  gather_facts: yes
+  gather_facts: no
 
   roles:
     - chrony
