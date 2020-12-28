@@ -1,8 +1,9 @@
 ---
-- hosts: "{{ site }}-elkdata"
+- hosts: "{{ tag }}"
   become: true
   become_user: root
   gather_facts: yes
 
   roles:
     - data
+
