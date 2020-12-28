@@ -23,6 +23,10 @@
     name: yum-plugin-versionlock
     state: latest
 
+- name: Remove any existing locks
+  command: /usr/bin/yum versionlock delete "kibana-7*"
+  ignore_errors: yes
+
 - name: Lock kibana at 7.10.0
   command: /usr/bin/yum versionlock "kibana-7.10.0*"
 
