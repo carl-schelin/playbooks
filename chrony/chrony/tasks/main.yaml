@@ -3,7 +3,7 @@
   lineinfile:
     dest: /etc/chrony.conf
     state: absent
-    regexp: '^server {?!10\.100\.228\.31|192\.168\.200\.20}'
+    regexp: '^server {?!192\.168\.1\.254}'
 
 - name: add in good lines
   lineinfile:
@@ -11,6 +11,11 @@
     line: "{{ item.line }}"
     insertbefore: bof 
   with_items:
-    - { line: "server 192.168.200.20" }
-    - { line: "server 10.100.228.31" }
+    - { line: "server 192.168.1.254" }
+
+- name: Restart chrony
+  systemd:
+    daemon_reload: yes
+    name: chronyd
+    state: restarted
 
