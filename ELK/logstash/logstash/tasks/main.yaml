@@ -28,6 +28,10 @@
     name: yum-plugin-versionlock
     state: latest
 
+- name: Remove any existing locks
+  command: /usr/bin/yum versionlock delete "logstash-7*"
+  ignore_errors: yes
+
 - name: Lock logstash at 7.10.0
   command: /usr/bin/yum versionlock "logstash-7.10.0*"
 
