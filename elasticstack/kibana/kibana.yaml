@@ -1,9 +1,0 @@
----
-- hosts: "elk-{{ site }}-kibana"
-  become: true
-  become_user: root
-  gather_facts: yes
-
-  roles:
-    - kibana
-
