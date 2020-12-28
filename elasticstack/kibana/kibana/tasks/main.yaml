@@ -7,8 +7,8 @@
 - name: Remove kibana lock
   command: /usr/bin/yum versionlock delete "kibana.*"
 
-- name: Lock kibana at 7.8.0
-  command: /usr/bin/yum versionlock add "kibana-7.9.2*"
+- name: Lock kibana at 7.10.0
+  command: /usr/bin/yum versionlock add "kibana-7.10.0*"
 
 - name: Install kibana
   yum:
