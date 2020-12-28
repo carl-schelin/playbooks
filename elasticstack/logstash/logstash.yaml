@@ -1,5 +1,5 @@
 ---
-- hosts: "{{ site }}-logstash"
+- hosts: "elk-{{ site }}-logstash"
   become: true
   become_user: root
   gather_facts: yes
