@@ -12,8 +12,8 @@
 - name: Remove logstash lock
   command: /usr/bin/yum versionlock delete "logstash.*"
 
-- name: Lock logstash at 7.8.0
-  command: /usr/bin/yum versionlock add "logstash-7.9.2"
+- name: Lock logstash at 7.10.0
+  command: /usr/bin/yum versionlock add "logstash-7.10.0"
 
 - name: Install logstash
   yum:
