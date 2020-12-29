@@ -3,7 +3,7 @@
   include_vars:
     file: "vars/{{ tag }}.yaml"
 
-- name: Delete the kibana repo file if it exists
+- name: copy the kibana repo file 
   copy:
     src: ../files/kibana.repo
     dest: /etc/yum.repos.d/kibana.repo
