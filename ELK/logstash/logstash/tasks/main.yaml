@@ -8,10 +8,10 @@
     name: java
     state: latest
 
-- name: Delete the logstash repo file if it exists
-  file:
-    path: /etc/yum.repos.d/logstash.repo
-    state: absent
+- name: Copy the logstash repo file 
+  copy:
+    src: ../files/logstash.repo
+    dest: /etc/yum.repos.d/logstash.repo
 
 - name: Copy elasticsearch GPG Key
   copy:
