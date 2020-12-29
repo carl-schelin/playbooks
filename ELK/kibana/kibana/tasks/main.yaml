@@ -4,9 +4,9 @@
     file: "vars/{{ tag }}.yaml"
 
 - name: Delete the kibana repo file if it exists
-  file:
-    path: /etc/yum.repos.d/kibana.repo
-    state: absent
+  copy:
+    src: ../files/kibana.repo
+    dest: /etc/yum.repos.d/kibana.repo
 
 - name: Copy elasticsearch GPG Key
   copy:
