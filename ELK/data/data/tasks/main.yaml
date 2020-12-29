@@ -8,10 +8,10 @@
     name: java
     state: latest
 
-- name: Delete the elasticsearch repo file if it exists
-  file:
-    path: /etc/yum.repos.d/elasticsearch.repo
-    state: absent
+- name: Copy the elasticsearch repo file 
+  copy:
+    src: ../files/elasticsearch.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
 
 - name: Copy elasticsearch GPG Key
   copy:
