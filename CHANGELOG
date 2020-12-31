@@ -1,0 +1,1 @@
+Removed any company specific information, renaming scripts, and changing to the unixsuite directory as the default. Moved some specific information into the .config file.
