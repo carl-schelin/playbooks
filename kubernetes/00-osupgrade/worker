@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # Carl Schelin
 # The intention is to loop through the worker nodes and upgrade the sytems as we go
