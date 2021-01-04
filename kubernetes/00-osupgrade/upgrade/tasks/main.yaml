@@ -5,7 +5,7 @@
     state: latest
     disable_gpg_check: yes
 
-- name: Reboot the server
+- name: Reboot the server (25 seconds pause)
   reboot:
     post_reboot_delay: 25
 
