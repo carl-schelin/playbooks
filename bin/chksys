@@ -168,6 +168,12 @@ function hardware_cpu {
     fi
     NUMVIRT=`/usr/sbin/psrinfo | wc -l | awk '{print $1}'`
     NUMCORES=$(( $NUMVIRT / $NUMPHYS ))
+  elif [[ $OS = 'OpenBSD' ]]; then
+    # run sysctl hw.model for processor type
+    # run sysctl hw.ncpus for number of processors
+
+    NUMPHYS=`/sbin/sysctl hw.ncpu | cut -f2 -d=`
+    NUMCORES=1
   fi
 
   if [[ $NUMCORES -gt 1 ]]
@@ -198,6 +204,8 @@ function hardware_cpu {
       kill -HUP $OUTPUT
       sleep 5
     fi
+  elif [[ $OS = 'OpenBSD' ]]; then
+    logit "hardware" "cpu" "${NUMPHYS},${NUMCORES}"
   else
     LOOP=1
     while [[ $LOOP -le $NUMPHYS ]]
@@ -220,6 +228,8 @@ function hardware_mem {
     then
       MEMVALUE=`/usr/contrib/bin/machinfo | grep "Memory =" | awk '{print $3" MB"}'`
     fi
+  elif [[ $OS = 'OpenBSD' ]]; then
+    MEMVALUE=`/sbin/sysctl hw.physmem | cut -f2 -d=`
   fi
 
   if [[ ! -z ${MEMVALUE} ]]
@@ -303,7 +313,7 @@ function software_os {
   'SunOS') 
     OSV=`head -1 /etc/release`
   ;;
-  'HP-UX' | 'OSF1' | 'FreeBSD')
+  'HP-UX' | 'OSF1' | 'FreeBSD' | 'OpenBSD')
     OSV=`uname -sr`
   ;;
   esac
@@ -922,7 +932,7 @@ function resolv {
 ## Are you root?
 RUNBY=5000
 case $OS in
-('Linux' | 'HP-UX' | 'FreeBSD' | 'OSF1')
+('Linux' | 'HP-UX' | 'FreeBSD' | 'OSF1' | 'OpenBSD')
   RUNBY=`/usr/bin/id -u`
 ;;
 ('SunOS')
