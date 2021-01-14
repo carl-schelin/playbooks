@@ -30,7 +30,8 @@ fi
 . "${DIRNAME}"/../.config
 
 # set up variables
-ROOT="/var/tmp/mysql"
+# newer versions of mysql/mariadb won't let you write to /var/tmp so changed to /opt/mysqlbackup
+ROOT="/opt/mysqlbackup"
 DATE=`date +"%Y%m%d"`
 LOG="$ROOT/mysql.$DATE/mysql.report"
 # location of mysql on Solaris using CSW package management
