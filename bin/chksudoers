@@ -126,15 +126,15 @@ fi
 # ok, run through the %groups and see who has what. check for space or tabs
 for i in $(grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}')
 do
-# get the group info from ${SCRIPTS_DATA}/group
-  GID=$(grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f3 -d:)
+# get the group info from ${SCRIPTS_LOGS}/group
+  GID=$(grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f3 -d:)
 
   if [[ $DEBUG = 'yes' ]]
   then
-    grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f3 -d:
+    grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f3 -d:
     echo "Checking group id ${GID}:"
   fi
-  for j in $(grep "^${i}:" "${SCRIPTS_DATA}/group" | cut -f4 -d: | sed -e "s/,/ /g")
+  for j in $(grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f4 -d: | sed -e "s/,/ /g")
   do
 
 # check to see if a group is root accessible and set the yes/no flag
@@ -313,7 +313,7 @@ do
     echo "Checking group membership for users in passwd:"
   fi
 # parse the passwd file and see if anyone is a member of a root accessible GID
-  for j in $(awk -F: '{print $1":"$4}' "${SCRIPTS_DATA}/passwd")
+  for j in $(awk -F: '{print $1":"$4}' "${SCRIPTS_LOGS}/passwd")
   do
     USER=$(echo "${j}" | cut -f1 -d:)
     UGID=$(echo "${j}" | cut -f2 -d:)
@@ -348,7 +348,7 @@ done
 sort "${OUTPUT}" | uniq > "${CHKSUDOERS}"
 
 # make a backup of the sudoers file
-cp "${SUDOERS}" "${SCRIPTS_DATA}"
+cp "${SUDOERS}" "${SCRIPTS_LOGS}"
 
 exit 0
 
