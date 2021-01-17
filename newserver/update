@@ -73,8 +73,8 @@ fi
 /usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Disabling the Firewall"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} firewall.yaml -s 
+  echo "Disabling the Firewall, installing ksh, ipa-client, and mailx"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} newserver.yaml -s 
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
