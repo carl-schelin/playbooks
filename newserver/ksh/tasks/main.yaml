@@ -1,0 +1,7 @@
+---
+- name: ensure ksh is installed and current
+  yum:
+    name: ksh
+    state: present
+    disable_gpg_check: yes
+
