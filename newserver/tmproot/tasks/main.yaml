@@ -1,0 +1,7 @@
+---
+- name: Make sure tmproot group exists
+  group:
+    name: tmproot
+    gid: 666
+    state: present
+
