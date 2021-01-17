@@ -1,0 +1,7 @@
+---
+- name: ensure mailx is installed and current
+  yum:
+    name: mailx
+    state: present
+    disable_gpg_check: yes
+
