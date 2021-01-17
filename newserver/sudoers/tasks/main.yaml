@@ -1,0 +1,29 @@
+# this works well on 90% of systems
+---
+- name: Include site variables for admins
+  include_vars:
+    file: "vars/users.yaml"
+
+- name: Install default sudoers
+  template: 
+    src: templates/sudoers
+    dest: "/etc/sudoers"
+    mode: 0440
+
+- name: Ensure tmproot group exists
+  group:
+    gid: 666
+    name: tmproot
+    state: present
+
+- name: Ensure Admins have access and are a member of the sysadmin group
+  user:
+    name: "{{ item.name }}"
+    comment: "{{ item.gecos }}"
+    groups: "{{ item.group }}"
+  with_items: "{{ users }}"
+
+- name: Unlock the admin account if locked.
+  command: "/bin/passwd -u {{ item.name }}"
+  with_items: "{{ users }}"
+
