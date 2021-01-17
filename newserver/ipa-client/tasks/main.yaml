@@ -1,0 +1,7 @@
+---
+- name: ensure ipa-client is installed and current
+  yum:
+    name: ipa-client
+    state: present
+    disable_gpg_check: yes
+
