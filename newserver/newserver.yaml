@@ -6,14 +6,4 @@
   gather_facts: yes
 
   roles:
-    - chrony
-    - firewall
-    - ipa-client
-    - ksh
-    - mailx
-    - snmpd
-    - sshd
-    - sudoers
-    - sysadmin
-    - tmproot
-    - vmtoolsd
+    - telegraf
