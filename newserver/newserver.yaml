@@ -5,4 +5,14 @@
   gather_facts: no
 
   roles:
+    - chrony
     - firewall
+    - ipa-client
+    - ksh
+    - mailx
+    - snmpd
+    - sshd
+    - sudoers
+    - sysadmin
+    - tmproot
+    - vmtoolsd
