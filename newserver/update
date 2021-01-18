@@ -57,9 +57,9 @@ then
   exit 1
 fi
 
-if [[ -z ${OPTSITE} ]]
+if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: No configured site: ${OPTTAG}"
   echo ""
   usage
   exit 1
@@ -70,11 +70,11 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
   echo "Disabling the Firewall, installing ksh, ipa-client, and mailx"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} newserver.yaml -s 
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} newserver.yaml
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
