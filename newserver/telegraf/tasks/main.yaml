@@ -3,6 +3,11 @@
   include_vars:
     file: "vars/vars.yaml"
 
+- name: Copy the influxdb repo 
+  copy:
+    src: ../files/influxdb.repo
+    dest: /etc/yum.repos.d/influxdb.conf
+
 - name: Install telegraf
   yum:
     name: telegraf
