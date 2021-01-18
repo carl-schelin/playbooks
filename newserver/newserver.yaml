@@ -2,7 +2,8 @@
 - hosts: "{{ tag }}"
   become: true
   become_user: root
-  gather_facts: no
+# need this for sudoers
+  gather_facts: yes
 
   roles:
     - chrony
