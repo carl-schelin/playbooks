@@ -1,7 +1,7 @@
 ---
 - name: Install open-vm-tools
   yum:
-    name: vmtoolsd
+    name: open-vm-tools
     state: latest
 
 - name: Start the vmtoolsd service
