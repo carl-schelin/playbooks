@@ -1,0 +1,17 @@
+# Carl Schelin
+# this has to be done because terraform 13+ changed the behavior of installations
+# so for this, it has to be a local install
+---
+- name: make the libvirt provider directory
+  file:
+    path: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64
+    state: directory
+    owner: unixsvc
+    group: unixsvc
+    mode: '0755'
+
+- name: Install the libvirt provider file
+  copy:
+    src: ../files/terraform-provider-libvirt
+    dest: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64/
+
