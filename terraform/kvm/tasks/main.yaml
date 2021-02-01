@@ -28,5 +28,5 @@
     comment: "Unix Service Account"
     uid: 5000
     group: unixsvc
-    groups: admins,sudo,sysadmin,libvirt,kvm
+    groups: sudo,sysadmin,libvirt,kvm
 
