@@ -1,0 +1,14 @@
+---
+- name: Copy terraform
+  copy:
+    src: ../files/terraform
+    dest: /usr/local/bin/terraform
+
+- name: make admin/terraform directory
+  file:
+    path: /usr/local/admin/terraform
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: '0775'
+
