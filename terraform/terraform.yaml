@@ -1,0 +1,18 @@
+# Carl Schelin
+# tag: terraform
+# install kvm. This installs all the necessary files, starts libvirtd, makes the mount point, and updates the service account
+# install terraform. Just copies a file out
+# install the libvirt providor into the service account's home directory
+# create the logical volume for images
+---
+- hosts: "{{ tag }}"
+  become: true
+  become_user: root
+  gather_facts: no
+
+  roles:
+    - kvm
+    - terraform
+    - provider
+    - createlvm
+
