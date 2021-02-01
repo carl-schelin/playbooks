@@ -14,4 +14,7 @@
   copy:
     src: ../files/terraform-provider-libvirt
     dest: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64/
+    owner: unixsvc
+    group: unixsvc
+    mode: '0644'
 
