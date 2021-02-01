@@ -1,0 +1,32 @@
+---
+- name: Install the necessary KVM packages
+  apt:
+    pkg:
+    - qemu
+    - qemu-kvm
+    - libvirt-daemon
+    - libvirt-clients
+    - bridge-utils
+    - virt-manager
+    - libguestfs-tools
+    - libvirt-dev
+
+- name: Activate libvirtd
+  systemd:
+    name: libvirtd
+    enabled: yes
+    state: started
+
+- name: Create Image directory
+  file:
+    path: /libvirt_images
+    state: directory
+
+- name: Append the service account with the kvm groups
+  user:
+    name: unixsvc
+    comment: "Unix Service Account"
+    uid: 5000
+    group: unixsvc
+    groups: admins,sudo,sysadmin,libvirt,kvm
+
