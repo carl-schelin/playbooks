@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # chksys - Script to parse system info for the inventory
 # Carl Schelin
@@ -68,7 +68,8 @@ function system {
   logit "system" "hostname" ${HOSTNAME}
   logit "system" "fqdn" ${FQDN}
 
-  if [[ $OS = 'Linux' ]]; then
+  if [[ $OS = 'Linux' ]]
+  then
     if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
     then
       KERNEL=`rpm -q kernel --queryformat '%{installtime}\n' | sort -n | tail -1`
@@ -79,7 +80,8 @@ function system {
     then
       logit "system" "kernel" ${KERNELDATE}
     fi
-  elif [[ $OS = 'HP-UX' ]]; then
+  elif [[ $OS = 'HP-UX' ]]
+  then
     SWLIST=`swlist -l bundle | grep QPKBASE`
     SWYEAR=`echo $SWLIST | awk '{print $NF}'`
     SWOUTPUT=`echo $SWLIST | sed -e "s/$SWYEAR//g"`
@@ -129,7 +131,8 @@ function system {
 }
 
 function hardware_cpu {
-  if [[ $OS = 'Linux' ]]; then
+  if [[ $OS = 'Linux' ]]
+  then
     CPU=`grep "model name" /proc/cpuinfo | awk -F: '{print $2}' | head -1`
     NUMPHYS=`grep "physical id" /proc/cpuinfo | sort -u | wc -l | awk '{print $1}'`
     if [[ -z $NUMPHYS ]]
@@ -142,7 +145,8 @@ function hardware_cpu {
       NUMPHYS=`grep -c processor /proc/cpuinfo`
       NUMCORES=1
     fi
-  elif [[ $OS = 'HP-UX' ]]; then
+  elif [[ $OS = 'HP-UX' ]]
+  then
     NUMPHYS=`machinfo | grep 'Number of CPUs' | awk '{print $NF}'`
     if [[ ! -z $NUMPHYS ]]
     then
@@ -154,7 +158,8 @@ function hardware_cpu {
       CPU=`machinfo | grep 'Processor' | cut -c5-`
       NUMCORES=`machinfo | grep 'processors' | cut -f2 -d\( | awk '{print $1}'`
     fi
-  elif [[ $OS = 'SunOS' ]]; then
+  elif [[ $OS = 'SunOS' ]]
+  then
 
     # run psrinfo -p to get the number of physical processors
     # run psrinfo to get the number of virtual processors
@@ -171,7 +176,8 @@ function hardware_cpu {
     fi
     NUMVIRT=`psrinfo | wc -l | awk '{print $1}'`
     NUMCORES=$(( $NUMVIRT / $NUMPHYS ))
-  elif [[ $OS = 'OpenBSD' ]]; then
+  elif [[ $OS = 'OpenBSD' ]]
+  then
     # run sysctl hw.model for processor type
     # run sysctl hw.ncpus for number of processors
 
@@ -186,7 +192,8 @@ function hardware_cpu {
     CORES="$NUMCORES core"
   fi
 
-  if [[ $OS = 'SunOS' ]]; then
+  if [[ $OS = 'SunOS' ]]
+  then
     # doesn't work on the mlc's due to a skip in the output of psrinfo (48 cores, skips to 64 at number 48)
     LOOP=0
     while [[ $LOOP -lt $NUMVIRT ]]
@@ -207,7 +214,8 @@ function hardware_cpu {
       kill -HUP $OUTPUT
       sleep 5
     fi
-  elif [[ $OS = 'OpenBSD' ]]; then
+  elif [[ $OS = 'OpenBSD' ]]
+  then
     logit "hardware" "cpu" "${NUMPHYS},${NUMCORES}"
   else
     LOOP=1
@@ -221,17 +229,21 @@ function hardware_cpu {
 }
 
 function hardware_mem {
-  if [[ $OS = 'Linux' ]]; then
+  if [[ $OS = 'Linux' ]]
+  then
     MEMVALUE=`grep 'MemTotal' /proc/meminfo | awk '{print $2" "$3}'`
-  elif [[ $OS = 'SunOS' ]]; then
+  elif [[ $OS = 'SunOS' ]]
+  then
     MEMVALUE=`prtconf | grep Memory | awk '{print $3" "$4}'`
-  elif [[ $OS = 'HP-UX' ]]; then
+  elif [[ $OS = 'HP-UX' ]]
+  then
     MEMVALUE=`machinfo | grep Memory: | awk '{print $2" MB"}'`
     if [[ -z ${MEMVALUE} ]]
     then
       MEMVALUE=`machinfo | grep "Memory =" | awk '{print $3" MB"}'`
     fi
-  elif [[ $OS = 'OpenBSD' ]]; then
+  elif [[ $OS = 'OpenBSD' ]]
+  then
     MEMVALUE=`sysctl hw.physmem | cut -f2 -d=`
   fi
 
@@ -242,7 +254,8 @@ function hardware_mem {
 }
 
 function hardware_disk {
-  if [[ $OS = 'Linux' ]]; then
+  if [[ $OS = 'Linux' ]]
+  then
     if [[ -f /dev/sda ]]
     then
       for i in `ls /dev/sd?`
@@ -292,7 +305,8 @@ function system_uuid {
 function software {
   for pkg in datapal httpd informix java mysqld netbackup:backup newrelic openjdk opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
   do
-    if [[ -n "`echo $pkg | awk -F: '{print $2}'`" ]]; then
+    if [[ -n "`echo $pkg | awk -F: '{print $2}'`" ]]
+    then
       sftpkg=`echo $pkg | awk -F: '{print $1}'` 
       pkgname=`echo $pkg | awk -F: '{print $2}'` 
     else
@@ -300,9 +314,11 @@ function software {
       pkgname=$pkg
     fi
  
-    if [[ -f ${SCRIPTS_LOGS}/${sftpkg}.version ]]; then
+    if [[ -f ${SCRIPTS_LOGS}/${sftpkg}.version ]]
+    then
       SFTWARE=`head -1 ${SCRIPTS_LOGS}/${sftpkg}.version`
-      if [[ -n "${SFTWARE}" ]]; then
+      if [[ -n "${SFTWARE}" ]]
+      then
         logit "software" "${pkgname}" "${SFTWARE}"
       fi
     fi
@@ -315,16 +331,20 @@ function software_os {
     # various linux installations
     # for redhat, if the release file has 2 lines, it's Oracle Unbreakable Linux
     OSV='Unknown'
-    if [[ -f /etc/redhat-release ]]; then
+    if [[ -f /etc/redhat-release ]]
+    then
       COUNT=`wc -l /etc/redhat-release | awk '{print $1}'`
-      if [[ $COUNT = 1 ]]; then
+      if [[ $COUNT = 1 ]]
+      then
         OSV=`cat /etc/redhat-release`
       fi
-      if [[ $COUNT = 2 ]]; then
+      if [[ $COUNT = 2 ]]
+      then
         OSV="Oracle `head -1 /etc/redhat-release`"
       fi
     fi
-    if [[ -f /etc/debian_version ]]; then
+    if [[ -f /etc/debian_version ]]
+    then
       OSV="Debian `cat /etc/debian_version`"
     fi
   ;;
@@ -336,7 +356,8 @@ function software_os {
   ;;
   esac
 
-  if [[ ! -z "${OSV}" ]]; then
+  if [[ ! -z "${OSV}" ]]
+  then
     logit "software" "os" "${OSV}"
   fi
 }
@@ -382,34 +403,98 @@ function network_routing {
     DEFGATE=''
     DEFDEV=''
     DEFROUTE=0
-    for i in `netstat -rn | egrep -v "(Kernel|Destination)" | awk '{print $1":"$2":"$3":"$8}'`
-    do
-      VERSION=0
-      SOURCE=`echo $i|cut -f1 -d:`
-      GATEWAY=`echo $i|cut -f2 -d:`
-      MASK=`echo $i|cut -f3 -d:`
-      DEVICE=`echo $i|cut -f4 -d:`
+
+#default via 10.0.2.2 dev enp0s3 proto dhcp metric 100
+#10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100
+    which ip > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      for i in $(ip route | awk '{print $1":"$2":"$3":"$4":"$5}')
+      do
+        VERSION=0
+
+# can be 'default' which won't have a mask
+        SOURCE=`echo $i | cut -f1 -d:`
+        MASK=`echo $SOURCE | cut -f2 -d/`
+        SOURCE=`echo $SOURCE | cut -f1 -d/`
+        if [[ $SOURCE = 'default' ]]
+        then
+          SOURCE='0.0.0.0'
+          MASK='0.0.0.0'
+        fi
+
+# for a normal line, device is 5
+        DEVICE=`echo $i|cut -f5 -d:`
+
+        GATEWAY=`echo $i|cut -f3 -d:`
+# if 'dev' then gateway is default and device is what gateway is now
+        CHECK=`echo $i|cut -f2 -d:`
+        if [[ $CHECK = 'dev' ]]
+        then
+          DEVICE=$GATEWAY
+          GATEWAY='0.0.0.0'
+        fi
 
     # identify the default gateway and interface
-      if [[ $SOURCE = '0.0.0.0' ]]; then
-        DEFGATE=$GATEWAY
-        DEFDEV=$DEVICE
-        DEFROUTE=1
-      fi
+        if [[ $SOURCE = '0.0.0.0' ]]
+        then
+          DEFGATE=$GATEWAY
+          DEFDEV=$DEVICE
+          DEFROUTE=1
+        fi
 
 # looking for the static routes. Not all files will have the interface name in the line so just search for the IP and gateway.
-      STATIC=0
-      if [[ -f /etc/sysconfig/network-scripts/route-${DEVICE} ]]
-      then
-        egrep "${SOURCE}.*${GATEWAY}" /etc/sysconfig/network-scripts/route-${DEVICE} > /dev/null
-        if [[ $? -eq 0 ]]
+        STATIC=0
+        if [[ -f /etc/sysconfig/network-scripts/route-${DEVICE} ]]
         then
-          STATIC=1
+          egrep "${SOURCE}.*${GATEWAY}" /etc/sysconfig/network-scripts/route-${DEVICE} > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            STATIC=1
+          fi
         fi
-      fi
 
-      logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE,$STATIC"
-    done
+        logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE,$STATIC"
+      done
+    else
+#Kernel IP routing table
+#Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+#0.0.0.0         10.0.2.2        0.0.0.0         UG        0 0          0 enp0s3
+#10.0.2.0        0.0.0.0         255.255.255.0   U         0 0          0 enp0s3
+      which netstat > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        for i in $(netstat -rn | egrep -v "(Kernel|Destination)" | awk '{print $1":"$2":"$3":"$8}')
+        do
+          VERSION=0
+          SOURCE=`echo $i|cut -f1 -d:`
+          GATEWAY=`echo $i|cut -f2 -d:`
+          MASK=`echo $i|cut -f3 -d:`
+          DEVICE=`echo $i|cut -f4 -d:`
+
+    # identify the default gateway and interface
+          if [[ $SOURCE = '0.0.0.0' ]]
+          then
+            DEFGATE=$GATEWAY
+            DEFDEV=$DEVICE
+            DEFROUTE=1
+          fi
+
+# looking for the static routes. Not all files will have the interface name in the line so just search for the IP and gateway.
+          STATIC=0
+          if [[ -f /etc/sysconfig/network-scripts/route-${DEVICE} ]]
+          then
+            egrep "${SOURCE}.*${GATEWAY}" /etc/sysconfig/network-scripts/route-${DEVICE} > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              STATIC=1
+            fi
+          fi
+
+          logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE,$STATIC"
+        done
+      fi
+    fi
   ;;
 
   'SunOS')
@@ -442,7 +527,8 @@ function network_routing {
 
     # if IP6, mask is / something
       OUTPUT=`echo $SOURCE | grep /`
-      if [[ ! -z $OUTPUT ]]; then
+      if [[ ! -z $OUTPUT ]]
+      then
         VERSION=1
         DEVICE=$GATEWAY
         GATEWAY=$MASK
@@ -452,7 +538,8 @@ function network_routing {
       fi
 
     # if ::1 then this is the IP6 loopback
-      if [[ $SOURCE = "::1" ]]; then
+      if [[ $SOURCE = "::1" ]]
+      then
         VERSION=1
         MASK=64
         GATEWAY="::1"
@@ -501,11 +588,13 @@ function network_iface {
 
     # check for onboot
         OUTPUT=`egrep -i "onboot=(\"yes\"|yes)" $i | grep -v "^#"`
-        if [[ ! -z $OUTPUT ]]; then
+        if [[ ! -z $OUTPUT ]]
+        then
           INTERFACE=`echo $i | cut -f3 -d-`
 
     # get the gateway from the route file if it exists, otherwise use the one from route check
-          if [[ -f /etc/sysconfig/network-scripts/route-$INTERFACE ]]; then
+          if [[ -f /etc/sysconfig/network-scripts/route-$INTERFACE ]]
+          then
             GATEWAY=`egrep -v "(#|^$)" /etc/sysconfig/network-scripts/route-$INTERFACE | head -1 | awk '{print $3}'`
             DEVICE=$INTERFACE
           fi
@@ -516,55 +605,63 @@ function network_iface {
     if [[ $DISTRO = "Debian" ]]
     then
 # figure out how to get the default gateway
-      ;
+      echo "debian/ubuntu"
     fi
 
     # with newer Red Hat, ip becomes the proper tool.
     # and now virtual interfaces will be presented as 'global secondary'
     which ip > /dev/null 2>&1
-    if [[ $? -eq 0 ]]; then
-      TEST=`ip addr show $INTERFACE`
-      if [[ $? -eq 0 ]]; then
-        MAC=`ip addr show $INTERFACE | grep 'link/ether' | awk '{print $2}'`
+    if [[ $? -eq 0 ]]
+    then
 
-        for j in `ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}'`
-        do
-          ADDR=`     echo $j | cut -f1 -d#`
-          INTERFACE=`echo $j | cut -f2 -d#`
-          IP=`       echo $ADDR | cut -f1 -d/`
-          IPV6=0
-          NETMASK=`  echo $ADDR | cut -f2 -d/`
+      for INTERFACE in `ip a | grep -v "^ " | awk '{print $2}'`
+      do
+        TEST=`ip addr show $INTERFACE`
+        if [[ $? -eq 0 ]]
+        then
+          MAC=`ip addr show $INTERFACE | grep 'link/ether' | awk '{print $2}'`
 
-          OUTGATE=''
-          OUTROUTE=''
+          for j in `ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}'`
+          do
+            ADDR=`     echo $j | cut -f1 -d#`
+            INTERFACE=`echo $j | cut -f2 -d#`
+            IP=`       echo $ADDR | cut -f1 -d/`
+            IPV6=0
+            NETMASK=`  echo $ADDR | cut -f2 -d/`
+
+            OUTGATE=''
+            OUTROUTE=''
 # found the default gateway information
-          if [[ $DEFDEV = $INTERFACE ]]; then
-            OUTGATE=${DEFGATE}
-            OUTROUTE=${DEFROUTE}
+            if [[ $DEFDEV = $INTERFACE ]]
+            then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
 # any other interfaces were found in a route file
-          elif [[ $DEVICE = $INTERFACE ]]; then
-            OUTGATE=${GATEWAY}
-            OUTROUTE=0
-          fi
-          logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
-        done
+            elif [[ $DEVICE = $INTERFACE ]]
+            then
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+          done
 
 # now process ipv6 addresses
-        for j in `ip addr show $INTERFACE | grep "inet6 " | awk '{print $2"#"$NF}'`
-        do
-          ADDR=`     echo $j | cut -f1 -d#`
-          IFACE=`echo $j | cut -f2 -d#`
-          IPV6=1
-          if [[ $IFACE != 'link' ]] && [[ $IFACE != 'host' ]]
-          then
-            INTERFACE=$IFACE
-          fi
-          IP=`       echo $ADDR | cut -f1 -d/`
-          NETMASK=`  echo $ADDR | cut -f2 -d/`
+          for j in `ip addr show $INTERFACE | grep "inet6 " | awk '{print $2"#"$NF}'`
+          do
+            ADDR=`     echo $j | cut -f1 -d#`
+            IFACE=`echo $j | cut -f2 -d#`
+            IPV6=1
+            if [[ $IFACE != 'link' ]] && [[ $IFACE != 'host' ]]
+            then
+              INTERFACE=$IFACE
+            fi
+            IP=`       echo $ADDR | cut -f1 -d/`
+            NETMASK=`  echo $ADDR | cut -f2 -d/`
 
-          logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC"
-        done
-      fi
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC"
+          done
+        fi
+      done
     else
       which ifconfig > /dev/null 2>&1
       if [[ $? -eq 0 ]]
@@ -572,10 +669,12 @@ function network_iface {
   
     # now check for a valid interface
         TEST=`ifconfig $INTERFACE`
-        if [[ $? -eq 0 ]]; then
+        if [[ $? -eq 0 ]]
+        then
 
           IP=`ifconfig $INTERFACE | grep 'inet addr' | cut -f2 -d: | awk '{print $1}'`
-          if [[ $INTERFACE = 'lo' ]]; then
+          if [[ $INTERFACE = 'lo' ]]
+          then
             NETMASK=`ifconfig $INTERFACE | grep 'Mask' | cut -f3 -d:`
           else
             NETMASK=`ifconfig $INTERFACE | grep 'Mask' | cut -f4 -d:`
@@ -589,17 +688,20 @@ function network_iface {
           OUTGATE=''
           OUTROUTE=''
     # found the default gateway information
-          if [[ $DEFDEV = $INTERFACE ]]; then
+          if [[ $DEFDEV = $INTERFACE ]]
+          then
             OUTGATE=${DEFGATE}
             OUTROUTE=${DEFROUTE}
-          elif [[ $DEVICE = $INTERFACE ]]; then
+          elif [[ $DEVICE = $INTERFACE ]]
+          then
     # any other interfaces were found in a route file
             OUTGATE=${GATEWAY}
             OUTROUTE=0
           fi
           logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
 
-          if [[ ! -z $IP6 ]]; then
+          if [[ ! -z $IP6 ]]
+          then
             logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC"
           fi
         fi
@@ -626,21 +728,25 @@ function network_iface {
     # get the group info
       GROUP=''
       GROUPFLAG=0
-      if [[ -f /etc/hostname.${INTERFACE} ]]; then
+      if [[ -f /etc/hostname.${INTERFACE} ]]
+      then
         for k in `cat /etc/hostname.${INTERFACE}`
         do
-          if [[ $GROUPFLAG = 1 ]]; then
+          if [[ $GROUPFLAG = 1 ]]
+          then
             GROUP=$k
             GROUPFLAG=0
           fi
-          if [[ $k = 'group' ]]; then
+          if [[ $k = 'group' ]]
+          then
             GROUPFLAG=1
           fi
         done
       fi
 
     # save the default route
-      if [[ $DEFDEV = $INTERFACE ]]; then
+      if [[ $DEFDEV = $INTERFACE ]]
+      then
         OUTGATE=${DEFGATE}
         OUTROUTE=${DEFROUTE}
       else
@@ -712,7 +818,8 @@ function network_iface {
         fi
   
       # found the default gateway information
-        if [[ $DEFDEV = $INTERFACE ]]; then
+        if [[ $DEFDEV = $INTERFACE ]]
+        then
           OUTGATE=${DEFGATE}
           OUTROUTE=${DEFROUTE}
         else
@@ -793,7 +900,8 @@ function network_iface {
             fi
 
       # found the default gateway information
-            if [[ $DEFDEV = $VALUE ]]; then
+            if [[ $DEFDEV = $VALUE ]]
+            then
               OUTGATE=${DEFGATE}
               OUTROUTE=${DEFROUTE}
             else
@@ -846,7 +954,8 @@ function network_iface {
           fi
 
       # found the default gateway information
-          if [[ $DEFDEV = $INTERFACE ]]; then
+          if [[ $DEFDEV = $INTERFACE ]]
+          then
             OUTGATE=${DEFGATE}
             OUTROUTE=${DEFROUTE}
           else
@@ -919,10 +1028,12 @@ function filesystem {
 }
 
 function resolv {
-  if [[ ! -f /etc/resolv.conf ]]; then
+  if [[ ! -f /etc/resolv.conf ]]
+  then
     logit "config" "resolv" "none"
   else
-    if [[ `grep '^nameserver' /etc/resolv.conf | wc -l` -lt 1 ]]; then
+    if [[ `grep '^nameserver' /etc/resolv.conf | wc -l` -lt 1 ]]
+    then
       logit "config" "resolv" "none"
     else
       if [[ -n `grep '^domain' /etc/resolv.conf` ]];then
@@ -935,7 +1046,8 @@ function resolv {
       NLIST=''
       grep '^nameserver' /etc/resolv.conf | while read MYLINE
       do
-        if [[ -z $NLIST ]]; then
+        if [[ -z $NLIST ]]
+        then
           NLIST="`echo $MYLINE | awk '{print $2}'`"
         else
           NLIST="${NLIST},`echo $MYLINE | awk '{print $2}'`"
@@ -944,11 +1056,13 @@ function resolv {
       logit "config" "resolv" "nameserver,$NLIST"
       
       OPTS="`grep option /etc/resolv.conf`"
-      if [[ `grep '^option' /etc/resolv.conf | wc -l` -gt 0 ]]; then
+      if [[ `grep '^option' /etc/resolv.conf | wc -l` -gt 0 ]]
+      then
         OLIST=''
         grep '^option' /etc/resolv.conf | while read MYLINE
         do
-          if [[ -z $OLIST ]]; then
+          if [[ -z $OLIST ]]
+          then
             OLIST="`echo $MYLINE | awk '{print $2}'`"
           else
             OLIST="${OLIST},`echo $MYLINE | awk '{print $2}'`"
