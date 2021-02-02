@@ -3,6 +3,7 @@
   copy:
     src: ../files/terraform
     dest: /usr/local/bin/terraform
+    mode: '0755'
 
 - name: make admin/terraform directory
   file:
