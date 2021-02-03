@@ -2,7 +2,7 @@
 
 # Carl Schelin
 # update:
-# ensure the west and intrado certs are installed
+# ensure the company cert auth files are installed
 
 function usage() {
   echo "Usage:"
@@ -11,8 +11,8 @@ function usage() {
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
   echo " -s site - Site to attach"
-  echo "    CIL site: alde tato"
-  echo "    Production sites: lnmt miam"
+  echo "    Stage site: tato"
+  echo "    Production site: lnmt"
 }
 
 if [[ $(id -u) -ne 5000 ]]
