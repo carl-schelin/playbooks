@@ -1,16 +1,16 @@
 ---
-- name: Check for IntradoCA.pem
-  stat: path=/etc/pki/ca-trust/source/anchors/IntradoCA.pem
+- name: Check for companyCA.pem
+  stat: path=/etc/pki/ca-trust/source/anchors/companyCA.pem
   register: foobar
 
 - name: Don't run it again if it already exists. Assumption is the other files exist as well.
   fail: msg="This host has already had this playbook run against it"
   when: foobar.stat.exists
 
-- name: Add IntradoCA.pem
+- name: Add companyCA.pem
   copy:
-    src: ../files/IntradoCA.pem
-    dest: /etc/pki/ca-trust/source/anchors/IntradoCA.pem
+    src: ../files/companyCA.pem
+    dest: /etc/pki/ca-trust/source/anchors/companyCA.pem
     mode: "0644"
 
 - name: Add unixsystems.key
