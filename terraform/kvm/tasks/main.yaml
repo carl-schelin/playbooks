@@ -11,6 +11,22 @@
     - libguestfs-tools
     - libvirt-dev
 
+- name: Is security_driver already set to 'none'
+  lineinfile:
+    state: absent
+    path: /etc/libvirt/qemu.conf
+    regexp: '^security_driver = "none"'
+  check_mode: true
+  changed_when: false
+  register: check
+
+- name: Add the security_driver line if missing
+  lineinfile:
+    state: present
+    path: /etc/libvirt/qemu.conf
+    line: 'security_driver = "none"'
+  when: check.found == 0
+
 - name: Activate libvirtd
   systemd:
     name: libvirtd
