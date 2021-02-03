@@ -2,7 +2,23 @@
 # this has to be done because terraform 13+ changed the behavior of installations
 # so for this, it has to be a local install
 ---
-- name: make the libvirt provider directory
+- name: Check the qemu.conf file for the status of the security_driver setting
+  lineinfile:
+    state: absent
+    path: /etc/libvirt/qemu.conf
+    regexp: '^security_driver = "none"'
+  check_mode: true
+  changed_when: false
+  register: check
+
+- name: Change the security_driver setting to 'none'
+  lineinfile:
+    state: present
+    path: /etc/libvirt/qemu.conf
+    line: 'security_driver = "none"'
+  when: check.found == 0
+
+- name: Create the service account libvirt provider directory
   file:
     path: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64
     state: directory
@@ -10,7 +26,7 @@
     group: unixsvc
     mode: '0755'
 
-- name: Install the libvirt provider file
+- name: Install the terraform-provider-libvirt binary
   copy:
     src: ../files/terraform-provider-libvirt
     dest: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64/
