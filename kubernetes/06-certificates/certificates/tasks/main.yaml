@@ -1,6 +1,6 @@
 ---
-- name: Check for safety-systems.docker.west.com.pem
-  stat: path=/etc/pki/ca-trust/source/anchors/safety-systems.docker.west.com.pem
+- name: Check for bldr0cuomrepo1.internal.pri.pem
+  stat: path=/etc/pki/ca-trust/source/anchors/bldr0cuomrepo1.internal.pri.pem
   register: foobar
 
 - name: Don't run it again if it already exists. Assumption is the other files exist as well.
@@ -8,35 +8,35 @@
   when: foobar.stat.exists
 
 # now add the correct file for docker, but also all the other files.
-- name: Add IntradoCA.pem
+- name: Add companyCA.pem
   copy:
-    src: ../files/IntradoCA.pem
-    dest: /etc/pki/ca-trust/source/anchors/IntradoCA.pem
+    src: ../files/companyCA.pem
+    dest: /etc/pki/ca-trust/source/anchors/companyCA.pem
 
-- name: Add safety-systems.docker.west.com.pem
+- name: Add bldr0cuomrepo1.internal.pri.pem
   copy:
-    src: ../files/safety-systems.docker.west.com.pem
-    dest: /etc/pki/ca-trust/source/anchors/safety-systems.docker.west.com.pem
+    src: ../files/bldr0cuomrepo1.internal.pri.pem
+    dest: /etc/pki/ca-trust/source/anchors/bldr0cuomrepo1.internal.pri.pem
 
-- name: Add WestCorpIssueCA3.cer  
+- name: Add corp.cer  
   copy:
-    src: ../files/WestCorpIssueCA3.cer  
-    dest: /etc/pki/tls/certs/WestCorpIssueCA3.cer  
+    src: ../files/corp.cer  
+    dest: /etc/pki/tls/certs/corp.cer  
 
-- name: Add WestCorporationIssueCA5_B64.cer  
+- name: Add corp2.cer  
   copy:
-    src: ../files/WestCorporationIssueCA5_B64.cer  
-    dest: /etc/pki/tls/certs/WestCorporationIssueCA5_B64.cer  
+    src: ../files/corp2.cer  
+    dest: /etc/pki/tls/certs/corp2.cer  
 
-- name: Add WestCorporationRootCA_B64.cer  
+- name: Add corp3.cer  
   copy:
-    src: ../files/WestCorporationRootCA_B64.cer  
-    dest: /etc/pki/tls/certs/WestCorporationRootCA_B64.cer  
+    src: ../files/corp3.cer  
+    dest: /etc/pki/tls/certs/corp3.cer  
 
-- name: Add WestCorpRootCA.cer
+- name: Add corp4.cer
   copy:
-    src: ../files/WestCorpRootCA.cer
-    dest: /etc/pki/tls/certs/WestCorpRootCA.cer
+    src: ../files/corp4.cer
+    dest: /etc/pki/tls/certs/corp4.cer
 
 - name: Trust the new certificates
   command: /usr/bin/update-ca-trust
