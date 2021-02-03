@@ -6,9 +6,10 @@
 
 function usage() {
   echo "Usage:"
-  echo "update -eht [tag]"
+  echo "update -deht [tag]"
   echo "where:"
   echo " -h help"
+  echo " -d Remove all the files from the tagged server"
   echo " -e enable check - Enable --check to validate task"
   echo " -t tag - Tag for the list of servers"
   echo "  Run searchansible to see all tags"
@@ -30,10 +31,13 @@ fi
 
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
+OPTDELETE='no'
 OPTTAG=''
-while getopts "eht:" arg
+while getopts "deht:" arg
 do
   case $arg in
+    d) OPTDELETE="yes"
+       ;;
     e) OPTCHECK="--check"
        ;;
     t) OPTTAG="${OPTARG}"
@@ -73,8 +77,14 @@ fi
 /usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Update haproxy"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} terraform.yaml
+  if [[ ${OPTDELETE} = 'no' ]]
+  then
+    echo "Install kvm and terraform"
+    ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} terraform.yaml
+  else
+    echo "Deinstall kvm and terraform"
+    ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} destroy.yaml
+  fi
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
