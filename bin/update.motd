@@ -12,6 +12,13 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# need the fingerprint file to build the motd
+if [[ ! -f ${SCRIPTS_DATA}/fingerprint ]]
+then
+  echo "No fingerprint file found, exiting"
+  exit 1
+fi
+
 # process to provide more detail to the MOTD presentation
 if [[ -f ${SCRIPTS_DATA}/motd ]]
 then
