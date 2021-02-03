@@ -18,6 +18,12 @@
     line: 'security_driver = "none"'
   when: check.found == 0
 
+- name: Restart libvirtd if security_driver was changed
+  systemd:
+    name: libvirtd
+    state: restarted
+  when: check.found == 0
+
 - name: Create the service account libvirt provider directory
   file:
     path: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64
