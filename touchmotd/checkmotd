@@ -9,8 +9,7 @@ ADMIN=/usr/local/admin
 PLAYBOOK=$ADMIN/playbooks/cschelin/touchmotd
 HOSTS="$ADMIN/etc/hosts"
 
-WHOCARES=unixadmins@intrado.com
-WHOCARES=carl.schelin@intrado.com
+WHOCARES=cschelin@internal.pri
 
 if [[ $(id -u) -ne 5000 ]]
 then
