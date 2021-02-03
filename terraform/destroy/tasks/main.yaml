@@ -1,0 +1,72 @@
+# Carl Schelin
+# this playbook is intented to clean up the installation of Terraform on the target server
+---
+- name: Deactivate libvirtd
+  systemd:
+    name: libvirtd
+    enabled: no
+    state: stopped
+
+- name: Remove the KVM packages
+  apt:
+    pkg:
+    - qemu
+    - qemu-kvm
+    - libvirt-daemon
+    - libvirt-clients
+    - bridge-utils
+    - virt-manager
+    - libguestfs-tools
+    - libvirt-dev
+  state: absent
+
+- name: unmount the libvirt_images directory
+  mount:
+    path: /libvirt_images
+    state: absent
+
+- name: Remove the libvirt_images directory
+  file:
+    path: /libvirt_images
+    state: absent
+
+- name: Remove the images logical volume
+  lvol:
+    vg: ubuntu-vg
+    lv: images
+    state: absent
+    force: yes
+
+- name: Remove the KVM groups from the service account
+  user:
+    name: unixsvc
+    comment: "Unix Service Account"
+    uid: 5000
+    group: unixsvc
+    groups: sudo,sysadmin
+
+- name: Remove the service account libvirt provider directory
+  file:
+    path: /home/unixsvc/.local
+    state: absent
+
+- name: Remove the /var/lib/libvirt directory
+  file:
+    path: /var/lib/libvirt
+    state: absent
+
+- name: Remove the /etc/libvirt directory
+  file:
+    path: /etc/libvirt
+    state: absent
+
+- name: Remove the qemu-ifdown file in /etc
+  file:
+    path: /etc/qemu-ifdown
+    state: absent
+
+- name: Remove the qemu-ifup file in /etc
+  file:
+    path: /etc/qemu-ifup
+    state: absent
+
