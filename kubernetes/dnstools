@@ -3,11 +3,10 @@
 function usage {
   echo "dnslabel [site]"
   echo "  where site is:"
-  echo "    Sandbox: icl-0"
-  echo "    Dev: bldr or gldn"
-  echo "    SQA: cabo or hell"
-  echo "    CIL: tato or alde"
-  echo "    Prod: lnmt or miam"
+  echo "    Dev: bldr"
+  echo "    SQA: cabo"
+  echo "    Stage: tato"
+  echo "    Prod: lnmt"
 
 }
 
@@ -20,89 +19,34 @@ fi
 CONTEXT=$1
 
 case ${CONTEXT} in
-  "bldr") COUNT="01 02 03 04 05 06 07"
+  "bldr") COUNT="01 02 03"
           ;;
-  "gldn") COUNT="01 02 03 04 05"
+  "cabo") COUNT="01 02 03"
           ;;
-  "cabo") COUNT="01 02 03 04 05 06 07"
+  "tato") COUNT="01 02 03"
           ;;
-  "hell") COUNT="01 02 03 04 05"
-          ;;
-  "tato") COUNT="01 02 03 04 05 06 07 08 09 10 11 12 13 14"
-          ;;
-  "alde") COUNT="01 02 03 04 05"
-          ;;
-  "lnmt") COUNT="01 02 03 04 05 06 07 08 09 10 12 13 14 15 16 17 18 19"
-          ;;
-  "miam") COUNT="01 02 03 04 05 06 07"
+  "lnmt") COUNT="01 02 03"
           ;;
 esac
 
 /usr/local/bin/context ${CONTEXT}
 
-# remember DEV-M/SQA-M is 5 worker nodes, DEV-L/SQA-L is 7 worker nodes
-# SIM-M is 5 nodes, SIM-L is 9 nodes (10 but number 10 is down for now).
-# currently LNMT is 7 nodes as is MIAM. LNMT should be 10 but firewall issues for 8-10.
 for i in ${COUNT}
 do
 
   case ${CONTEXT} in 
-    "bldr") SITE="bldr0ek8sifw${i}.e911.dev.intrado.com"
-            VERIFY="curl -m 5 -vv https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-hell-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-hell-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.dev.intrado.com"
+    "bldr") SITE="bldr0cuomknode${i}.internal.pri"
+            VERIFY="curl -m 5 -vv https://inventory.internal.pri"
             ;;
-    "gldn") SITE="gldn0ek8sifw${i}.e911.dev.intrado.com"
-            VERIFY="curl -m 5 https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-hell-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-hell-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-vip.dev.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.dev.intrado.com"
-            ;;
-    "cabo") SITE="cabo0ek8sifw${i}.e911.sqa.intrado.com"
-            VERIFY="curl -m 5 https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-hell-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-hell-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.sqa.intrado.com"
+    "cabo") SITE="cabo0cuomknode{i}.internal.pri"
+            VERIFY="curl -m 5 -vv https://inventory.internal.pri"
 
             ;;
-    "hell") SITE="hell0ek8sifw${i}.e911.sqa.intrado.com"
-            VERIFY="curl -m 5 https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-hell-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-hell-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-lwms-vip.sqa.intrado.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.sqa.intrado.com"
+    "tato") SITE="tato0cuomknode${i}.internal.pri"
+            VERIFY="curl -m 5 -vv https://inventory.internal.pri"
             ;;
-    "alde") SITE="alde0euomknode${i}"
-            if [[ $i -gt 3 ]]
-            then
-              SITE="alde0euomknode${i}.scc911.com"
-            fi
-            VERIFY="curl -m 5 https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-tier2-wms-vip.cildmz.intrado.pri"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.cildmz.intrado.pri"
-            ;;
-    "tato") SITE="tato0euomknode${i}"
-            if [[ $i -gt 3 ]]
-            then
-              SITE="tato0euomknode${i}.scc911.com"
-            fi
-            VERIFY="curl -m 5 https://westbusinessinsightsdev.west.com"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-tier2-wms-vip.cildmz.intrado.pri"
-            VERIFY="${VERIFY}\ncurl -m 5 -vv https://axway-wms-vip.cildmz.intrado.pri"
-            ;;
-    "lnmt") SITE="lnmt1euomknode${i}.scc911.com"
-            VERIFY="curl -m 5 https://westbusinessinsights.west.com"
-            VERIFY="${VERIFY} - curl -m 5 -vv http://axway-tier2-wms-vip.intrado.com"
-            VERIFY="${VERIFY} - curl -m 5 -vv http://axway-wms-vip.intrado.com"
-            ;;
-    "miam") SITE="miam1euomknode${i}.scc911.com"
-            VERIFY="curl -m 5 https://westbusinessinsights.west.com"
-            VERIFY="${VERIFY} - curl -m 5 -vv http://axway-tier2-wms-vip-miami.intrado.com"
-            VERIFY="${VERIFY} - curl -m 5 -vv http://axway-wms-vip-miami.intrado.com"
+    "lnmt") SITE="lnmt1cuomknode${i}.internal.pri"
+            VERIFY="curl -m 5 -vv https://inventory.internal.pri"
             ;;
   esac
 
@@ -111,7 +55,7 @@ do
     kubectl label nodes ${SITE} trouble=dnstools
 
     echo "Verify: ${VERIFY}"
-    kubectl run --restart=Never -it --image systems-and-platforms-kubernetes.docker.west.com/infoblox/dnstools dnstools --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": { "trouble": "dnstools" }}}'
+    kubectl run --restart=Never -it --image bldr0cuomrepo1.internal.pri:5000/infoblox/dnstools dnstools --overrides='{"apiVersion": "v1", "spec": {"nodeSelector": { "trouble": "dnstools" }}}'
 
     kubectl delete pod dnstools -n kube-system
 
