@@ -30,3 +30,54 @@ snmpd - Installs a common snmpd.conf file to /etc/snmp
 yumupgrade - Basically runs a 'yum upgrade -y'
 
 
+### checked in playbooks ###
+
+chrony - updated to use the correct local IP
+ELK
+ data
+ elasticsearch
+ kibana
+ logstash
+ master
+haproxy
+kubernetes
+ 00-osupgrade
+ 01-bridge
+ 02-swap
+ 03-packages
+ 04-clustername
+ 05-kubelet
+ 06-certificates
+ 07-logging
+ 08-permissions
+ 09-destroy
+ 13-kubeadm
+ 15-versionlock
+ configurations
+ dnstools
+ postinstall
+ readme.md
+ scripts
+logcerts
+mariadb
+nousers
+resolver
+satellite
+snmp
+sshd
+sudoers
+touchmotd
+yumupgrade
+
+### Update notes ###
+
+There are a few places where you might want to make changes for your environment.
+
+Under the kubernetes directory, you'll want to update the sites and what site you're trying to verify. These are my sites and what I was verifying.
+
+For the kubernetes/06-certificates/certificates/tasks/main.yaml file, my CA is called 'companyCA.pem' Change this if yours is different. I also point to my internal repo server to check for and retrieve its CA so I can pull images. And due to a past installation, I have four 'corp' ca files. Change them as appropriate or simply remove the extra lines. I need to shift that to a variable.
+
+Basically the same thing under logcerts/logcerts/tasks/main.yaml. I'm using companyCA.pem. Feel free  to change it if necessary.
+
+Under the touchmotd/checkmotd script, it points to my internal email address.
+
