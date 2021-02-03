@@ -50,6 +50,11 @@
     path: /home/unixsvc/.local
     state: absent
 
+- name: Remove the terraform binary
+  file:
+    path: /usr/local/bin/terraform
+    state: absent
+
 - name: Remove the /var/lib/libvirt directory
   file:
     path: /var/lib/libvirt
