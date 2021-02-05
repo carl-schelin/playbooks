@@ -18,6 +18,7 @@
     - virt-manager
     - libguestfs-tools
     - libvirt-dev
+    - libosinfo-bin
     state: absent
 
 - name: unmount the libvirt_images directory
