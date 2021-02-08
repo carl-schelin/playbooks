@@ -256,7 +256,8 @@ function hardware_mem {
 function hardware_disk {
   if [[ $OS = 'Linux' ]]
   then
-    if [[ -f /dev/sda ]]
+    ls /dev/sda > /dev/null 2>&1
+    if [[ $? -eq 0  ]]
     then
       for i in `ls /dev/sd?`
       do
@@ -268,7 +269,8 @@ function hardware_disk {
       done
     fi
     # under KVM the devices are 'vda' and not 'sda'
-    if [[ -f /dev/vda ]]
+    ls /dev/vda > /dev/null 2>&1
+    if [[ $? -eq 0  ]]
     then
       for i in `ls /dev/vd?`
       do
@@ -579,43 +581,26 @@ function network_routing {
 function network_iface {
   case $OS in 
   'Linux')
-    # in linux there are multiple possibilities.
-    if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
-    then
-    
-      for i in `ls /etc/sysconfig/network-scripts/ifcfg-* | grep -v .bak`
-      do
-
-    # check for onboot
-        OUTPUT=`egrep -i "onboot=(\"yes\"|yes)" $i | grep -v "^#"`
-        if [[ ! -z $OUTPUT ]]
-        then
-          INTERFACE=`echo $i | cut -f3 -d-`
-
-    # get the gateway from the route file if it exists, otherwise use the one from route check
-          if [[ -f /etc/sysconfig/network-scripts/route-$INTERFACE ]]
-          then
-            GATEWAY=`egrep -v "(#|^$)" /etc/sysconfig/network-scripts/route-$INTERFACE | head -1 | awk '{print $3}'`
-            DEVICE=$INTERFACE
-          fi
-        fi
-      done
-    fi
-
-    if [[ $DISTRO = "Debian" ]]
-    then
-# figure out how to get the default gateway
-      echo "debian/ubuntu"
-    fi
-
     # with newer Red Hat, ip becomes the proper tool.
     # and now virtual interfaces will be presented as 'global secondary'
     which ip > /dev/null 2>&1
     if [[ $? -eq 0 ]]
     then
 
-      for INTERFACE in `ip a | grep -v "^ " | awk '{print $2}'`
+# get the gateway for this interface if it exists
+      GATEWAY=""
+      for INTERFACE in `ip a | grep -v "^ " | awk '{print $2}' | cut -f1 -d:`
       do
+        if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
+        then
+          GATEWAY=`ip route show table all | grep "^default " | grep "dev $INTERFACE " | awk '{print $3}'`
+        fi
+
+        if [[ $DISTRO = "Debian" ]]
+        then
+          GATEWAY=`ip route show table all | grep "^default " | grep "dev $INTERFACE " | awk '{print $3}'`
+        fi
+
         TEST=`ip addr show $INTERFACE`
         if [[ $? -eq 0 ]]
         then
