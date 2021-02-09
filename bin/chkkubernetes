@@ -7,9 +7,6 @@
 #BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
 
-# while working on it
-DIRNAME=/opt/intrado/bin
-
 if [[ ! -f ${DIRNAME}/../.config ]]
 then
   echo "Unable to locate ${DIRNAME}/../.config. Exiting."
@@ -31,10 +28,6 @@ then
   echo "Preventing the execution of the script."
   exit 1
 fi
-
-WHOCARES="unixadmins.safetyservices@regmail.west.com"
-WHOCARES="unixadmins-oncall.safetyservices@regmail.west.com"
-WHOCARES="cschelin@west.com"
 
 # are on a 1.9+ system where kubernetes is installed?
 if [[ -f /opt/kubernetes/.config ]]
