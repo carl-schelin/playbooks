@@ -1,0 +1,168 @@
+#!/bin/ksh
+
+# check the status of kubernetes and send out email or alerts depending on 
+# the status of the environment.
+#
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+# while working on it
+DIRNAME=/opt/intrado/bin
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+RUNAS=`id -u`
+if [[ ${RUNAS} != 0 ]]
+then
+  echo "This script must be run as root."
+  exit 1
+fi
+
+if [[ -f ${SCRIPTS_DATA}/chkkubernetes.stop ]]
+then
+  echo "Preventing the execution of the script."
+  exit 1
+fi
+
+WHOCARES="unixadmins.safetyservices@regmail.west.com"
+WHOCARES="unixadmins-oncall.safetyservices@regmail.west.com"
+WHOCARES="cschelin@west.com"
+
+# are on a 1.9+ system where kubernetes is installed?
+if [[ -f /opt/kubernetes/.config ]]
+then
+  KUBEPATH=/opt/kubernetes
+  KUBE_CONTEXT=`grep "^CONTEXT=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_ETCD_CERTS=`grep "^ETCD_CERTS=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_KUBERNETES_CERTS=`grep "^KUBERNETES_CERTS=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_API_SERVER=`grep "^EXTERNAL_IP=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_API_SERVER_PORT=`grep "^EXTERNAL_PORT=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_CA_FILE="ca.pem"
+  KUBE_WORKER_FILE="kubernetes.pem"
+  KUBE_WORKER_KEY_FILE="kubernetes-key.pem"
+fi
+
+# are on the old 1.2 system
+if [[ -f /var/tmp/kubernetes/.config ]]
+then
+  KUBEPATH=/var/tmp/kubernetes
+  KUBE_CONTEXT=`grep "^CONTEXT=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_ETCD_CERTS="/etc/etcd/tls"
+  KUBE_KUBERNETES_CERTS="/etc/kubernetes/tls"
+  KUBE_API_SERVER=`grep "^SERVICE_IP=" ${KUBEPATH}/.config | cut -f2 -d= | sed -e "s/\"//g"`
+  KUBE_API_SERVER_PORT="443"
+  KUBE_CA_FILE="kube-ca.pem"
+  KUBE_WORKER_FILE="worker.pem"
+  KUBE_WORKER_KEY_FILE="worker-key.pem"
+fi
+
+# need to check the chkkubernetes.input listing
+# if none:none, then just exit
+# if can't find the context, exit
+
+
+
+if [[ -z ${KUBE_CONTEXT} ]]
+then
+  echo "Context not found, exiting"
+  exit 1
+fi
+
+OUTPUT=`grep "^${HOSTNAME}:" ${SCRIPTS_DATA}/chkkubernetes.input | cut -f4 -d:`
+if [[ $OUTPUT = "none" ]]
+then
+  echo "No checking requested"
+  exit 1
+fi
+
+# are we on a system being monitored?
+CHKSYS=`grep "^${HOSTNAME}:" ${SCRIPTS}/etc/chkkubernetes.input`
+
+# check the status of etcd
+etcdctl \
+  --ca-file=${KUBE_ETCD_CERTS}/${KUBE_CA_FILE} \
+  --key-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_KEY_FILE} \
+  --cert-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_FILE} \
+  --endpoint=https://${INTERNAL_IP}:2379 \
+  cluster-health > /dev/null
+
+if [[ $? -eq 0 ]]
+then
+  echo "etcd cluster healthy"
+else
+  echo "etcd cluster is not healthy"
+fi
+
+# check the status of the local api server
+curl \
+  -vvv \
+  --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} \
+  --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} \
+  --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} \
+  https://${INTERNAL_IP}:${KUBE_API_SERVER_PORT}/version > /dev/null 2>&1
+
+if [[ $? -eq 0 ]]
+then
+  echo "Local apiserver query reply success"
+else
+  echo "Local apiserver query failed"
+fi
+
+curl \
+  -k \
+  -vvv \
+  -cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} \
+  -key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} \
+  -cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} \
+  https://${KUBE_API_SERVER}:${KUBE_API_SERVER_PORT}/version > /dev/null 2>&1
+
+if [[ $? -eq 0 ]]
+then
+  echo "apiserver VIP query success"
+else
+  echo "apiserver VIP query failed"
+fi
+
+for i in $(kubectl get nodes | grep -v NAME | awk '{print $1":"$2}')
+do
+  NODE=$(echo $i | cut -f1 -d:)
+# management nodes are 'Ready,SchedulingDisabled'; just looking for 'Ready' or not.
+  STATUS=$(echo $i | cut -f2 -d: | cut -f1 -d,)
+
+  if [[ ! ${STATUS} = 'Ready' ]]
+  then
+    echo "Node ${NODE} is currently not in Ready state (${STATUS}) kubectl describe node ${NODE}"
+  fi
+done
+
+for i in $(kubectl get namespaces | grep Active | egrep -v "(NAME|default)")
+do
+  FLAG=0
+  for j in $(kubectl --namespace=${i} get pods | awk '{print $1":"$2":"$3":"$4}')
+  do
+    CONTAINER=$(echo ${j} | cut -f1 -d:)
+    ACTIVE=$(echo ${j} | cut -f2 -d: | cut -f1 -d/)
+    EXPECTED=$(echo ${j} | cut -f2 -d: | cut -f2 -d/)
+    ERROR=$(echo ${j} | cut -f3 -d:)
+    DAYS=$(echo ${j} | cut -f4 -d:)
+
+    if [[ ${ACTIVE} -ne ${EXPECTED} ]]
+    then
+      if [[ ${FLAG} -eq 0 ]]
+      then
+        echo "Namespace ${i} is reporting errors:"
+        FLAG=1
+      fi
+      echo "Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}"
+    fi
+  done
+done
+
