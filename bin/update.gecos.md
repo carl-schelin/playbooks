@@ -8,6 +8,6 @@ Note that any system based account can have the GECOS record changed including s
  
 * Location: [server]:bin/update.gecos
 * Data File: [server]:etc/valid.email
-* Source File: lnmt1cuomrcs1:etc/valid.email
+* Source File: [server]:etc/valid.email
 * Changefreeze File: [server]:etc/changefreeze
 
