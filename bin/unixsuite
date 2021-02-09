@@ -74,7 +74,7 @@
 # 2016-07-07 - Added chksync to provide a report on the status of sync'd repos in Satellite.
 # 2016-11-10 - Added simplejson check for older RHEL5 systems.
 # 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
-# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left Intrado
+# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left the company
 # 2017-05-03 - Added chkroutes script
 # 2017-06-23 - Added SKIPRANDOM variable check. if it's set to anything, skip the random pause for the chkbackups script
 # 2017-06-26 - Added chkserver script
