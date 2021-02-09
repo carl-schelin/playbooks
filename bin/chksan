@@ -2,7 +2,6 @@
 
 # ${BASENAME}
 # Carl Schelin
-# documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
 # update to include SCRIPTS directory
 # added multipath -ll to Linux test
 # corrected multipath output path

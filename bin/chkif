@@ -1,8 +1,7 @@
 #!/bin/ksh
 
 # chkif by Carl Schelin
-# documentation: https://incowk01/wiki/index.php/Sysadmin_Tools
-# updated to redirect output to INTRADO/etc/ifconfig.output
+# updated to redirect output to SUITE/etc/ifconfig.output
 # updated to capture netstat output; checking for collisions
 # changed netstat output to go to a unique file
 # added netstat capture for linux; capturing the collisions and other errors to check against

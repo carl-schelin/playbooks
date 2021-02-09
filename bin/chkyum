@@ -7,7 +7,7 @@
 # then yum history info [number]
 # history sub-command, use: list, info, summary, repeat, redo, undo, new, rollback, addon, addon-info, stats, statistics, sync, synchronizepkg, pkgs, pkg-list, pkgs-list, package, package-list, packages, packages-list, pkg-info, pkgs-info, package-info, packages-info.
 
-#[root@lnmt1cuomtool10 bin]# yum history list all
+#[root@inventory bin]# yum history list all
 #Loaded plugins: enabled_repos_upload, langpacks, package_upload, product-id, search-disabled-repos, subscription-manager
 #ID     | Login user               | Date and time    | Action(s)      | Altered
 #-------------------------------------------------------------------------------

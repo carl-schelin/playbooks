@@ -1,7 +1,6 @@
 #!/usr/bin/ksh
 
 # Check the version of bash installed on the various platforms.
-# Documentation: https://incowk01/makers/index.php?title=Chkbash
 # updated to retrieve the CVE info from the changelog on Red Hat and CentOS
 
 #BASENAME=$(basename "${0}")

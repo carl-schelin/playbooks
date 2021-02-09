@@ -1,9 +1,8 @@
 #!/bin/ksh
 
-# lockuser - Lock users who have left Intrado
+# lockuser - Lock users who have left the company
 # Carl Schelin
-# Documentation: https://incowk01/makers/index.php/Lockuser
-# Initially just lock users who no longer work at Intrado.
+# Initially just lock users who no longer work at the company.
 # search for passwd. different locations for different versions of os but should always bein the path.
 #
 # TCS: Ubuntu returns 'L' vs 'LK'. It's always something...

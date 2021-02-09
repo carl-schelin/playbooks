@@ -28,8 +28,8 @@ Description: The chksys script is a general data gathering script used to ensure
 * Resolver Information
 
 * Location: [server]:bin/chksys
-* Data File: [server]:var/chksys.import
-* Reporting Script: [management server]:/usr/local/httpd/bin/import.php
+* Data File: [server]:etc/chksys.import
+* Import Script: [management server]:/usr/local/httpd/bin/import.php
 * Version Script: [server]:bin/chkversion
 * Version Data File: [server]:var/[software].version
 

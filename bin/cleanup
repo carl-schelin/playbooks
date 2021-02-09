@@ -12,7 +12,7 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-# prevent the Netbackup Fiber Transport client from starting. Caused an incident where incofmc2 failed to completely start due to the nbfbclnt script halting on starting the agent.
+# prevent the Netbackup Fiber Transport client from starting. Caused an incident where the server failed to completely start due to the nbfbclnt script halting on starting the agent.
 if [[ -f /usr/openv/netbackup/bin/nbftclnt ]]
 then
   chmod -x /usr/openv/netbackup/bin/nbftclnt
@@ -124,29 +124,44 @@ fi
 
 # install the /usr/local/bin scripts as required.
 # this depends on which server we're on
-# this is for incojs01, lnmt1cuomtool11, miam1cuomtool11, lnmt1cuasifgit, and lnmt1cuomrcs1
+# this is for the various servers
 
-if [[ ${HOSTNAME} = 'incojs01.scc911.com' ]]
-then
-  cp ${SCRIPTS_INSTALL}/scripts/inventory /usr/local/bin/
-  cp ${SCRIPTS_INSTALL}/scripts/newserver /usr/local/bin/
-fi
-if [[ ${HOSTNAME} = 'lnmt1cuomtool10.scc911.com' ]] || [[ ${HOSTNAME} = 'miam1cuomtool10.scc911.com' ]]
-then
-  for i in inventory newserver import context searchansible
-  do
-    cp ${SCRIPTS_INSTALL}/scripts/$i /usr/local/bin/
-  done
-fi
-if [[ ${HOSTNAME} = 'lnmt1cuasifgit.scc911.com' ]]
-then
-  cp ${SCRIPTS_INSTALL}/scripts/context /usr/local/bin/
-fi
-if [[ ${HOSTNAME} = 'lnmtcuomrcs1.scc911.com' ]]
-then
-  for i in check checkall checkdiff checkin checkinstall checkout checkrw install playbooks
-  do
-    cp ${SCRIPTS_INSTALL}/scripts/$i /usr/local/bin/
-  done
-fi
+for i in ${MANAGEMENTSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    cp ${SCRIPTS_INSTALL}/scripts/inventory /usr/local/bin/
+    cp ${SCRIPTS_INSTALL}/scripts/newserver /usr/local/bin/
+  fi
+done
+
+for i in ${TOOLSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]] 
+  then
+    for j in inventory newserver import context searchansible
+    do
+      cp ${SCRIPTS_INSTALL}/scripts/$j /usr/local/bin/
+    done
+  fi
+done
+
+for i in ${GITSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    cp ${SCRIPTS_INSTALL}/scripts/context /usr/local/bin/
+  fi
+done
+
+for i in ${DEVSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    for j in check checkall checkdiff checkin checkinstall checkout checkrw install playbooks
+    do
+      cp ${SCRIPTS_INSTALL}/scripts/$j /usr/local/bin/
+    done
+  fi
+done
 

@@ -17,7 +17,7 @@ The script loops through the /etc/group file. The group.master file is checked f
 
 This lets us configure a specific system with a unique group listing.
 
-lnmt1cuomtool11:sysadmins:cschelin,unixsvc,jainsley
+inventory:sysadmins:cschelin,unixsvc,jainsley
 
 The script would make sure the sysadmins group on the specific system matches the above configuration.
 

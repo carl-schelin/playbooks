@@ -42,7 +42,7 @@
 # 2012-09-05 - Added chkcluster to validate cluster state for those servers running either HP's Serviceguard or Redhat's cluster software. 
 # 2012-09-18 - Added a third chkusers script (chkusrs.Q4) for systems with ancient perl installations (4.0).
 # 2012-10-03 - Added chkapa script for HPUX bonding. Only runs on boxes where OS = hpux.         
-# 2013-01-09 - Modified the chksudoers portion for HP-UX to keep it from running on hpmiamn and hplgmtn due to timeout issues; chksudoers needs to be rewritten
+# 2013-01-09 - Modified the chksudoers portion for HP-UX to keep it from running on the HP boxes due to timeout issues; chksudoers needs to be rewritten
 # 2013-01-21 - Added the rolling of wtmps files on the ALI nodes once a month.
 # 2013-02-19 - KZ: Reduced timeout polling interval to 5 seconds in the runscript function
 # 2013-06-26 - The picld on Sun boxes can cause prtdiag and cfg2html to hang until it's restarted. Added a restart item to be run once a month on Solaris systems.
@@ -74,7 +74,7 @@
 # 2016-07-07 - Added chksync to provide a report on the status of sync'd repos in Satellite.
 # 2016-11-10 - Added simplejson check for older RHEL5 systems.
 # 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
-# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left Intrado
+# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left the company
 # 2017-05-03 - Added chkroutes script
 # 2017-06-23 - Added SKIPRANDOM variable check. if it's set to anything, skip the random pause for the chkbackups script
 # 2017-06-26 - Added chkserver script
@@ -470,16 +470,7 @@ then
     runscript chkusers
   fi
 # retrieve sudoers information
-# temporarily prevent the script from running on these two servers 
-# the chksudoers script needs to be converted to perl as a test
-# it seems the script is causing timeouts; verified with Rob
-  if [[ $HOSTNAME != 'hplgmtn' ]] 
-  then
-    if [[ $HOSTNAME != 'hpmiamn' ]]
-    then
-      runscript chksudoers
-    fi
-  fi
+  runscript chksudoers
 
   if [[ $DOWEEK = '7' ]]
   then
