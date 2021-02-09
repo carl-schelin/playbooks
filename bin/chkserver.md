@@ -69,7 +69,7 @@ Server:Keyword:Value[0]:Value[1]:...
   * IPAddressMonitored
     * Value[0] is the IP address that is monitored.
   * Location
-    * Value[0] is the West 5 character Data Center designation
+    * Value[0] is the 5 character Data Center identity
   * Memory
     * Value[0] is the expected amount of RAM for the system
   * MonitoringServer
