@@ -643,53 +643,63 @@ function network_iface {
             IP=`       echo $ADDR | cut -f1 -d/`
             NETMASK=`  echo $ADDR | cut -f2 -d/`
 
-            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC"
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,,"
           done
         fi
       done
     else
+# we really shouldn't ever get here. the iproute2 packages have been available since around 2000. But just in case.
       which ifconfig > /dev/null 2>&1
       if [[ $? -eq 0 ]]
       then
   
-    # now check for a valid interface
-        TEST=`ifconfig $INTERFACE`
-        if [[ $? -eq 0 ]]
-        then
+        for INTERFACE in `ifconfig | grep -v "^ " | awk '{print $1}' | cut -f1 -d:`
+        do
 
-          IP=`ifconfig $INTERFACE | grep 'inet addr' | cut -f2 -d: | awk '{print $1}'`
-          if [[ $INTERFACE = 'lo' ]]
+          if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
           then
-            NETMASK=`ifconfig $INTERFACE | grep 'Mask' | cut -f3 -d:`
-          else
-            NETMASK=`ifconfig $INTERFACE | grep 'Mask' | cut -f4 -d:`
+            GATEWAY=`netstat -rn | grep $INTERFACE | grep "^0.0.0.0" | awk '{print $2}'`
           fi
-          IPTMP=`ifconfig $INTERFACE | grep 'inet6 addr' | awk '{print $3}'`
-          IP6=`echo $IPTMP | cut -f1 -d/`
-          NETMASK66=`echo $IPTMP | cut -f2 -d/`
-          MAC=`ifconfig $INTERFACE | grep 'HWaddr' | awk '{print $5}'`
+
+    # now check for a valid interface
+          TEST=`ifconfig $INTERFACE`
+          if [[ $? -eq 0 ]]
+          then
+
+            IP=`ifconfig $INTERFACE | grep 'inet ' | awk '{print $2}'`
+            if [[ $INTERFACE = 'lo' ]]
+            then
+              NETMASK=`ifconfig $INTERFACE | grep 'netmask' | awk '{print $4}`
+            else
+              NETMASK=`ifconfig $INTERFACE | grep 'netmask' | awk '{print $4}'
+            fi
+            IPTMP=`ifconfig $INTERFACE | grep 'inet6 ' | awk '{print $3}'`
+            IP6=`echo $IPTMP | cut -f1 -d/`
+            NETMASK66=`echo $IPTMP | cut -f2 -d/`
+            MAC=`ifconfig $INTERFACE | grep 'HWaddr' | awk '{print $5}'`
 
     # not the default and no route file found.
-          OUTGATE=''
-          OUTROUTE=''
+            OUTGATE=''
+            OUTROUTE=''
     # found the default gateway information
-          if [[ $DEFDEV = $INTERFACE ]]
-          then
-            OUTGATE=${DEFGATE}
-            OUTROUTE=${DEFROUTE}
-          elif [[ $DEVICE = $INTERFACE ]]
-          then
+            if [[ $DEFDEV = $INTERFACE ]]
+            then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
+            elif [[ $DEVICE = $INTERFACE ]]
+            then
     # any other interfaces were found in a route file
-            OUTGATE=${GATEWAY}
-            OUTROUTE=0
-          fi
-          logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
+            logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
 
-          if [[ ! -z $IP6 ]]
-          then
-            logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC"
+            if [[ ! -z $IP6 ]]
+            then
+              logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC,,,"
+            fi
           fi
-        fi
+        done
       fi
     fi
   ;;
