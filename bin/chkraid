@@ -80,11 +80,6 @@ do
     then
       FLAGS="-S"
     fi
-    if [[ $HOSTNAME = "incoga13" || $HOSTNAME = "incoga23" ]]
-    then
-      /usr/sbin/raidctl -l c3t2d0 > ${SCRIPTS_LOGS}/raidctl.$HOSTNAME
-      FLAGS="-l c3t0d0"
-    fi
   fi
   if [[ $CONTENT = "hpacucli" ]]
   then
