@@ -2,7 +2,6 @@
 # This script doesn't run stand alone but is called by the chkbash script
 # due to the bash location not being consistent across platforms.
 # the chkbash script runs this and writes the output to the LOG file
-# Documentation: https://incowk01/makers/index.php?title=Bashvul
 
 BASENAME=$(basename "${0}")
 DIRNAME=$(dirname "${0}")
