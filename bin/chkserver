@@ -2997,10 +2997,10 @@ check_redhat_subscription() {
 
       if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
       then
-        RPM=$(rpm -qa | egrep 'katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)')
+        RPM=$(rpm -qa | egrep 'katello-ca-consumer')
         if [[ -z ${RPM} ]]
         then
-          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | egrep katello-ca-consumer-(lnmtcodcstl10|lnmt1cuomsat6)" >> "${LOG}"
+          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | egrep katello-ca-consumer" >> "${LOG}"
         fi
         RPM=$(rpm -qa | grep 'katello-agent')
         if [[ -z ${RPM} ]]
