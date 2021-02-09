@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# suitecheck - Run scripts in the run.d directory every 5 minutes
+# suitecheck - This script should be run every 5 minutes
 # Carl Schelin - 12/19/2018
 
 DIRNAME=$(dirname "$0")
@@ -14,8 +14,12 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
+# get the current hour and minute
+# scripts in run.d/$RUNDATE will be run in the order presented
+RUNDATE=$(date +"HM")
+
 FLAG="no"
-for i in `ls ${SCRIPTS_DATA}/suitecheck.*`
+for i in `ls ${SCRIPTS_LOGS}/suitecheck.*`
 do
   FLAG="yes"
 done
@@ -28,27 +32,45 @@ fi
 
 touch ${SCRIPTS_DATA}/suitecheck.$$
 
-# permit immediate running of scripts (within 5 minutes) if needed
-# always delete it after one run
-if [[ -f ${SCRIPTS_BINS}/runonce ]]
-then
-  "${SCRIPTS_BINS}/runonce"
-  rm "${SCRIPTS_BINS}/runonce"
-fi
-
+# the run directory
 if [[ ! -d ${SCRIPTS_RUND} ]]
 then
   mkdir -p ${SCRIPTS_RUND}
 fi
 
-for i in `ls ${SCRIPTS_RUND}`
+# the data directory
+if [[ ! -d ${SCRIPTS_DATA} ]]
+then
+  mkdir -p ${SCRIPTS_DATA}
+fi
+
+# the output directory
+if [[ ! -d ${SCRIPTS_LOGS} ]]
+then
+  mkdir -p ${SCRIPTS_LOGS}
+fi
+
+# run any script in the always directory
+for i in `ls ${SCRIPTS_RUND}/always/`
 do
-  "${SCRIPTS_RUND}"/${i}
+  "${SCRIPTS_RUND}"/always/${i}
 done
 
-# only delete the one we created
-if [[ -f ${SCRIPTS_DATA}/suitecheck.$$ ]]
+# runonce should only run one time and then be deleted
+if [[ -f ${SCRIPTS_RUND}/always/runonce ]]
 then
-  rm ${SCRIPTS_DATA}/suitecheck.$$
+  rm "${SCRIPTS_RUND}/always/runonce"
+fi
+
+# then run any script in the current hour/minute directory
+for i in `ls ${SCRIPTS_RUND}/${RUNDATE}/`
+do
+  "${SCRIPTS_RUND}"/${RUNDATE}/${i}
+done
+
+# finally delete the run flag  we created
+if [[ -f ${SCRIPTS_LOGS}/suitecheck.$$ ]]
+then
+  rm ${SCRIPTS_LOGS}/suitecheck.$$
 fi
 
