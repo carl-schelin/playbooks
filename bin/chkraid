@@ -3,13 +3,13 @@
 # chkraid - Capture the configuration of the raid
 # Owner: Carl Schelin
 # 20081229 - Added -S for raidctl due to newer version of commands
-# 20090306 - Added specific checks for incoga10 and incoga20 due to horked firmware
+# 20090306 - Added specific checks for xxxxxxxx and xxxxxxxx due to horked firmware
 # 20090630 - Added check for Adaptec Raid
 # 20090702 - Changed adaptec FLAGS from al to ld
 # 20091023 - Added new Solaris Release (5/09) to if statement
 # 20110607 - Added hpacucli utility check
 # 20110911 - updated checks for ga10 and ga20
-# 20110927 - corrected check for incoga13 and incoga23, added HOSTNAME variable, pulled while loop out of if statement.
+# 20110927 - corrected check for xxxxxxxx and xxxxxxxx, added HOSTNAME variable, pulled while loop out of if statement.
 # 20110930 - provided a way to get both RAID arrays from the ga10/20 servers
 # 20120511 - Added check for HPUX 11iv3 (VZ Alim systems) using HP raid controllers smart array utility, sautil (ppietras)  
 # 20120612 - Added default output of 'binary doesn't exist' so the .output file has something in it to be copied.
