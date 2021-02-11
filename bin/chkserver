@@ -158,7 +158,7 @@
 # 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
 # 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
 # 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
-# 2018/05/21 - CS - Updated bp.conf check for servers in Miami and Longmont
+# 2018/05/21 - CS - Updated bp.conf check for servers in other data centers 
 # 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
 # 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
 # 2018/07/02 - CS - Added a check of a service to see if it's running
