@@ -16,13 +16,16 @@ fi
 
 # get the current hour and minute
 # scripts in run.d/$RUNDATE will be run in the order presented
-RUNDATE=$(date +"HM")
+RUNDATE=$(date +"%H%M")
 
-FLAG="no"
-for i in `ls ${SCRIPTS_LOGS}/suitecheck.*`
-do
-  FLAG="yes"
-done
+if [[ -f ${SCRIPTS_LOGS}/suitecheck.* ]]
+then
+  FLAG="no"
+  for i in `ls ${SCRIPTS_LOGS}/suitecheck.*`
+  do
+    FLAG="yes"
+  done
+fi
 
 if [[ ${FLAG} = 'yes' ]]
 then
@@ -62,11 +65,14 @@ then
   rm "${SCRIPTS_RUND}/always/runonce"
 fi
 
+if [[ -d ${SCRIPTS_RUND}/${RUNDATE} ]]
+then
 # then run any script in the current hour/minute directory
-for i in `ls ${SCRIPTS_RUND}/${RUNDATE}/`
-do
-  "${SCRIPTS_RUND}"/${RUNDATE}/${i}
-done
+  for i in `ls ${SCRIPTS_RUND}/${RUNDATE}/`
+  do
+    "${SCRIPTS_RUND}"/${RUNDATE}/${i}
+  done
+fi
 
 # finally delete the run flag  we created
 if [[ -f ${SCRIPTS_LOGS}/suitecheck.$$ ]]
