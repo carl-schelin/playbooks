@@ -5,12 +5,11 @@ HERE=`pwd`
 HOSTNAME=`hostname|cut -f1 -d.`
 DATABASES="stnlocator inventory status"
 
-STAGE=/var/tmp/mysql/stage
+STAGE=/opt/mysqlbackup/stage
 if [[ ! -d $STAGE ]]
 then
   mkdir -p $STAGE
 fi
-
 
 while getopts ":s:d:h" opt
 do
@@ -137,7 +136,7 @@ then
     cp /opt/transfer/mysql.inventory.tar.gz .
     mv mysql.inventory.tar.gz $CURRENT
   else
-    scp incojs01:/var/tmp/mysql/$CURRENT .
+    scp inventory:/opt/mysqlbackup/$CURRENT .
   fi
 
   gzip -dc $CURRENT | tar fvx -
@@ -150,13 +149,13 @@ then
   for i in `ls *.sql`
   do
     echo $i
-    mysql --user=root --password='53Rv!c3!' inventory < $i
+    mysql --user=root --password='sp@nGw1p' inventory < $i
   done
 
   echo "Importing the data"
   for i in `ls *.txt`
   do
-    mysqlimport --local --user=root --password='53Rv!c3!' inventory `pwd`/$i
+    mysqlimport --local --user=root --password='sp@nGw1p' inventory `pwd`/$i
   done
 
 fi
