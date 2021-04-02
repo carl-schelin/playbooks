@@ -605,6 +605,7 @@ function network_iface {
         if [[ $? -eq 0 ]]
         then
           MAC=$(ip addr show $INTERFACE | grep 'link/ether' | awk '{print $2}')
+	  FLAG=0
 
           for j in $(ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}')
           do
@@ -627,6 +628,8 @@ function network_iface {
               OUTGATE=${GATEWAY}
               OUTROUTE=0
             fi
+
+	    FLAG=1
             logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
           done
 
@@ -643,8 +646,18 @@ function network_iface {
             IP=$(       echo $ADDR | cut -f1 -d/)
             NETMASK=$(  echo $ADDR | cut -f2 -d/)
 
-            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,,"
+            OUTGATE=''
+            OUTROUTE=''
+
+	    FLAG=1
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
           done
+
+# if an interface doesn't have an init or init6 line but is active, display it anyway.
+	  if [[ $FLAG -eq 0 ]]
+          then
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+	  fi
         fi
       done
     else
