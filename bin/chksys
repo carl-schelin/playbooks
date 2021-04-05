@@ -589,7 +589,7 @@ function network_iface {
 
 # get the gateway for this interface if it exists
       GATEWAY=""
-      for INTERFACE in $(ip a | grep -v "^ " | awk '{print $2}' | cut -f1 -d:)
+      for INTERFACE in $(ip a | grep -v "^ " | awk '{print $2}' | cut -f1 -d: | cut -f1 -d@)
       do
         if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
         then
@@ -607,6 +607,8 @@ function network_iface {
           MAC=$(ip addr show $INTERFACE | grep 'link/ether' | awk '{print $2}')
 	  FLAG=0
 
+          OUTGATE=''
+          OUTROUTE=''
           for j in $(ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}')
           do
             ADDR=$(     echo $j | cut -f1 -d#)
