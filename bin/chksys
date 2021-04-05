@@ -10,7 +10,6 @@
 # 2014-02-04 CS: Fixed error where 5.1 and 5.2 Linux errored; due to putting `` in an evaluation variable (MEMTOTAL)
 # 2014-02-09 CS: Check for blank data and not write the line if so
 # 2014-02-10 CS: Add SunOS id command and set up defaults for linux and solaris.
-# 2014-02-10 CS: Pull the netbackup and ovc versions
 # 2014-02-20 CS: Associate netback and ovo with backups and monitoring
 # 2014-04-02 CS: Add adinfo for centrify
 # 2014-04-22 CS: added retrievals for sudo, httpd, and mysql
@@ -305,7 +304,7 @@ function system_uuid {
 
 
 function software {
-  for pkg in datapal httpd informix java mysqld netbackup:backup newrelic openjdk opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
+  for pkg in httpd informix java mysqld openjdk opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
   do
     if [[ -n "$(echo $pkg | awk -F: '{print $2}')" ]]
     then

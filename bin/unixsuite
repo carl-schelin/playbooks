@@ -291,9 +291,6 @@ runscript ucmdbsvc
 # install simplejson if it exists
 runscript simplejson
 
-# remove the netbackup java installation if it exists
-runscript nbujava
-
 # modify sudoers to add unixsvc as NOPASSWD for Ansible
 runscript modifysudo
 

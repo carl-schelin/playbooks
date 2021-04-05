@@ -84,7 +84,6 @@
 # 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
 # 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
 # 2017/08/15 - CS - Added debugging options
-# 2017/08/15 - CS - Fixed netbackup check to look at port in case it's not in /etc/services
 # 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
 # 2017/08/17 - CS - Updated to report non-standard groups on a system
 # 2017/08/21 - CS - Added cron check
@@ -94,10 +93,8 @@
 # 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
 # 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
 # 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
-# 2017/09/05 - CS - Removed the hosts.allow issues as unneeded for Netbackup any more.
 # 2017/09/05 - CS - Fixed group.master check.
 # 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
-# 2017/09/11 - CS - Updated netbackup to check hosts.allow but only on nb 6 clients (55 as of last count)
 # 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
 # 2017/09/14 - CS - fix metadb check to only check the first 20 characters due to drive names with caps
 # 2017/09/19 - CS - Updated to exclude checks due to them being acceptible
@@ -116,21 +113,12 @@
 # 2017/10/30 - CS - Added check_selinux to check selinux status
 # 2017/11/06 - CS - Added check_installation to check to see if the installation directories exists.
 # 2017/11/06 - CS - Added a commented "number of checks" to be able to calculate totals.
-# 2017/11/06 - CS - Updated openview check to add a certificate check
-# 2017/11/07 - CS - Updated openview check to add the number of running and aborted processes and to check for buffering
-# 2017/11/07 - CS - Updated openview check to add stopped and starting to the list
-# 2017/11/10 - CS - Added bbcutil check of Openview. Removed /dev/null redirect as I'm printing a bunch of text anyway.
-# 2017/11/13 - CS - Added openview configuration check
 # 2017/11/15 - CS - Added disk space check
-# 2017/11/16 - CS - Updated check_openview route check to accurately identify route information
 # 2017/11/16 - CS - Added a check_management_route function and added it to all the functions where we're looking for access
 # 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
 # 2017/12/02 - CS - Added a check for oom-killer messages
 # 2017/12/02 - CS - check for katello-ca certificate rpm and katello-agent agent rpm installations
-# 2017/12/02 - CS - Update to check management routes for netbackup
-# 2017/12/02 - CS - Update to check access to specific netbackup ports
 # 2017/12/03 - CS - Only check for Katello if system is or was subscribed
-# 2017/12/03 - CS - Updated check_openview to confirm denied request for a certificate
 # 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
 # 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
 # 2017/12/27 - CS - Updated management interface check; if on the same network it fails
@@ -152,9 +140,6 @@
 # 2018/03/09 - CS - Changed dig -x into a loop due to multiple PTR records for an IP.
 # 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
 # 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
-# 2018/04/06 - CS - Added the ability for the script to send a test message through the openview system.
-# 2018/04/13 - CS - Updated the openview check to see if the chkov script is not in root's cron
-# 2018/04/13 - CS - Updated the openview check to see if the agent has been set to not start if stopped.
 # 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
 # 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
 # 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
@@ -394,7 +379,7 @@ EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
 
 ######################
 ### Check the Management Interface for the passed Destination IP Address
-### Management traffic, openview, opnet, data palette, netbackup, etc goes out the management interface.
+### Management traffic, opnet, etc goes out the management interface.
 ### This function checks that.
 ######################
 
@@ -1162,48 +1147,6 @@ check_config_memory() {
   if [[ ${DEBUG} = '44' ]]
   then
     echo "Exiting check_config_memory()"
-  fi
-}
-
-
-######################
-### Doc: Function: check_config_netbackup(51) - 1 check
-### Doc: * is netbackup installed
-######################
-
-check_config_netbackup() {
-  if [[ ! ${DEBUG} = 'no' ]]
-  then
-    echo "Entering check_config_netbackup(51)"
-  fi
-  if [[ ! -f /usr/openv/netbackup/bp.conf ]]
-  then
-    printf "%b\n" "  ${RED}NetBackup is not installed${RESET}" >> "${LOG}"
-  fi
-  if [[ ${DEBUG} = '51' ]]
-  then
-    echo "Exiting check_config_netbackup()"
-  fi
-}
-
-
-######################
-### Doc: Function: check_config_openview(52) - 1 check
-### Doc: * Is openview installed
-######################
-
-check_config_openview() {
-  if [[ ! ${DEBUG} = 'no' ]]
-  then
-    echo "Entering check_config_openview(52)"
-  fi
-  if [[ ! -d /opt/OV/bin ]]
-  then
-    printf "%b\n" "  ${RED}OpenView is not installed${RESET}" >> "${LOG}"
-  fi
-  if [[ ${DEBUG} = '52' ]]
-  then
-    echo "Exiting check_config_openview()"
   fi
 }
 
@@ -4441,33 +4384,9 @@ then
     fi
 
 # it's supposed to be installed, let's check
-      if [[ ${FIELD2} = 'Openview' ]]
-      then
-        check_config_openview
-      fi
-
-# it's supposed to be installed, let's check
-      if [[ ${FIELD2} = 'Netbackup' ]]
-      then
-        check_config_netbackup
-      fi
-
-# it's supposed to be installed, let's check
-      if [[ ${FIELD2} = 'Datapalette' ]]
-      then
-        check_config_datapalette
-      fi
-
-# it's supposed to be installed, let's check
       if [[ ${FIELD2} = 'OpNet' ]]
       then
         check_config_opnet
-      fi
-
-# it's supposed to be installed, let's check
-      if [[ ${FIELD2} = 'Centrify' ]]
-      then
-        check_config_centrify
       fi
 
 # check to see if an account is supposed to be allowed to use cron

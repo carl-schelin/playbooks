@@ -1,7 +1,7 @@
 ## chkdef Script
 
 Description: The **chkdef** script lists all the defunct processes in the system. This was initially created to identify systems where a bug 
-with OpenView caused there to be 2 defunct processes. In the mean time, we found one of the database servers would have a perl script that 
+with an agent caused there to be 2 defunct processes. In the mean time, we found one of the database servers would have a perl script that 
 failed to exit cleanly leaving 45 or so defunct processes. A webpage report of the processes plus a report in the status email that count the 
 number of defunct processes is created. The status email also creates a status web page which lists all issues including a defunct process count.
 

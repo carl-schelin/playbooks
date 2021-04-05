@@ -7,15 +7,11 @@ Description: The chksys script is a general data gathering script used to ensure
 * List of configured storage (Linux)
 * System UUID (Linux, Solaris)
 * Installed software and version information:
-** Data Palette
 ** HTTPD
 ** Informix
 ** MySQLd
-** Netbackup
-** NewRelic
 ** OpNet
 ** Oracle
-** Openview (ovc)
 ** Postgres
 ** sudo
 ** VMToolsd
