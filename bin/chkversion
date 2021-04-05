@@ -2,22 +2,14 @@
 
 # Carl Schelin
 # 8/20/2011 - get version information from various tools on the system.
-# - openview - has to get it running as root.
-# - netbackup - just copying it from the netbackup directory
-# - openview - added outputting it's not installed
-# - netbackup - added outputting it's not installed
-# - openview - use the right command to check versions
 # 20140403 - Only run the commands/copy files/etc if the version file doesn't exist. Keeps from continually running the command
 # 20140416 - check sudo version
 # 20140729 - Return to running commands each night.
-# 20140902 - Added version check for openview if opcagt doesn't exist.
-# 20140918 - Added alternate version check for openview if opcagt doesn't exist in /opt/OV/bin.
 # 20150113 - Get Oracle smon values (asm_smon/ora_smon) to get ASM and instance names.
 # 20150718 - Get Postgres version
 # 20150718 - Get Informix version
 # 20150816 - Change mysql check as ./mysqld was found on several servers
 # 20151006 - Check for data palette and Panorama (opnet) installation
-# 20170331 - remove ovc.version file if it exists
 # 20180322 - Updated it to fully clean and added wildfly and newrelic
 
 #BASENAME=$(basename "${0}")
@@ -33,7 +25,7 @@ fi
 . "${DIRNAME}"/../.config
 
 # clean up
-for i in datapal httpd informix mysqld netbackup newrelic omsa opnet oracle ovc postgres sudo vmtoolsd wildfly
+for i in httpd informix mysqld omsa opnet oracle postgres sudo vmtoolsd wildfly
 do
   if [[ -f ${SCRIPTS_DATA}/$i.version ]]
   then
@@ -43,15 +35,6 @@ done
 
 # checking installed software
 # for the chksys script, at least one line needs to be added even if it's just "Installed"
-
-##############################################
-### Data Palette - datapal.version
-##############################################
-
-if [[ -f /opt/datapalette/bin/datapal ]]
-then
-  echo "Installed" > "${SCRIPTS_DATA}/datapal.version"
-fi
 
 ##############################################
 ### HTTPD - httpd.version
@@ -113,50 +96,12 @@ then
 fi
 
 ##############################################
-### Netbackup - netbackup.version
-##############################################
-
-if [[ -f /usr/openv/netbackup/bin/version ]]
-then
-  cp /usr/openv/netbackup/bin/version "${SCRIPTS_DATA}/netbackup.version"
-fi
-
-##############################################
-### New Relic - newrelic.version
-##############################################
-
-OUTPUT=$(ps -ef | grep newrelic | grep -v grep)
-if [[ ! -z $OUTPUT ]]
-then
-  echo "Installed" > "${SCRIPTS_DATA}/newrelic.version"
-fi
-
-##############################################
 ### Dell Open Manage Report - omsa.version
 ##############################################
 
 if [[ -x /opt/dell/srvadmin/bin/omreport ]];
  then
    /opt/dell/srvadmin/bin/omreport about > "${SCRIPTS_DATA}/omsa.version"
-fi
-
-##############################################
-### Openview - ovc.version
-##############################################
-
-if [[ -f /opt/OV/bin/opcagt ]]
-then
-  /opt/OV/bin/opcagt -version > "${SCRIPTS_DATA}/ovc.version"
-else
-  if [[ -f /opt/OV/bin/OpC/opcagt ]]
-  then
-    /opt/OV/bin/OpC/opcagt -version > "${SCRIPTS_DATA}/ovc.version"
-  else
-    if [[ -f /opt/OV/bin/ovc ]]
-    then
-      /opt/OV/bin/ovc -version > "${SCRIPTS_DATA}/ovc.version"
-    fi
-  fi
 fi
 
 ##############################################

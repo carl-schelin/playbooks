@@ -12,28 +12,10 @@ fi
 # Source the configuration file
 . "${DIRNAME}"/../.config
 
-# prevent the Netbackup Fiber Transport client from starting. Caused an incident where the server failed to completely start due to the nbfbclnt script halting on starting the agent.
-if [[ -f /usr/openv/netbackup/bin/nbftclnt ]]
+if [[ -d /etc/sysconfig/network-scripts ]]
 then
-  chmod -x /usr/openv/netbackup/bin/nbftclnt
-fi
-
-if [[ -d /opt/ov ]]
-then
-  if [[ -f /opt/OV/bin/ovc ]]
-  then
-    echo "Removing /opt/ov"
-    rm -rf /opt/ov
-  fi
-fi
-
-if [[ -d /opt/nbu ]]
-then
-  if [[ -f /usr/openv/netbackup/bp.conf ]]
-  then
-    echo "Removing /opt/nbu"
-    rm -rf /opt/nbu
-  fi
+  chmod 644 /etc/sysconfig/network-scripts/ifcfg-*
+  chmod 644 /etc/sysconfig/network-scripts/route-*
 fi
 
 if [[ -f /tmp/newuser ]]
@@ -67,37 +49,6 @@ find ${SCRIPTS_LOGS} -name logfile.* -mtime +10 -exec rm {} \;
 # and remove old log files than 90 days (3 files)
 find ${SCRIPTS_LOGS} -name unixsuite.log.* -mtime +92 -exec rm {} \;
 
-
-# until rsync is working as expected, old files may not be removed.
-# this variable lets us identify files that have been deprecated 
-# and aren't needed any more. Add a deprecated file here and 
-# the file on the server will be removed if it exists
-
-DEPRECATED="chkapa chkapa.output chkarray chkarray.output chkems chkems.output chkipcs chkipcs.output chkomsa chkomsa.out"
-DEPRECATED="${DEPRECATED} chkprofile chkprofile.output chkpwck chkpwck.output chkroutetable chksecurity chksecurity.output"
-DEPRECATED="${DEPRECATED} chksudo chksudo.output chksync chktime chktime.output getsysinfo leaping leaping.log leaping.run"
-DEPRECATED="${DEPRECATED} ovhfchk ovupdate retired routetable.output runnow runonce runps setdate sync-clock chksudo.bak"
-DEPRECATED="${DEPRECATED} chkconfig yodo ntpd.output oracle.output STDOUT nohup.out carl chkopenview.completed"
-DEPRECATED="${DEPRECATED} lsof.output opcagt.status.output ovstatus.output Unix_Backups_Last_7Days.html group.master.backup"
-
-if [[ ! -z ${DEPRECATED} ]]
-then
-  for i in ${DEPRECATED}
-  do
-    if [[ -f ${SCRIPTS_BINS}/$i ]]
-    then
-      rm ${SCRIPTS_BINS}/$i
-    fi
-    if [[ -f ${SCRIPTS_DATA}/$i ]]
-    then
-      rm ${SCRIPTS_DATA}/$i
-    fi
-    if [[ -f ${SCRIPTS_LOGS}/$i ]]
-    then
-      rm ${SCRIPTS_LOGS}/$i
-    fi
-  done
-fi
 
 # standardizing rsync to /usr/local/bin/rsync so the unixsuite scripts can be rsync'd instead of just copied.
 if [[ ! -f /usr/local/bin/rsync ]]

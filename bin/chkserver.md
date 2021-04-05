@@ -24,8 +24,6 @@ The output can be parsed to review errors either on system or by using the **chk
 * Route Table: [server]:var/routeable.output
 * Security Data: [server]:var/chksecurity.output
 * Exclude File: [server]:etc/chkserver.exclude
-* Openview Completed File: [server]:var/chkopenview.completed
-* Openview Blocked File: [server]:etc/chkopenview.block
 
 The .config file contains the configuration used by this script. You also have the ability to disable checks within the .config file.
 
@@ -72,14 +70,8 @@ Server:Keyword:Value[0]:Value[1]:...
     * Value[0] is the 5 character Data Center identity
   * Memory
     * Value[0] is the expected amount of RAM for the system
-  * MonitoringServer
-    * Value[0] is the name of the Openview monitoring server
-  * Netbackup
-    * Netbackup is installed on the server.
   * NetworkZone
     * Value[0] is the network zone (Corp, E911, DMZ, Lab).
-  * Openview
-    * Openview is installed on the server.
   * OpNet
     * OpNet is installed on the server.
   * Running
@@ -133,10 +125,6 @@ The following checks are run against all servers:
     * Verifies that Value[1] group is a valid group
   * check_config_memory()
     * Verifies the amount of RAM that's supposed to be in the system. On VMs, there is a bit of overhead so large amounts of RAM return slightly less RAM. Add the correct amount to the Merge file.
-  * check_config_netbackup()
-    * Verifies that NetBackup is installed
-  * check_config_openview()
-Verifies that Openview is installed
   * check_config_opnet()
 Verifies that OpNet is installed
   * check_config_running()
@@ -206,36 +194,10 @@ Verifies that Value[1] service is running
   * check_management()
     * Is a management server pingable?
     * Is a management server accessible via their designated port?
-  * check_netbackup()
-    * If Netbackup version 6, verify the /etc/hosts.allow file is properly configured.
-    * Is the correct route in place for the netbackup server?
-    * Is the netbackup server pingable?
-    * Is the netbackup server accessible via their designated port?
-    * Verifies that vnetd is running on the correct port.
-    * Verifies that bpcd is running on the correct port.
-    * Verifies that the first SERVER line in the bp.conf file is correct.
-    * Verifies that the correct media servers are in the bp.conf file.
-    * Verifies that the correct CLIENT_NAME is in the bp.conf file. Note that if the backups.output file is > 0 bytes, this check is bypassed.
-    * Reports if the last backup was more than 7 days prior.
   * check_nrpe()
     * Reports if the nrpe agent is not running.
   * check_oomkiller()
     * Reports if there are any oom-killer messages in the log file.
-  * check_openview()
-    * Reports if the chkov agent validation script is not active in root's cron.
-    * Reports if the chkov agent script will not restart the agent in the event of an error.
-    * Reports the status of the openview agent.
-    * Is the correct route in place for the openview server?
-    * Is the openview server pingable?
-    * Is the openview server accessible via their designated port?
-    * Can the bbcutil ping the openview server?
-    * Are certificates installed?
-    * Is the agent buffering?
-    * Validates the openview configuration.
-    * Are policies installed?
-    * If permitted, sends a validation message to the openview servers
-      * A chkopenview.completed file prevents the message. Removing this will have the test message sent the next time chkopenview is run
-      * A chkopenview.block file will prevent the message even if the chkopenview.completed file is deleted.
   * check_opnet()
     * Is OpNet Installed?
     * Is OpNet Running?

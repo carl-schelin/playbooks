@@ -13,7 +13,7 @@
 # 2011-07-19 - Add rrdtool and unixsuite.log rolling.
 # 2011-08-17 - Correct chkusers.contrib to add bin to the path for the -f check. Added copy of anaconda-ks.cfg to etc if it exists.
 # 2011-08-18 - Correct script to run chkusers for all systems. Added a permissions change at the end of the script run as well.
-# 2011-08-20 - Added chkversion script, mainly to get openview version but others in the future.
+# 2011-08-20 - Added chkversion script, mainly to get monitoring agent version but others in the future.
 # 2011-09-06 - Added logroll option for some HP-UX boxes.
 # 2011-09-06 - Added logroll and scanraid option for some OSF1 boxes.
 # 2011-09-10 - added runscript function to ensure the completion of all scripts before final cleanup
@@ -82,7 +82,7 @@
 # 2017-09-07 - Added update.groups script
 # 2017-09-14 - Updated to check for centrify and change group ownerships to uxadmins vs sysadmin
 # 2017-09-25 - Fixed to use a better method of figuring out groups
-# 2017-11-10 - added getovconf to get the openview configuration
+# 2017-11-10 - added getovconf to get the monitoring agent configuration
 # 2019-11-07 - Renamed to unixsuite
 
 #BASENAME=$(basename "${0}")
@@ -291,9 +291,6 @@ runscript ucmdbsvc
 # install simplejson if it exists
 runscript simplejson
 
-# remove the netbackup java installation if it exists
-runscript nbujava
-
 # modify sudoers to add unixsvc as NOPASSWD for Ansible
 runscript modifysudo
 
@@ -321,14 +318,8 @@ runscript update.rsyslog
 # Update root's .forward
 runscript update.forward
 
-# get the openview configuration
-runscript getovconf
-
 # get the yum history output
 runscript gethistory
-
-# show the policies
-runscript chkpolicy
 
 # clean up on aisle three
 runscript cleanup
