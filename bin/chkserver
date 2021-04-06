@@ -1,4 +1,4 @@
-#!/usr/bin/ksh
+#!/bin/bash
 
 # chkserver - Check the postinstall steps where possible
 # Owner: Carl Schelin
@@ -3323,46 +3323,6 @@ check_routetable() {
 
 
 ######################
-### Doc: Function: check_rrdtool(23) - 5 checks
-### Doc: * is runstat running
-### Doc: * is updaterrd running
-### Doc: * is iostat running
-### Doc: * is vmstat running
-### Doc: * is mpstat running
-######################
-
-check_rrdtool() {
-  if [[ ! ${DEBUG} = 'no' ]]
-  then
-    echo "Entering check_rrdtool(23)"
-  fi
-  if [[ $OS = "Linux" ]] || [[ $OS = "SunOS" ]]
-  then
-# check to see if more than one copy of the RRDTool library is running and call it out
-# also call out if the main runstats script is _not_ running as it means it's either 
-# not enabled or the system hasn't been installed yet.
-    for i in runstat updaterrd iostat vmstat mpstat
-    do
-      RUNSTATS=$(ps -e | grep ${i} | wc -l | awk '{print $1}')
-      if [[ ${RUNSTATS} -eq 0 ]]
-      then
-        printf "%b\n" "  ${YELLOW}rrdtool is not configured or ${i} is not running${RESET}" >> "${LOG}"
-      fi
-# occasionally it reports 2 due to catching it during transition. Since it's only a problem at a much larger number, we'll report if there are more than 2 running.
-      if [[ ${RUNSTATS} -gt 2 ]]
-      then
-        printf "%b\n" "  ${RED}Multiple copies of ${i} are running. There should only be one.${RESET}" >> "${LOG}"
-      fi
-    done
-  fi
-  if [[ ${DEBUG} = '23' ]]
-  then
-    echo "Exiting check_rrdtool()"
-  fi
-}
-
-
-######################
 ### Doc: Function: check_scanners(38) - 1 check
 ### Doc: * checks to make sure the security scanners are using the correct network route
 ######################
@@ -4295,7 +4255,7 @@ done
 # function stil exists though
 #check_lsof:13
 
-for i in check_kubernetes:11 check_defunct_processes:42 check_disk_suite:31 check_eeprom:37 check_disk_space:31 check_oomkiller:34 check_vmware_agent:27 check_vpn_route:46 check_rrdtool:23 check_cfg2html:28
+for i in check_kubernetes:11 check_defunct_processes:42 check_disk_suite:31 check_eeprom:37 check_disk_space:31 check_oomkiller:34 check_vmware_agent:27 check_vpn_route:46 check_cfg2html:28
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
