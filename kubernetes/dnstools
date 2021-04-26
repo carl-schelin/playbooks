@@ -19,13 +19,13 @@ fi
 CONTEXT=$1
 
 case ${CONTEXT} in
-  "bldr") COUNT="01 02 03"
+  "bldr") COUNT="1 2 3"
           ;;
-  "cabo") COUNT="01 02 03"
+  "cabo") COUNT="1 2 3"
           ;;
-  "tato") COUNT="01 02 03"
+  "tato") COUNT="1 2 3"
           ;;
-  "lnmt") COUNT="01 02 03"
+  "lnmt") COUNT="1 2 3"
           ;;
 esac
 
