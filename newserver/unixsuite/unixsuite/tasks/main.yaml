@@ -1,0 +1,58 @@
+# run the following commands to set up a new system.
+# maybe part of the install script too; the cfg2html file
+# this also copies a few scripts for special servers.
+---
+- name: Set up the suitecheck script
+  ansible.builtin.cron:
+    name: "Master script which runs scripts that run daily or less often"
+    minute: "*/5"
+    job: "/opt/unixsuite/bin/suitecheck > /dev/null 2>&1"
+
+- name: Set up the sendmail process
+  ansible.builtin.cron:
+    name: "Processes the sendmail queue every 15 minutes"
+    minute: "*/15"
+    job: "/usr/sbin/sendmail -q"
+
+- name: Create the necessary directories
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0770
+    recurse: yes
+  loop:
+    - { path: /opt/unixsuite/run.d/0100 }
+    - { path: /opt/unixsuite/run.d/always }
+    - { path: /opt/unixsuite/var }
+
+- name: Remove directory if they exist
+  ansible.builtin.file:
+    path: /opt/unixsuite/rrdtool
+    state: absent
+
+- name: Link standard scripts
+  ansible.builtin.file:
+    src: '/opt/unixsuite/bin/{{ item.src }}'
+    dest: '/opt/unixsuite/run.d/0100/{{ item.dest }}'
+    state: hard
+  loop:
+    - { src: chkserver,      dest: chkserver }
+    - { src: chksys,         dest: chksys }
+    - { src: chkusers,       dest: chkusers }
+    - { src: chkversion,     dest: chkversion }
+    - { src: cleanup,        dest: cleanup }
+    - { src: lockuser,       dest: lockuser }
+    - { src: modifysudo,     dest: modifysudo }
+    - { src: update.forward, dest: update.forward }
+    - { src: update.gecos,   dest: update.gecos }
+    - { src: update.groups,  dest: update.groups }
+    - { src: update.motd,    dest: update.motd }
+
+- name: Link .config
+  ansible.builtin.file:
+    src: /opt/unixsuite/.config
+    dest: /opt/unixsuite/run.d/.config
+    state: hard
+
