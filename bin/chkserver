@@ -2288,33 +2288,6 @@ check_interfaces() {
 
 
 ######################
-### Doc: Function: check_unixsuite(8) - 2 checks
-### Doc: * Checks to see if the unixsuite script has run
-### Doc: * Checks to see if the unixsuite script is enabled in root's cron
-######################
-
-check_unixsuite() {
-  if [[ ! ${DEBUG} = 'no' ]]
-  then
-    echo "Entering check_unixsuite(8)"
-  fi
-  if [[ ! -f ${SCRIPTS_LOGS}/unixsuite.log ]]
-  then
-    printf "%b\n" "  ${YELLOW}The ${SCRIPTS}/bin/unixsuite script hasn't run yet.${RESET}" >> "${LOG}"
-  fi
-  CRON=$(crontab -l | grep -v "^#" | grep "${SCRIPTS}/bin/unixsuite")
-  if [[ -z $CRON ]]
-  then
-    printf "%b\n" "  ${RED}The unixsuite script is disabled in root's cron${RESET}" >> "${LOG}"
-  fi
-  if [[ ${DEBUG} = '8' ]]
-  then
-    echo "Exiting check_unixsuite()"
-  fi
-}
-
-
-######################
 ### Doc: Function: check_ksh(10) - 1 check
 ### Doc: * Verifies /usr/bin/ksh exists as all scripts are using this shell
 ######################
@@ -4268,7 +4241,7 @@ done
 
 # disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
 #check_floppy:35
-for i in check_unixsuite:8 check_ksh:10 check_removeips:20 check_nrpe:15
+for i in check_ksh:10 check_removeips:20 check_nrpe:15
 do
   FUNCTION_CALL=$(echo $i | cut -f1 -d:)
   FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
