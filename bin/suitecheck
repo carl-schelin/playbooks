@@ -33,7 +33,7 @@ then
   exit 1
 fi
 
-touch ${SCRIPTS_DATA}/suitecheck.$$
+touch ${SCRIPTS_LOGS}/suitecheck.$$
 
 # the run directory
 if [[ ! -d ${SCRIPTS_RUND} ]]
