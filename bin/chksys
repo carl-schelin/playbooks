@@ -348,6 +348,10 @@ function software_os {
     then
       OSV="Debian $(cat /etc/debian_version)"
     fi
+    if [[ -f /etc/SUSE-build ]]
+    then
+      OSV="SUSE $(tail -1 /etc/SUSE-brand | awk '{print $3}')"
+    fi
   ;;
   'SunOS') 
     OSV=$(head -1 /etc/release)

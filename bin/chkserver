@@ -2681,6 +2681,10 @@ check_packages() {
     then
       /usr/bin/dpkg-query -l | grep "^ii " | awk '{print $2"-"$3}' > "${CHKPACKAGES}"
     fi
+    if [[ -f /etc/SUSE-brand ]]
+    then
+      /usr/bin/zypper se -s > "${CHKPACKAGES}"
+    fi
   fi
 
   if [[ $OS = "SunOS" ]]
