@@ -18,12 +18,14 @@
     src: templates/telegraf.conf
     dest: "/etc/telegraf/telegraf.conf"
     mode: 0644
+  with_item: "{{ config }}"
 
 - name: Install main telegraf core file
   template:
     src: templates/core.conf
     dest: "/etc/telegraf.d/core.conf"
     mode: 0644
+  with_item: "{{ config }}"
 
 #- name: Enable and start the telegraf service
 #  systemd:
