@@ -1,8 +1,4 @@
 ---
-- name: Include variables for telegraf
-  include_vars:
-    file: "vars/vars.yaml"
-
 - name: Copy the influxdb repo 
   copy:
     src: ../files/influxdb.repo
@@ -18,14 +14,12 @@
     src: templates/telegraf.conf
     dest: "/etc/telegraf/telegraf.conf"
     mode: 0644
-  with_item: "{{ config }}"
 
 - name: Install main telegraf core file
   template:
     src: templates/core.conf
     dest: "/etc/telegraf.d/core.conf"
     mode: 0644
-  with_item: "{{ config }}"
 
 #- name: Enable and start the telegraf service
 #  systemd:
