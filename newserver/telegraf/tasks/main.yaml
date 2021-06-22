@@ -6,7 +6,7 @@
 - name: Copy the influxdb repo 
   copy:
     src: ../files/influxdb.repo
-    dest: /etc/yum.repos.d/influxdb.conf
+    dest: /etc/yum.repos.d/influxdb.repo
 
 - name: Install telegraf
   yum:
