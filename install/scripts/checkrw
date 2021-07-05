@@ -13,7 +13,6 @@ then
   echo " - status"
   echo " - changelog"
   echo " - httpd"
-  echo " - intrado"
   echo " - kubernetes [ 1.2.0 | 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
   echo " - kubeadm [ 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
   echo " - kubecerts [ 1.9.0 | 1.10.5 | 1.11.2 | 1.13 ]"
@@ -44,12 +43,6 @@ fi
 if [[ $1 = 'httpd' ]]
 then
   find /opt/code/httpd -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|settings.php|RCS|README)" | sort -k 9
-  CHECKED="yes"
-fi
-
-if [[ $1 = 'intrado' ]]
-then
-  find /opt/code/intrado -type f -exec ls -l {} \; | grep rw | egrep -v "(countall|findcount|searchall|RCS|README|install)" | sort -k 9
   CHECKED="yes"
 fi
 

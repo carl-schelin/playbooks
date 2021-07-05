@@ -30,8 +30,8 @@ do
       echo "where:"
       echo " -s - The database to import. Make sure you create the database first."
       echo "    - stnlocator - STN Locator app"
-      echo "    - inventory - Intrado inventory app"
-      echo "    - status - Intrado status app"
+      echo "    - inventory - inventory app"
+      echo "    - status - status app"
       echo " -d - An alternate date to load in case you want older data."
       echo " -h - Help."
       exit 1
@@ -69,8 +69,8 @@ then
   echo "where:"
   echo " -s - The database to import. Make sure you create the database first."
   echo "    - stnlocator - STN Locator app"
-  echo "    - inventory - Intrado inventory app"
-  echo "    - status - Intrado status app"
+  echo "    - inventory - inventory app"
+  echo "    - status - status app"
   echo " -d - An alternate date to load in case you want older data."
   echo " -h - Help."
   exit 1
@@ -179,7 +179,7 @@ then
     cp /opt/transfer/mysql.status.tar.gz .
     mv mysql.status.tar.gz $CURRENT
   else
-    scp status.intrado.com:/var/tmp/mysql/$CURRENT .
+    scp status.internal.pri:/var/tmp/mysql/$CURRENT .
   fi
 
   gzip -dc mysql.$DATE.tar.gz | tar fvx -

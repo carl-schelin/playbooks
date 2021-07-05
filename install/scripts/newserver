@@ -40,7 +40,7 @@ then
 fi
 
 echo "Retrieving the chksys.import file from $1"
-scp $i:/opt/intrado/etc/chksys.import $ADMIN/servers/$1/
+scp $i:/opt/unixsuite/etc/chksys.import $ADMIN/servers/$1/
 
 if [[ ! -f $ADMIN/servers/$1/chksys.import ]]
 then

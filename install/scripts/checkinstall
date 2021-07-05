@@ -6,16 +6,15 @@ if [[ -z $1 ]]
 then
   echo "Reminds you what files you may be working on in the working directory that haven't been added to the code repository yet."
   echo ""
-  echo "Usage: checkinstall [ inventory | status | changelog | incojs01 (bin) | ]"
+  echo "Usage: checkinstall [ inventory | status | changelog ]"
   echo ""
-  echo "(bin) indicates the directory that's being checked; /usr/local/httpd/bin, for the respective server."
   exit 1
 fi
 
 if [[ $1 = 'inventory' ]]
 then
   cd /var/www/html/inventory
-  for i in `find . -type f -print | egrep -v "(settings.php|research|searchall.back|./css/themes|.js$|.csv$|./pictures|./imgs)" | egrep -v "servers.(ali|dba|ienv|lab|mob|mon|net|sba|scm|se|tandem|tss|unix|vns|vtt|web|win)"`
+  for i in `find . -type f -print | egrep -v "(settings.php|research|./css/themes|.js$|.csv$|./pictures|./imgs)"`
   do
     if [[ ! -f /opt/code/inventory/$i ]]
     then
@@ -61,30 +60,6 @@ then
   for i in `find . -type f -print | egrep -v ".changelog$"`
   do
     if [[ ! -f /opt/code/changelog/$i ]]
-    then
-      echo "Missing: $i"
-    fi
-  done
-fi
-
-if [[ $1 = 'incojs01' ]]
-then
-  cd /usr/local/httpd/incojs01
-  for i in `find . -type f -print`
-  do
-    if [[ ! -f /opt/code/incojs01/httpd/bin/$i ]]
-    then
-      echo "Missing: $i"
-    fi
-  done
-fi
-
-if [[ $1 = 'intrado' ]]
-then
-  cd ~/scripts/incojs01/intrado
-  for i in `find . -type f -print`
-  do
-    if [[ ! -f /opt/code/incojs01/intrado/$i ]]
     then
       echo "Missing: $i"
     fi

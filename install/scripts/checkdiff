@@ -9,7 +9,6 @@ then
   echo " - inventory"
   echo " - status"
   echo " - changelog"
-  echo " - intrado"
   exit 1
 fi
 
@@ -90,37 +89,6 @@ then
   WORKING=/var/www/html/status
 
   for i in `cat /opt/code/manifest.status | sed -e "s/ /_/g" | egrep -v "(^#|^$)"`
-  do
-
-    SECTION=`echo $i | sed -e "s/_/ /g" | awk '{print $1}'`
-
-    if [[ $SECTION = '+' ]]
-    then
-      echo "Working: `echo $i | sed -e "s/_/ /g" -e "s/+ //g"`"
-    else
-      if [[ -f $WORKING/$i ]]
-      then
-        diff $WORKING/$i $CODE/$i > /dev/null
-        if [[ $? = 1 ]]
-        then
-          echo "Compare Working Script:"
-          echo "< $WORKING/$i"
-          echo "with Official Distribution:"
-          echo "> $CODE/$i"
-          diff $WORKING/$i $CODE/$i
-        fi
-      fi
-    fi
-  done
-fi
-
-if [[ $1 = 'intrado' ]]
-then
-
-  CODE=/opt/code/incojs01/intrado
-  WORKING=~/scripts/incojs01/intrado
-
-  for i in `cat /opt/code/manifest.intrado | sed -e "s/ /_/g" | egrep -v "(^#|^$)"`
   do
 
     SECTION=`echo $i | sed -e "s/_/ /g" | awk '{print $1}'`

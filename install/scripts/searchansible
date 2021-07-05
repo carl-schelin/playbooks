@@ -4,7 +4,6 @@
 # straight search returns all the headers where passing a parameter will search headers for the search string
 
 LOCATION="/usr/local/admin/etc/hosts"
-RETURN=1
 
 if [[ -z $1 ]]
 then
@@ -30,7 +29,6 @@ else
     echo $i | grep -i "^\[$1\]" > /dev/null
     if [[ $? -eq 0 ]]
     then
-      RETURN=0
       DISPLAY='yes'
     fi
 
@@ -54,6 +52,4 @@ else
 
   done
 fi
-
-exit $RETURN
 

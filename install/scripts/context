@@ -33,19 +33,9 @@ else
        ;;
     cabo) ARG="cabo0-0"
        ;;
-    gldn) ARG="gldn0-0"
-       ;;
-    hell) ARG="hell0-0"
-       ;;
-    icl) ARG="icl-0"
-       ;;
-    alde) ARG="alde0-0"
-       ;;
     tato) ARG="tato0-1"
        ;;
     lnmt) ARG="lnmt1-2"
-       ;;
-    miam) ARG="miam1-1"
        ;;
     *) ARG=$1
        ;;

@@ -13,7 +13,6 @@ OPTIONS:
        admin
        changelog - this should be a html directory such as /var/www/html
        httpd
-       intrado
        inventory - this should be a html directory such as /var/www/html
        kubeadm - need to have a -v (version) flag
        kubecerts - need to have a -v (version) flag

@@ -37,7 +37,7 @@ then
   exit 1
 fi
 
-# if just one parameter passed (inventory incojs01 for example), assume it's a server name
+# if just one parameter passed (inventory lnmt1cuomtool11 for example), assume it's a server name
 if [[ -z $2 ]]
 then
   SERVER=$1
@@ -128,7 +128,7 @@ then
         cd $HTTPD/bin
         /usr/local/bin/php import.php $ADMIN/servers/$SVRNAME/chksys.import
         echo "----------------------------------------------------------------------"
-        echo "if you receive: Sorry: Unable to locate miamfldcgrt20 in the database."
+        echo "if you receive: Sorry: Unable to locate lnmt1cuomtool11 in the database."
         echo "  it means at least one interface must be entered with the name $SVRNAME "
         echo "  in order for the import script to locate the server."
         echo "----------------------------------------------------------------------"
