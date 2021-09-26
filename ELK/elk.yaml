@@ -1,4 +1,4 @@
-# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&elk:&data' data.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&elk:&[data|kibana|logstash|master]' --tags [data|kibana|logstash|master] elk.yaml -C
 ---
 - hosts: "{{ pattern }}"
   become: true
@@ -6,5 +6,8 @@
   gather_facts: yes
 
   roles:
-    - data
+    - { data,     tag=data }
+    - { kibana,   tag=kibana }
+    - { logstash, tag=logstash }
+    - { master,   tag=master }
 
