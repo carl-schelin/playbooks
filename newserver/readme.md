@@ -1,7 +1,6 @@
 ### Overview ###
 
-Update the sshd_config file to properly display the /etc/issue and /etc/motd files.
-
+This section is for all the tasks when a new server is built plus ensure some common bits are in place
 
 ### issue and motd ###
 
