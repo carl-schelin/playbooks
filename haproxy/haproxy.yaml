@@ -1,3 +1,4 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&haproxy' haproxy.yaml -C
 ---
 - hosts: "{{ pattern }}"
   become: true
@@ -6,3 +7,4 @@
 
   roles:
     - haproxy
+
