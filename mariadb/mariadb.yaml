@@ -1,3 +1,4 @@
+#  ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&mariadb' mariadb.yaml -C
 ---
 - hosts: "{{ pattern }}"
   become: true
