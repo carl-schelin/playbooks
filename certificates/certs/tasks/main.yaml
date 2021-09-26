@@ -1,0 +1,77 @@
+---
+- name: Import CentOS-7 GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
+    fingerprint: 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
+  when: 
+    - ansible_distribution_major_version == '7'
+    - ansible_distribution == 'CentOS' or
+      ansible_distribution == 'Red Hat Enterprise Linux'
+
+
+- name: Import CentOS-8 GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://www.centos.org/keys/RPM-GPG-KEY-CentOS-Official
+    fingerprint: 6341 AB27 53D7 8A78 A7C2  7BB1 24C6 A8A7 F4A8 0EB5
+  when: 
+    - ansible_distribution_major_version == '8'
+    - ansible_distribution == 'CentOS' or
+      ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Import EPEL 7 GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7Server
+  when: 
+    - ansible_distribution_major_version == '7'
+    - ansible_distribution == 'CentOS' or
+      ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Import EPEL 8 GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+  when: 
+    - ansible_distribution_major_version == '8'
+    - ansible_distribution == 'CentOS' or
+      ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Is this an Elasticsearch server?
+  lineinfile:
+    path: /opt/unixsuite/etc/fingerprint
+    line: ".*,elk,.*"
+    state: present
+  check_mode: yes
+  register: elasticsearch
+  failed_when: elasticsearch is changed
+
+- name: Import Elasticsearch GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://packages.elastic.co/GPG-KEY-elasticsearch
+    fingerprint: 4609 5ACC 8548 582C 1A26  99A9 D27D 666C D88E 42B4
+  when: elasticsearch is not changed
+
+- name: Is this a Kubernetes server?
+  lineinfile:
+    path: /opt/unixsuite/etc/fingerprint
+    line: ".*,kubernetes,.*"
+    state: present
+  check_mode: yes
+  register: kubernetes
+  failed_when: kubernetes is changed
+
+- name: Import Kubernetes GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://packages.cloud.google.com/yum/doc/yum-key.gpg
+  when: kubernetes is not changed
+
+- name: Import Second Kubernetes GPG Signing Key
+  rpm_key:
+    state: present
+    key: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+  when: kubernetes is not changed
+
