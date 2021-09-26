@@ -1,3 +1,7 @@
+# this assumes the use of the inventory's hosts file which has a list of servers in boulder, identified as elk servers for all four types, and then each type.
+# conceivably you could just use boulder:&logstash and it would work however kubernetes have servers identified as 'master' as well so best to combine
+# patterns.
+#
 # ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&elk:&[data|kibana|logstash|master]' --tags [data|kibana|logstash|master] elk.yaml -C
 ---
 - hosts: "{{ pattern }}"
