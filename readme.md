@@ -36,39 +36,45 @@ yumupgrade - Basically runs a 'yum upgrade -y'
 
 ### checked in playbooks ###
 
-* chrony - updated to use the correct local IP
 * ELK
-**   data
-**   elasticsearch
-**   kibana
-**   logstash
-**   master
+  * data
+  * kibana
+  * logstash
+  * master
 * haproxy
 * kubernetes
-**   00-osupgrade
-**   01-bridge
-**   02-swap
-**   03-packages
-**   04-clustername
-**   05-kubelet
-**   06-certificates
-**   07-logging
-**   08-permissions
-**   09-destroy
-**   13-kubeadm
-**   15-versionlock
-**   configurations
-**   dnstools
-**   postinstall
-**   readme.md
-**   scripts
+  * upgrade
+  * bridge
+  * swap
+  * packages
+  * clustername
+  * kubelet
+  * certificates
+  * logging
+  * permissions
+  * destroy
+  * kubeadm
+  * versionlock
+  * configurations
+  * dnstools
+  * postinstall
+  * readme.md
+  * scripts
 * logcerts
 * mariadb
+* newserver
+  * chrony - updated to use the correct local IP
+  * firewall
+  * gecos
+  * initialize
+  * ipa-client
+  * ksh
+  * mailx
+  * snmpd
+  * sshd
 * nousers
 * resolver
 * satellite
-* snmp
-* sshd
 * sudoers
 * touchmotd
 * yumupgrade
