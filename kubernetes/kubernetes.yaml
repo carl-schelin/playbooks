@@ -1,0 +1,24 @@
+# Author: Carl Schelin
+# Purpose:
+# This playbook runs all the different tasks that are needed to build the kubernetes environment.
+---
+- name: Configure the bridge module and kernel settings for the core-dns container
+  hosts: "{{ site }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - { bridge, tag=bridge }
+    - { swap, tag=swap }
+    - { packages, tag=packages }
+    - { clustername, tag=clustername }
+    - { kubelet, tag=kubelet }
+    - { certificates, tag=certificates }
+    - { logging, tag=logging }
+    - { permissions, tag=permissions }
+    - { kubeadm, tag=kubeadm }
+    - { versionlock, tag=versionlock }
+    - { postinstall, tag=postinstall }
+
+
