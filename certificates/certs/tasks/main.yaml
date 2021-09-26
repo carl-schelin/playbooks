@@ -45,7 +45,6 @@
     state: present
   check_mode: yes
   register: elasticsearch
-  failed_when: elasticsearch is changed
 
 - name: Import Elasticsearch GPG Signing Key
   rpm_key:
@@ -61,7 +60,6 @@
     state: present
   check_mode: yes
   register: kubernetes
-  failed_when: kubernetes is changed
 
 - name: Import Kubernetes GPG Signing Key
   rpm_key:
