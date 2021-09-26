@@ -2,14 +2,13 @@
 
 # Carl Schelin
 # update:
-# configure and install kvm and terraform
+# Update 
 
 function usage() {
   echo "Usage:"
-  echo "update -deht [tag]"
+  echo "update -eht [tag]"
   echo "where:"
   echo " -h help"
-  echo " -d Remove all the files from the tagged server"
   echo " -e enable check - Enable --check to validate task"
   echo " -t tag - Tag for the list of servers"
   echo "  Run searchansible to see all tags"
@@ -29,15 +28,13 @@ then
   exit 0
 fi
 
+PLAYBOOK=install_terraform.yaml
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
-OPTDELETE='no'
 OPTTAG=''
-while getopts "deht:" arg
+while getopts "eht:" arg
 do
   case $arg in
-    d) OPTDELETE="yes"
-       ;;
     e) OPTCHECK="--check"
        ;;
     t) OPTTAG="${OPTARG}"
@@ -63,7 +60,7 @@ fi
 
 if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured tag: ${OPTTAG}"
+  echo "Error: No configured site: ${OPTTAG}"
   echo ""
   usage
   exit 1
@@ -74,17 +71,11 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  if [[ ${OPTDELETE} = 'no' ]]
-  then
-    echo "Install kvm and terraform"
-    ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} terraform.yaml
-  else
-    echo "Deinstall kvm and terraform"
-    ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} destroy.yaml
-  fi
+  echo "Update sshd"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e pattern=${OPTTAG} ${PLAYBOOK}
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi

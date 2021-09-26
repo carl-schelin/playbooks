@@ -2,17 +2,17 @@
 
 # Carl Schelin
 # update:
-# Update sshd to fix the banner, issue, motd, and remote root access issues
+# Update 
 
 function usage() {
   echo "Usage:"
-  echo "update -ehp [pattern]"
+  echo "update -eht [tag]"
   echo "where:"
   echo " -h help"
   echo " -e enable check - Enable --check to validate task"
-  echo " -p pattern - The pattern in the searchansible hosts file to use"
-  echo "  Run searchansible to see all patterns"
-  echo "  Run searchansible [pattern] to see the servers associated with [pattern]"
+  echo " -t tag - Tag for the list of servers"
+  echo "  Run searchansible to see all tags"
+  echo "  Run searchansible [tag] to see the servers associated with [tag]"
 }
 
 if [[ $(id -u) -ne 5000 ]]
@@ -28,15 +28,16 @@ then
   exit 0
 fi
 
+PLAYBOOK=newserver.yaml
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
-OPTPATTERN=''
-while getopts "ehp:" arg
+OPTTAG=''
+while getopts "eht:" arg
 do
   case $arg in
     e) OPTCHECK="--check"
        ;;
-    p) OPTPATTERN="${OPTARG}"
+    t) OPTTAG="${OPTARG}"
        ;;
     h) usage
        exit 0
@@ -57,9 +58,9 @@ then
   exit 1
 fi
 
-if [[ -z ${OPTPATTERN} ]]
+if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No pattern identified: ${OPTPATTERN}"
+  echo "Error: No configured site: ${OPTTAG}"
   echo ""
   usage
   exit 1
@@ -70,12 +71,12 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTPATTERN} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Disabling the Firewall, installing ksh, ipa-client, and mailx"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e pattern=${OPTPATTERN} newserver.yaml
+  echo "Update sshd"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e pattern=${OPTTAG} ${PLAYBOOK}
 else
-  echo "Unable to locate ${OPTPATTERN} in the ${HOSTS} hosts file"
+  echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi
 

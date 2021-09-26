@@ -5,7 +5,7 @@
 # install the libvirt providor into the service account's home directory
 # create the logical volume for images
 ---
-- hosts: "{{ tag }}"
+- hosts: "{{ pattern }}"
   become: true
   become_user: root
   gather_facts: no

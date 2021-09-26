@@ -2,7 +2,7 @@
 
 # Carl Schelin
 # update:
-# Update new servers
+# Update 
 
 function usage() {
   echo "Usage:"
@@ -28,6 +28,7 @@ then
   exit 0
 fi
 
+PLAYBOOK=unixsuite.yaml
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTTAG=''
@@ -70,11 +71,11 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Initial installation"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} unixsuite.yaml
+  echo "Update sshd"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e pattern=${OPTTAG} ${PLAYBOOK}
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi

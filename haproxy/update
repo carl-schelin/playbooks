@@ -2,7 +2,7 @@
 
 # Carl Schelin
 # update:
-# Update haproxy 
+# Update 
 
 function usage() {
   echo "Usage:"
@@ -28,6 +28,7 @@ then
   exit 0
 fi
 
+PLAYBOOK=haproxy.yaml
 HOSTS="/usr/local/admin/etc/hosts"
 OPTCHECK=''
 OPTTAG=''
@@ -59,7 +60,7 @@ fi
 
 if [[ -z ${OPTTAG} ]]
 then
-  echo "Error: No configured site: ${OPTSITE}"
+  echo "Error: No configured site: ${OPTTAG}"
   echo ""
   usage
   exit 1
@@ -70,11 +71,11 @@ then
   echo "Validation enabled. No changes will be made to the systems."
 fi
 
-/usr/local/bin/searchansible ${OPTTAG} > /dev/null 2>&1
+/usr/local/bin/searchansible ${OPTSITE} > /dev/null 2>&1
 if [[ $? -eq 0 ]]
 then
-  echo "Update haproxy"
-  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e tag=${OPTTAG} haproxy.yaml
+  echo "Update sshd"
+  ansible-playbook -i ${HOSTS} ${OPTCHECK} -e pattern=${OPTTAG} ${PLAYBOOK}
 else
   echo "Unable to locate ${OPTTAG} in the ${HOSTS} hosts file"
 fi

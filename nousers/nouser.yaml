@@ -1,6 +1,6 @@
 # Update the sudoers file
 ---
-- hosts: "{{ site }}"
+- hosts: "{{ pattern }}"
   become: true
   become_user: root
   gather_facts: no
