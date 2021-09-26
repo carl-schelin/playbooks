@@ -1,0 +1,53 @@
+---
+- name: Check for bldr0cuomrepo1.internal.pri.pem
+  stat: path=/etc/pki/ca-trust/source/anchors/bldr0cuomrepo1.internal.pri.pem
+  register: foobar
+
+- name: Don't run it again if it already exists. Assumption is the other files exist as well.
+  fail: msg="This host has already had this playbook run against it"
+  when: foobar.stat.exists
+
+# now add the correct file for docker, but also all the other files.
+- name: Add companyCA.pem
+  copy:
+    src: ../files/companyCA.pem
+    dest: /etc/pki/ca-trust/source/anchors/companyCA.pem
+
+- name: Add bldr0cuomrepo1.internal.pri.pem
+  copy:
+    src: ../files/bldr0cuomrepo1.internal.pri.pem
+    dest: /etc/pki/ca-trust/source/anchors/bldr0cuomrepo1.internal.pri.pem
+
+- name: Add corp.cer  
+  copy:
+    src: ../files/corp.cer  
+    dest: /etc/pki/tls/certs/corp.cer  
+
+- name: Add corp2.cer  
+  copy:
+    src: ../files/corp2.cer  
+    dest: /etc/pki/tls/certs/corp2.cer  
+
+- name: Add corp3.cer  
+  copy:
+    src: ../files/corp3.cer  
+    dest: /etc/pki/tls/certs/corp3.cer  
+
+- name: Add corp4.cer
+  copy:
+    src: ../files/corp4.cer
+    dest: /etc/pki/tls/certs/corp4.cer
+
+- name: Trust the new certificates
+  command: /usr/bin/update-ca-trust
+
+- name: Restart kubelet
+  systemd:
+    name: kubelet
+    state: restarted
+
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted
+
