@@ -5,6 +5,20 @@ This is the playbook subdirectory for Kubernetes work.
 
 ### Sections ###
 
+#### Bridge ####
+
+# Purpose:
+# The core-dns container in Kubernetes has a bug in that if a container shares a worker with core-dns, name resolution fails.
+# Since there are generally a pair of core-dns containers, the resolution lookup can succeed which throws off troubleshooting.
+# The solution is to enable the three bridge kernel rules and enable the bridge module.
+
+
+
+
+
+
+
+
 The playbooks are created to be run in order vs trying to figure out which ones to run.
 
 Playbooks 01-07 were used to initially set up the Kubernetes servers for the 1.14.7 installations.
