@@ -1,0 +1,10 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder,user=cschelin' pwreset.yaml -C
+---
+- name: Change passwords
+  hosts: "{{ pattern }}"
+  become: yes
+  gather_facts: yes
+
+  roles:
+  - pwreset
+
