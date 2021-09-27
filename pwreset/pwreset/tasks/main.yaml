@@ -4,35 +4,35 @@
     name={{ user }}
     update_password=always
     password=boulder.{{ user }}
-  when: (('BLDR' in inventory_hostname|upper)
+  when: ('BLDR' in inventory_hostname|upper)
 
 - name: Change {{ user }}'s qa password
   user:
     name={{ user }}
     update_password=always
     password=cabo.{{ user }}
-  when: (('CABO' in inventory_hostname|upper)
+  when: ('CABO' in inventory_hostname|upper)
 
 - name: Change {{ user }}'s staging password
   user:
     name={{ user }}
     update_password=always
     password=tatooine.{{ user }}
-  when: (('TATO' in inventory_hostname|upper)
+  when: ('TATO' in inventory_hostname|upper)
 
 - name: Change {{ user }}'s production password
   user:
     name={{ user }}
     update_password=always
     password=longmont.{{ user }}
-  when: (('LNMT' in inventory_hostname|upper)
+  when: ('LNMT' in inventory_hostname|upper)
 
 - name: Change {{ user }}'s personal password
   user:
     name={{ user }}
     update_password=always
     password=nederland.{{ user }}
-  when: (('NDLD' in inventory_hostname|upper)
+  when: ('NDLD' in inventory_hostname|upper)
 
 - name: Ensure standard user resets password upon login, skip service accounts
   shell: chage -d 0 {{ user }}
