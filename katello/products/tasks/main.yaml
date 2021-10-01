@@ -1,0 +1,55 @@
+---
+- name: Create CentOS 7 product
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "CentOS 7 Linux"
+    state: present
+
+- name: Create CentOS 8 product
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "CentOS 8 Linux"
+    state: present
+
+- name: Create EPEL 7 product
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Fedora EPEL 7 Linux"
+    state: present
+
+- name: Create EPEL 8 product
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Fedora EPEL 8 Linux"
+    state: present
+
+- name: Create Kubernetes
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Kubernetes"
+    state: present
+
+- name: Create Elasticsearch
+  theforeman.foreman.product:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Elasticsearch"
+    state: present
+
