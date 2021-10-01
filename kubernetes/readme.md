@@ -1,11 +1,11 @@
-### Overview ###
+### Overview
 
 This is the playbook subdirectory for Kubernetes work.
 
 
-### Sections ###
+### Sections
 
-#### Bridge ####
+#### Bridge
 
 # Purpose:
 # The core-dns container in Kubernetes has a bug in that if a container shares a worker with core-dns, name resolution fails.
