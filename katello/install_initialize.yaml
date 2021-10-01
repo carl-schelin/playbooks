@@ -1,0 +1,10 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts -e pattern='lnmt1cuomkat1' initialize.yaml -C
+---
+- hosts: "{{ pattern }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - initialize
+
