@@ -1,0 +1,14 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts --ask-vault-pass -e pattern='lnmt1cuomkat1' install_katello.yaml --tag [configure|credentials|products|repositories|contentviews|activation]
+---
+- hosts: "{{ pattern }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - { role: configure,    tags: ["configure"] }
+    - { role: credentials,  tags: ["credentials"] }
+    - { role: products,     tags: ["products"] }
+    - { role: repositories, tags: ["repositories"] }
+    - { role: activation,   tags: ["activation"] }
+
