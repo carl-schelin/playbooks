@@ -1,0 +1,10 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts --ask-vault-pass -e pattern='lnmt1cuomkat1' install_activation.yaml 
+---
+- hosts: "{{ pattern }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - activation
+
