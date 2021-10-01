@@ -14,7 +14,7 @@
     password: "{{ katello_password }}"
     server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
-    name: "Dallas"
+    name: "{{ item }}"
     state: present
   with_items:
     - Boulder
