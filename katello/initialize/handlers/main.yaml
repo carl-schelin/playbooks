@@ -1,0 +1,14 @@
+---
+- name: Reload firewalld service
+  systemd:
+    name: firewalld
+    state: reloaded
+  notify:
+    - Restart firewalld
+
+- name: Restart firewalld
+  systemd:
+    name: firewalld
+    state: restarted
+
+
