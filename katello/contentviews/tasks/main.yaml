@@ -1,0 +1,43 @@
+---
+- name: "Create CentOS 7 Content View"
+  theforeman.foreman.content_view:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "CentOS 7"
+    repositories:
+      - name: 'CentOS 7 Extras'
+        product: 'CentOS 7 Linux'
+      - name: 'CentOS 7 OS'
+        product: 'CentOS 7 Linux'
+      - name: 'CentOS 7 Plus'
+        product: 'CentOS 7 Linux'
+      - name: 'CentOS 7 Updates'
+        product: 'CentOS 7 Linux'
+      - name: 'EPEL 7 Core'
+        product: 'Fedora EPEL 7 Linux'
+
+- name: "Create CentOS 8 Content View"
+  theforeman.foreman.content_view:
+    username: "admin"
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "CentOS 8"
+    repositories:
+      - name: 'CentOS 8 AppStream'
+        product: 'CentOS 8 Linux'
+      - name: 'CentOS 8 BaseOS'
+        product: 'CentOS 8 Linux'
+      - name: 'CentOS 8 Extras'
+        product: 'CentOS 8 Linux'
+      - name: 'CentOS 8 Plus'
+        product: 'CentOS 8 Linux'
+      - name: 'CentOS 8 PowerTools'
+        product: 'CentOS 8 Linux'
+      - name: 'EPEL 8 Core'
+        product: 'Fedora EPEL 8 Linux'
+      - name: 'EPEL 8 Modular'
+        product: 'Fedora EPEL 8 Linux'
+
