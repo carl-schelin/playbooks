@@ -1,0 +1,73 @@
+---
+- name: Configure Organization
+  theforeman.foreman.organization:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    name: "{{ katello_organization }}"
+    state: present
+
+
+- name: Configure Dallas location
+  theforeman.foreman.location:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Dallas"
+    state: present
+  with_items:
+    - Boulder
+    - Cabo
+    - Tatooine
+    - Longmont
+
+
+- name: Create Development Lifecycle Environment
+  theforeman.foreman.lifecycle_environment:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Development"
+    label: "Development"
+    prior: "Library"
+    description: "The development environment"
+    state: present
+
+- name: Create QA Lifecycle Environment
+  theforeman.foreman.lifecycle_environment:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "QA"
+    label: "QA"
+    prior: "Development"
+    description: "The QA environment"
+    state: present
+
+- name: Create Staging Lifecycle Environment
+  theforeman.foreman.lifecycle_environment:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Staging"
+    label: "Staging"
+    prior: "QA"
+    description: "The staging environment"
+    state: present
+
+- name: Create Production Lifecycle Environment
+  theforeman.foreman.lifecycle_environment:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }}"
+    organization: "{{ katello_organization }}"
+    name: "Production"
+    label: "Production"
+    prior: "Staging"
+    description: "The production environment"
+    state: present
+
