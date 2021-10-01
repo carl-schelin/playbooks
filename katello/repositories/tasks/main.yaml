@@ -1,0 +1,202 @@
+---
+- name: "Create CentOS 7 Base repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 7 Linux"
+    name: "CentOS 7 OS"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/base"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 7 Updates repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 7 Linux"
+    name: "CentOS 7 Updates"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/updates"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 7 Extras repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 7 Linux"
+    name: "CentOS 7 Extras"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/extras"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 7 Plus repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 7 Linux"
+    name: "CentOS 7 Plus"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/centosplus"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+
+- name: "Create EPEL 7 repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "Fedora EPEL 7 Linux"
+    name: "EPEL 7 Core"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/epel"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+
+- name: "Create CentOS 8 BaseOS repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 8 Linux"
+    name: "CentOS 8 BaseOS"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/BaseOS"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 8 AppStream repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 8 Linux"
+    name: "CentOS 8 AppStream"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/AppStream"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 8 PowerTools Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 8 Linux"
+    name: "CentOS 8 PowerTools"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/PowerTools"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 8 Extras Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 8 Linux"
+    name: "CentOS 8 Extras"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/extras"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create CentOS 8 Plus Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "CentOS 8 Linux"
+    name: "CentOS 8 Plus"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/centosplus"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+
+- name: "Create EPEL 8 Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "Fedora EPEL 8 Linux"
+    name: "EPEL 8 Core"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/epel"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+- name: "Create EPEL 8 Modular Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "Fedora EPEL 8 Linux"
+    name: "EPEL 8 Modular"
+    url: "http://lnmt1cuomjs1.internal.pri/centos8/epel-modular"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+
+- name: "Create Kubernetes Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "Kubernetes"
+    name: "Kubernetes"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/kubernetes"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
+
+- name: "Create Elasticsearch Repository"
+  theforeman.foreman.repository:
+    username: admin
+    password: "{{ katello_password }}"
+    server_url: "{{ katello_url }} "
+    organization: "{{ katello_organization }}"
+    content_type: "yum"
+    product: "Elasticsearch"
+    name: "Elasticsearch"
+    url: "http://lnmt1cuomjs1.internal.pri/centos7/elasticsearch"
+    mirror_on_sync: true
+    download_policy: background
+    state: present
+
