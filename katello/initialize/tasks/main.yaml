@@ -1,0 +1,51 @@
+---
+- name: Install firewalld
+  yum:
+    name: firewalld
+    state: present
+
+- name: Add Katello Firewall ports
+  firewalld:
+    permanent:  yes
+    state:  enabled
+    port: "{{ item }}"
+  with_items:
+    - 80/tcp
+    - 443/tcp
+    - 5646/tcp
+    - 5647/tcp
+    - 9090/tcp
+  notify:
+    - Reload firewalld service
+
+- name: Install foreman-release.rpm
+  yum:
+    name: https://yum.theforeman.org/releases/2.3/el7/x86_64/foreman-release.rpm
+    state: present
+
+- name: install katello-repos-latest.rpm
+  yum:
+    name: https://fedorapeople.org/groups/katello/releases/yum/3.18/katello/el7/x86_64/katello-repos-latest.rpm
+    state: present
+
+- name: install puppet6-release-el-7.noarch.rpm
+  yum:
+    name: https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+    state: present
+
+- name: install epel-release
+  yum:
+    name: epel-release
+    state: present
+
+- name: install centos-release-scl-rh
+  yum:
+    name: centos-release-scl-rh
+    state: present
+
+
+- name: Install katello
+  yum:
+    name: katello
+    state: present
+
