@@ -33,6 +33,16 @@ This will take several minutes to get things set up. Let it run.
 
 Now we're at the meat of the installation. Here you'll configure the Organization, Site Locations, Lifecycle Environments, add Repository Credentials, create Products, Repositories, Content Views, and finally Activation Keys.
 
+For the Credentials, you'll need to retrieve them from the pertinent sites and place them into the credentials role under the files directory.
+
+* https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
+* https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+* https://www.centos.org/keys/RPM-GPG-KEY-CentOS-Official
+* https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+* https://artifacts.elastic.co/GPG-KEY-elasticsearch
+* https://packages.cloud.google.com/yum/doc/yum-key.gpg
+* https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
 Run the following playbook to complete all the steps. You can also run them individually by adding a --tag and following with the role you want to run.
 
 * --tag configure
