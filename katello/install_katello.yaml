@@ -10,5 +10,5 @@
     - { role: credentials,  tags: ["credentials"] }
     - { role: products,     tags: ["products"] }
     - { role: repositories, tags: ["repositories"] }
-    - { role: activation,   tags: ["contentviews"] }
+    - { role: contentviews,   tags: ["contentviews"] }
 
