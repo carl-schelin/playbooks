@@ -3,7 +3,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 7 Linux"
@@ -17,7 +17,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 7 Linux"
@@ -31,7 +31,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 7 Linux"
@@ -45,7 +45,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 7 Linux"
@@ -60,7 +60,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "Fedora EPEL 7 Linux"
@@ -75,7 +75,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 8 Linux"
@@ -89,7 +89,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 8 Linux"
@@ -103,7 +103,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 8 Linux"
@@ -117,7 +117,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 8 Linux"
@@ -131,7 +131,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "CentOS 8 Linux"
@@ -146,7 +146,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "Fedora EPEL 8 Linux"
@@ -160,7 +160,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "Fedora EPEL 8 Linux"
@@ -175,7 +175,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "Kubernetes"
@@ -190,7 +190,7 @@
   theforeman.foreman.repository:
     username: admin
     password: "{{ katello_password }}"
-    server_url: "{{ katello_url }} "
+    server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     content_type: "yum"
     product: "Elasticsearch"
