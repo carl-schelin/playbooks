@@ -6,6 +6,7 @@
     server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     name: "CentOS 7"
+    state: present
     repositories:
       - name: 'CentOS 7 Extras'
         product: 'CentOS 7 Linux'
@@ -25,6 +26,7 @@
     server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
     name: "CentOS 8"
+    state: present
     repositories:
       - name: 'CentOS 8 AppStream'
         product: 'CentOS 8 Linux'
