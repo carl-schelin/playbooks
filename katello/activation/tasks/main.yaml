@@ -1,5 +1,5 @@
 ---
-- name: "Create CentOS 7 Development activation key"
+- name: "Create CentOS 7 Activation keys"
   theforeman.foreman.activation_key:
     username: "admin"
     password: "{{ katello_password }}"
@@ -14,47 +14,20 @@
     state: present
     subscriptions:
      - name: "CentOS 7 Linux"
+  with_items:
+    - Development
+    - QA
+    - Staging
+    - Production
 
-- name: "Create CentOS 7 Staging activation key"
+- name: "Create CentOS 8 Activation Keys"
   theforeman.foreman.activation_key:
     username: "admin"
     password: "{{ katello_password }}"
     server_url: "{{ katello_url }}"
     organization: "{{ katello_organization }}"
-    name: "Staging CentOS 7 Key"
-    lifecycle_environment: "Staging"
-    content_view: 'CentOS 7'
-    description: "CentOS 7 Activation Key"
-    auto_attach: yes
-    unlimited_hosts: yes
-    state: present
-    subscriptions:
-     - name: "CentOS 7 Linux"
-
-- name: "Create CentOS 7 Production activation key"
-  theforeman.foreman.activation_key:
-    username: "admin"
-    password: "{{ katello_password }}"
-    server_url: "{{ katello_url }}"
-    organization: "{{ katello_organization }}"
-    name: "Production CentOS 7 Key"
-    lifecycle_environment: "Production"
-    content_view: 'CentOS 7'
-    description: "CentOS 7 Activation Key"
-    auto_attach: yes
-    unlimited_hosts: yes
-    state: present
-    subscriptions:
-     - name: "CentOS 7 Linux"
-
-- name: "Create CentOS 8 Development Activation Key"
-  theforeman.foreman.activation_key:
-    username: "admin"
-    password: "{{ katello_password }}"
-    server_url: "{{ katello_url }}"
-    organization: "{{ katello_organization }}"
-    name: "Development CentOS 8 Key"
-    lifecycle_environment: "Development"
+    name: "{{ item }} CentOS 8 Key"
+    lifecycle_environment: "{{ item }}"
     content_view: 'CentOS 8'
     description: "CentOS 8 Activation Key"
     auto_attach: yes
@@ -62,36 +35,9 @@
     state: present
     subscriptions:
      - name: "CentOS 8 Linux"
-
-- name: "Create CentOS 8 Staging Activation Key"
-  theforeman.foreman.activation_key:
-    username: "admin"
-    password: "{{ katello_password }}"
-    server_url: "{{ katello_url }}"
-    organization: "{{ katello_organization }}"
-    name: "Staging CentOS 8 Key"
-    lifecycle_environment: "Staging"
-    content_view: 'CentOS 8'
-    description: "CentOS 8 Activation Key"
-    auto_attach: yes
-    unlimited_hosts: yes
-    state: present
-    subscriptions:
-     - name: "CentOS 8 Linux"
-
-- name: "Create CentOS 8 Production Activation Key"
-  theforeman.foreman.activation_key:
-    username: "admin"
-    password: "{{ katello_password }}"
-    server_url: "{{ katello_url }}"
-    organization: "{{ katello_organization }}"
-    name: "Production CentOS 8 Key"
-    lifecycle_environment: "Production"
-    content_view: 'CentOS 8'
-    description: "CentOS 8 Activation Key"
-    auto_attach: yes
-    unlimited_hosts: yes
-    state: present
-    subscriptions:
-     - name: "CentOS 8 Linux"
+  with_items:
+    - Development
+    - QA
+    - Staging
+    - Production
 
