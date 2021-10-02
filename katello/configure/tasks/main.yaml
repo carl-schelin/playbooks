@@ -8,7 +8,7 @@
     state: present
 
 
-- name: Configure Dallas location
+- name: Configure locations
   theforeman.foreman.location:
     username: admin
     password: "{{ katello_password }}"
