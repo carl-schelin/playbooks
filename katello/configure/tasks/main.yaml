@@ -13,7 +13,7 @@
     username: admin
     password: "{{ katello_password }}"
     server_url: "{{ katello_url }}"
-    organization: "{{ katello_organization }}"
+    organizations: "{{ katello_organization }}"
     name: "{{ item }}"
     state: present
   with_items:
