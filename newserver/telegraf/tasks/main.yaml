@@ -23,9 +23,9 @@
     mode: 0644
   with_items: "{{ config }}"
 
-#- name: Enable and start the telegraf service
-#  systemd:
-#    name: telegraf
-#    state: started
-#    enabled: yes
+- name: Enable and start the telegraf service
+  systemd:
+    name: telegraf
+    state: started
+    enabled: yes
 
