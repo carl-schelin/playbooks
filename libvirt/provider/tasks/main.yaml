@@ -26,7 +26,7 @@
 
 - name: Create the service account libvirt provider directory
   file:
-    path: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64
+    path: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.11/linux_amd64
     state: directory
     owner: unixsvc
     group: unixsvc
@@ -35,7 +35,7 @@
 - name: Install the terraform-provider-libvirt binary
   copy:
     src: ../files/terraform-provider-libvirt
-    dest: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.2/linux_amd64/
+    dest: /home/unixsvc/.local/share/terraform/plugins/registry.terraform.io/dmacvicar/libvirt/0.6.11/linux_amd64/
     owner: unixsvc
     group: unixsvc
     mode: '0755'
