@@ -1,0 +1,24 @@
+# Assuming the VG is already in place, create a file system, format it, and mount it.
+# this assumes of course that the LV doesn't yet exist.
+# Carl Schelin
+# 2017-05-12
+# 
+---
+- name: creating the new LVM logical volume
+  lvol: 
+    vg=ubuntu-vg
+    lv=images
+    size=200G
+
+- name: creating the new filesystem on new LVM logical volume
+  filesystem:
+    fstype=ext4
+    dev=/dev/ubuntu-vg/images
+
+- name: mounting the new filesystem
+  mount:
+    path=/opt/libvirt_images
+    src=/dev/ubuntu-vg/images
+    fstype=ext4
+    state=mounted
+

@@ -1,0 +1,55 @@
+# create logical volumes for various files.
+# Carl Schelin
+# 2017-05-12
+#
+---
+#- name: create partition
+#  parted:
+#    device: /dev/sdb
+#    number: 1
+#    flags: [ lvm ]
+#    state: present
+#    part_end: 2TB
+#
+#- name: create volume group 1TB
+#  lvg:
+#    vg: vg01
+#    pvs: /dev/sdb1
+#    pesize: 2048G
+#
+- name: creating the new LVM images vol
+  lvol:
+    vg: vg01
+    lv: images
+    size: 700G
+
+- name: creating the new filesystem on images
+  filesystem:
+    fstype: ext4
+    dev: /dev/vg01/images
+
+- name: mounting the new images filesystem
+  mount:
+    path: /opt/libvirt_images
+    src: /dev/vg01/images
+    fstype: ext4
+    state: mounted
+
+- name: creating the new LVM logical volume
+  lvol:
+    vg: vg01
+    lv: downloads
+    size: 200G
+
+- name: creating the new filesystem on new LVM logical volume
+  filesystem:
+    fstype: ext4
+    dev: /dev/vg01/downloads
+
+- name: mounting the new downloads filesystem
+  mount:
+    path: /opt/downloads
+    src: /dev/vg01/downloads
+    fstype: ext4
+    state: mounted
+

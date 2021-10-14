@@ -4,21 +4,41 @@
 # 2017-05-12
 # 
 ---
-- name: creating the new LVM logical volume
-  lvol: 
-    vg=ubuntu-vg
-    lv=images
-    size=200G
+- name: Include Red Hat tasks
+  include_tasks: "redhat.yaml"
+  when: ansible_os_family == "RedHat"
 
-- name: creating the new filesystem on new LVM logical volume
-  filesystem:
-    fstype=ext4
-    dev=/dev/ubuntu-vg/images
+- name: Include Debian tasks
+  include_tasks: "debian.yaml"
+  when: ansible_os_family == "Debian"
 
-- name: mounting the new filesystem
-  mount:
-    path=/libvirt_images
-    src=/dev/ubuntu-vg/images
-    fstype=ext4
-    state=mounted
+- name: Update permissions and ownerships of downloads
+  file:
+    path: /opt/downloads
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: Update permissions and ownerships of libvirt_images
+  file:
+    path: /opt/libvirt_images
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: Copy over the images
+  copy:
+    src: '{{ item }}'
+    dest: '/opt/downloads/'
+  loop:
+    - bionic-server-cloudimg-amd64.img
+    - centos7_300g.qcow2
+    - centos8_120g.qcow2
+    - centos8_20g.qcow2
+    - centos8_50g.qcow2
+    - centos8_75g.qcow2
+    - CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2
+    - debian10_20g.qcow2
+    - debian-10-openstack-amd64.qcow2
+    - ubuntu18_20g.img
 
