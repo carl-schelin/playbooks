@@ -4,6 +4,7 @@
 # install terraform. Just copies a file out
 # install the libvirt providor into the service account's home directory
 # create the logical volume for images
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=nikodemus' install_terraform --tags [initialize,kvm,terraform,provider,createlvm]
 ---
 - hosts: "{{ pattern }}"
   become: true
@@ -11,8 +12,9 @@
   gather_facts: no
 
   roles:
-    - kvm
-    - terraform
-    - provider
-    - createlvm
+    - { role: initialize,  tag: ["initialize"] }
+    - { role: kvm,         tag: ["kvm"] }
+    - { role: terraform,   tag: ["terraform"] }
+    - { role: provider,    tag: ["provider"] }
+    - { role: createlvm,   tag: ["createlvm"] }
 
