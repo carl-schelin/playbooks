@@ -1,0 +1,14 @@
+---
+- name: Install the necessary KVM packages
+  apt:
+    pkg:
+    - qemu
+    - qemu-kvm
+    - libvirt-daemon
+    - libvirt-clients
+    - bridge-utils
+    - virt-manager
+    - libguestfs-tools
+    - libvirt-dev
+    - libosinfo-bin
+

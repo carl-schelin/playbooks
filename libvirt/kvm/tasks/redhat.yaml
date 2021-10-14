@@ -1,0 +1,10 @@
+---
+- name: Install the necessary KVM packages
+  dnf:
+    name:
+      - qemu-kvm
+      - libvirt-daemon
+      - virt-manager
+      - virt-install
+      - libguestfs-tools
+

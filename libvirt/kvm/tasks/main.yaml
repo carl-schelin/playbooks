@@ -1,16 +1,11 @@
 ---
-- name: Install the necessary KVM packages
-  apt:
-    pkg:
-    - qemu
-    - qemu-kvm
-    - libvirt-daemon
-    - libvirt-clients
-    - bridge-utils
-    - virt-manager
-    - libguestfs-tools
-    - libvirt-dev
-    - libosinfo-bin
+- name: Include Red Hat tasks
+  include_tasks: "redhat.yaml"
+  when: ansible_os_family == "RedHat"
+
+- name: Include Debian tasks
+  include_tasks: "debian.yaml"
+  when: ansible_os_family == "Debian"
 
 - name: Activate libvirtd
   systemd:
@@ -20,8 +15,19 @@
 
 - name: Create Image directory
   file:
-    path: /libvirt_images
+    path: /opt/libvirt_images
     state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: Create Downloads directory
+  file:
+    path: /opt/downloads
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
 
 - name: Append the service account with the kvm groups
   user:
@@ -29,5 +35,10 @@
     comment: "Unix Service Account"
     uid: 5000
     group: unixsvc
+    groups: sudo,sysadmin,libvirt,kvm
+
+- name: Append Carl's account with the kvm groups
+  user:
+    name: cschelin
     groups: sudo,sysadmin,libvirt,kvm
 
