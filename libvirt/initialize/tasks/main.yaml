@@ -1,0 +1,59 @@
+---
+- name: Install ksh
+  dnf:
+    name: ksh
+    state: latest
+
+- name: Install git
+  dnf:
+    name: git
+    state: latest
+
+- name: Install firewalld
+  dnf:
+    name: firewalld
+    state: latest
+
+- name: Enable and Start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Install snmpd on centOS
+  dnf:
+    name: net-snmp
+    state: latest
+
+- name: Enable and Start snmpd
+  systemd:
+    name: snmpd
+    state: started
+    enabled: yes
+
+- name: Add sysadmin group
+  group:
+    name: sysadmin
+    state: present
+
+- name: Add tmproot group
+  group:
+    name: tmproot
+    state: present
+    gid: 666
+
+- name: Update sudoers
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: "^%sysadmin.*"
+    line: "%sysadmin    ALL=(ALL) ALL"
+
+- name: Create playbooks directory
+  file:
+    path: /usr/local/admin/playbooks
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+    state: directory
+
