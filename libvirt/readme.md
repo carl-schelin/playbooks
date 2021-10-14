@@ -21,7 +21,7 @@ In the createlvm/files directory, the following images need to be available:
 * CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2 - CentOS cloud Image
 * debian-10-openstack-amd64.qcow2 - Debian cloud image
 
-(https://docs.openstack.org/image-guide/obtain-images.html)[Images can be found here]
+[https://docs.openstack.org/image-guide/obtain-images.html](Images can be found here)
 
 Then copy the above images as listed below and adjust the sizes as noted. (These files are also needed.)
 
@@ -37,12 +37,12 @@ In the provider/files directory, you need the following file:
 
 * terraform-provider-libvirt
 
-(https://github.com/dmacvicar/terraform-provider-libvirt)[Binary can be found here]
+[https://github.com/dmacvicar/terraform-provider-libvirt](Binary can be found here)
 
 In the terraform/files directory, you need the following file:
 
 * terraform
 
-(https://www.terraform.io/downloads.html)[Binary can be found here]
+[https://www.terraform.io/downloads.html](Binary can be found here)
 
 
