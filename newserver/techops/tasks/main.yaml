@@ -1,0 +1,15 @@
+# Carl Schelin
+# delete the old and new installation directories as they're unneeded once the system is installed.
+# 2018/03/06
+---
+---
+- name: Remove the old installation directory
+  file:
+    state: absent
+    path: "/opt/techops/"
+
+- name: Remove the new installation directory
+  file:
+    state: absent
+    path: "/opt/techops70/"
+
