@@ -9,15 +9,16 @@
 
   roles:
     - {role: initialize, tags: 'initialize'}
-    - {role: chrony, tags: 'chrony'}
-    - {role: firewall, tags: 'firewall'}
+    - {role: chrony,     tags: 'chrony'}
+    - {role: firewall,   tags: 'firewall'}
     - {role: ipa-client, tags: 'ipa-client'}
-    - {role: ksh, tags: 'ksh'}
-    - {role: mailx, tags: 'mailx'}
-    - {role: snmpd, tags: 'snmpd'}
-    - {role: sshd, tags: 'sshd'}
-    - {role: sudoers, tags: 'sudoers'}
-    - {role: sysadmin, tags: 'sysadmin'}
-    - {role: telegraf, tags: 'telegraf'}
-    - {role: tmproot, tags: 'tmproot'}
-    - {role: vmtoolsd, tags: 'vmtoolsd'}
+    - {role: ksh,        tags: 'ksh'}
+    - {role: mailx,      tags: 'mailx'}
+    - {role: snmpd,      tags: 'snmpd'}
+    - {role: sshd,       tags: 'sshd'}
+    - {role: sudoers,    tags: 'sudoers'}
+    - {role: sysadmin,   tags: 'sysadmin'}
+    - {role: techops,    tags: 'techops'}
+    - {role: telegraf,   tags: 'telegraf'}
+    - {role: tmproot,    tags: 'tmproot'}
+    - {role: vmtoolsd,   tags: 'vmtoolsd'}
