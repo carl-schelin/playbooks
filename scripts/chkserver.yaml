@@ -1,0 +1,15 @@
+# Occasionally I need to run the chkserver script which is a data gathering shell 
+# script. This playbook lets me run it outside of the normal time it runs.
+# I suppose it could be used to run any script but this is the purpose of this one :) 
+# Carl Schelin
+# 2017-06-27
+# ansible-playbook -i /usr/local/admin/etc/hosts -e pattern=[servername] chkserver.yaml
+---
+- name: Run the chkserver script
+  hosts: '{{ pattern }}'
+  become: yes
+
+  tasks:
+    - name: Run the chkserver script
+      script: /opt/unixsuite/bin/chkserver
+
