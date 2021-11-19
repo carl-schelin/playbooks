@@ -1,40 +1,40 @@
 ---
 - name: Change development password for {{ username }}
   user:
-    name={{ username }}
+    name="{{ username }}"
     update_password=always
-    password={{ boulder.password }}
+    password="{{ boulder }}"
   when: ('BLDR' in inventory_hostname|upper)
 
 - name: Change qa password for {{ username }}
   user:
-    name={{ username }}
+    name="{{ username }}"
     update_password=always
-    password={{ cabo.password }}
+    password="{{ cabo }}"
   when: ('CABO' in inventory_hostname|upper)
 
 - name: Change staging password for {{ username }}
   user:
-    name={{ username }}
+    name="{{ username }}"
     update_password=always
-    password={{ tatooine.password }}
+    password="{{ tatooine }}"
   when: ('TATO' in inventory_hostname|upper)
 
 - name: Change production password for {{ username }}
   user:
-    name={{ username }}
+    name="{{ username }}"
     update_password=always
-    password={{ longmont.password }}
+    password="{{ longmont }}"
   when: ('LNMT' in inventory_hostname|upper)
 
 - name: Change personal password for {{ username }}
   user:
-    name={{ username }}
+    name="{{ username }}"
     update_password=always
-    password={{ nederland.password }}
+    password="{{ nederland.password }}"
   when: ('NDLD' in inventory_hostname|upper)
 
 - name: Ensure standard username resets password upon login, skip service accounts
-  shell: chage -d 0 {{ username }}
+  shell: "chage -d 0 {{ username }}"
   when: username != 'root' and username != 'unixsvc'
 
