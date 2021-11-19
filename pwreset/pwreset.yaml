@@ -1,9 +1,27 @@
-# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder' -e 'user=root' -e 'envuser=boulderroot' pwreset.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder' pwreset.yaml -C
 ---
-- name: Change passwords
-  hosts: "{{ pattern }}"
-  become: yes
-  gather_facts: yes
+- name: Validation Checks
+  hosts: localhost
+  become: false
+
+  tasks:
+    - name: Verify the -e variable was set
+      assert:
+        that:
+          - "false"
+        msg: You must run the playbook with '-e pattern=[site] and '-e user=[username]'
+      when: (pattern is undefined) or (pattern | trim == '') or 
+            (user is undefined) or (user | trim == '')
+
+    - name: Make sure we're reasonably current with Ansible
+      assert:
+        that:
+          - "{{ ansible_version.string | version_compare('2.9', '>=') }}"
+        msg: This playbook works best when Ansible 2.9 or above is installed
+
+- name: Asserts passed, now Reset password
+  hosts: {{ pattern }} 
+  become: true
 
   roles:
   - pwreset
