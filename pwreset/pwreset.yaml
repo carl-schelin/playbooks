@@ -9,9 +9,8 @@
       assert:
         that:
           - "false"
-        msg: You must run the playbook with '-e pattern=[site] and '-e user=[username]'
-      when: (pattern is undefined) or (pattern | trim == '') or 
-            (user is undefined) or (user | trim == '')
+        msg: You must run the playbook with '-e pattern=[site]
+      when: (pattern is undefined) or (pattern | trim == '')
 
     - name: Make sure we're reasonably current with Ansible
       assert:
