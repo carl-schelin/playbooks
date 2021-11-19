@@ -1,40 +1,40 @@
 ---
-- name: Change {{ user }}'s development password
+- name: Change {{ username }}'s development password
   user:
-    name={{ user }}
+    name={{ username }}
     update_password=always
-    password={{ envuser }}
+    password={{ boulder.password }}
   when: ('BLDR' in inventory_hostname|upper)
 
-- name: Change {{ user }}'s qa password
+- name: Change {{ username }}'s qa password
   user:
-    name={{ user }}
+    name={{ username }}
     update_password=always
-    password={{ envuser }}
+    password={{ cabo.password }}
   when: ('CABO' in inventory_hostname|upper)
 
-- name: Change {{ user }}'s staging password
+- name: Change {{ username }}'s staging password
   user:
-    name={{ user }}
+    name={{ username }}
     update_password=always
-    password={{ envuser }}
+    password={{ tatooine.password }}
   when: ('TATO' in inventory_hostname|upper)
 
-- name: Change {{ user }}'s production password
+- name: Change {{ username }}'s production password
   user:
-    name={{ user }}
+    name={{ username }}
     update_password=always
-    password={{ envuser }}
+    password={{ longmont.password }}
   when: ('LNMT' in inventory_hostname|upper)
 
-- name: Change {{ user }}'s personal password
+- name: Change {{ username }}'s personal password
   user:
-    name={{ user }}
+    name={{ username }}
     update_password=always
-    password={{ envuser }}
+    password={{ nederland.password }}
   when: ('NDLD' in inventory_hostname|upper)
 
-- name: Ensure standard user resets password upon login, skip service accounts
-  shell: chage -d 0 {{ user }}
-  when: user != 'root' and user != 'unixsvc'
+- name: Ensure standard username resets password upon login, skip service accounts
+  shell: chage -d 0 {{ username }}
+  when: username != 'root' and username != 'unixsvc'
 
