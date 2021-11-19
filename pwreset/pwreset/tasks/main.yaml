@@ -1,33 +1,33 @@
 ---
-- name: Change {{ username }}'s development password
+- name: Change development password for {{ username }}
   user:
     name={{ username }}
     update_password=always
     password={{ boulder.password }}
   when: ('BLDR' in inventory_hostname|upper)
 
-- name: Change {{ username }}'s qa password
+- name: Change qa password for {{ username }}
   user:
     name={{ username }}
     update_password=always
     password={{ cabo.password }}
   when: ('CABO' in inventory_hostname|upper)
 
-- name: Change {{ username }}'s staging password
+- name: Change staging password for {{ username }}
   user:
     name={{ username }}
     update_password=always
     password={{ tatooine.password }}
   when: ('TATO' in inventory_hostname|upper)
 
-- name: Change {{ username }}'s production password
+- name: Change production password for {{ username }}
   user:
     name={{ username }}
     update_password=always
     password={{ longmont.password }}
   when: ('LNMT' in inventory_hostname|upper)
 
-- name: Change {{ username }}'s personal password
+- name: Change personal password for {{ username }}
   user:
     name={{ username }}
     update_password=always
