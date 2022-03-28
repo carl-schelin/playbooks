@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # suitecheck - This script should be run every 5 minutes
 # Carl Schelin - 12/19/2018
@@ -15,8 +15,16 @@ fi
 . "${DIRNAME}"/../.config
 
 # get the current hour and minute
-# scripts in run.d/$RUNDATE will be run in the order presented
-RUNDATE=$(date +"%H%M")
+# scripts in run.d/$RUNTIME will be run in the order presented
+RUNTIME=$(date +"%H%M")
+
+# get the current day of the week
+# scripts in W[DOW][RUNTIME] will be run
+WEEKDAY=$(date +"%w")
+
+# get the current day of the month
+# scripts in M[DOM][RUNTIME] will be run
+MONTHDAY=$(date +"%d")
 
 if [[ -f ${SCRIPTS_LOGS}/suitecheck.* ]]
 then
@@ -65,12 +73,28 @@ then
   rm "${SCRIPTS_RUND}/always/runonce"
 fi
 
-if [[ -d ${SCRIPTS_RUND}/${RUNDATE} ]]
+if [[ -d ${SCRIPTS_RUND}/${RUNTIME} ]]
 then
 # then run any script in the current hour/minute directory
-  for i in `ls ${SCRIPTS_RUND}/${RUNDATE}/`
+  for i in `ls ${SCRIPTS_RUND}/${RUNTIME}/`
   do
-    "${SCRIPTS_RUND}"/${RUNDATE}/${i}
+    "${SCRIPTS_RUND}"/${RUNTIME}/${i}
+  done
+fi
+
+if [[ -d ${SCRIPTS_RUND}/W${WEEKDAY}${RUNTIME} ]]
+then
+  for i in `ls ${SCRIPTS_RUND}/W${WEEKDAY}${RUNTIME}/`
+  do
+    "${SCRIPTS_RUND}"/W${WEEKDAY}${RUNTIME}/${i}
+  done
+fi
+
+if [[ -d ${SCRIPTS_RUND}/M${MONTHDAY}${RUNTIME} ]]
+then
+  for i in `ls ${SCRIPTS_RUND}/M${MONTHDAY}${RUNTIME}/`
+  do
+    "${SCRIPTS_RUND}"/M${MONTHDAY}${RUNTIME}/${i}
   done
 fi
 
