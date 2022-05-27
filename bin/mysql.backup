@@ -32,7 +32,7 @@ fi
 # set up variables
 # newer versions of mysql/mariadb won't let you write to /var/tmp so changed to /opt/mysqlbackup
 ROOT="/opt/mysqlbackup"
-DATE=`date +"%Y%m%d"`
+DATE=$(date +"%Y%m%d")
 LOG="$ROOT/mysql.$DATE/mysql.report"
 # location of mysql on Solaris using CSW package management
 PATH="/opt/csw/mysql5/bin:$PATH"; export PATH
@@ -65,22 +65,14 @@ echo "Beginning mysql report: ${DATE}" > ${LOG}
 
 for i in ${MYSQL_DATABASES}
 do
-# create new database directory for backups. don't dump a database if it's already there
-  if [[ ! -d ${ROOT}/mysql.${DATE}/${i} ]]
-  then
-    mkdir -p ${ROOT}/mysql.${DATE}/${i}
-
 # ensure mysql can actually write to the database directory
-    chmod -R 775 ${ROOT}/mysql.${DATE}
-    chown -R mysql:mysql ${ROOT}/mysql.${DATE}
+  chmod -R 775 ${ROOT}/mysql.${DATE}
+  chown -R mysql:mysql ${ROOT}/mysql.${DATE}
 
-    cd ${ROOT}/mysql.${DATE}/${i}
-
-    echo "Dumping ${i}" >> ${LOG}
-    echo "Dumping ${i}"
-    echo "mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user=\"${MYSQL_USER}\" --password=\"${MYSQL_PASSWORD}\""
-    mysqldump --tab=${ROOT}/mysql.${DATE}/${i}/ --opt ${i} --user="${MYSQL_USER}" --password="${MYSQL_PASSWORD}" >> ${LOG}
-  fi
+  echo "Dumping ${i}" >> ${LOG}
+  echo "Dumping ${i}"
+  echo "mysqldump --tab=${ROOT} --opt ${i} --user=\"${MYSQL_USER}\" --password=\"${MYSQL_PASSWORD}\""
+  mysqldump --opt ${i} --user="${MYSQL_USER}" --password="${MYSQL_PASSWORD}" > ${ROOT}/mysql.${DATE}/${i}.sql
 
 done
 
