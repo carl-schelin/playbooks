@@ -1,0 +1,201 @@
+---
+- name: Install the epel package on Red Hat based systems
+  ansible.builtin.yum:
+    name: epel-release
+    state: latest
+
+- name: Upgrade server
+  ansible.builtin.yum:
+    name: "*"
+    state: latest
+  notify: Reboot Server
+  when: patch == "true"
+
+- name: Install firewalld
+  ansible.builtin.yum:
+    name: firewalld
+    state: latest
+
+- name: Initially start firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Install various Red Hat based tools
+  ansible.builtin.yum:
+    name:
+      - bind-utils
+      - curl
+      - gnupg2
+      - ksh
+      - mailx
+      - net-tools
+      - psmisc
+      - python3
+      - python3-pip
+      - tcpdump
+      - traceroute
+      - wget
+    disable_gpg_check: yes
+    state: latest
+
+- name: ensure ipa-client is installed and current
+  ansible.builtin.yum:
+    name: ipa-client
+    state: latest
+
+- name: Install chrony
+  ansible.builtin.yum:
+    name: chrony
+    state: latest
+  notify:
+  - Restart chrony
+
+- name: Setup time services
+  template:
+    src: redhat.chrony.conf.j2
+    dest: /etc/chrony.conf
+  notify:
+  - Restart chrony
+
+- name: Install snmpd on centOS
+  ansible.builtin.yum:
+    name: net-snmp
+    state: latest
+  notify:
+  - Restart snmpd
+
+- name: Setup SNMP services
+  template:
+    src: snmpd.conf.j2
+    dest: /etc/snmp/snmpd.conf
+  notify:
+  - Restart snmpd
+
+- name: Install open-vm-tools
+  yum:
+    name: open-vm-tools
+    state: latest
+  notify:
+    - Restart vmtoolsd
+
+- name: Remove Public Services
+  firewalld:
+    zone: public
+    permanent: yes
+    state: disabled
+    service: "{{ item }}"
+  with_items:
+    - cockpit
+    - dhcpv6-client
+
+- name: Add snmp to Public zone
+  firewalld:
+    zone: public
+    permanent: yes
+    state: enabled
+    service: "{{ item }}"
+  with_items:
+    - snmp
+
+- name: Remove remote root login from sshd_config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^PermitRootLogin no'
+    insertafter: "^#PermitRootLogin yes"
+    line: 'PermitRootLogin no'
+  notify:
+  - Restart sshd
+
+- name: Enable /etc/ssh/ssh_host_ecdsa_key in sshd_config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_ecdsa_key'
+    line: 'HostKey /etc/ssh/ssh_host_ecdsa_key'
+  notify:
+  - Restart sshd
+
+- name: Enable /etc/ssh/ssh_host_ed25519_key in sshd_config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_ed25519_key'
+    line: 'HostKey /etc/ssh/ssh_host_ed25519_key'
+  notify:
+  - Restart sshd
+
+- name: Enable /etc/ssh/ssh_host_rsa_key in sshd_config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_rsa_key'
+    line: 'HostKey /etc/ssh/ssh_host_rsa_key'
+  notify:
+  - Restart sshd
+
+- name: Update the banner line to point to /etc/issue
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^Banner /etc/issue'
+    line: 'Banner /etc/issue'
+  notify:
+  - Restart sshd
+
+- name: Copy the influxdb repo
+  copy:
+    src: ../files/influxdb.repo
+    dest: /etc/yum.repos.d/influxdb.repo
+
+- name: Install telegraf
+  yum:
+    name: telegraf
+    state: latest
+
+- name: Install main telegraf configuration
+  template:
+    src: templates/telegraf.conf
+    dest: "/etc/telegraf/telegraf.conf"
+    mode: 0644
+  with_items: "{{ config }}"
+  notify:
+  - Restart telegraf
+
+- name: Install main telegraf core file
+  template:
+    src: templates/core.conf
+    dest: "/etc/telegraf/telegraf.d/core.conf"
+    mode: 0644
+  with_items: "{{ config }}"
+  notify:
+  - Restart telegraf
+
+- name: Include site variables for admins
+  include_vars:
+    file: "vars/users.yaml"
+
+- name: Install default sudoers
+  template:
+    src: templates/sudoers
+    dest: "/etc/sudoers"
+    mode: 0440
+
+- name: Ensure all syslog logging logs are compressed
+  lineinfile:
+    path: /etc/logrotate.d/syslog
+    line: "    compress"
+    insertafter: "    missingok"
+    state: present
+
+- name: Restart firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Set SELinux to Permissive
+  selinux:
+    policy: targeted
+    state: permissive
+  notify:
+    - Reboot Server
+

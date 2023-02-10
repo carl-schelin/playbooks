@@ -1,6 +1,0 @@
----
-- name: Make sure sysadmin group exists
-  group:
-    name: sysadmin
-    state: present
-

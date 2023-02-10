@@ -1,0 +1,47 @@
+---
+ name: Download the Amazon CLI tools
+  get_url:
+    url: "{{ amazon.cli }}"
+    dest: /var/tmp/awscliv2.zip
+
+- name: Uncompress the Amazon CLI tools
+  unarchive:
+    src: /var/tmp/awscliv2.zip
+    dest: /var/tmp
+    remote_src: yes
+
+- name: Create the .aws directory
+  file:
+    path: {{ item.home }}/.aws
+    state: directory
+    owner: {{ item.name }}
+    group: {{ item.name }}
+    mode: 0700
+  with_items: "{{ users }}"
+
+- name: Install the configuration into a home directory
+  template:
+    src: config.j2
+    dest: {{ item.home }}/.aws/config
+    owner: {{ item.name }}
+    group: {{ item.name }}
+    mode: 0600
+  with_items: "{{ users }}"
+
+- name: Install the credentials into a home directory
+  template:
+    src: credentials.j2
+    dest: {{ item.home }}/.aws/credentials
+    owner: {{ item.name }}
+    group: {{ item.name }}
+    mode: 0600
+  with_items: "{{ users }}"
+
+- name: Install terraform
+  copy:
+    src: terraform
+    dest: /usr/local/bin/terraform
+    owner: root
+    group: root
+    mode: 0755
+
