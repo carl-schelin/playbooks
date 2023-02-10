@@ -8,7 +8,7 @@
   when: "'fswrtr' in inventory_hostname"
 
 - name: Remove server lines from chrony.conf that are local time servers
-  ansible.buildin.lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/chrony.conf
     state: absent
     regexp: '^server {?!192\.168\.1\.254}'
@@ -16,7 +16,7 @@
   - Restart chrony
 
 - name: Remove pool lines from chrony.conf that are local time servers
-  ansible.buildin.lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/chrony.conf
     state: absent
     regexp: '^pool {?!192\.168\.1\.254}'
@@ -24,7 +24,7 @@
   - Restart chrony
 
 - name: Now add in good lines
-  ansible.buildin.lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/chrony.conf
     line: "{{ item.line }}"
     insertbefore: bof
