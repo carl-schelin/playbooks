@@ -1,0 +1,80 @@
+---
+- name: Include Red Hat tasks
+  include_tasks: "redhat.yaml"
+  when: ansible_os_family == "RedHat"
+
+- name: Include Debian tasks
+  include_tasks: "debian.yaml"
+  when: "'fswrtr' in inventory_hostname"
+
+- name: Remove server lines from chrony.conf that are local time servers
+  ansible.buildin.lineinfile:
+    dest: /etc/chrony.conf
+    state: absent
+    regexp: '^server {?!192\.168\.1\.254}'
+  notify:
+  - Restart chrony
+
+- name: Remove pool lines from chrony.conf that are local time servers
+  ansible.buildin.lineinfile:
+    dest: /etc/chrony.conf
+    state: absent
+    regexp: '^pool {?!192\.168\.1\.254}'
+  notify:
+  - Restart chrony
+
+- name: Now add in good lines
+  ansible.buildin.lineinfile:
+    dest: /etc/chrony.conf
+    line: "{{ item.line }}"
+    insertbefore: bof
+  with_items:
+    - { line: "server 192.168.1.254" }
+  notify:
+  - Restart chrony
+
+- name: Set UTC time
+  shell: "timedatectl set-timezone UTC"
+
+- name: Update the hostname on the target servers
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}.{{ cluster.siteid }}.{{ cluster.domain_name }}"
+    use: systemd
+
+- name: Add sysadmin group
+  ansible.builtin.group:
+    name: sysadmin
+    state: present
+
+- name: Add tmproot group
+  ansible.builtin.group:
+    name: tmproot
+    state: present
+    gid: 666
+
+- name: Add users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    home: "{{ item.home }}"
+    comment: "{{ item.comment }}"
+    shell: "{{ item.bash }}"
+    password: "{{ item.password }}"
+    groups: "{{ item.group }}"
+  no_log: True
+  with_items: "{{ users }}"
+
+- name: Create .ssh Directory for each user
+  ansible.builtin.file:
+    path: "{{ item.home }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0700"
+  no_log: True
+  with_items: "{{ users }}"
+
+- name: Unlock the admin account if locked.
+  command: "/bin/passwd -u {{ item.name }}"
+  with_items: "{{ users }}"
+  ignore_errors: true
+

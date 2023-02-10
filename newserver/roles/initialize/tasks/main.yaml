@@ -1,7 +1,0 @@
----
-- name: Install the epel package on CentOS
-  ansible.builtin.yum:
-    name: epel-release
-    state: latest
-  when: ansible_os_family == "RedHat"
-

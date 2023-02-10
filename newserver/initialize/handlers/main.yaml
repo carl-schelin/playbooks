@@ -1,0 +1,25 @@
+---
+- name: Restart chrony
+  systemd:
+    daemon_reload: yes
+    name: chronyd
+    state: restarted
+
+- name: Restart vmtoolsd
+  systemd:
+    name: vmtoolsd
+    state: started
+    enabled: yes
+
+- name: Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+    enabled: yes
+
+- name: Restart telegraf
+  systemd:
+    name: telegraf
+    state: started
+    enabled: yes
+

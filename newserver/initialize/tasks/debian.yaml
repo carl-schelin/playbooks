@@ -1,0 +1,119 @@
+---
+- name: Update debian
+  command: 'apt-get --allow-releaseinfo-change update'
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    name: "*"
+    state: latest
+    update_cache: yes
+  tags:
+  - upgrade
+  notify: Reboot Server
+  when: patch == "true"
+
+- name: Change the ip6tables assignment
+  alternatives:
+    name: ip6tables
+    path: /usr/sbin/ip6tables-legacy
+
+- name: Change the iptables assignment
+  alternatives:
+    name: iptables
+    path: /usr/sbin/iptables-legacy
+
+- name: Install firewalld
+  ansible.builtin.apt:
+    name: firewalld
+    state: latest
+
+- name: Initially start firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Update the login.defs file with correct permissions
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: "^UMASK.*022"
+    line: "UMASK           077"
+
+- name: Install various debian tools
+  ansible.builtin.apt:
+    name:
+      - python3
+      - curl
+      - dnsutils
+      - gnupg2
+      - ksh
+      - net-tools
+      - psmisc
+      - python3-pip
+      - tcpdump
+      - traceroute
+      - wget
+    state: latest
+
+- name: ensure ipa-client is installed and current
+  ansible.builtin.apt:
+    name: freeipa-client
+    state: latest
+
+- name: Install chrony on Debian
+  ansible.builtin.apt:
+    name: chrony
+    state: latest
+  notify:
+  - Start the chrony Service
+
+- name: Setup time services
+  template:
+    src: debian.chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+  notify:
+  - Start the chrony Service
+
+- name: Install snmpd on Debian
+  ansible.builtin.apt:
+    name: snmpd
+    state: latest
+  notify:
+  - Start the snmpd Service
+
+- name: Setup SNMP services
+  template:
+    src: snmpd.conf.j2
+    dest: /etc/snmp/snmpd.conf
+  notify:
+  - Start the snmpd Service
+
+- name: Remove Public Services
+  firewalld:
+    zone: public
+    permanent: yes
+    state: disabled
+    service: "{{ item }}"
+  with_items:
+    - cockpit
+    - dhcpv6-client
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+- name: Add snmp to Public zone
+  firewalld:
+    zone: public
+    permanent: yes
+    state: enabled
+    service: "{{ item }}"
+  with_items:
+    - snmp
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
+
+- name: Restart firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
