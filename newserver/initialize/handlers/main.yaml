@@ -5,6 +5,12 @@
     name: chronyd
     state: restarted
 
+- name: Restart snmpd
+  systemd:
+    name: snmpd
+    state: started
+    enabled: yes
+
 - name: Restart vmtoolsd
   systemd:
     name: vmtoolsd
