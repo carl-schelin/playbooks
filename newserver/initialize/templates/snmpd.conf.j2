@@ -1,0 +1,6 @@
+# SNMP Config for the above 8 servers (you can just put at the bottom of the default file).
+rocommunity {{ read_only }}
+trapsink {{ snmp.ipa_1 }} {{ snmp_trap }}
+trapsink {{ snmp.ipa_2 }} {{ snmp_trap }}
+agentAddress  udp:{{ ansible_eth0.ipv4.address }}:161
+
