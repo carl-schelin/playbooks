@@ -38,7 +38,7 @@
 
 - name: Update the hostname on the target servers
   ansible.builtin.hostname:
-    name: "{{ inventory_hostname }}.{{ cluster.siteid }}.{{ cluster.domain_name }}"
+    name: "{{ inventory_hostname }}.{{ site.name }}.{{ site.domain }}"
     use: systemd
 
 - name: Add sysadmin group
