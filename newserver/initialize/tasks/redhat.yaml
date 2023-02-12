@@ -174,10 +174,6 @@
   notify:
   - Restart telegraf
 
-- name: Include site variables for admins
-  include_vars:
-    file: "vars/users.yaml"
-
 - name: Install default sudoers
   template:
     src: templates/sudoers
