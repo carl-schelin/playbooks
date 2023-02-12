@@ -29,3 +29,6 @@
     state: started
     enabled: yes
 
+- name: Reboot Server
+  reboot:
+
