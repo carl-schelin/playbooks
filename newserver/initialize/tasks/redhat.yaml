@@ -197,10 +197,10 @@
     state: restarted
     enabled: yes
 
-- name: Set SELinux to Permissive
-  selinux:
-    policy: targeted
-    state: permissive
-  notify:
-    - Reboot Server
+#- name: Set SELinux to Permissive
+#  selinux:
+#    policy: targeted
+#    state: permissive
+#  notify:
+#    - Reboot Server
 
