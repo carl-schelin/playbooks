@@ -43,11 +43,13 @@
 - name: ensure ipa-client is installed and current
   ansible.builtin.yum:
     name: ipa-client
+    disable_gpg_check: yes
     state: latest
 
 - name: Install chrony
   ansible.builtin.yum:
     name: chrony
+    disable_gpg_check: yes
     state: latest
   notify:
   - Restart chrony
@@ -62,6 +64,7 @@
 - name: Install snmpd on centOS
   ansible.builtin.yum:
     name: net-snmp
+    disable_gpg_check: yes
     state: latest
   notify:
   - Restart snmpd
@@ -76,6 +79,7 @@
 - name: Install open-vm-tools
   yum:
     name: open-vm-tools
+    disable_gpg_check: yes
     state: latest
   notify:
     - Restart vmtoolsd
@@ -149,6 +153,7 @@
 - name: Install telegraf
   yum:
     name: telegraf
+    disable_gpg_check: yes
     state: latest
 
 - name: Install main telegraf configuration
