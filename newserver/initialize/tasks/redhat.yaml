@@ -162,6 +162,7 @@
     dest: "/etc/telegraf/telegraf.conf"
     mode: 0644
   with_items: "{{ config }}"
+  no_log: True
   notify:
   - Restart telegraf
 
@@ -171,6 +172,7 @@
     dest: "/etc/telegraf/telegraf.d/core.conf"
     mode: 0644
   with_items: "{{ config }}"
+  no_log: True
   notify:
   - Restart telegraf
 
