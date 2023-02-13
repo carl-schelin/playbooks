@@ -57,9 +57,9 @@
     name: "{{ item.name }}"
     home: "{{ item.home }}"
     comment: "{{ item.comment }}"
-    shell: "{{ item.bash }}"
+    shell: "{{ item.shell }}"
     password: "{{ item.password }}"
-    groups: "{{ item.group }}"
+    groups: "{{ item.groups }}"
   no_log: True
   with_items: "{{ users }}"
 
