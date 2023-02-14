@@ -1,0 +1,13 @@
+---
+- name: Start the monit Service
+  systemd:
+    name: monit.service
+    state: restarted
+    enabled: yes
+
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+

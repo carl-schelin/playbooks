@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>monit</short>
+  <description>Service Monitoring Tool</description>
+  <port protocol="tcp" port="2812" />
+</service>
