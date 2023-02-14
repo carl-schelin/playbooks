@@ -20,7 +20,7 @@
 
   - name: Include common variables
     include_vars:
-      file: ../vars/common.yaml
+      file: ../../vars/common.yaml
 
   roles:
     - tools
