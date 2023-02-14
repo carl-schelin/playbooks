@@ -1,0 +1,103 @@
+---
+- name: Install the epel package on CentOS
+  ansible.builtin.yum:
+    name: epel-release
+    state: latest
+
+- name: Upgrade server
+  yum:
+    name: "*"
+    state: latest
+  notify: Reboot Server
+  when: patch == "true"
+
+- name: install various centos tools
+  dnf:
+    name:
+      - git
+      - gnupg2
+      - python3
+      - python3-pip
+    state: present
+
+- name: install ansible
+  command: pip3 install ansible
+
+- name: Set SELinux to Permissive
+  selinux:
+    policy: targeted
+    state: permissive
+  notify:
+    - Reboot Server
+
+- name: Add sysadmin group
+  ansible.builtin.group:
+    name: sysadmin
+    state: present
+
+- name: Make etc directory
+  file:
+    path: /usr/local/admin/etc
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: Make playbooks directory
+  file:
+    path: /usr/local/admin/playbooks
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: copy host inventory file
+  copy:
+    src: /usr/local/admin/etc/hosts
+    dest: /usr/local/admin/etc/hosts
+    owner: unixsvc
+    group: sysadmin
+
+- name: copy servers inventory file
+  copy:
+    src: /usr/local/admin/etc/servers
+    dest: /usr/local/admin/etc/servers
+    owner: unixsvc
+    group: sysadmin
+
+- name: copy searchansible script
+  copy:
+    src: /usr/local/bin/searchansible
+    dest: /usr/local/bin/searchansible
+    owner: unixsvc
+    group: sysadmin
+    mode: 0755
+
+- name: copy host file
+  copy:
+    src: files/hosts.{{ pattern }}
+    dest: /etc/hosts
+
+- name: copy unixsvc private key
+  copy:
+    src: /home/unixsvc/.ssh/id_rsa
+    dest: /home/unixsvc/.ssh/id_rsa
+    owner: unixsvc
+    group: unixsvc
+    mode: 0600
+
+- name: copy unixsvc public key
+  copy:
+    src: /home/unixsvc/.ssh/id_rsa.pub
+    dest: /home/unixsvc/.ssh/id_rsa.pub
+    owner: unixsvc
+    group: unixsvc
+
+- name: Create symbolic link to admin
+  file:
+    src: /usr/local/admin
+    dest: /home/unixsvc/admin
+    owner: unixsvc
+    group: unixsvc
+    state: link
+

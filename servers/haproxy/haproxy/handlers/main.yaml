@@ -1,0 +1,13 @@
+---
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Start the haproxy Service
+  systemd:
+    name: haproxy
+    state: restarted
+    enabled: yes
+

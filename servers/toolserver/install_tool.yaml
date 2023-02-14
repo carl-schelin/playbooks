@@ -1,0 +1,28 @@
+---
+- hosts: "{{ pattern }}:&tool"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  pre_tasks:
+  - name: Verify the -e variable was set
+    assert:
+      that:
+        - "false"
+      msg: You must run the playbook with -e pattern=[provisioning server] flag
+    when: (pattern is undefined) or (pattern | trim == '')
+
+  - name: Make sure ansible is reasonably current
+    assert:
+      that:
+        - "{{ ansible_version.string is version_compare('2.9', '>=') }}"
+      msg: This playbook works best when Ansible 2.9 or above is installed
+
+  - name: Include common variables
+    include_vars:
+      file: ../vars/common.yaml
+
+  roles:
+    - tools
+
+

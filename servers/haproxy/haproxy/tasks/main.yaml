@@ -1,17 +1,92 @@
 ---
-- name: Install haproxy
-  yum:
+- name: Install HaProxy packages
+  ansible.builtin.yum:
     name: haproxy
-    state: latest
+    state: present
+    update_cache: yes
 
-- name: Copy haproxy settings file 
-  copy:
-    src: ../files/{{ ansible_hostname }}.cfg
+- name: Write out haproxy config file
+  template:
+    src: haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: 0644
+  notify: Start the haproxy Service
 
-- name: restart haproxy
+- name: Set the log file permissions
+  file:
+    path: /var/log/haproxy.log
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Make the /var/lib/haproxy directory for the chroot
+  file:
+    path: /var/lib/haproxy
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Make the /var/lib/haproxy/dev directory for the /dev/log
+  file:
+    path: /var/lib/haproxy/dev
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Does the socket exist already
+  stat:
+    path: /var/lib/haproxy/dev/log
+  register: devlog
+
+- name: Create /dev/log socket
+  command: python3 -c "import socket as s; sock = s.socket(s.AF_UNIX); sock.bind('/var/lib/haproxy/dev/log')"
+  when: devlog.stat.issock is not defined
+
+- name: Install rsyslog configuration
+  copy:
+    src: 49-haproxy.conf
+    dest: /etc/rsyslog.d
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Start the rsyslog Service
+
+
+- name: Install the custom firewall xml files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/firewalld/services/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - haproxy.xml
+    - ingress.xml
+    - machcfg.xml
+
+- name: Reload the firewall to register the xml files
   systemd:
-    name: haproxy
-    daemon-reload: yes
+    name: firewalld
     state: restarted
+    enabled: yes
+
+- name: Add firewall services
+  firewalld:
+    zone: public
+    permanent: yes
+    immediate: yes
+    state: enabled
+    service: "{{ item }}"
+  with_items:
+    - https
+    - http
+    - kube-apiserver
+    - machcfg
+    - ingress
+  notify: Start the firewalld Service
 
