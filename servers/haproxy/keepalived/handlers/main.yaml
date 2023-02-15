@@ -1,0 +1,7 @@
+---
+- name: Start the keepalived Service
+  systemd:
+    name: keepalived
+    state: restarted
+    enabled: yes
+

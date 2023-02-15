@@ -1,6 +1,6 @@
 global
-	log /dev/log	local0
-	log /dev/log	local1 notice
+	log /dev/log local0
+	log /dev/log local1 notice
 	chroot /var/lib/haproxy
 	stats socket /var/lib/haproxy/admin.sock mode 660 level admin expose-fd listeners
 	stats timeout 30s
@@ -32,8 +32,8 @@ defaults
 #---------------------------------------------------------------------
 listen stats
 	bind *:1936
-	mode        http
-	log         global
+	mode http
+	log  global
 	maxconn 10
 	stats enable
 	stats hide-version

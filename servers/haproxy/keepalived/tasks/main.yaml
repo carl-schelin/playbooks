@@ -1,0 +1,27 @@
+---
+- name: Install keepalived
+  ansible.builtin.yum:
+    name: "keepalived"
+    state: present
+    update_cache: yes
+
+- name: Write out master keepalived config file
+  template:
+    src: primary_keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: "'hap1' in inventory_hostname"
+  notify: Start the keepalived Service
+
+- name: Write out backup keepalived config file
+  template:
+    src: backup_keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: "'hap2' in inventory_hostname"
+  notify: Start the keepalived Service
+
