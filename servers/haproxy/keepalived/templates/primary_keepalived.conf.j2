@@ -5,7 +5,7 @@ vrrp_script chk_haproxy {
 }
 
 vrrp_instance VI_1 {
-    interface {{ loadbalancer_vip.interface }}
+    interface ens192
     state MASTER
     priority 200
 
