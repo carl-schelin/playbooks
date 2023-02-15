@@ -1,4 +1,9 @@
 ---
+- name: Install the python2-dnf package on CentOS
+  ansible.builtin.yum:
+    name: python2-dnf
+    state: latest
+
 - name: Install the epel package on CentOS
   ansible.builtin.yum:
     name: epel-release
@@ -12,16 +17,14 @@
   when: patch == "true"
 
 - name: install various centos tools
-  dnf:
+  ansible.builtin.yum:
     name:
       - git
       - gnupg2
       - python3
       - python3-pip
+      - ansible
     state: present
-
-- name: install ansible
-  command: pip3 install ansible
 
 - name: Set SELinux to Permissive
   selinux:

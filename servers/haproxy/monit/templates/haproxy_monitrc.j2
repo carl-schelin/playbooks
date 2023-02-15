@@ -173,11 +173,16 @@ set eventqueue
 #    }
 set httpd
     port 2812
-     address {{ loadbalancer.ipa }}  # only accept connection from localhost
-     allow {{ loadbalancer.ipa }}/255.255.255.255    # allow localhost to connect to the server and
-     allow {{ provision.ipa }}/255.255.255.255    # allow localhost to connect to the server and
-     allow 10.187.0.0/255.255.0.0    # allow localhost to connect to the server and
-     allow {{ monit.name }}:{{ monit.password }} read-only        # require user 'admin' with password 'monit'
+{% if 'hap1' in ansible_hostname %}
+     address {{ loadbalancer_primary.ipa }}                  # only accept connection from localhost
+     allow {{ loadbalancer_primary.ipa }}/255.255.255.255    # allow localhost to connect to the server
+{% else %}
+     address {{ loadbalancer_secondary.ipa }}                  # only accept connection from localhost
+     allow {{ loadbalancer_secondary.ipa }}/255.255.255.255    # allow localhost to connect to the server
+{% endif %}
+     allow {{ tool.ipa }}/255.255.255.255                    # allow connections from the tool server
+     allow 192.168.0.0/255.255.0.0                           # allow connections from the internal servers
+     allow {{ monit.name }}:{{ monit.password }} read-only   # require authentication
 
 #
 ## Monit can perform act differently regarding services previous state when

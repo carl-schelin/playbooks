@@ -5,13 +5,24 @@
     state: present
     update_cache: yes
 
-- name: Write out haproxy config file
+- name: Write out primary haproxy config file
   template:
-    src: haproxy.cfg.j2
+    src: primary_haproxy.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
     owner: root
     group: root
     mode: 0644
+  when: "'hap1' in inventory_hostname"
+  notify: Start the haproxy Service
+
+- name: Write out backup haproxy config file
+  template:
+    src: backup_haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: 0644
+  when: "'hap2' in inventory_hostname"
   notify: Start the haproxy Service
 
 - name: Set the log file permissions

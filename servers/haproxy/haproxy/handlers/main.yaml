@@ -11,3 +11,9 @@
     state: restarted
     enabled: yes
 
+- name: Start the rsyslog Service
+  service:
+    name: rsyslog
+    state: restarted
+    enabled: yes
+
