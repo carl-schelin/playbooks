@@ -25,6 +25,13 @@ Note you can run the `searchansible` script (part of the unixsuite repository) t
 
 While there are a list here, it may not be totally current as things move around, are added, and may be deleted.
 
+I did review them and break them down into either the newserver builds, basically something that is done once to get a server built and configured
+
+I also created a servers directory which has the installation process for specific applications.
+
+Finally I created a utilities directory for things that might repeat. Maintenance type tasks.
+
+
 kubernetes - see the Kubernetes directory for notes
 
 satellite - Upgrades satellite repos for 6.5
