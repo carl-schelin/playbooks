@@ -1,0 +1,14 @@
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr1' install_gitlab.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo1' install_gitlab.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato1' install_gitlab.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt2' install_gitlab.yaml -C
+# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld2' install_gitlab.yaml -C
+---
+- hosts: "{{ pattern }}"
+  become: true
+  become_user: root
+  gather_facts: no
+
+  roles:
+    - gitlab
+

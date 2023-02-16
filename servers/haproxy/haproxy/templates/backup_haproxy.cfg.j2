@@ -44,15 +44,14 @@ listen stats
 	monitor-uri /healthz/ready
 
 
-frontend openshift-api-server
+frontend kubernetes-api-server
 	bind *:6443
-	default_backend openshift-api-server
+	default_backend kubernetes-api-server
 	mode tcp
 	option tcplog
 
-backend openshift-api-server
+backend kubernetes-api-server
 	mode tcp
-	server {{ bootstrap.name }} {{ bootstrap.ipa }}:6443 check
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:6443 check
 {% endfor %}
@@ -66,7 +65,6 @@ frontend machine-config-server
 
 backend machine-config-server
 	mode tcp
-	 server {{ bootstrap.name }} {{ bootstrap.ipa }}:22623 check
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:22623 check
 {% endfor %}
