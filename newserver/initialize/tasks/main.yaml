@@ -52,7 +52,7 @@
     state: present
     gid: 666
 
-- name: Add users
+- name: Add users (ignore errors as some are in IDM)
   ansible.builtin.user:
     name: "{{ item.name }}"
     home: "{{ item.home }}"
@@ -60,6 +60,7 @@
     shell: "{{ item.shell }}"
     password: "{{ item.password }}"
     groups: "{{ item.groups }}"
+  ignore_errors: True
   no_log: True
   with_items: "{{ users }}"
 
