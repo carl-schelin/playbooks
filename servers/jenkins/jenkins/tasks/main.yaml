@@ -1,0 +1,12 @@
+---
+- name: Update firewall
+  firewalld:
+    zone: public
+    permanent: yes
+    service: "{{ items }}"
+  with_items:
+  - http
+  - https
+  notify:
+    - Restart firewalld
+

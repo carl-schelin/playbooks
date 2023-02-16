@@ -1,0 +1,6 @@
+---
+- name: Restart firewalld
+  systemctl:
+    name: firewalld
+    state: restarted
+
