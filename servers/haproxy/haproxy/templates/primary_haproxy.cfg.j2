@@ -46,7 +46,7 @@ listen stats
 
 frontend kubernetes-api-server
 	bind *:6443
-	default_backend openshift-api-server
+	default_backend kubernetes-api-server
 	mode tcp
 	option tcplog
 
