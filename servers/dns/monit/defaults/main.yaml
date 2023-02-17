@@ -1,0 +1,5 @@
+---
+monit:
+  name: "admin"
+  password: "set the password here"
+

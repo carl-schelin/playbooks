@@ -19,41 +19,41 @@
 
   - name: Include common variables
     include_vars:
-      file: ../vars/common.yaml
+      file: ../../vars/common.yaml
     tags:
       - always
 
   - name: Include boulder specific variables
     include_vars:
-      file: ../vars/boulder.yaml
+      file: ../../vars/boulder.yaml
     when: "'bldr0' in inventory_hostname"
     tags:
       - always
 
   - name: Include cabo specific variables
     include_vars:
-      file: ../vars/cabo.yaml
+      file: ../../vars/cabo.yaml
     when: "'cabo0' in inventory_hostname"
     tags:
       - always
 
   - name: Include tatooine specific variables
     include_vars:
-      file: ../vars/tatooine.yaml
+      file: ../../vars/tatooine.yaml
     when: "'tato0' in inventory_hostname"
     tags:
       - always
 
   - name: Include longmont specific variables
     include_vars:
-      file: ../vars/longmont.yaml
+      file: ../../vars/longmont.yaml
     when: "'lnmt1' in inventory_hostname"
     tags:
       - always
 
   - name: Include nederland specific variables
     include_vars:
-      file: ../vars/nederland.yaml
+      file: ../../vars/nederland.yaml
     when: "'ndld1' in inventory_hostname"
     tags:
       - always

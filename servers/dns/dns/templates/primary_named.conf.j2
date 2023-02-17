@@ -24,7 +24,7 @@ options {
         querylog yes;
         allow-query { inside-networks; };
         allow-recursion { inside-networks; };
-        allow-transfer { localhost; {{ management.dns_secondary.ipa }}; };
+        allow-transfer { localhost; {{ dns_secondary.ipa }}; };
 
         /*
          - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
@@ -102,7 +102,7 @@ zone "{{ site.domain }}"
         };
 };
 
-{% if cluster.siteid != 'bldr' %}
+{% if site.name != 'bldr' %}
 zone "bldr.{{ site.name }}.{{ site.domain }}"
 {
         type forward;
@@ -113,7 +113,7 @@ zone "bldr.{{ site.name }}.{{ site.domain }}"
 };
 {% endif %}
 
-{% if cluster.siteid != 'cabo' %}
+{% if site.name != 'cabo' %}
 zone "cabo.{{ site.name }}.{{ site.domain }}"
 {
         type forward;
@@ -124,7 +124,7 @@ zone "cabo.{{ site.name }}.{{ site.domain }}"
 };
 {% endif %}
 
-{% if cluster.siteid != 'tato' %}
+{% if site.name != 'tato' %}
 zone "tato.{{ site.name }}.{{ site.domain }}"
 {
         type forward;
@@ -135,7 +135,7 @@ zone "tato.{{ site.name }}.{{ site.domain }}"
 };
 {% endif %}
 
-{% if cluster.siteid != 'lnmt' %}
+{% if site.name != 'lnmt' %}
 zone "lnmt.{{ site.name }}.{{ site.domain }}"
 {
         type forward;
@@ -146,7 +146,7 @@ zone "lnmt.{{ site.name }}.{{ site.domain }}"
 };
 {% endif %}
 
-{% if cluster.siteid != 'ndld' %}
+{% if site.name != 'ndld' %}
 zone "ndld.{{ site.name }}.{{ site.domain }}"
 {
         type forward;

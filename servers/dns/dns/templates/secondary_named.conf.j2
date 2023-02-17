@@ -106,7 +106,7 @@ zone "{{ site.name}}.{{site.domain }}"
 };
 
 {% if site.name != 'bldr' %}
-zone "bldr.{{ site }}.{{ domain }}"
+zone "bldr.{{ site.name }}.{{ site.domain }}"
 {
         type forward;
         forwarders {
