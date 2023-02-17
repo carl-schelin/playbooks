@@ -1,0 +1,58 @@
+# this contains common variables used by all sites.
+---
+disk: vda
+
+# --------------------------------------------------------------------------- #
+# Set the variable to indicate not to patch systems during initialization
+# When passed as an extra variable, that takes precedence
+# --------------------------------------------------------------------------- #
+patch: false
+
+
+# --------------------------------------------------------------------------- #
+# For the DNS forwarders, set up the ips for the forwarders to other sites
+# --------------------------------------------------------------------------- #
+dnsfwd:
+# development
+  bldrfwd1: "192.168.101.154"
+  bldrfwd2: "192.168.101.155"
+# qa
+  cabofwd1: "192.168.102.154"
+  cabofwd2: "192.168.102.155"
+# stage
+  tatofwd1: "192.168.103.154"
+  tatofwd2: "192.168.103.155"
+# production
+  lnmtfwd1: "192.168.104.154"
+  lnmtfwd2: "192.168.104.155"
+# nederland
+  ndldfwd1: "192.168.105.154"
+  ndldfwd2: "192.168.105.155"
+# core network
+  corefwd1: "192.168.1.254"
+
+
+# --------------------------------------------------------------------------- #
+# installation directory. Will be created in Bastion Node
+# --------------------------------------------------------------------------- #
+install_ocp4: "/home/ocp4"
+
+
+# --------------------------------------------------------------------------- #
+# NTP Server
+# --------------------------------------------------------------------------- #
+ntp:
+  - ipa: 192.168.1.254
+
+
+# --------------------------------------------------------------------------- #
+# Links to the necessary files to download from RedHat to PXE boot the avi_cluster
+# Verify that links are active when updating the version of the cluster.
+# --------------------------------------------------------------------------- #
+ocp_bios:           "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-metal.x86_64.raw.gz"
+ocp_rootfs:         "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live-rootfs.x86_64.img"
+ocp_initramfs:      "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live-initramfs.x86_64.img"
+ocp_install_kernel: "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.9/4.9.0/rhcos-4.9.0-x86_64-live-kernel-x86_64"
+ocp_client:         "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.9.0/openshift-client-linux-4.9.0.tar.gz"
+ocp_installer:      "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.9.0/openshift-install-linux-4.9.0.tar.gz"
+

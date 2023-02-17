@@ -1,0 +1,63 @@
+---
+- name: Install Bind9
+  dnf:
+    name: ['bind']
+    state: present
+    update_cache: yes
+
+- name: create master directory
+  file:
+    path: /var/named/master
+    state: directory
+    owner: named
+    group: named
+
+- name: Include DNS tasks for the Primary DNS server
+  include_tasks: "primary.yaml"
+  when: "'dns1' in inventory_hostname"
+
+- name: Include DNS tasks for the Secondary DNS server
+  include_tasks: "secondary.yaml"
+  when: "'dns2' in inventory_hostname"
+
+- name: Open firewall ports for internal access to DNS statistics
+  firewalld:
+    zone: internal
+    permanent: yes
+    immediate: yes
+    state: enabled
+    port: "{{ item }}"
+  with_items:
+    - 9000/tcp
+  notify:
+  - Start the firewalld Service
+
+- name: Adding the DNS Service to be accessible via the Service network
+  firewalld:
+    service: dns
+    zone: public
+    permanent: yes
+    state: enabled
+  notify:
+  - Start the firewalld Service
+
+- name: Adding the DNS Service to be accessible to IQ DNS Forwarders
+  firewalld:
+    service: dns
+    zone: internal
+    permanent: yes
+    state: enabled
+  notify:
+  - Start the firewalld Service
+
+- name: Adding service network restrictions
+  firewalld:
+    zone: public
+    source: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - "{{ service.nfs.subnet_range }}"
+  notify:
+  - Start the firewalld Service
+

@@ -1,0 +1,4 @@
+# site specific variables for all servers
+---
+
+Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.

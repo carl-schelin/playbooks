@@ -1,0 +1,11 @@
+---
+- name: Write out secondary named file
+  template:
+    src: secondary_named.conf.j2
+    dest: /etc/named.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the named Service
+

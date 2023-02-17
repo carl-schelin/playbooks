@@ -1,0 +1,49 @@
+---
+- name: Generate serial key and use in Zone Files
+  shell: echo `date +%Y%m%d00`
+  register: dns_serialnumber
+
+- name: Set generated serial-number as fact
+  set_fact:
+    serialnumber: "{{ dns_serialnumber.stdout }}"
+
+- name: Write out primary bind option file
+  template:
+    src: primary_named.conf.j2
+    dest: /etc/named.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the named Service
+
+- name: Write out forward zone file
+  template:
+    src: primary.forward-db.j2
+    dest: /var/named/master/{{ cluster.siteid }}.{{ cluster.domain_name }}
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the named Service
+
+- name: Write out service reverse zone file
+  template:
+    src: service.reverse-db.j2
+    dest: /var/named/master/{{ service.dns_reverse.network }}.in-addr.arpa
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the named Service
+
+- name: Write out management reverse zone file
+  template:
+    src: management.reverse-db.j2
+    dest: /var/named/master/{{ management.dns_reverse.network }}.in-addr.arpa
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the named Service
+
