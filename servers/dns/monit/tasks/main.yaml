@@ -1,0 +1,68 @@
+---
+- name: Install the custom firewall xml files
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/firewalld/services/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  with_items:
+    - monit.xml
+
+- name: Reload the firewall to register the xml files
+  systemd:
+    name: firewalld
+    state: reloaded
+    enabled: yes
+
+- name: Add firewall services
+  firewalld:
+    permanent: yes
+    immediate: yes
+    state: enabled
+    zone: public
+    service: "{{ item }}"
+  with_items:
+    - monit
+  notify: Start the firewalld Service
+
+
+- name: Install monit package
+  ansible.builtin.yum:
+    name: ['monit']
+    state: present
+    update_cache: yes
+
+- name: Create the monit directory
+  file:
+    path: /var/lib/monit
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create the events directory
+  file:
+    path: /var/lib/monit/events
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Monitor DNS
+  copy:
+    src: "../files/{{ item }}"
+    dest: "/etc/monit.d/{{ item }}"
+  with_items:
+    - dns.monitrc
+  notify: Start the monit Service
+
+- name: Set monitrc file to enable HTTP Interface
+  template:
+    src: dns_monitrc.j2
+    dest: /etc/monitrc
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Start the monit Service
+
