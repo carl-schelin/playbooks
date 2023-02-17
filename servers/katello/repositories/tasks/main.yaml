@@ -10,7 +10,7 @@
     name: "CentOS 7 OS"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/base"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 7 Updates repository"
@@ -24,7 +24,7 @@
     name: "CentOS 7 Updates"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/updates"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 7 Extras repository"
@@ -38,7 +38,7 @@
     name: "CentOS 7 Extras"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/extras"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 7 Plus repository"
@@ -52,7 +52,7 @@
     name: "CentOS 7 Plus"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/centosplus"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 
@@ -67,7 +67,7 @@
     name: "EPEL 7 Core"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/epel"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 
@@ -82,7 +82,7 @@
     name: "CentOS 8 BaseOS"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/BaseOS"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 8 AppStream repository"
@@ -96,7 +96,7 @@
     name: "CentOS 8 AppStream"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/AppStream"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 8 PowerTools Repository"
@@ -110,7 +110,7 @@
     name: "CentOS 8 PowerTools"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/PowerTools"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 8 Extras Repository"
@@ -124,7 +124,7 @@
     name: "CentOS 8 Extras"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/extras"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create CentOS 8 Plus Repository"
@@ -138,7 +138,7 @@
     name: "CentOS 8 Plus"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/centosplus"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 
@@ -153,7 +153,7 @@
     name: "EPEL 8 Core"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/epel"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 - name: "Create EPEL 8 Modular Repository"
@@ -167,7 +167,7 @@
     name: "EPEL 8 Modular"
     url: "http://lnmt1cuomjs1.internal.pri/centos8/epel-modular"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 
@@ -182,7 +182,7 @@
     name: "Kubernetes"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/kubernetes"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
 
@@ -197,6 +197,6 @@
     name: "Elasticsearch"
     url: "http://lnmt1cuomjs1.internal.pri/centos7/elasticsearch"
     mirror_on_sync: true
-    download_policy: background
+    download_policy: "On Demand"
     state: present
 
