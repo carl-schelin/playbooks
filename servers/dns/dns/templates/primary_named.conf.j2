@@ -24,7 +24,7 @@ options {
         querylog yes;
         allow-query { inside-networks; };
         allow-recursion { inside-networks; };
-        allow-transfer { localhost; {{ management.dns_secondary.ipa }}; };
+        allow-transfer { localhost; {{ dns_secondary.ipa }}; };
 
         /*
          - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
