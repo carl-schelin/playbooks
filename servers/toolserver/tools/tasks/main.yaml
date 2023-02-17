@@ -104,3 +104,25 @@
     group: unixsvc
     state: link
 
+
+# for the web servers we need to install httpd
+# then create the /var/log/httpd/[website] directory
+# then install the specific virtual.conf file for 
+# the sites
+
+
+
+
+
+
+- name: Add firewall services
+  firewalld:
+    zone: public
+    permanent: yes
+    immediate: yes
+    state: enabled
+    service: "{{ item }}"
+  with_items:
+    - http
+  notify: Start the firewalld Service
+
