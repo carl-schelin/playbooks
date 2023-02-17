@@ -1,0 +1,162 @@
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+//
+// See /usr/share/doc/bind*/sample/ for example named configuration files.
+//
+
+options {
+        version none;
+        hostname none;
+        notify no;
+
+        listen-on port 53 { any; };
+        listen-on-v6 port 53 { none; };
+
+        directory       "/var/named";
+        dump-file       "/var/named/data/cache_dump.db";
+        statistics-file "/var/named/data/named_stats.txt";
+        memstatistics-file "/var/named/data/named_mem_stats.txt";
+        secroots-file   "/var/named/data/named.secroots";
+        recursing-file  "/var/named/data/named.recursing";
+        querylog yes;
+        allow-query { inside-networks; };
+        allow-recursion { inside-networks; };
+        allow-transfer { localhost; {{ management.dns_secondary.ipa }}; };
+
+        /*
+         - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+         - If you are building a RECURSIVE (caching) DNS server, you need to enable
+           recursion.
+         - If your recursive DNS server has a public IP address, you MUST enable access
+           control to limit queries to your legitimate users. Failing to do so will
+           cause your server to become part of large scale DNS amplification
+           attacks. Implementing BCP38 within your network would greatly
+           reduce such attack surface
+        */
+        recursion yes;
+
+        dnssec-enable yes;
+        dnssec-validation auto;
+
+        managed-keys-directory "/var/named/dynamic";
+
+        pid-file "/run/named/named.pid";
+        session-keyfile "/run/named/session.key";
+
+        /* https://fedoraproject.org/wiki/Changes/CryptoPolicy */
+        include "/etc/crypto-policies/back-ends/bind.config";
+
+        /* Fowarders */
+        forwarders {
+		{{ dns.forwarder1 | default("192.168.1.254") }};
+	};
+
+};
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+acl inside-networks {
+        localhost;
+        localnets;
+};
+
+statistics-channels {
+        inet {{ dns_primary.ipa }} port 9000 allow {any;};
+};
+
+zone "." IN {
+        type hint;
+        file "named.ca";
+};
+
+zone "{{ site.name }}.{{ site.domain }}"
+{
+        type master;
+        file "/var/named/master/{{ site.name }}.{{ site.domain }}";
+        allow-update { key rndc-key; };
+        notify yes;
+        zone-statistics yes;
+};
+
+zone "{{ dns_primary.ipa.split('.')[2] }}.{{ dns_primary.ipa.split('.')[1] }}.{{ dns_primary.ipa.split('.')[0] }}.in-addr.arpa" {
+        type master;
+        file "/var/named/master/{{ dns_primary.ipa.split('.')[2] }}.{{ dns_primary.ipa.split('.')[1] }}.{{ dns_primary.ipa.split('.')[0] }}.in-addr.arpa";
+        allow-update { key rndc-key; };
+        notify yes;
+        zone-statistics yes;
+};
+
+zone "{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.corefwd1 }};
+        };
+};
+
+{% if cluster.siteid != 'bldr' %}
+zone "bldr.{{ site.name }}.{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.bldrfwd1 }};
+                {{ dnsfwd.bldrfwd2 }};
+        };
+};
+{% endif %}
+
+{% if cluster.siteid != 'cabo' %}
+zone "cabo.{{ site.name }}.{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.cabofwd1 }};
+                {{ dnsfwd.cabofwd2 }};
+        };
+};
+{% endif %}
+
+{% if cluster.siteid != 'tato' %}
+zone "tato.{{ site.name }}.{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.tatofwd1 }};
+                {{ dnsfwd.tatofwd2 }};
+        };
+};
+{% endif %}
+
+{% if cluster.siteid != 'lnmt' %}
+zone "lnmt.{{ site.name }}.{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.lnmtfwd1 }};
+                {{ dnsfwd.lnmtfwd2 }};
+        };
+};
+{% endif %}
+
+{% if cluster.siteid != 'ndld' %}
+zone "ndld.{{ site.name }}.{{ site.domain }}"
+{
+        type forward;
+        forwarders {
+                {{ dnsfwd.ndldfwd1 }};
+                {{ dnsfwd.ndldfwd2 }};
+        };
+};
+{% endif %}
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
+

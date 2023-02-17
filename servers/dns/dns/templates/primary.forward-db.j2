@@ -1,0 +1,87 @@
+$TTL 86400
+{{ site.domain }}.{{ site.name }}.               IN SOA                    ns1.{{ site.domain }}.{{ site.name }}. root.{{ site.domain }}.{{ site.name }}. (
+			{{ serialnumber }}                  ;serial
+			28800               ;refresh (8 hours)
+			3600                ;retry (1 hour)
+			604800              ;expire (1 week)
+			86400 )             ;minimum (1 day)
+;
+{{ site.domain }}.{{ site.name }}.     IN     NS     ns1.{{ site.domain }}.{{ site.name }}.
+{{ site.domain }}.{{ site.name }}.     IN     NS     ns2.{{ site.domain }}.{{ site.name }}.
+;
+; *****************************************************************************
+; Name Server-Information
+; *****************************************************************************
+ns1     IN     A     {{ dns_primary.ipa }}
+ns2     IN     A     {{ dns_secondary.ipa }}
+;
+; *****************************************************************************
+; {{ site.domain }} Support Nodes
+; *****************************************************************************
+{{ dns_primary.name }}     IN     A     {{ dns_primary.ipa }}
+{{ dns_secondary.name }}     IN     A     {{ dns_secondary.ipa }}
+;
+{% if gitlab is defined %}
+{{ gitlab.name }}     IN     A     {{ gitlab.ipa }}
+{% endif %}
+;
+{% if katello is defined %}
+{{ katello.name }}     IN     A     {{ katello.ipa }}
+{% endif %}
+;
+{% if idm is defined %}
+{{ idm.name }}     IN     A     {{ idm.ipa }}
+{% endif %}
+;
+{% for db in database %}
+{{ db.name }}     IN     A     {{ db.ipa }}
+{% endfor %}
+;
+{% for s in storage %}
+{{ s.name }}     IN     A     {{ s.ipa }}
+{% endfor %}
+;
+{{ loadbalancer_primary.name }}     IN     A     {{ loadbalancer_primary.ipa }}
+{{ loadbalancer_secondary.name }}     IN     A     {{ loadbalancer_secondary.ipa }}
+;
+; *****************************************************************************
+; The api points to the IP of your load balancer
+; *****************************************************************************
+api                IN      A       {{ loadbalancer_vip.ipa }}
+api-int            IN      A       {{ loadbalancer_vip.ipa }}
+;
+; *****************************************************************************
+; The wildcard also points to the load balancer
+; *****************************************************************************
+*.apps             IN      A       {{ loadbalancer_vip.ipa }}
+;
+; *****************************************************************************
+; The various openshift hostnames
+; *****************************************************************************
+console-openshift-console.apps               IN     A     {{ loadbalancer_vip.ipa }}
+downloads-openshift-console.apps             IN     A     {{ loadbalancer_vip.ipa }}
+grafana-openshift-monitoring.apps            IN     A     {{ loadbalancer_vip.ipa }}
+oauth-openshift.apps                         IN     A     {{ loadbalancer_vip.ipa }}
+prometheus-k8s-openshift-monitoring.apps     IN     A     {{ loadbalancer_vip.ipa }}
+router-default.apps                          IN     A     {{ loadbalancer_vip.ipa }}
+;
+openshift     IN     A     {{ loadbalancer_vip.ipa }}
+;
+;api                IN      CNAME      router-default.apps.{{ site.domain }}.{{ site.name }}.
+;ui                IN      CNAME      router-default.apps.{{ site.domain }}.{{ site.name }}.
+;
+; *****************************************************************************
+; Create entries for the control plane
+; *****************************************************************************
+{% for c in control %}
+{{ c.name }}              IN    A  {{ c.ipa }}
+{% endfor %}
+;
+; *****************************************************************************
+; Create entries for the worker hosts
+; *****************************************************************************
+{% for w in workers %}
+{{ w.name }}              IN    A  {{ w.ipa }}
+{% endfor %}
+;
+;EOF
