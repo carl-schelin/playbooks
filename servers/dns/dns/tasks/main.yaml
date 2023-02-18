@@ -32,7 +32,7 @@
   notify:
   - Start the firewalld Service
 
-- name: Adding the DNS Service to be accessible via the Service network
+- name: Adding the DNS Service to the firewall
   firewalld:
     service: dns
     zone: public
