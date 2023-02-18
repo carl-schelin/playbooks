@@ -41,7 +41,7 @@
   notify:
   - Start the firewalld Service
 
-- name: Adding the DNS Service to be accessible to IQ DNS Forwarders
+- name: Adding the DNS Service to be accessible to DNS Forwarders
   firewalld:
     service: dns
     zone: internal
