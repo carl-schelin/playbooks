@@ -23,7 +23,9 @@ $TTL 86400
 ;
 {{ tool.ipa.split('.')[3] }}		IN	PTR	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ storage.ipa.split('.')[3] }}		IN	PTR	{{ storage.name }}.{{ site.name }}.{{ site.domain }}.
+{% for s in storage %}
+{{ s.ipa.split('.')[3] }}		IN	PTR	{{ s.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
 ;
 {{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}.
 {{ loadbalancer_primary.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_primary.name }}.{{ site.name }}.{{ site.domain }}.
