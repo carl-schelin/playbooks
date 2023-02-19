@@ -1,66 +1,66 @@
 $TTL 86400
-@       IN      SOA     {{ site.domain }}.{{ site.name }}. root.{{ site.domain }}.{{ site.name }}. (
+@       IN      SOA     {{ site.name }}.{{ site.domain }}. root.{{ site.name }}.{{ site.domain }}. (
                         {{ serialnumber }}    ;serial
                         1D             ;refresh
                         1H             ;retry
                         1W             ;expire
                         1D )           ;minimum TTL
 ;
-       IN      NS      ns1.{{ site.domain }}.{{ site.name }}.
-       IN      NS      ns2.{{ site.domain }}.{{ site.name }}.
+       IN      NS      ns1.{{ site.name }}.{{ site.domain }}.
+       IN      NS      ns2.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Name Server-Information
 ; *****************************************************************************
-{{ dns_primary.ipa.split('.')[3] }}		IN	PTR	ns1.{{ site.domain }}.{{ site.name }}.
-{{ dns_secondary.ipa.split('.')[3] }}		IN	PTR	ns2.{{ site.domain }}.{{ site.name }}.
+{{ dns_primary.ipa.split('.')[3] }}		IN	PTR	ns1.{{ site.name }}.{{ site.domain }}.
+{{ dns_secondary.ipa.split('.')[3] }}		IN	PTR	ns2.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Site Support Nodes
 ; *****************************************************************************
-{{ dns_primary.ipa.split('.')[3] }}		IN	PTR	{{ dns_primary.name }}.{{ site.domain }}.{{ site.name }}.
-{{ dns_secondary.ipa.split('.')[3] }}		IN	PTR	{{ dns_secondary.name }}.{{ site.domain }}.{{ site.name }}.
+{{ dns_primary.ipa.split('.')[3] }}		IN	PTR	{{ dns_primary.name }}.{{ site.name }}.{{ site.domain }}.
+{{ dns_secondary.ipa.split('.')[3] }}		IN	PTR	{{ dns_secondary.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ tool.ipa.split('.')[3] }}		IN	PTR	{{ tool.name }}.{{ site.domain }}.{{ site.name }}.
+{{ tool.ipa.split('.')[3] }}		IN	PTR	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ storage.ipa.split('.')[3] }}		IN	PTR	{{ storage.name }}.{{ site.domain }}.{{ site.name }}.
+{{ storage.ipa.split('.')[3] }}		IN	PTR	{{ storage.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	{{ haproxy.name }}.{{ site.domain }}.{{ site.name }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	{{ haproxy.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ glrunner.ipa.split('.')[3] }}		IN	PTR	{{ glrunner.name }}.{{ site.domain }}.{{ site.name }}.
+{{ glrunner.ipa.split('.')[3] }}		IN	PTR	{{ glrunner.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% if gitlab is defined %}
-{{ gitlab.ipa.split('.')[3] }}		IN	PTR	{{ gitlab.name }}.{{ site.domain }}.{{ site.name }}.
+{{ gitlab.ipa.split('.')[3] }}		IN	PTR	{{ gitlab.name }}.{{ site.name }}.{{ site.domain }}.
 {% endif %}
 ;
 {% if katello is defined %}
-{{ katello.ipa.split('.')[3] }}		IN	PTR	{{ katello.name }}.{{ site.domain }}.{{ site.name }}.
+{{ katello.ipa.split('.')[3] }}		IN	PTR	{{ katello.name }}.{{ site.name }}.{{ site.domain }}.
 {% endif %}
 ;
 {% if idm is defined %}
-{{ idm.ipa.split('.')[3] }}		IN	PTR	{{ idm.name }}.{{ site.domain }}.{{ site.name }}.
+{{ idm.ipa.split('.')[3] }}		IN	PTR	{{ idm.name }}.{{ site.name }}.{{ site.domain }}.
 {% endif %}
 ;
 {% for db in database %}
-{{ db.ipa.split('.')[3] }}		IN	PTR	{{ db.name }}.{{ site.domain }}.{{ site.name }}.
+{{ db.ipa.split('.')[3] }}		IN	PTR	{{ db.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
 ; *****************************************************************************
 ; The api points to the IP of your load balancer
 ; *****************************************************************************
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api-int.{{ site.domain }}.{{ site.name }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api-int.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; The various openshift hostnames
  *****************************************************************************
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	console-openshift-console.apps.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	downloads-openshift-console.apps.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	grafana-openshift-monitoring.apps.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	oauth-openshift.apps.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	prometheus-k8s-openshift-console.apps.{{ site.domain }}.{{ site.name }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	router-default.apps.{{ site.domain }}.{{ site.name }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	console-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	downloads-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	grafana-openshift-monitoring.apps.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	oauth-openshift.apps.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	prometheus-k8s-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	router-default.apps.{{ site.name }}.{{ site.domain }}.
 ;
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	openshift.{{ site.domain }}.{{ site.name }}.
+{{ haproxy.ipa.split('.')[3] }}		IN	PTR	openshift.{{ site.name }}.{{ site.domain }}.
 ;
 ;EOF

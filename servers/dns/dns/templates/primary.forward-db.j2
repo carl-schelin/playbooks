@@ -1,13 +1,13 @@
 $TTL 86400
-{{ site.domain }}.{{ site.name }}.               IN SOA                    ns1.{{ site.domain }}.{{ site.name }}. root.{{ site.domain }}.{{ site.name }}. (
+{{ site.name }}.{{ site.domain }}.               IN SOA                    ns1.{{ site.name }}.{{ site.domain }}. root.{{ site.name }}.{{ site.domain }}. (
 			{{ serialnumber }}                  ;serial
 			28800               ;refresh (8 hours)
 			3600                ;retry (1 hour)
 			604800              ;expire (1 week)
 			86400 )             ;minimum (1 day)
 ;
-{{ site.domain }}.{{ site.name }}.     IN     NS     ns1.{{ site.domain }}.{{ site.name }}.
-{{ site.domain }}.{{ site.name }}.     IN     NS     ns2.{{ site.domain }}.{{ site.name }}.
+{{ site.name }}.{{ site.domain }}.     IN     NS     ns1.{{ site.name }}.{{ site.domain }}.
+{{ site.name }}.{{ site.domain }}.     IN     NS     ns2.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Name Server-Information
@@ -16,7 +16,7 @@ ns1     IN     A     {{ dns_primary.ipa }}
 ns2     IN     A     {{ dns_secondary.ipa }}
 ;
 ; *****************************************************************************
-; {{ site.domain }} Support Nodes
+; {{ site.name }} Support Nodes
 ; *****************************************************************************
 {{ dns_primary.name }}     IN     A     {{ dns_primary.ipa }}
 {{ dns_secondary.name }}     IN     A     {{ dns_secondary.ipa }}
@@ -58,17 +58,17 @@ api-int            IN      A       {{ loadbalancer_vip.ipa }}
 ; *****************************************************************************
 ; The various openshift hostnames
 ; *****************************************************************************
-console-openshift-console.apps               IN     A     {{ loadbalancer_vip.ipa }}
-downloads-openshift-console.apps             IN     A     {{ loadbalancer_vip.ipa }}
-grafana-openshift-monitoring.apps            IN     A     {{ loadbalancer_vip.ipa }}
-oauth-openshift.apps                         IN     A     {{ loadbalancer_vip.ipa }}
-prometheus-k8s-openshift-monitoring.apps     IN     A     {{ loadbalancer_vip.ipa }}
-router-default.apps                          IN     A     {{ loadbalancer_vip.ipa }}
+;console-openshift-console.apps               IN     A     {{ loadbalancer_vip.ipa }}
+;downloads-openshift-console.apps             IN     A     {{ loadbalancer_vip.ipa }}
+;grafana-openshift-monitoring.apps            IN     A     {{ loadbalancer_vip.ipa }}
+;oauth-openshift.apps                         IN     A     {{ loadbalancer_vip.ipa }}
+;prometheus-k8s-openshift-monitoring.apps     IN     A     {{ loadbalancer_vip.ipa }}
+;router-default.apps                          IN     A     {{ loadbalancer_vip.ipa }}
 ;
-openshift     IN     A     {{ loadbalancer_vip.ipa }}
+;openshift     IN     A     {{ loadbalancer_vip.ipa }}
 ;
-;api                IN      CNAME      router-default.apps.{{ site.domain }}.{{ site.name }}.
-;ui                IN      CNAME      router-default.apps.{{ site.domain }}.{{ site.name }}.
+;api                IN      CNAME      router-default.apps.{{ site.name }}.{{ site.domain }}.
+;ui                IN      CNAME      router-default.apps.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Create entries for the control plane
