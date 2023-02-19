@@ -45,9 +45,11 @@ $TTL 86400
 {{ idm.ipa.split('.')[3] }}		IN	PTR	{{ idm.name }}.{{ site.name }}.{{ site.domain }}.
 {% endif %}
 ;
+{% if database is defined %}
 {% for db in database %}
 {{ db.ipa.split('.')[3] }}		IN	PTR	{{ db.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
+{% endif %}
 ;
 ; *****************************************************************************
 ; The api points to the IP of your load balancer

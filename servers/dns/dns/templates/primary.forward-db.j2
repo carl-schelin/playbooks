@@ -33,9 +33,11 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ idm.name }}     IN     A     {{ idm.ipa }}
 {% endif %}
 ;
+{% if database is defined %}
 {% for db in database %}
 {{ db.name }}     IN     A     {{ db.ipa }}
 {% endfor %}
+{% endif %}
 ;
 {% for s in storage %}
 {{ s.name }}     IN     A     {{ s.ipa }}
