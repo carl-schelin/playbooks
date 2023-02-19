@@ -20,9 +20,9 @@
   include_tasks: "secondary.yaml"
   when: "'dns2' in inventory_hostname"
 
-- name: Open firewall ports for internal access to DNS statistics
+- name: Open firewall ports for access to DNS statistics
   firewalld:
-    zone: internal
+    zone: public
     permanent: yes
     immediate: yes
     state: enabled
