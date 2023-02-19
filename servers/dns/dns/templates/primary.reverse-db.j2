@@ -57,7 +57,7 @@ $TTL 86400
 ;
 ; *****************************************************************************
 ; The various openshift hostnames
- *****************************************************************************
+; *****************************************************************************
 {{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	console-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
 {{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	downloads-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
 {{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	grafana-openshift-monitoring.apps.{{ site.name }}.{{ site.domain }}.
