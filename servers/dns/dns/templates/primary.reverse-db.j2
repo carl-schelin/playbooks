@@ -25,7 +25,9 @@ $TTL 86400
 ;
 {{ storage.ipa.split('.')[3] }}		IN	PTR	{{ storage.name }}.{{ site.name }}.{{ site.domain }}.
 ;
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	{{ haproxy.name }}.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_primary.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_primary.name }}.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_secondary.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_secondary.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {{ glrunner.ipa.split('.')[3] }}		IN	PTR	{{ glrunner.name }}.{{ site.name }}.{{ site.domain }}.
 ;
@@ -48,19 +50,19 @@ $TTL 86400
 ; *****************************************************************************
 ; The api points to the IP of your load balancer
 ; *****************************************************************************
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	api-int.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	api.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	api-int.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; The various openshift hostnames
  *****************************************************************************
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	console-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	downloads-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	grafana-openshift-monitoring.apps.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	oauth-openshift.apps.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	prometheus-k8s-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	router-default.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	console-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	downloads-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	grafana-openshift-monitoring.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	oauth-openshift.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	prometheus-k8s-openshift-console.apps.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	router-default.apps.{{ site.name }}.{{ site.domain }}.
 ;
-{{ haproxy.ipa.split('.')[3] }}		IN	PTR	openshift.{{ site.name }}.{{ site.domain }}.
+{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	openshift.{{ site.name }}.{{ site.domain }}.
 ;
 ;EOF
