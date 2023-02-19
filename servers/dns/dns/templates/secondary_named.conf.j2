@@ -97,7 +97,7 @@ zone "{{ dns_secondary.ipa.split('.')[2] }}.{{ dns_secondary.ipa.split('.')[1] }
 };
 
 // Point to internal DNS for following domain(s)
-zone "{{ site.name}}.{{site.domain }}"
+zone "{{site.domain }}"
 {
         type forward;
         forwarders {
