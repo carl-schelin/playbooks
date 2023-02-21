@@ -50,14 +50,3 @@
   notify:
   - Start the firewalld Service
 
-- name: Adding service network restrictions
-  firewalld:
-    zone: public
-    source: "{{ item }}"
-    state: enabled
-    permanent: yes
-  with_items:
-    - "{{ nfs.subnet_range }}"
-  notify:
-  - Start the firewalld Service
-
