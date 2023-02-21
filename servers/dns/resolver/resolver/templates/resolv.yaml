@@ -1,8 +1,0 @@
-# Note this file is updated via Ansible. Do not update this manually
-domain {{ item.domain }}
-search {{ item.search }}
-nameserver {{ item.nameserver1 }}
-nameserver {{ item.nameserver2 }}
-nameserver {{ item.nameserver3 }}
-options attempts:5
-options timeout:15

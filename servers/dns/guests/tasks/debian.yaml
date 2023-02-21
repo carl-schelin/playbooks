@@ -1,0 +1,17 @@
+---
+- name: Copy the debian head file for resolv.conf
+  template:
+    src: templates/resolvconf.head
+    dest: /etc/resolvconf/resolv.conf.d/head
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy the resolv.conf file
+  template:
+    src: templates/resolv.conf
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644
+
