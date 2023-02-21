@@ -71,6 +71,7 @@
     owner: "{{ item.name }}"
     group: "{{ item.name }}"
     mode: "0700"
+  ignore_errors: True
   no_log: True
   with_items: "{{ users }}"
 
