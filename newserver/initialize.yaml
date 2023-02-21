@@ -42,9 +42,9 @@
       file: ../vars/longmont.yaml
     when: "'lnmt1' in inventory_hostname"
 
-  - name: Include nedelrand specific variables
+  - name: Include nederland specific variables
     include_vars:
-      file: ../vars/nedelrand.yaml
+      file: ../vars/nederland.yaml
     when: "'ndld1' in inventory_hostname"
 
   roles:
