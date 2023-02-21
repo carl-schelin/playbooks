@@ -1,13 +1,13 @@
 $TTL 86400
-@       IN      SOA     {{ site.name }}.{{ site.domain }}. root.{{ site.name }}.{{ site.domain }}. (
-                        {{ serialnumber }}    ;serial
-                        1D             ;refresh
-                        1H             ;retry
-                        1W             ;expire
-                        1D )           ;minimum TTL
+@	IN	SOA	{{ site.name }}.{{ site.domain }}. root.{{ site.name }}.{{ site.domain }}. (
+			{{ serialnumber }}		;serial
+			1D		;refresh
+			1H		;retry
+			1W		;expire
+			1D )		;minimum TTL
 ;
-       IN      NS      ns1.{{ site.name }}.{{ site.domain }}.
-       IN      NS      ns2.{{ site.name }}.{{ site.domain }}.
+	IN	NS	ns1.{{ site.name }}.{{ site.domain }}.
+	IN	NS	ns2.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Name Server-Information
