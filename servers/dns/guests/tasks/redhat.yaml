@@ -7,11 +7,11 @@
     group: root
     mode: 0644
 
-- name: Set centos DNS information
-  command: "nmcli con mod 'ens192' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
+- name: Set DNS information
+  command: "nmcli dev mod 'ens192' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
 
-- name: Set centos DNS information
-  command: "nmcli con mod  'ens192' ipv4.dns-search '{{ site.name }}.{{ site.domain }}'"
+- name: Set DNS information
+  command: "nmcli dev mod  'ens192' ipv4.dns-search '{{ site.name }}.{{ site.domain }}' schelin.org"
 
 - name: Reload nmcli configuration
   command: "nmcli dev reapply ens192"
