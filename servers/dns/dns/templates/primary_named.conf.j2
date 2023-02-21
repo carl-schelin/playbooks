@@ -103,7 +103,7 @@ zone "{{ site.domain }}"
 };
 
 {% if site.environment != 'bldr' %}
-zone "dev.{{ site.name }}.{{ site.domain }}"
+zone "dev.{{ site.domain }}"
 {
         type forward;
         forwarders {
@@ -114,7 +114,7 @@ zone "dev.{{ site.name }}.{{ site.domain }}"
 {% endif %}
 
 {% if site.environment != 'cabo' %}
-zone "qa.{{ site.name }}.{{ site.domain }}"
+zone "qa.{{ site.domain }}"
 {
         type forward;
         forwarders {
@@ -125,7 +125,7 @@ zone "qa.{{ site.name }}.{{ site.domain }}"
 {% endif %}
 
 {% if site.environment != 'tato' %}
-zone "stage.{{ site.name }}.{{ site.domain }}"
+zone "stage.{{ site.domain }}"
 {
         type forward;
         forwarders {
@@ -136,7 +136,7 @@ zone "stage.{{ site.name }}.{{ site.domain }}"
 {% endif %}
 
 {% if site.environment != 'lnmt' %}
-zone "prod.{{ site.name }}.{{ site.domain }}"
+zone "prod.{{ site.domain }}"
 {
         type forward;
         forwarders {
@@ -147,7 +147,7 @@ zone "prod.{{ site.name }}.{{ site.domain }}"
 {% endif %}
 
 {% if site.environment != 'ndld' %}
-zone "home.{{ site.name }}.{{ site.domain }}"
+zone "home.{{ site.domain }}"
 {
         type forward;
         forwarders {

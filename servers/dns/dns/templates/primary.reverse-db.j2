@@ -21,136 +21,135 @@ $TTL 86400
 ;
 {% if amazon is defined %}
 {{ amazon.ipa.split('.')[3] }}		IN	PTR	{{ amazon.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if ansible is defined %}
 {{ ansible.ipa.split('.')[3] }}		IN	PTR	{{ ansible.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if database is defined %}
 {% for db in database %}
 {{ db.ipa.split('.')[3] }}		IN	PTR	{{ db.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if development is defined %}
 {% for dv in development %}
-{{ dv.ipa.split('.')[3] }}           IN      PTR       {{ dv.name }}.{{ site.name }}.{{ site.domain }}.
+{{ dv.ipa.split('.')[3] }}		IN	PTR	{{ dv.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {{ dns_primary.ipa.split('.')[3] }}		IN	PTR	{{ dns_primary.name }}.{{ site.name }}.{{ site.domain }}.
 {{ dns_secondary.ipa.split('.')[3] }}		IN	PTR	{{ dns_secondary.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% if docker is defined %}
 {% for dk in docker %}
-{{ dk.ipa.split('.')[3] }}           IN      PTR       {{ dk.name }}.{{ site.name }}.{{ site.domain }}.
+{{ dk.ipa.split('.')[3] }}		IN	PTR	{{ dk.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if gitlab is defined %}
 {{ gitlab.ipa.split('.')[3] }}		IN	PTR	{{ gitlab.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% for gl in glrunner %}
 {{ gl.ipa.split('.')[3] }}		IN	PTR	{{ gl.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
 {% if grafana is defined %}
 {{ grafana.ipa.split('.')[3] }}		IN	PTR	{{ grafana.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if idm is defined %}
 {{ idm.ipa.split('.')[3] }}		IN	PTR	{{ idm.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if ipam is defined %}
 {% for ip in ipam %}
-{{ ip.ipa.split('.')[3] }}           IN      PTR       {{ ip.name }}.{{ site.name }}.{{ site.domain }}.
+{{ ip.ipa.split('.')[3] }}		IN	PTR	{{ ip.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if jenkins is defined %}
 {% for jk in jenkins %}
-{{ jk.ipa.split('.')[3] }}           IN      PTR       {{ jk.name }}.{{ site.name }}.{{ site.domain }}.
+{{ jk.ipa.split('.')[3] }}		IN	PTR	{{ jk.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if jumpstart is defined %}
 {{ jumpstart.ipa.split('.')[3] }}		IN	PTR	{{ jumpstart.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if katello is defined %}
 {{ katello.ipa.split('.')[3] }}		IN	PTR	{{ katello.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if mail is defined %}
 {{ mail.ipa.split('.')[3] }}		IN	PTR	{{ mail.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
 ;
+{% endif %}
 {% if media is defined %}
 {% for md in media %}
-{{ md.ipa.split('.')[3] }}           IN      PTR       {{ md.name }}.{{ site.name }}.{{ site.domain }}.
+{{ md.ipa.split('.')[3] }}		IN	PTR	{{ md.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if nagios is defined %}
 {% for ng in nagios %}
-{{ ng.ipa.split('.')[3] }}           IN      PTR       {{ ng.name }}.{{ site.name }}.{{ site.domain }}.
+{{ ng.ipa.split('.')[3] }}		IN	PTR	{{ ng.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if nmis is defined %}
 {% for nm in nmis %}
-{{ nm.ipa.split('.')[3] }}           IN      PTR       {{ nm.name }}.{{ site.name }}.{{ site.domain }}.
+{{ nm.ipa.split('.')[3] }}		IN	PTR	{{ nm.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if salt is defined %}
-{{ salt.ipa.split('.')[3] }}     IN     PTR     {{ salt.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ salt.ipa.split('.')[3] }}		IN	PTR	{{ salt.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if sips is defined %}
-{{ sips.ipa.split('.')[3] }}     IN     PTR     {{ sips.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ sips.ipa.split('.')[3] }}		IN	PTR	{{ sips.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if solaris is defined %}
-{{ solaris.ipa.split('.')[3] }}     IN     PTR     {{ solaris.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ solaris.ipa.split('.')[3] }}		IN	PTR	{{ solaris.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% for s in storage %}
 {{ s.ipa.split('.')[3] }}		IN	PTR	{{ s.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
 {% if syslog is defined %}
-{{ syslog.ipa.split('.')[3] }}     IN     PTR     {{ syslog.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ syslog.ipa.split('.')[3] }}		IN	PTR	{{ syslog.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if terraform is defined %}
-{{ terraform.ipa.split('.')[3] }}     IN     PTR     {{ terraform.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ terraform.ipa.split('.')[3] }}		IN	PTR	{{ terraform.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {{ tool.ipa.split('.')[3] }}		IN	PTR	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% if tower is defined %}
-{{ tower.ipa.split('.')[3] }}     IN     PTR     {{ tower.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ tower.ipa.split('.')[3] }}		IN	PTR	{{ tower.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if vault is defined %}
-{{ vault.ipa.split('.')[3] }}     IN     PTR     {{ vault.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ vault.ipa.split('.')[3] }}		IN	PTR	{{ vault.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if wiki is defined %}
-{{ wiki.ipa.split('.')[3] }}     IN     PTR     {{ wiki.name }}.{{ site.name }}.{{ site.domain }}.
-{% endif %}
+{{ wiki.ipa.split('.')[3] }}		IN	PTR	{{ wiki.name }}.{{ site.name }}.{{ site.domain }}.
 ;
+{% endif %}
 {% if windows is defined %}
 {% for wn in windows %}
-{{ wn.ipa.split('.')[3] }}           IN      PTR       {{ wn.name }}.{{ site.name }}.{{ site.domain }}.
+{{ wn.ipa.split('.')[3] }}		IN	PTR	{{ wn.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
+;
 {% endif %}
-;
-;
 ;
 {% if loadbalancer_vip is defined %}
 ; *****************************************************************************
@@ -170,16 +169,15 @@ $TTL 86400
 ; Create entries for the control plane
 ; *****************************************************************************
 {% for c in control %}
-{{ c.ipa.split('.')[3] }}              IN    PTR  {{ c.name }}
+{{ c.ipa.split('.')[3] }}		IN	PTR	{{ c.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
 ; *****************************************************************************
 ; Create entries for the worker hosts
 ; *****************************************************************************
 {% for w in workers %}
-{{ w.ipa.split('.')[3] }}              IN    PTR  {{ w.name }}
+{{ w.ipa.split('.')[3] }}		IN	PTR	{{ w.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
 {% endif %}
-;
 ;EOF

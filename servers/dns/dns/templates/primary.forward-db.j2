@@ -20,166 +20,164 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 ; *****************************************************************************
 ;
 {% if amazon is defined %}
-{{ amazon.name }}     IN     A     {{ amazon.ipa }}
-{% endif %}
+          {{ amazon.name }}		IN	A	{{ amazon.ipa }}
 ;
+{% endif %}
 {% if ansible is defined %}
-{{ ansible.name }}     IN     A     {{ ansible.ipa }}
-{% endif %}
+         {{ ansible.name }}		IN	A	{{ ansible.ipa }}
 ;
+{% endif %}
 {% if database is defined %}
 {% for db in database %}
-{{ db.name }}     IN     A     {{ db.ipa }}
+              {{ db.name }}		IN	A	{{ db.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if development is defined %}
 {% for dv in development %}
-{{ dv.name }} 		IN	A	{{ dv.ipa }}
+              {{ dv.name }} 		IN	A	{{ dv.ipa }}
 {% endfor %}
-{% endif %}
 ;
-{{ dns_primary.name }}     IN     A     {{ dns_primary.ipa }}
-{{ dns_secondary.name }}     IN     A     {{ dns_secondary.ipa }}
+{% endif %}
+     {{ dns_primary.name }}		IN	A	{{ dns_primary.ipa }}
+   {{ dns_secondary.name }}		IN	A	{{ dns_secondary.ipa }}
 ;
 {% if docker is defined %}
 {% for dk in docker %}
-{{ dk.name }} 		IN	A	{{ dk.ipa }}
+              {{ dk.name }} 		IN	A	{{ dk.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if gitlab is defined %}
-{{ gitlab.name }}     IN     A     {{ gitlab.ipa }}
-{% endif %}
+          {{ gitlab.name }}		IN	A	{{ gitlab.ipa }}
 ;
+{% endif %}
 {% for gl in glrunner %}
-{{ gl.name }}	IN	A	{{ gl.ipa }}
+              {{ gl.name }}		IN	A	{{ gl.ipa }}
 {% endfor %}
 ;
 {% if grafana is defined %}
-{{ grafana.name }}     IN     A     {{ grafana.ipa }}
-{% endif %}
+         {{ grafana.name }}		IN	A	{{ grafana.ipa }}
 ;
+{% endif %}
 {% if idm is defined %}
-{{ idm.name }}     IN     A     {{ idm.ipa }}
-{% endif %}
+             {{ idm.name }}		IN	A	{{ idm.ipa }}
 ;
+{% endif %}
 {% if ipam is defined %}
 {% for ip in ipam %}
-{{ ip.name }} 		IN	A	{{ ip.ipa }}
+              {{ ip.name }} 		IN	A	{{ ip.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if jenkins is defined %}
 {% for jk in jenkins %}
-{{ jk.name }} 		IN	A	{{ jk.ipa }}
+              {{ jk.name }} 		IN	A	{{ jk.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if jumpstart is defined %}
-{{ jumpstart.name }}     IN     A     {{ jumpstart.ipa }}
-{% endif %}
+       {{ jumpstart.name }}		IN	A	{{ jumpstart.ipa }}
 ;
+{% endif %}
 {% if katello is defined %}
-{{ katello.name }}     IN     A     {{ katello.ipa }}
-{% endif %}
+         {{ katello.name }}		IN	A	{{ katello.ipa }}
 ;
+{% endif %}
 {% if mail is defined %}
-{{ mail.name }}     IN     A     {{ mail.ipa }}
-{% endif %}
+            {{ mail.name }}		IN	A	{{ mail.ipa }}
 ;
+{% endif %}
 {% if media is defined %}
 {% for md in media %}
-{{ md.name }} 		IN	A	{{ md.ipa }}
+              {{ md.name }} 		IN	A	{{ md.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if nagios is defined %}
 {% for ng in nagios %}
-{{ ng.name }} 		IN	A	{{ ng.ipa }}
+              {{ ng.name }} 		IN	A	{{ ng.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if nmis is defined %}
 {% for nm in nmis %}
-{{ nm.name }} 		IN	A	{{ nm.ipa }}
+              {{ nm.name }} 		IN	A	{{ nm.ipa }}
 {% endfor %}
-{% endif %}
 ;
+{% endif %}
 {% if salt is defined %}
-{{ salt.name }}     IN     A     {{ salt.ipa }}
-{% endif %}
+            {{ salt.name }}		IN	A	{{ salt.ipa }}
 ;
+{% endif %}
 {% if sips is defined %}
-{{ sips.name }}     IN     A     {{ sips.ipa }}
-{% endif %}
+            {{ sips.name }}		IN	A	{{ sips.ipa }}
 ;
+{% endif %}
 {% if solaris is defined %}
-{{ solaris.name }}     IN     A     {{ solaris.ipa }}
-{% endif %}
+         {{ solaris.name }}		IN	A	{{ solaris.ipa }}
 ;
+{% endif %}
 {% for s in storage %}
-{{ s.name }}     IN     A     {{ s.ipa }}
+               {{ s.name }}		IN	A	{{ s.ipa }}
 {% endfor %}
 ;
 {% if syslog is defined %}
-{{ syslog.name }}     IN     A     {{ syslog.ipa }}
-{% endif %}
+          {{ syslog.name }}		IN	A	{{ syslog.ipa }}
 ;
+{% endif %}
 {% if terraform is defined %}
-{{ terraform.name }}     IN     A     {{ terraform.ipa }}
-{% endif %}
+       {{ terraform.name }}		IN	A	{{ terraform.ipa }}
 ;
-{{ tool.name }}     IN     A     {{ tool.ipa }}
+{% endif %}
+            {{ tool.name }}		IN	A	{{ tool.ipa }}
 ;
 {% if tower is defined %}
-{{ tower.name }}     IN     A     {{ tower.ipa }}
-{% endif %}
+           {{ tower.name }}		IN	A	{{ tower.ipa }}
 ;
+{% endif %}
 {% if vault is defined %}
-{{ vault.name }}     IN     A     {{ vault.ipa }}
-{% endif %}
+           {{ vault.name }}		IN	A	{{ vault.ipa }}
 ;
+{% endif %}
 {% if wiki is defined %}
-{{ wiki.name }}     IN     A     {{ wiki.ipa }}
-{% endif %}
+            {{ wiki.name }}		IN	A	{{ wiki.ipa }}
 ;
+{% endif %}
 {% if windows is defined %}
 {% for wn in windows %}
-{{ wn.name }} 		IN	A	{{ wn.ipa }}
+              {{ wn.name }} 		IN	A	{{ wn.ipa }}
 {% endfor %}
+;
 {% endif %}
-;
-;
 ;
 {% if loadbalancer_vip is defined %}
 ; *****************************************************************************
 ; Set up the kubernetes clusters
 ; *****************************************************************************
-{{ loadbalancer_vip.name }}     IN     A     {{ loadbalancer_vip.ipa }}
-{{ loadbalancer_primary.name }}     IN     A     {{ loadbalancer_primary.ipa }}
-{{ loadbalancer_secondary.name }}     IN     A     {{ loadbalancer_secondary.ipa }}
+{{ loadbalancer_vip.name }}		IN	A	{{ loadbalancer_vip.ipa }}
+{{ loadbalancer_primary.name }}		IN	A	{{ loadbalancer_primary.ipa }}
+{{ loadbalancer_secondary.name }}		IN	A	{{ loadbalancer_secondary.ipa }}
 ;
 ; *****************************************************************************
 ; The api points to the IP of your load balancer
 ; *****************************************************************************
-api                IN      A       {{ loadbalancer_vip.ipa }}
-api-int            IN      A       {{ loadbalancer_vip.ipa }}
+api		IN	A	{{ loadbalancer_vip.ipa }}
+api-int		IN	A	{{ loadbalancer_vip.ipa }}
 ;
 ; *****************************************************************************
 ; Create entries for the control plane
 ; *****************************************************************************
 {% for c in control %}
-{{ c.name }}              IN    A  {{ c.ipa }}
+{{ c.name }}		IN	A	{{ c.ipa }}
 {% endfor %}
 ;
 ; *****************************************************************************
 ; Create entries for the worker hosts
 ; *****************************************************************************
 {% for w in workers %}
-{{ w.name }}              IN    A  {{ w.ipa }}
+{{ w.name }}		IN	A	{{ w.ipa }}
 {% endfor %}
 ;
 {% endif %}
-;
 ;EOF
