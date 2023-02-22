@@ -14,23 +14,104 @@
     minute: "*/15"
     job: "/usr/sbin/sendmail -q"
 
-- name: Create the necessary directories
+- name: Create the base directory
   ansible.builtin.file:
-    path: '{{ item.path }}'
+    path: '/opt/unixsuite'
     state: directory
     owner: unixsvc
     group: sysadmin
     mode: 0770
-    recurse: yes
-  loop:
-    - { path: /opt/unixsuite/run.d/0100 }
-    - { path: /opt/unixsuite/run.d/always }
-    - { path: /opt/unixsuite/var }
 
-- name: Remove directory if they exist
+- name: Create the core directories
   ansible.builtin.file:
-    path: /opt/unixsuite/rrdtool
-    state: absent
+    path: '/opt/unixsuite/{{ item }}'
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0770
+  with_items:
+    - bin
+    - cfghtml
+    - etc
+    - run.d
+    - var
+
+- name: Create the run directories
+  ansible.builtin.file:
+    path: '/opt/unixsuite/run.d/{{ item }}'
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0770
+  with_items:
+    - 0100
+    - always
+
+- name: Install the scripts
+  ansible.builtin.copy:
+    source: '.config'
+    path: '/opt/unixsuite/.config'
+    state: present
+    owner: unixsvc
+    group: sysadmin
+    mode: 0660
+
+- name: Install the scripts
+  ansible.builtin.copy:
+    source: '{{ item }}'
+    path: '/opt/unixsuite/bin/{{ item }}'
+    state: present
+    owner: unixsvc
+    group: sysadmin
+    mode: 0770
+  with_items:
+    - chkcluster
+    - chkdef
+    - chketh
+    - chkif
+    - chkkubernetes
+    - chkmessages
+    - chkports
+    - chkprinter
+    - chkprtdiag
+    - chkraid
+    - chksan
+    - chkserver
+    - chkstack
+    - chksudoers
+    - chksys
+    - chkusers
+    - chkversion
+    - chkyum
+    - cleanup
+    - corefiles
+    - gethistory
+    - lockuser
+    - logme
+    - logroll
+    - makeroutes
+    - mkimage-yum.sh
+    - modifysudo
+    - msgprocess
+    - mysql.backup
+    - nessus
+    - password
+    - profile
+    - resethp
+    - review
+    - runmrc
+    - simplejson
+    - status
+    - status.md
+    - suitecheck
+    - tomcat
+    - ucmdbsvc
+    - unixsuite
+    - unlock
+    - update.forward
+    - update.gecos
+    - update.groups
+    - update.motd
 
 - name: Link standard scripts
   ansible.builtin.file:
