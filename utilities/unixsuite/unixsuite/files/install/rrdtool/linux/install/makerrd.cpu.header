@@ -1,0 +1,7 @@
+# Capture the output of mpstat -P ALL 1
+
+function cpur {
+  if [[ ! -f $RRDDATA/cpu.rrd ]]
+  then
+    echo "creating cpu.rrd"
+    $RRD/rrdtool create $RRDDATA/cpu.rrd --step $STEP \

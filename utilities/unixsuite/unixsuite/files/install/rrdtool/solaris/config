@@ -1,0 +1,55 @@
+#
+# How often to update the databases in seconds
+STEP=15
+
+#
+# The heartbeat value. Should be a little larger than STEP
+HEARTBEAT=$(($STEP + 5))
+
+#
+# Timing info.
+MINUTE=$((60 / $STEP))
+HOUR=$((3600 / $STEP))
+DAY=$((86400 / $STEP))
+WEEK=$((604800  / $STEP))
+
+# 
+# Location of the rrdtool binary
+RRD=/usr/local/bin
+
+#
+# Root directory of the core scripts
+RRDTOOL=/opt/unixsuite/rrdtool
+
+#
+# rrd databases
+RRDDATA=/var/rrdtool/data
+
+#
+# Data capture scripts
+SCRIPTS=$RRDTOOL/scripts
+
+#
+# Raw data files; output of vmstat, iostat, etc as well as log files
+DATA=/var/rrdtool/data
+
+#
+# rrd Graph directory
+GRAPHS=/var/rrdtool/graphs
+
+# 
+# Web directory for the graphs once done
+HTTPD=/usr/local/httpd/hgdocs/remote/rrd
+
+#
+# Interface configuration
+INTERFACES="e1000g2:e1000g2 nge0:nge0"
+
+#
+# Drive configuration
+DRIVES="sd0:root sd1:zfs"
+
+#
+# CPU Listing (just enumerate the number of cores)
+CPUS="0 1 2 3 4 5 6 7"
+

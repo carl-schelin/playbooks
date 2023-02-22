@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# mysql.backup - 
+#  1. Dump the mysql databases
+#  2. Note changes with yesterday's databases
+#  3. Archive the directory
+#  4. Delete yesterday's directory
+#  5. E-mail report if there are changes
+
+# to verify database integrity:
+#for i in *.MYI
+#do
+#  myisamchk $i
+#  if [[ $? -gt 0 ]]
+#  then
+#    echo $i
+#  fi
+#done
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# set up variables
+# newer versions of mysql/mariadb won't let you write to /var/tmp so changed to /opt/mysqlbackup
+ROOT="/opt/mysqlbackup"
+DATE=$(date +"%Y%m%d")
+LOG="$ROOT/mysql.$DATE/mysql.report"
+# location of mysql on Solaris using CSW package management
+PATH="/opt/csw/mysql5/bin:$PATH"; export PATH
+
+# Generally bail if the MYSQL_DATABASES is empty.
+if [[ -z ${MYSQL_DATABASES} ]]
+then
+  echo "Not on a supported mysql server. Exiting..."
+  exit 0
+fi
+
+# remove current file if it exists. The idea being you can kick off another backup of the database at any time.
+if [[ -f ${ROOT}/mysql.${DATE}.tar.gz ]]
+then
+  rm ${ROOT}/mysql.${DATE}.tar.gz
+fi
+
+# create new directory for backups
+if [[ ! -d ${ROOT}/mysql.${DATE} ]]
+then
+  mkdir ${ROOT}/mysql.${DATE}
+fi
+
+# ensure mysql can actually write to the directory
+chmod -R 775 ${ROOT}
+chown -R ${MYSQL_OWNER} ${ROOT}
+
+# dump the databases out
+echo "Beginning mysql report: ${DATE}" > ${LOG}
+
+for i in ${MYSQL_DATABASES}
+do
+# ensure mysql can actually write to the database directory
+  chmod -R 775 ${ROOT}/mysql.${DATE}
+  chown -R mysql:mysql ${ROOT}/mysql.${DATE}
+
+  echo "Dumping ${i}" >> ${LOG}
+  echo "Dumping ${i}"
+  echo "mysqldump --tab=${ROOT} --opt ${i} --user=\"${MYSQL_USER}\" --password=\"${MYSQL_PASSWORD}\""
+  mysqldump --opt ${i} --user="${MYSQL_USER}" --password="${MYSQL_PASSWORD}" > ${ROOT}/mysql.${DATE}/${i}.sql
+
+done
+
+# tar and compress today's files so it can be backed up to the remote server
+if [[ -d ${ROOT}/mysql.${DATE} ]]
+then
+  cd ${ROOT}
+  echo "Archive directory."
+  tar cf mysql.${DATE}.tar mysql.${DATE}
+  if [[ $? -eq 0 ]]
+  then
+    echo "Compress Archive."
+    gzip -9 mysql.${DATE}.tar
+    if [[ $? -eq 0 ]]
+    then
+      echo "Remove directory."
+      rm -rf mysql.${DATE}
+    fi
+  fi
+fi
+
+# finally, remove all old backups
+echo "Remove old compressed archives."
+find ${ROOT} -name mysql.\*.gz -prune -atime +${MYSQL_ARCHIVE} -exec rm {} \;
+
+exit 0
+

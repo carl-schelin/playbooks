@@ -1,0 +1,51 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Update the nessus key pair
+#
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+NESSUS=$(grep nessus /etc/passwd | cut -f1 -d:)
+NESDIR=$(grep nessus /etc/passwd | cut -f6 -d:)
+NESGRP=$(grep nessus /etc/group | cut -f1 -d:)
+
+if [[ -z ${NESGRP} ]]
+then
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    NESGRP='users'
+  fi
+  if [[ ${OS} = 'SunOS' ]]
+  then
+    NESGRP='others'
+  fi
+fi
+
+if [[ -d ${NESDIR} ]]
+then
+  if [[ ! -d ${NESDIR}/.ssh ]]
+  then
+    mkdir "${NESDIR}/.ssh"
+    chown "${NESSUS}:${NESGRP}" "${NESDIR}/.ssh"
+    chmod 700 "${NESDIR}/.ssh"
+  fi
+
+  if [[ -f ${SCRIPTS_DATA}/nessus.id_rsa.pub ]]
+  then
+    cp "${SCRIPTS_DATA}/nessus.id_rsa.pub" "${NESDIR}/.ssh/authorized_keys"
+    chown -R "${NESSUS}:${NESGRP}" "${NESDIR}"
+    chmod 400 "${NESDIR}"/.ssh/authorized_keys
+  fi
+fi
+

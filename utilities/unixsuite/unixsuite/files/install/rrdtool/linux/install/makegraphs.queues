@@ -1,0 +1,27 @@
+function memg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Queues" \
+    --vertical-label "queues" \
+    --upper-limit 15 \
+    DEF:rproc=$RRDDATA/memory.rrd:rproc:AVERAGE \
+      VDEF:maxR=rproc,MAXIMUM \
+      VDEF:minR=rproc,MINIMUM \
+      VDEF:avgR=rproc,AVERAGE \
+    DEF:bproc=$RRDDATA/memory.rrd:bproc:AVERAGE \
+      VDEF:maxB=bproc,MAXIMUM \
+      VDEF:minB=bproc,MINIMUM \
+      VDEF:avgB=bproc,AVERAGE \
+    LINE1:rproc#0000FF:"Run Queue    " \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s\n" \
+    LINE1:bproc#FF0000:"Blocked Queue" \
+      GPRINT:maxB:"Max %6.2lf %s" \
+      GPRINT:minB:"Min %6.2lf %s" \
+      GPRINT:avgB:"Avg %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+

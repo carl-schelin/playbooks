@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# James Noyes
+
+SECONDARY=/opt/tomcat/bin/daemon.sh
+APPUSER=microstrategy
+
+if [ `/usr/bin/whoami` != "root" ]
+then
+   echo "This script is only for root.  Invoke $SECONDARY (start|stop) instead."
+   exit 1
+fi
+
+case $1 in
+
+start)
+   su - $APPUSER $SECONDARY start
+   ;;
+stop)
+   su - $APPUSER $SECONDARY stop
+   ;;
+*)
+   echo "Usage: $0 (start|stop)
+   exit 1
+   ;;
+
+exit 0
+

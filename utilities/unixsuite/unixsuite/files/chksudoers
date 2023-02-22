@@ -1,0 +1,354 @@
+#!/bin/ksh
+
+# by Carl Schelin
+# create a list of users who are in sudoers including extracting from etc/group information
+# 9/8/11 - added check for NOPASSWD:ALL in addition to checking for ALL
+# 9/8/11 - changed /,// to /,/ / in the first loop (getting useruseruseruser instead of user user user user)
+# 9/8/11 - changed to exclude multiple ALL's from the loop
+# 9/8/11 - added check to extract the current user status (active/locked) from the users.dat file
+# 9/20/11 - Added TMPSU to be checked and identified as having root access
+# 9/22/11 - Added check to get the name of all cmnd_alias entries with /su - or /su and build an egrep list (alias|alias|alias)
+# 9/22/11 - Fixed a couple of small bugs, one when grepping for ALL on DALLAS and getting the wrong Cmnd_Alias
+# 9/26/11 - Added a bit to trim spaces from the /bin/su check
+# 9/26/11 - Change checking of the last entry to checking if TMPSU (for example) is in the list of Cmnd_Alias's 
+#        (TMPSU, DPLSU caused this fix), also added (,|$) to prevent DALL from succeeding
+# 10/12/11 - changed path for group and passwd file due to centrify being installed on some servers.
+# 02/01/13 - Updated all GECOS= entries to pull from chkusers.dat file to get centrify information. - KSZ
+# 01/20/16 - added sfw sudoers check - TCS
+# 01/31/18 - Added debugging code to better identify where account issues pop up
+# 07/02/19 - Fixed checking sudoers for (user) access. Had to run the check 4 times so if more than 4 entries are found on a line, it won't check the remaining 4.
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+OUTPUT="${SCRIPTS_LOGS}/chksudoers.output"
+CHKSUDOERS="${SCRIPTS_LOGS}/chksudoers.dat"
+CHKUSERS="${SCRIPTS_LOGS}/chkusers.dat"
+DEBUG="yes"
+DEBUG="no"
+
+# locate the sudoers file on the system
+
+# sun freeware install
+if [[ -f /opt/sfw/etc/sudoers ]]
+then
+  SUDOERS='/opt/sfw/etc/sudoers'
+fi
+
+# default install
+if [[ -f /etc/sudoers ]]
+then
+  SUDOERS='/etc/sudoers'
+fi
+
+# custom installation
+if [[ -f /usr/local/etc/sudoers ]]
+then
+  SUDOERS='/usr/local/etc/sudoers'
+fi
+
+# hp-ux location
+if [[ -f /opt/iexpress/sudo/etc/sudoers ]]
+then
+  SUDOERS='/opt/iexpress/sudo/etc/sudoers'
+fi
+
+# if no sudo file then it's not installed
+if [[ "$SUDOERS" = "" ]]
+then
+  exit 0
+fi
+
+# clean up the file
+if [[ -f "${OUTPUT}" ]]
+then
+  rm "${OUTPUT}"
+fi
+
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking ${SUDOERS}: User_Alias:"
+fi
+# there shouldn't be anyone using the User_Alias entry but this checks just in case
+for i in $(grep -v "^#" "${SUDOERS}" | grep "User_Alias" | cut -f2 -d= | sed -e "s/,/ /g")
+do
+  ROOT=$(grep -v "^#" "${SUDOERS}" | egrep "^User_Alias.*TMPROOT" | grep "${i}")
+  if [[ -z $ROOT ]]
+  then
+    TMPROOT="no"
+  else
+    TMPROOT="yes"
+  fi
+
+  STATUS=$(grep "^${HOSTNAME}:${i}:" "${CHKUSERS}" | cut -f6 -d:)
+  GECOS=$(grep "^${HOSTNAME}:${i}:" "${CHKUSERS}" | cut -f3 -d:)
+  echo "${HOSTNAME}:${i}:${GECOS}:${TMPROOT}:${STATUS}" >> "${OUTPUT}"
+  if [[ $DEBUG = 'yes' ]]
+  then
+    echo "${HOSTNAME}:${i}:${GECOS}:${TMPROOT}:${STATUS}"
+  fi
+done
+
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking ${SUDOERS}: Cmnd_Alias:"
+fi
+# this section builds a list of the Cmnd_Aliases that have root access. Generally TMPSU but others such as BEASU have it as well.
+for i in $(grep -v "^#" $SUDOERS | grep "Cmnd_Alias" | cut -f2 -d= | sed -e "s/ /_/g" | sed -e "s/,/ /g")
+do
+  CMD=$(echo "${i}" | sed -e "s/_/ /g")
+# trim spaces
+  CHKCMD=$(echo "${CMD}")
+
+  if [[ $CHKCMD = "/usr/bin/su" || $CHKCMD = "/usr/bin/su -" || $CHKCMD = "/bin/su" || $CHKCMD = "/bin/su -" ]]
+  then
+    CMND_ALIAS=$(grep -v "^#" "${SUDOERS}" | grep "Cmnd_Alias" | egrep "(${CMD}$|${CMD},)" | awk '{print $2}')
+  fi
+done
+
+# replace the spaces (if any) with a pipe for the egrep command
+CMND_ALIAS=$(echo "${CMND_ALIAS}" | sed -e "s/ /|/g")
+
+if [[ $DEBUG = 'yes' ]]
+then
+  echo "Checking $SUDOERS:"
+  grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}'
+fi
+# ok, run through the %groups and see who has what. check for space or tabs
+for i in $(grep -v "^#" $SUDOERS | grep "%" | cut -f1 -d\ | cut -f1 -d\	| awk -F% '{print $2}')
+do
+# get the group info from ${SCRIPTS_LOGS}/group
+  GID=$(grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f3 -d:)
+
+  if [[ $DEBUG = 'yes' ]]
+  then
+    grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f3 -d:
+    echo "Checking group id ${GID}:"
+  fi
+  for j in $(grep "^${i}:" "${SCRIPTS_LOGS}/group" | cut -f4 -d: | sed -e "s/,/ /g")
+  do
+
+# check to see if a group is root accessible and set the yes/no flag
+#    ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%$i" | cut -f2 -d= | egrep "( |	)(ALL|$CMND_ALIAS)(,|$)" | head -1)
+
+# could have a specific user called out in parens to restrict access. "(username) ALL" just means the group can run any command as 'username' so ALL isn't bad here.
+# need to split on parens and check to see if something is returend
+# first get the commands
+    COMMANDS=$(grep -v "^#" "${SUDOERS}" | grep "^%${i}" | cut -f2 -d=)
+
+
+# then get the individual sections separated by commas; section 1
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f1 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+# then get the individual sections separated by commas; section 2
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f2 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+# then get the individual sections separated by commas; section 3
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f3 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+# then get the individual sections separated by commas; section 4
+    echo ${COMMANDS} | grep "," > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      SECTION=$(echo ${COMMANDS} | cut -f4 -d,)
+    else
+      SECTION=${COMMANDS}
+    fi
+# now split on parens
+    echo ${SECTION} | grep '(' > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f1 -d\))
+      ROOT=$(echo ${PAREN} | grep -i ALL)
+# if "(ALL)" check for "(ALL) ALL"
+      if [[ ! -z $ROOT ]]
+      then
+        PAREN=$(echo ${SECTION} | cut -f2 -d\( | cut -f2 -d\))
+        ROOT=$(echo ${PAREN} | grep -i ALL)
+      fi
+    else
+      ROOT=$(echo ${SECTION} | grep -i ALL)
+    fi
+
+    if [[ -z $ROOT ]]
+    then
+      TMPROOT="no"
+    else
+      TMPROOT="yes"
+    fi
+
+    STATUS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f6 -d:)
+    GECOS=$(grep "^$HOSTNAME:$j:" "${CHKUSERS}" | cut -f3 -d:)
+    echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS" >> "${OUTPUT}"
+    if [[ $DEBUG = 'yes' ]]
+    then
+      echo "$HOSTNAME:$j:$GECOS:$TMPROOT:$STATUS"
+    fi
+
+
+  done
+
+  if [[ $DEBUG = 'yes' ]]
+  then
+    echo "Checking group membership for users in passwd:"
+  fi
+# parse the passwd file and see if anyone is a member of a root accessible GID
+  for j in $(awk -F: '{print $1":"$4}' "${SCRIPTS_LOGS}/passwd")
+  do
+    USER=$(echo "${j}" | cut -f1 -d:)
+    UGID=$(echo "${j}" | cut -f2 -d:)
+
+    if [[ ${GID} = "${UGID}" ]]
+    then
+      ROOT=$(grep -v "^#" "${SUDOERS}" | grep "^%${i}" | awk '{print $NF}')
+      if [[ $DEBUG = 'yes' ]]
+      then
+        echo "${SUDOERS} - ${i}"
+        grep -v "^#" ${SUDOERS} | grep "^%${i}" | awk '{print $NF}'
+      fi
+      if [[ -z $ROOT ]]
+      then
+        TMPROOT="no"
+      else
+        TMPROOT="yes"
+      fi
+
+      STATUS=$(grep "^${HOSTNAME}:${USER}:" "${CHKUSERS}" | cut -f6 -d:)
+      GECOS=$(grep "^${HOSTNAME}:${USER}:" "${CHKUSERS}" | cut -f3 -d:)
+      echo "${HOSTNAME}:${USER}:${GECOS}:${TMPROOT}:${STATUS}" >> "${OUTPUT}"
+      if [[ $DEBUG = 'yes' ]]
+      then
+        echo "${HOSTNAME}:${USER}:${GECOS}:${TMPROOT}:${STATUS}"
+      fi
+    fi
+  done
+done
+
+# sort and clear out the duplicates if any
+sort "${OUTPUT}" | uniq > "${CHKSUDOERS}"
+
+# make a backup of the sudoers file
+cp "${SUDOERS}" "${SCRIPTS_LOGS}"
+
+exit 0
+

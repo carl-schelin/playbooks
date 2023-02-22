@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# suitecheck - This script should be run every 5 minutes
+# Carl Schelin - 12/19/2018
+
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# get the current hour and minute
+# scripts in run.d/$RUNTIME will be run in the order presented
+RUNTIME=$(date +"%H%M")
+
+# get the current day of the week
+# scripts in W[DOW][RUNTIME] will be run
+WEEKDAY=$(date +"%w")
+
+# get the current day of the month
+# scripts in M[DOM][RUNTIME] will be run
+MONTHDAY=$(date +"%d")
+
+if [[ -f ${SCRIPTS_LOGS}/suitecheck.* ]]
+then
+  FLAG="no"
+  for i in `ls ${SCRIPTS_LOGS}/suitecheck.*`
+  do
+    FLAG="yes"
+  done
+fi
+
+if [[ ${FLAG} = 'yes' ]]
+then
+  echo "suitecheck is already running. Exiting"
+  exit 1
+fi
+
+touch ${SCRIPTS_LOGS}/suitecheck.$$
+
+# the run directory
+if [[ ! -d ${SCRIPTS_RUND} ]]
+then
+  mkdir -p ${SCRIPTS_RUND}
+fi
+
+# the data directory
+if [[ ! -d ${SCRIPTS_DATA} ]]
+then
+  mkdir -p ${SCRIPTS_DATA}
+fi
+
+# the output directory
+if [[ ! -d ${SCRIPTS_LOGS} ]]
+then
+  mkdir -p ${SCRIPTS_LOGS}
+fi
+
+# run any script in the always directory
+for i in `ls ${SCRIPTS_RUND}/always/`
+do
+  "${SCRIPTS_RUND}"/always/${i}
+done
+
+# runonce should only run one time and then be deleted
+if [[ -f ${SCRIPTS_RUND}/always/runonce ]]
+then
+  rm "${SCRIPTS_RUND}/always/runonce"
+fi
+
+if [[ -d ${SCRIPTS_RUND}/${RUNTIME} ]]
+then
+# then run any script in the current hour/minute directory
+  for i in `ls ${SCRIPTS_RUND}/${RUNTIME}/`
+  do
+    "${SCRIPTS_RUND}"/${RUNTIME}/${i}
+  done
+fi
+
+if [[ -d ${SCRIPTS_RUND}/W${WEEKDAY}${RUNTIME} ]]
+then
+  for i in `ls ${SCRIPTS_RUND}/W${WEEKDAY}${RUNTIME}/`
+  do
+    "${SCRIPTS_RUND}"/W${WEEKDAY}${RUNTIME}/${i}
+  done
+fi
+
+if [[ -d ${SCRIPTS_RUND}/M${MONTHDAY}${RUNTIME} ]]
+then
+  for i in `ls ${SCRIPTS_RUND}/M${MONTHDAY}${RUNTIME}/`
+  do
+    "${SCRIPTS_RUND}"/M${MONTHDAY}${RUNTIME}/${i}
+  done
+fi
+
+# finally delete the run flag  we created
+if [[ -f ${SCRIPTS_LOGS}/suitecheck.$$ ]]
+then
+  rm ${SCRIPTS_LOGS}/suitecheck.$$
+fi
+

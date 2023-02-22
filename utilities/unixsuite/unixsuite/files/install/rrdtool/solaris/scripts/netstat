@@ -1,0 +1,12 @@
+#!/bin/ksh
+
+# expecting $1 = interface
+#           $2 = RX or TX
+
+case $2 in
+ RX) /usr/bin/netstat -i -n | /bin/grep "^$1 " | /bin/awk '{print $5}'
+     ;;
+ TX) /usr/bin/netstat -i -n | /bin/grep "^$1 " | /bin/awk '{print $7}'
+     ;;
+esac
+

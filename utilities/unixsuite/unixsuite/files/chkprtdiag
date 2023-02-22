@@ -1,0 +1,62 @@
+#!/bin/ksh
+
+# Carl Schelin
+# 9/30/2011 - get output of prtdiag from Sun systems.
+# 10/3/2011 - change prtdiag directory to its well known location
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+CONTENT="prtdiag"
+TIMEOUT=60
+FLAGS="-v"
+
+if [[ $OS = "SunOS" ]]
+then
+
+# delete the old output file
+  if [[ -f ${SCRIPTS_DATA}/$CONTENT.output ]]
+  then
+    rm ${SCRIPTS_DATA}/$CONTENT.output
+  fi
+
+# run the command to get the expected output
+
+  if [[ -f /usr/platform/`uname -i`/sbin/$CONTENT ]]
+  then
+    /usr/platform/`uname -i`/sbin/$CONTENT $FLAGS > ${SCRIPTS_DATA}/$CONTENT.output 2>&1 &
+    PID=$!
+  fi
+
+# wait for the specified number of seconds for the command to complete
+# if the timeout is exceeded, kill the process and move on to the next command
+
+  while [[ $TIMEOUT -gt 0 ]]
+  do
+    /usr/bin/ps -p $PID > /dev/null 2>&1
+    if [[ $? -ne 0 ]]
+    then
+      break
+    fi
+    TIMEOUT=$(($TIMEOUT - 1))
+    sleep 1
+  done
+
+# if the timeout reaches 0, then the process was killed.
+
+  if [[ $TIMEOUT -le 0 ]]
+  then
+    kill -KILL $PID
+  fi
+
+fi
+

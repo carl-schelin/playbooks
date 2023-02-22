@@ -1,0 +1,3 @@
+    DEF:cpu_usrREPLACE=$RRDDATA/cpu.rrd:usrREPLACE:AVERAGE \
+    DEF:cpu_sysREPLACE=$RRDDATA/cpu.rrd:sysREPLACE:AVERAGE \
+    DEF:cpu_idlREPLACE=$RRDDATA/cpu.rrd:idlREPLACE:AVERAGE \

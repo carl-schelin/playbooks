@@ -1,0 +1,48 @@
+#!/bin/ksh
+
+# chkyum
+# get the history of all the installations
+
+# yum history list all to get all installations
+# then yum history info [number]
+# history sub-command, use: list, info, summary, repeat, redo, undo, new, rollback, addon, addon-info, stats, statistics, sync, synchronizepkg, pkgs, pkg-list, pkgs-list, package, package-list, packages, packages-list, pkg-info, pkgs-info, package-info, packages-info.
+
+#[root@inventory bin]# yum history list all
+#Loaded plugins: enabled_repos_upload, langpacks, package_upload, product-id, search-disabled-repos, subscription-manager
+#ID     | Login user               | Date and time    | Action(s)      | Altered
+#-------------------------------------------------------------------------------
+#    46 | System <unset>           | 2020-07-13 15:06 | Update         |    5
+#history list
+#Uploading Enabled Repositories Report
+#Loaded plugins: langpacks, product-id, subscription-manager
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+if [[ -f /bin/yum ]]
+then
+# first verify it's working
+  /bin/yum history list all > ${SCRIPTS_LOGS}/yum.history
+  if [[ $? -eq 0 ]]
+  then
+    for i in `/bin/yum history list all | egrep -v "(^Loaded plugins|^ID|^------|^history list|^Uploading Enabled)" | awk '{print $1}'`
+    do
+      if [[ ! -f ${SCRIPTS_LOGS}/yum.history.$i ]]
+      then
+        /bin/yum history info $i > ${SCRIPTS_LOGS}/yum.history.$i
+      fi
+    done
+  else
+    echo "`date`: yum error" >> ${SCRIPTS_LOGS}/yum.error
+  fi
+fi
+

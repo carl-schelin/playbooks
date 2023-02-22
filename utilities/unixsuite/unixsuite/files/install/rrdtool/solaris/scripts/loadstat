@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+# retrieve load average; 1, 5, and 15
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  1) /usr/bin/uptime | /usr/bin/awk '{print $(NF-2)}' | /usr/bin/awk -F"," '{print $1}'
+     ;;
+  5) /usr/bin/uptime | /usr/bin/awk '{print $(NF-1)}' | /usr/bin/awk -F"," '{print $1}'
+     ;;
+  15) /usr/bin/uptime | /usr/bin/awk '{print $NF}'
+     ;;
+esac
+

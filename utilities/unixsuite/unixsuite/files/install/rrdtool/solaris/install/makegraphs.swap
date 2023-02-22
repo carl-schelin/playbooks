@@ -1,0 +1,15 @@
+function swapg {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Swap" \
+    --vertical-label "swap" \
+    --lower-limit 0 \
+    DEF:swap_avail=$RRDDATA/memory.rrd:swap_avail:AVERAGE \
+    DEF:swap_used=$RRDDATA/memory.rrd:swap_used:AVERAGE \
+    AREA:swap_avail#339900:"Available" \
+    AREA:swap_used#FF0000:"In Use" \
+    COMMENT:"$DATE\r"
+}
+

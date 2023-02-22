@@ -1,0 +1,7 @@
+
+    $RRD/rrdtool update $RRDDATA/ntp.rrd $NTP
+    echo "$DATE:$NTP" >> $DATA/rrdtool.ntp
+
+  } &
+  sleep 2;
+

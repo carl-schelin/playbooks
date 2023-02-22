@@ -1,0 +1,3 @@
+    DEF:dispNUMBER=$RRDDATA/ntp.rrd:dispNUMBER:AVERAGE \
+    DEF:offsNUMBER=$RRDDATA/ntp.rrd:offsetNUMBER:AVERAGE \
+    DEF:delyNUMBER=$RRDDATA/ntp.rrd:delayNUMBER:AVERAGE \

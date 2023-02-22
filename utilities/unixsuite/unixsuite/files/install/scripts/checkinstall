@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# checkinstall - Runs a filtered find command against the working directory (/opt/html/[param]) to identify new files that haven't been added to the code repository (/opt/code/[param]) yet.
+
+if [[ -z $1 ]]
+then
+  echo "Reminds you what files you may be working on in the working directory that haven't been added to the code repository yet."
+  echo ""
+  echo "Usage: checkinstall [ inventory | status | changelog ]"
+  echo ""
+  exit 1
+fi
+
+if [[ $1 = 'inventory' ]]
+then
+  cd /var/www/html/inventory
+  for i in `find . -type f -print | egrep -v "(settings.php|research|./css/themes|.js$|.csv$|./pictures|./imgs)"`
+  do
+    if [[ ! -f /opt/code/inventory/$i ]]
+    then
+      echo "Missing File: $i"
+    fi
+  done
+  for i in `find . -type d -print | egrep -v "(./css/themes)"`
+  do
+    if [[ ! -d /opt/code/inventory/$i ]]
+    then
+      echo "Missing Directory: $i"
+    fi
+  done
+fi
+
+if [[ $1 = 'status' ]]
+then
+  cd /var/www/html/status
+  for i in `find . -type f -print | grep -v research | grep -v 'css/themes' | grep -v './imgs' | grep -v "./css/*js" | grep -v "./help" `
+  do
+    if [[ ! -f /opt/code/status/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+
+if [[ $1 = 'httpd' ]]
+then
+  cd ~/scripts/httpd
+  for i in `find . -type f -print`
+  do
+    if [[ ! -f /opt/code/httpd/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+
+if [[ $1 = 'changelog' ]]
+then
+  cd /var/www/html/changelog
+  for i in `find . -type f -print | egrep -v ".changelog$"`
+  do
+    if [[ ! -f /opt/code/changelog/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+
+if [[ $1 = 'kubernetes' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Missing version to check: 1.2.0, 1.9.0, 1.10.5, 1.11.0, or 1.13."
+  fi
+  cd ~/scripts/kubernetes/$2/kubernetes
+  for i in `find . -type f -print`
+  do
+    if [[ ! -f /opt/code/kubernetes/$2/kubernetes/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+
+if [[ $1 = 'kubeadm' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Missing version to check: 1.2.0, 1.9.0, 1.10.5, 1.11.0, or 1.13."
+  fi
+  cd ~/scripts/kubernetes/$2/kubeadm
+  for i in `find . -type f -print`
+  do
+    if [[ ! -f /opt/code/kubernetes/$2/kubeadm/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+if [[ $1 = 'kubecerts' ]]
+then
+  if [[ -z $2 ]]
+  then
+    echo "Error: Missing version to check: 1.2.0, 1.9.0, 1.10.5, 1.11.0, or 1.13."
+  fi
+  cd ~/scripts/kubernetes/$2/kubecerts
+  for i in `find . -type f -print`
+  do
+    if [[ ! -f /opt/code/kubernetes/$2/kubecerts/$i ]]
+    then
+      echo "Missing: $i"
+    fi
+  done
+fi
+

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# corefiles
+# This script removes core files in the /var/lib/origin directory.
+# per Red Hat, this is a known issue with older Openshift clusters.
+# this can be remvoed on an Openshift 4 cluster.
+
+VERSION=''
+
+# searching for the version so we don't run this on a v4 cluster
+# there may be other issues with v4 as this addresses a known v3 issue.
+if [[ -f /bin/oc ]]
+then
+  VERSION=$(/bin/oc version | head -1 | cut -f1 -d. | awk '{print $2}')
+fi
+
+if [[ ${VERSION] = 'v3' ]]
+then
+  find /var/lib/origin/ -name "core.*" -type f -mtime +30 -exec rm -f {} \;
+fi
+

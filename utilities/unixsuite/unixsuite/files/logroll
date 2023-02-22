@@ -1,0 +1,43 @@
+#!/bin/ksh
+
+# logroll - Carl Schelin
+# roll log files on HP-UX and OSF1 servers
+# 10/12/11 - set up script so it works on OSF1 and HP-UX systems.
+# 02/04/13 - added section for rsyncd.log specific for the Ali Log Access product      
+# 03/04/13 - Added a missing "fi" for the control statement and tested
+
+DATE=`/usr/bin/date +"%Y%m%d"`
+OS=`uname`
+
+if [[ $OS = "HP-UX" ]]
+then
+  LOG=/var/adm/syslog
+  FILE=syslog.log
+  RFILE=rsyncd.log
+fi
+if [[ $OS = "OSF1" ]]
+then
+  LOG=/var/cluster/members/{memb}/adm
+  FILE=messages
+fi
+
+if [[ ! -z $LOG ]]
+then
+  cd $LOG
+
+# just making sure we're in the right directory before starting work.
+  if [[ -f $FILE ]]
+  then
+    cp -p $FILE $FILE.$DATE
+    cat /dev/null > $FILE
+    gzip -9 $FILE.$DATE
+  fi
+# Modified slightly for rsyncd.log
+  if [[ -s $RFILE ]]
+  then
+    cp -p $RFILE $RFILE.$DATE
+    cat /dev/null > $RFILE
+    gzip -9 $RFILE.$DATE
+    find . -name $RFILE.\* -mtime +30 -exec rm {} \;
+  fi
+fi

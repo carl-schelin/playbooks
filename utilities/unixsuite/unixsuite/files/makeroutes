@@ -1,0 +1,47 @@
+#!/bin/ksh
+
+HOSTNAME=`hostname|cut -f1 -d.`
+MANAGEMENT=`grep "^${HOSTNAME}:ManagementInterface" /opt/unixsuite/etc/chkserver.input  | cut -f3 -d:`
+ROUTE=`netstat -rn | grep ${MANAGEMENT} | head -1 | awk '{print $2}'`
+
+if [[ ! -z $1 ]]
+then
+  ROUTE=$1
+fi
+
+if [[ -z $ROUTE ]] || [[ $ROUTE = '0.0.0.0' ]]
+then
+  echo "Need to pass in the management route; ROUTE = \"$ROUTE\""
+  exit 1
+fi
+
+if [[ ! -z $2 ]]
+then
+  MANAGEMENT=$2
+fi
+
+if [[ -z $MANAGEMENT ]]
+then
+  echo "Need to pass in the management device"
+  exit 1
+fi
+
+if [[ ! -f routes ]]
+then
+  echo "The 'routes' file doesn't exist"
+  exit 1
+fi
+
+echo ""
+echo "Listing route definitions"
+for i in `cat routes | sed -e "s/    Route to //g" -e "s/ missing.//g"`
+do
+  OUTPUT=`grep -v "^#" /opt/unixsuite/.config | grep $i`
+  echo "#"
+  echo "# $OUTPUT"
+  echo "route add -host $i/32 gw $ROUTE dev $MANAGEMENT; echo \"$i/32 via $ROUTE dev $MANAGEMENT\" >> /etc/sysconfig/network-scripts/route-$MANAGEMENT"
+  fi
+done
+
+rm routes
+

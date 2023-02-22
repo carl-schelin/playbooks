@@ -1,0 +1,45 @@
+function icpug {
+  $RRD/rrdtool graph $GRAPHS/cpu$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "CPU $1 usage" \
+    --vertical-label "load" \
+    --upper-limit 100 \
+    DEF:cpu_usr=$RRDDATA/cpu.rrd:usr${1}:AVERAGE \
+    DEF:cpu_sys=$RRDDATA/cpu.rrd:sys${1}:AVERAGE \
+    DEF:cpu_idl=$RRDDATA/cpu.rrd:idl${1}:AVERAGE \
+    CDEF:cu=cpu_usr,cpu_usr,0,IF \
+    CDEF:cs=cpu_sys,cpu_sys,0,IF \
+    CDEF:ci=cpu_idl,cpu_idl,0,IF \
+    CDEF:l=cu,0.1,0.1,IF \
+    CDEF:bo=cu,UN,0,cu,IF,0,GT,UNKN,NEGINF,IF \
+    CDEF:usr=100,cu,*,100,/ \
+    CDEF:sys=100,cs,*,100,/ \
+    CDEF:idl=100,ci,*,100,/ \
+    AREA:bo#DDDDDD: \
+    LINE1:sys#600000:'System':STACK \
+    LINE1:l#600000::STACK \
+      VDEF:maxS=sys,MAXIMUM \
+      VDEF:minS=sys,MINIMUM \
+      VDEF:avgS=sys,AVERAGE \
+      GPRINT:maxS:"Max %6.2lf%%" \
+      GPRINT:minS:"Min %6.2lf%%" \
+      GPRINT:avgS:"Avg %6.2lf%%\n" \
+    LINE1:usr#FF6103:'User  ':STACK \
+    LINE1:l#FF6103::STACK \
+      VDEF:maxU=usr,MAXIMUM \
+      VDEF:minU=usr,MINIMUM \
+      VDEF:avgU=usr,AVERAGE \
+      VDEF:maxI=idl,MAXIMUM \
+      VDEF:minI=idl,MINIMUM \
+      VDEF:avgI=idl,AVERAGE \
+      GPRINT:maxU:"Max %6.2lf%%" \
+      GPRINT:minU:"Min %6.2lf%%" \
+      GPRINT:avgU:"Avg %6.2lf%%\n" \
+      GPRINT:maxI:"  Idle    Max %6.2lf%%" \
+      GPRINT:minI:"Min %6.2lf%%" \
+      GPRINT:avgI:"Avg %6.2lf%%\n" \
+    COMMENT:"$DATE\r"
+}
+

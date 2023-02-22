@@ -1,0 +1,26 @@
+#!/bin/ksh
+
+#                       U      N       S     W         I      F       L      T    
+# 01:26:40 PM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+
+. /opt/unixsuite/rrdtool/config
+
+case $2 in
+  U) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $3}'
+     ;;
+  N) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $4}'
+     ;;
+  S) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $5}'
+     ;;
+  W) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $6}'
+     ;;
+  I) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $7}'
+     ;;
+  F) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $8}'
+     ;;
+  L) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $9}'
+     ;;
+  T) /usr/bin/tail -20 $DATA/mpstat.output | /bin/grep " $1 " | /usr/bin/tail -1 | /usr/bin/awk '{print $10}'
+     ;;
+esac
+

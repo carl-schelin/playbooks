@@ -1,0 +1,31 @@
+    AREA:boNUMBER#DDDDDD: \
+    STACK:sysNUMBER#COLORSYS:'System NUMBER'\
+    LINE1:lNUMBER#COLORSYS::STACK \
+      VDEF:maxNUMBERS=sysNUMBER,MAXIMUM \
+      VDEF:minNUMBERS=sysNUMBER,MINIMUM \
+      VDEF:avgNUMBERS=sysNUMBER,AVERAGE \
+      GPRINT:maxNUMBERS:"Max %6.2lf%%" \
+      GPRINT:minNUMBERS:"Min %6.2lf%%" \
+      GPRINT:avgNUMBERS:"Avg %6.2lf%%\n" \
+    STACK:nicNUMBER#COLORNIC:'Nice   NUMBER'\
+    LINE1:lNUMBER#COLORNIC::STACK \
+      VDEF:maxNUMBERN=nicNUMBER,MAXIMUM \
+      VDEF:minNUMBERN=nicNUMBER,MINIMUM \
+      VDEF:avgNUMBERN=nicNUMBER,AVERAGE \
+      GPRINT:maxNUMBERN:"Max %6.2lf%%" \
+      GPRINT:minNUMBERN:"Min %6.2lf%%" \
+      GPRINT:avgNUMBERN:"Avg %6.2lf%%\n" \
+    STACK:usrNUMBER#COLORUSR:'User   NUMBER'\
+    LINE1:lNUMBER#COLORUSR::STACK \
+      VDEF:maxNUMBERU=usrNUMBER,MAXIMUM \
+      VDEF:minNUMBERU=usrNUMBER,MINIMUM \
+      VDEF:avgNUMBERU=usrNUMBER,AVERAGE \
+      GPRINT:maxNUMBERU:"Max %6.2lf%%" \
+      GPRINT:minNUMBERU:"Min %6.2lf%%" \
+      GPRINT:avgNUMBERU:"Avg %6.2lf%%\n" \
+      VDEF:maxNUMBERI=idlNUMBER,MAXIMUM \
+      VDEF:minNUMBERI=idlNUMBER,MINIMUM \
+      VDEF:avgNUMBERI=idlNUMBER,AVERAGE \
+      GPRINT:maxNUMBERI:"  Idle   NUMBER  Max %6.2lf%%" \
+      GPRINT:minNUMBERI:"Min %6.2lf%%" \
+      GPRINT:avgNUMBERI:"Avg %6.2lf%%\n" \

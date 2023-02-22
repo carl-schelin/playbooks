@@ -1,0 +1,11 @@
+  # get load average information
+  {
+    DATE=`date`
+    LOAD="N:`$SCRIPTS/loadstat 1`:`$SCRIPTS/loadstat 5`:`$SCRIPTS/loadstat 15`"
+    
+    $RRD/rrdtool update $RRDDATA/load.rrd $LOAD
+    echo "$DATE:$LOAD" >> $DATA/rrdtool.load
+
+  } &
+  sleep 2;
+

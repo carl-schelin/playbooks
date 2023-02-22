@@ -1,0 +1,7 @@
+    
+    $RRD/rrdtool update $RRDDATA/hdd.rrd $HDD
+    echo "$DATE:$HDD" >> $DATA/rrdtool.hdd
+
+  } &
+  sleep 3;
+

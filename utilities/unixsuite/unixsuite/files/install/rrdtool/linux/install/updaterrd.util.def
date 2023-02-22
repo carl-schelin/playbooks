@@ -1,0 +1,1 @@
+    HDD="${HDD}:`$SCRIPTS/hddstat R sdDRIVE`:`$SCRIPTS/hddstat W sdDRIVE`:`$SCRIPTS/hddstat U sdDRIVE`"

@@ -1,0 +1,42 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+# want to continually run stats at 15 second intervals
+IOPID=999999
+VMPID=999999
+
+while true
+do
+
+  IOTST=`ps -e | grep $IOPID`
+  if [[ -z "$IOTST" ]]
+  then
+    /usr/bin/iostat -dxt 15 >> $DATA/iostat.output 2>&1 &
+    IOPID=$!
+  fi
+
+  VMTST=`ps -e | grep $VMPID`
+  if [[ -z "$VMTST" ]]
+  then
+    /usr/bin/vmstat 15 >> $DATA/vmstat.output 2>&1 &
+    VMPID=$!
+  fi
+
+  MPTST=`ps -e | grep $MPPID`
+  if [[ -z "$MPTST" ]]
+  then
+    /usr/bin/mpstat -P ALL 15 >> $DATA/mpstat.output 2>&1 &
+    MPPID=$!
+  fi
+
+# swap stats
+  cat /proc/swaps > $DATA/swap.output
+
+# dns stats
+#  /usr/sbin/rndc stats
+
+  sleep 15
+
+done
+

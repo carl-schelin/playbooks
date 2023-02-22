@@ -1,0 +1,39 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+# default rrd location of the rrd pid
+PIDFILE="/var/run/rrd.pid"
+DATE=`/bin/date`
+LOG="$DATA/rrd.log"
+
+# ok, all set. now get the pid for the running rrd process
+if [[ -f $PIDFILE ]]
+then
+  PID=`/bin/cat $PIDFILE`
+fi
+
+# is the process still active?
+PROCESS=`/bin/ps -e | /bin/grep ${PID}`
+
+if [[ -z "$PROCESS" ]]
+then
+  echo "$DATE [$PID] rrd process stopped. Restarting [$PID] process: [$PROCESS]" >> $LOG
+  if [[ -f $PIDFILE ]]
+  then
+    /bin/rm $PIDFILE
+  fi
+  $RRDTOOL/updaterrd >> $LOG &
+else
+  echo "$DATE [$PID] rrd is still running." >> $LOG
+fi
+
+# is the process still active?
+PROCESS=`/bin/ps -e | /bin/grep runstats`
+
+if [[ -z "$PROCESS" ]]
+then
+  echo "$DATE runstats process stopped. Restarting runstats process" >> $LOG
+  $RRDTOOL/runstats >> $LOG &
+fi
+

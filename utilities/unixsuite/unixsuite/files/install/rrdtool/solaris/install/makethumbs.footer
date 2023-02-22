@@ -1,0 +1,28 @@
+function dograph {
+    echo $1
+    $2g $1 $1-day-thumb 1d 200 80 $3
+}
+
+dograph lo lo
+dograph mem mem
+dograph swap swap
+dograph cpu cpu
+dograph load load
+
+for i in $INTERFACES
+do
+  INT1=`echo $i | cut -f1 -d:`
+  INT2=`echo $i | cut -f2 -d:`
+
+  dograph $INT1 $INT2
+done
+
+for i in $DRIVES
+do
+  DRV1=`echo $i | cut -f1 -d:`
+  DRV2=`echo $i | cut -f2 -d:`
+
+  dograph $DRV1 hdd $DRV2
+  dograph $DRV1 util $DRV2
+done
+

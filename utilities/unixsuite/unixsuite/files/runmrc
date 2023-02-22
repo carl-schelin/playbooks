@@ -1,0 +1,31 @@
+#!/bin/ksh
+
+# runmrc - Run Megarc to save the adapter configuration.
+# by Carl Schelin
+
+# Since the onboard hostname isn't the same as the one we generally use 
+# to access the system, we have to use a lookup table to get the name 
+# we expect.
+# 10/5/11 - move to unixsuite structure and change data directories.
+#   change the output so the backup files can be gathered without 
+#   having to have a translation table.
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+if [[ -f /usr/sbin/megarc ]]
+then
+
+  /usr/sbin/megarc -savecfg -f${SCRIPTS_DATA}/megarc.cfg -a0
+
+fi
+

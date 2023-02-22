@@ -1,0 +1,4 @@
+    DEF:cpu_usrNUMBER=$RRDDATA/cpu.rrd:cpu_usrNUMBER:AVERAGE \
+    DEF:cpu_nicNUMBER=$RRDDATA/cpu.rrd:cpu_nicNUMBER:AVERAGE \
+    DEF:cpu_sysNUMBER=$RRDDATA/cpu.rrd:cpu_sysNUMBER:AVERAGE \
+    DEF:cpu_idlNUMBER=$RRDDATA/cpu.rrd:cpu_idlNUMBER:AVERAGE \

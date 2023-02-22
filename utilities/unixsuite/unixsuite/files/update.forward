@@ -1,0 +1,64 @@
+#!/bin/ksh
+
+# update.forward
+# Carl Schelin
+# Update root's .forward file should an email address change
+# change the OLDFORWARD to WHOCARES email address as that's generally the Unix Admins email
+# OLDFORWARD is a space separated list in case there are more than one 
+# address that needs to be replaced.
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
+ROOTHOME=`awk -F: /^root:/'{print $6}' /etc/passwd`
+
+if [[ -z ${ROOTHOME} ]]
+then
+  echo "Unable to determine root's home directory"
+  echo "Exiting"
+  exit 0
+fi
+
+if [[ ! -f ${ROOTHOME}/.forward ]]
+then
+  echo "${WHOCARES}" > ${ROOTHOME}/.forward
+  if [[ ${CHANGELOG} != '' ]]
+  then
+    echo "Changelog sent"
+    echo "Updated ${HOSTNAME} to point .forward to Unix Admins email group" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+  fi
+  exit 0
+fi
+
+if [[ ! -z ${OLDFORWARD} ]]
+then
+  for i in ${OLDFORWARD}
+  do
+    grep -i "${i}" ${ROOTHOME}/.forward > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      echo "${WHOCARES}" > ${ROOTHOME}/.forward
+      if [[ ${CHANGELOG} != '' ]]
+      then
+        echo "Changelog sent"
+        echo "Updated ${HOSTNAME} to point .forward to Unix Admins" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+      fi
+    fi
+  done
+fi
+

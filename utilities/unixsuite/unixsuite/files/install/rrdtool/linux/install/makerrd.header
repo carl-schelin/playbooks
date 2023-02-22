@@ -1,0 +1,46 @@
+#!/bin/ksh
+
+# This script creates the various rrd database files 
+# comment out the function call at the end of the file if you 
+#   aren't going to be using the database listed
+
+# Hints
+# rrdtool create
+#   --step [value] - how often data will be submitted to the database. I'm using 15 seconds and the script, updaterrd 
+#                    runs on a 15 second cycle. If you add new data updates, adjust the sleep statements so that 
+#                    a 15 second cycle is maintained.
+#
+# DS is the raw data stored by the update command.
+#
+# Data Source:Variable:Type:Heartbeat:Minimum Value:Maximum Value
+#  Type:
+#    GAUGE = Values in a range, like CPU (0% to 100%)
+#    COUNTER = Values that increase, like Network RX/TX stats
+#  Heartbeat - How long before the data source is skipped and added as Unknown. This should be a few seconds longer than 
+#              the --step value.
+#  Minimum Value - Expected starting range; for GAUGE CPU, 0 would be the start for example.
+#  Maximum Value - Expected ending range; for GAUGE CPU, 100 would be the maximum value.
+#    For COUNTER, U (unknown) would be best for minumum and maximum.
+#
+# RRA is the processed data so you can store data for longer periods of time
+#
+# Round Robin Archives:Consolidation Function:XFiles Factor:Steps:Rows
+#   Consolidation Function:
+#     AVERAGE - Average of the data points (DP)
+#   XFiles Factor - how much of the AVERAGEd data can be unknown. Range is 0 to 1 (so 0.5 is half of 
+#                   the DPs that are used to create a consolidated data point (CDP) can be unknown)
+#   Steps - how many DPs are AVERAGEd to create a CDP in the archive
+#   Rows - how many CDP's are stored
+#
+# For each DP, x RRAs are created. So if you have 6 DS entries and 2 RRAs, you'll have 12 data sets
+#
+# So COUNTER will typically be $STEP:Unknown:Unknown
+# And GAUGE will typically be $STEP:Min:Max (like 0:100 for CPU)
+#
+# You'll want to have data for the day, data for the week, and data over several weeks
+#
+# 1440 minutes = 24 hours
+# 1440 hours = 60 days
+
+. /opt/unixsuite/rrdtool/config
+

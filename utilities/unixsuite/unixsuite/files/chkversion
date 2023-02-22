@@ -1,0 +1,203 @@
+#!/bin/ksh
+
+# Carl Schelin
+# 8/20/2011 - get version information from various tools on the system.
+# 20140403 - Only run the commands/copy files/etc if the version file doesn't exist. Keeps from continually running the command
+# 20140416 - check sudo version
+# 20140729 - Return to running commands each night.
+# 20150113 - Get Oracle smon values (asm_smon/ora_smon) to get ASM and instance names.
+# 20150718 - Get Postgres version
+# 20150718 - Get Informix version
+# 20150816 - Change mysql check as ./mysqld was found on several servers
+# 20151006 - Check for data palette and Panorama (opnet) installation
+# 20180322 - Updated it to fully clean and added wildfly and newrelic
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# clean up
+for i in httpd informix mysqld omsa opnet oracle postgres sudo vmtoolsd wildfly
+do
+  if [[ -f ${SCRIPTS_DATA}/$i.version ]]
+  then
+    rm "${SCRIPTS_DATA}/$i.version"
+  fi
+done
+
+# checking installed software
+# for the chksys script, at least one line needs to be added even if it's just "Installed"
+
+##############################################
+### HTTPD - httpd.version
+##############################################
+
+OUTPUT=$(ps -e | grep httpd)
+if [[ ! -z $OUTPUT ]]
+then
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=$(ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $8}')
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=$(ps -ef | grep -v grep | grep httpd | head -1 | awk '{print $9}')
+  fi
+  $OUTPUT -version | head -1 > "${SCRIPTS_DATA}/httpd.version"
+fi
+
+##############################################
+### Informix - informix.version
+##############################################
+
+OUTPUT=$(ps -ef | grep oninit | grep -v grep)
+if [[ ! -z $OUTPUT ]]
+then
+  if [[ -f /usr/informix/bin/onstat ]]
+  then
+    /usr/informix/bin/onstat - | grep -v "^$" | head -1 > "${SCRIPTS_DATA}/informix.version"
+  fi
+fi
+
+##############################################
+### MySQLd - mysqld.version
+##############################################
+
+OUTPUT=$(ps -e | grep mysqld)
+if [[ ! -z $OUTPUT ]]
+then
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=$(ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $8}')
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=$(ps -ef | grep -v grep | grep 'mysqld ' | head -1 | awk '{print $9}')
+  fi
+# mysql is installed but run as './mysqld' vs an absolute path. at least this tells you it's been found
+  if [[ -f $OUTPUT ]]
+  then
+    $OUTPUT --version | head -1 > "${SCRIPTS_DATA}/mysqld.version"
+  else
+    OUTPUT=$(find /opt -name mysqld -print | sort | tail -1)
+    if [[ -f $OUTPUT ]]
+    then
+      $OUTPUT --version | head -1 > ${SCRIPTS_LOGS}/mysqld.version
+    else
+      echo "$OUTPUT running but can't get version" > "${SCRIPTS_DATA}/mysqld.version"
+    fi
+  fi
+fi
+
+##############################################
+### Dell Open Manage Report - omsa.version
+##############################################
+
+if [[ -x /opt/dell/srvadmin/bin/omreport ]];
+ then
+   /opt/dell/srvadmin/bin/omreport about > "${SCRIPTS_DATA}/omsa.version"
+fi
+
+##############################################
+### Opnet - opnet.version
+##############################################
+
+if [[ -d /opt/Panorama ]]
+then
+  echo "Installed" > "${SCRIPTS_DATA}/opnet.version"
+fi
+
+##############################################
+### Oracle - oracle.version
+##############################################
+
+OUTPUT=$(ps -ef | egrep "(asm|ora)_smon" | grep -v grep | awk '{print $NF}' | cut -f3 -d_)
+if [[ ! -z $OUTPUT ]]
+then
+  for i in $OUTPUT
+  do
+    echo "${i}" >> "${SCRIPTS_DATA}/oracle.version"
+  done
+fi
+
+##############################################
+### Postgres - postgres.version
+##############################################
+
+OUTPUT=$(ps -ef | grep pgsql | grep -v grep)
+if [[ ! -z $OUTPUT ]]
+then
+# if started in the last 24 hours, it'll be hh:mm:ss
+  OUTPUT=$(ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $8}')
+  if [[ ! -x $OUTPUT ]]
+  then
+# if been up a while, it'll be Oct 16'
+    OUTPUT=$(ps -ef | grep -v grep | grep 'pgsql' | head -1 | awk '{print $9}')
+  fi
+  DIR=$(dirname "${OUTPUT}")
+  "${DIR}/psql" --version | head -1 > "${SCRIPTS_DATA}/postgres.version"
+fi
+
+##############################################
+### sudo - sudo.version
+##############################################
+
+if [[ -f /usr/local/bin/sudo ]]
+then
+  /usr/local/bin/sudo -V | head -1 > "${SCRIPTS_DATA}/sudo.version"
+fi
+
+##############################################
+### VMWare Tools - vmtoolsd.version
+##############################################
+
+if [[ -f /usr/sbin/vmtoolsd ]]
+then
+  /usr/sbin/vmtoolsd -v > "${SCRIPTS_DATA}/vmtoolsd.version"
+fi
+
+##############################################
+### Wildfly - wildfly.version
+##############################################
+
+OUTPUT=$(ps -ef | grep wildfly | grep -v grep)
+if [[ ! -z $OUTPUT ]]
+then
+  echo "Installed" > "${SCRIPTS_DATA}/wildfly.version"
+fi
+
+##############################################
+### Java - java.version
+##############################################
+
+# this is a check of running java processes. if running, get the version
+if [[ -f "${SCRIPTS_DATA}/java.version" ]]
+then
+  rm "${SCRIPTS_DATA}/java.version"
+fi
+
+#looks like this
+#java version "1.5.0_17"
+#Java(TM) Platform, Standard Edition for Business (build 1.5.0_17-b04)
+#Java HotSpot(TM) Server VM (build 1.5.0_17-b04, mixed mode)
+# or
+#openjdk version "1.5.0_17"
+# need to create a java.version or openjdk.version file
+# and parse out the quotes.
+# redirect ERROUT since some java -version commands output to ERROUT and not STDOUT
+
+OUTPUT=$(ps -ef | grep java | grep -v grep)
+if [[ ! -z $OUTPUT ]]
+then
+  java -version > "${SCRIPTS_DATA}/java.output" 2>&1
+  FILENAME=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $1}')
+  VERSION=$(head -1 ${SCRIPTS_DATA}/java.output | awk '{print $3}' | sed -e "s/\"//g")
+  echo "${VERSION}" > ${SCRIPTS_DATA}/${FILENAME}.version
+fi
+

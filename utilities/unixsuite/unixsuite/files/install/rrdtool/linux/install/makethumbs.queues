@@ -1,0 +1,12 @@
+function memg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 15 \
+    DEF:rproc=$RRDDATA/memory.rrd:rproc:AVERAGE \
+    DEF:bproc=$RRDDATA/memory.rrd:bproc:AVERAGE \
+    LINE1:rproc#0000FF: \
+    LINE1:bproc#FF0000:
+}
+

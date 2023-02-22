@@ -1,0 +1,296 @@
+#!/bin/ksh
+
+# lockuser - Lock users who have left the company
+# Carl Schelin
+# Initially just lock users who no longer work at the company.
+# search for passwd. different locations for different versions of os but should always bein the path.
+#
+# TCS: Ubuntu returns 'L' vs 'LK'. It's always something...
+# TCS: Added email to changelog
+# ECS: Updated script to remove users that are being locked from all secondary groups. HP-UX is a special case where the user will still be in the "users" group.
+# ECS: Updated script to run on FreeBSD
+# TCS: changed changelog to variable
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+
+ID=`id | cut -f2 -d= | cut -f1 -d\(`
+PASSWD=`which passwd`
+LOGFILE=${SCRIPTS_DATA}/lockuser.log
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  echo "Changefreeze in effect" >> $LOGFILE
+  exit 0
+fi
+
+########
+# EXCLUDEUSERS - Filters through the list of users to be locked.
+#       Removes users that should not be locked ($SYSADMINS) and
+#       only retains users that have an account on this machine.
+########
+EXCLUDEUSERS() {
+  NEWLOCKUSER=''
+  for i in $USERTOLOCK; do
+    # to be sure, pass email address as well
+    UTL=`echo $i | cut -f1 -d:`
+    EML=`echo $i | cut -f2 -d:`
+
+    FLAG=0
+    # change list here for root, service accounts, and new admins
+    for j in root ${SYSADMINS}; do
+      if [[ $UTL = $j ]]; then
+        FLAG=1
+      fi
+    done
+    if [[ $FLAG = 0 ]]; then
+      if [[ ! -z $EML ]]; then
+        NEWLOCKUSER="$NEWLOCKUSER $UTL:$EML"
+      else
+        NEWLOCKUSER="$NEWLOCKUSER $UTL"
+      fi
+    fi
+  done
+
+  USERTOLOCK=$NEWLOCKUSER
+
+  # Check the user list for users who are actually on the system,
+  # users who are users (id > 100) don't process them.
+  NEWLOCKUSER=''
+  for i in $USERTOLOCK; do
+    UTL=`echo $i | cut -f1 -d:`
+    EML=`echo $i | cut -f2 -d:`
+
+    if [[ ! -z $EML ]]; then
+      OUTPUT=`grep "^$UTL:" /etc/passwd | grep -i $EML`
+    else
+      OUTPUT=`grep "^$UTL:" /etc/passwd`
+    fi
+    if [[ ! -z $OUTPUT ]]; then
+      # user exists. get the user id
+      if [[ ! -z $EML ]]; then
+        USERID=`grep "^$UTL:" /etc/passwd | grep -i $EML | awk -F: '{print $3}'`
+      else
+        USERID=`grep "^$UTL:" /etc/passwd | awk -F: '{print $3}'`
+      fi
+      if [[ $USERID -gt 100 ]]; then
+        NEWLOCKUSER="$NEWLOCKUSER $UTL"
+      fi
+    fi
+  done
+
+  # copy any users that are left back to the list of users to remove
+  USERTOLOCK=$NEWLOCKUSER
+}
+
+########
+# LOCKUSERS - Locks the users.
+########
+LOCKUSERS() {
+  LOCKED=''
+  if [[ $OS = 'SunOS' ]]; then
+    for i in $USERTOLOCK; do
+      # check for locked account
+      OUTPUT=`$PASSWD -s $i | awk '{print $2}'`
+      if [[ ! $OUTPUT = 'LK' ]]; then
+        # lock account
+        $PASSWD -l $i
+        LOCKED="${LOCKED} ${i}"
+      fi
+    done
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
+    fi
+  fi
+
+  if [[ $OS = 'Linux' ]]; then
+    for i in $USERTOLOCK; do
+      # check for locked account
+      OUTPUT=`$PASSWD -S $i | awk '{print $2}'`
+      if [[ ! $OUTPUT = 'locked.' ]]; then
+        # Red Hat returns LK (old Red Hat returns locked
+        # Ubuntu returns L
+        if [[ ! $OUTPUT = 'LK' ]] && [[ ! $OUTPUT = 'L' ]]; then
+          # lock account
+          $PASSWD -l $i
+          LOCKED="${LOCKED} ${i}"
+        fi
+      fi
+    done
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
+    fi
+  fi
+
+  if [[ $OS = 'HP-UX' ]]; then
+    for i in $USERTOLOCK; do
+      # check for locked account
+      # alock = YES|NO - Admin Lock
+      OUTPUT=`/usr/lbin/getprpw -m alock $i | awk -F= '{print $2}'`
+      if [[ ! $OUTPUT = 'YES' ]]; then
+        # lock account
+        $PASSWD -l $i
+        LOCKED="${LOCKED} ${i}"
+      fi
+    done
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
+    fi
+  fi
+
+  if [[ $OS = 'FreeBSD' ]]; then
+    for i in $USERTOLOCK; do
+      # check for locked account
+      # check for keywork *LOCKED* in /etc/master.passwd file for the user
+      OUTPUT=`/usr/bin/grep $i /etc/master.passwd | grep "*LOCKED*"`
+      if [[ -z $OUTPUT ]]; then
+        # lock account
+        /usr/sbin/pw lock $i
+        LOCKED="${LOCKED} ${i}"
+      fi
+    done
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      if [[ ! -z $LOCKED ]]; then
+        echo "Locked users: ${LOCKED} via lockuser script" | mailx -s `hostname|cut -f1 -d.` ${CHANGELOG}
+      fi
+    fi
+  fi
+
+  if [[ ! -z $LOCKED ]]; then
+    echo "Locked $LOCKED account(s)" > ${SCRIPTS_DATA}/locked.output
+  fi
+}
+
+########
+# UPDATEGROUPS - Removes the users from any secondary groups.
+########
+UPDATEGROUPS() {
+  for i in $USERTOLOCK; do
+    GROUPS=`grep $i /etc/group | awk -F":" '{print $1}'`
+    if [[ $i != $GROUPS ]] && [[ ! -z $GROUPS ]]; then
+      case $OS in
+        SunOS)
+          usermod -G "" $i
+          ;;
+        Linux)
+          usermod -G "" $i
+          ;;
+        HP-UX)
+          usermod -G users $i
+          ;;
+        FreeBSD)
+          /usr/sbin/pw user mod $i -G ""
+          ;;
+        *)
+          echo "Lockuser script not configured to run on $OS"
+          exit 1;;
+      esac
+      LOGENTRY="$i:"
+      for j in $GROUPS; do
+        if [[ $j != $i ]]; then
+          if [[ $LOGENTRY = "$i:" ]]; then
+            if [[ $OS = "HP-UX" ]]; then
+              if [[ $j != "users" ]]; then
+                LOGENTRY="${LOGENTRY}${j}"
+              fi
+            else
+              LOGENTRY="${LOGENTRY}${j}"
+            fi
+          else
+            if [[ $OS = "HP-UX" ]]; then
+              if [[ $j != "users" ]]; then
+                LOGENTRY="${LOGENTRY},${j}"
+              fi
+            else
+              LOGENTRY="${LOGENTRY},${j}"
+            fi
+          fi
+        fi
+      done
+      if [[ $LOGENTRY != "$i:" ]]; then
+        echo $LOGENTRY >> $LOGFILE
+      fi
+    fi
+  done
+}
+
+########
+# MAIN
+########
+if [[ -f ${SCRIPTS_DATA}/lockuser.output ]]
+then
+  rm ${SCRIPTS_DATA}/lockuser.output
+fi
+
+if [[ -z $PASSWD ]]
+then
+  echo "Unable to locate passwd binary" > ${SCRIPTS_DATA}/lockuser.output
+fi
+
+USERS=${SCRIPTS_DATA}/lockuser.dat
+if [[ $OS = "Linux" ]]
+then
+  USERTOLOCK=`/bin/grep -v "^#" $USERS`
+else
+  USERTOLOCK=`/usr/bin/grep -v "^#" $USERS`
+fi
+
+# check for root access
+if [[ $ID != 0 ]]
+then
+  echo "You must run this as root"
+  exit 1
+fi
+
+# Check to see if users need to be locked
+EXCLUDEUSERS
+
+# Remove users from groups
+echo "#---------- $(date +%m/%d/%Y-%H:%M:%S) ----------#" >> $LOGFILE
+UPDATEGROUPS
+
+# if no users are found, exit the script
+if [[ -z $USERTOLOCK ]]; then
+  echo "No users to be archived on this system."
+  exit 1
+else
+  echo "Locking: $USERTOLOCK"
+fi
+
+# if a centrify system, users are removed at the central location
+# the lockuser script only parses the /etc/passwd file. Centrify users aren't in 
+# /etc/passwd. If a user is in /etc/passwd and in the lockuser.dat file, process them normally.
+#if [[ -f /usr/bin/adquery ]]; then
+#  # returns 0 if joined
+#  # returns 10 if not joined
+#  /usr/bin/adinfo > /dev/null 2>&1
+#  if [[ $? -eq 0 ]]
+#  then
+#    echo "Centrify managed system. Exiting."
+#    exit 1
+#  fi
+#fi
+
+LOCKUSERS
+

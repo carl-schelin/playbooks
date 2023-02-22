@@ -1,0 +1,215 @@
+#!/bin/ksh
+
+# update.groups
+# Carl Schelin
+# sysadmin group should be on every system.
+# centrify systems have sysadmin but only unixsvc as a member
+#  everyone else is in uxadmins
+# get the current id of the sysadmin group
+# get the centrify status
+# get the list of acceptable users in sysadmin from the group.master file
+# need to add a check for Centrify groups
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
+CENTRIFY="no"
+DATE=$(date +"%Y%m%d")
+LOG=${SCRIPTS_LOGS}/update.groups.output
+DEBUG="no"
+DEBUG="yes"
+
+if [[ ! -f ${SCRIPTS_DATA}/group.master ]]
+then
+  echo "No group.master file. Exiting."
+  exit 1
+fi
+
+if [[ -f "${LOG}" ]]
+then
+  rm "${LOG}"
+fi
+
+if [[ ${DEBUG} = 'yes' ]]
+then
+  echo "Date: ${DATE}" >> "${LOG}"
+fi
+
+if [[ -f /usr/sbin/adclient ]]
+then
+  /usr/bin/adinfo > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    CENTRIFY='yes'
+  fi
+fi
+
+for i in $(cut -f1 -d: /etc/group)
+do
+
+  if [[ ${DEBUG} = 'yes' ]]
+  then
+    echo "Checking ${i}" >> "${LOG}"
+  fi
+
+  GROUP=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+  GROUPLIST=$(grep "^${HOSTNAME}:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
+
+###########
+# if the server and group was NOT found in the group master file, check external sources for the information using 
+###########
+
+  if [[ -z ${GROUP} ]]
+  then
+    if [[ ${CENTRIFY} = 'yes' ]]
+    then
+# in some systems, uxadmins doesn't exist. if 'sysadmin' group is being checked, see if 'uxadmins' group exists.
+# if it doesn't, then update 'sysadmin' with the correct 'sysadmin' designation
+      if [[ ${i} = 'sysadmin' ]]
+      then
+        getent group uxadmins > /dev/null
+        if [[ $? -eq 0 ]]
+        then
+          GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+          GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
+        fi
+      else
+# add this for any other environment where centrify is installed but the co-group doesn't exist (webapps/webadmin?)
+        if [[ ${i} = 'webapps' ]]
+        then
+          getent group webadmin > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
+          fi
+        else
+# if neither are being checked, then check as normal
+          if [[ -z ${GROUP} ]]
+          then
+            GROUP=$(grep "^centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+            GROUPLIST=$(grep "centrify:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
+          fi
+        fi
+      fi
+    fi
+    if [[ -z ${GROUP} ]]
+    then
+      GROUP=$(grep "^\*:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f2 -d:)
+      GROUPLIST=$(grep "^\*:${i}:" "${SCRIPTS_DATA}/group.master" | cut -f3 -d:)
+    fi
+  fi
+
+###########
+# if the hostname and group was found in the group.master file, process the members of the group
+###########
+
+  if [[ ! -z ${GROUP} ]]
+  then
+
+    if [[ ${DEBUG} = 'yes' ]]
+    then
+      echo "Found ${GROUP} in ${SCRIPTS_DATA}/group.master" >> "${LOG}"
+    fi
+
+# see if the group exists
+    GID=$(grep "^${GROUP}:" /etc/group | cut -f3 -d:)
+
+# shouldn't happen but you never know
+    if [[ ! -z ${GID} ]]
+    then
+
+      if [[ ${DEBUG} = 'yes' ]]
+      then
+        echo "Found ${GID} in /etc/group" >> "${LOG}"
+      fi
+
+# so, we've pulled the validated group list from the group.master file
+# and we now have the group id (GID) from the existing group entry
+# get the actual group list; group:x:222:user1,user2,user3 from /etc/group
+# then compare it to the validated group list from the group.master file
+# if it DOES NOT match, back up the group file, use the backed up file to update the /etc/group file with the correct, validated group listing.
+# use the extracted GID and PASSWD
+      DONE=$(grep "^${GROUP}:" /etc/group)
+      PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
+      DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
+      if [[ ! ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
+      then
+
+# this is just for testing. Ultimately the following block and the 'debug' that follows would be removed and just the block starting with the comments would remain.
+# mainly we don't want to willy-nilly update everyone at once. Lots and lots of testing.
+        if [[ ${DEBUG} = 'yes' ]]
+        then
+          echo "Would Backup: cp /etc/group /etc/group-${DATE}" >> "${LOG}"
+          echo "Would Update: sed -e \"s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g\" /etc/group-${DATE} to /etc/group" >> "${LOG}"
+          echo "Would Send Changelog: Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" >> "${LOG}"
+        fi
+        if [[ ${DEBUG} = 'yes' ]]
+        then
+#  start updating groups one by one just to be cautious.
+#  webapps update was approved by Gerald and Ashley.
+          if [[ ${GROUP} = 'sysadmin' ]] || [[ ${GROUP} = 'uxadmins' ]] || [[ ${GROUP} = 'webapps' ]] || [[ ${GROUP} = 'webadmin' ]]
+          then
+            if [[ ${PASSWD} = '*' ]]
+            then
+              PASSWD='\*';
+            fi
+# if we've already done one group, don't make multiple backup files, just use the existing backup file.
+            if [[ -f /etc/group-${DATE} ]]
+            then
+              sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
+              DONE=$(grep "^${GROUP}:" /etc/group)
+              PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
+              DONELIST=$(grep "^${GROUP}:" /etc/group | cut -f4 -d:)
+              if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
+              then
+                if [[ ${CHANGELOG} != '' ]]
+                then
+                  echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+                fi
+                grpconv
+              else
+                echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
+              fi
+            else
+              cp -p /etc/group /etc/group-"${DATE}"
+              if [[ $? -eq 0 ]]
+              then
+                sed -e "s/${GROUP}:${PASSWD}:${GID}:.*/${GROUP}:${PASSWD}:${GID}:${GROUPLIST}/g" /etc/group-"${DATE}" > /etc/group
+
+                DONE=$(grep "^${GROUP}:" /etc/group)
+                PASSWD=$(grep "^${GROUP}:" /etc/group | cut -f2 -d:)
+                if [[ ${DONE} = "${GROUP}:${PASSWD}:${GID}:${GROUPLIST}" ]]
+                then
+                  if [[ ${CHANGELOG} != '' ]]
+                  then
+                    echo "Updated ${GROUP} replacing \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+                  fi
+                  grpconv
+                else
+                  echo "Failed to update ${GROUP}. Unable to replace \"${DONELIST}\" with \"${GROUPLIST}\" via script" | mailx -s "${HOSTNAME}: update.groups failed." root
+                fi
+              fi
+            fi
+          fi
+        fi
+      fi
+    fi
+  fi
+done
+

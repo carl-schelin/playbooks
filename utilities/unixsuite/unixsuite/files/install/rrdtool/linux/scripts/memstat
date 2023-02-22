@@ -1,0 +1,17 @@
+#!/bin/ksh
+
+# retrieve queue usage; runqueue blockedqueue
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  B) /bin/grep ^Buffers /proc/meminfo | /usr/bin/awk '{print $2}'
+     ;;
+  C) /bin/grep ^Cached /proc/meminfo | /usr/bin/awk '{print $2}'
+     ;;
+  F) /bin/grep ^MemFree /proc/meminfo | /usr/bin/awk '{print $2}'
+     ;;
+  T) /bin/grep ^MemTotal /proc/meminfo | /usr/bin/awk '{print $2}'
+     ;;
+esac
+

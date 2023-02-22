@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# checkdiff    - Parses the manifest.[param] file to see if there are files being worked on in the working directory (/opt/html) that aren't up to date in the code repository (/opt/code).
+
+if [[ -z $1 ]]
+then
+  echo "Usage: checkdiff [ site directory ]"
+  echo "  Where site directory is: "
+  echo " - inventory"
+  echo " - status"
+  echo " - changelog"
+  exit 1
+fi
+
+if [[ $1 = 'inventory' ]]
+then
+
+  CODE=/opt/code/inventory
+  WORKING=/var/www/html/inventory
+
+  for i in `cat /opt/code/manifest.inventory | sed -e "s/ /_/g" | egrep -v "(^#|^$|^\+)"`
+  do
+
+    SECTION=`echo $i | sed -e "s/_/ /g" | awk '{print $1}'`
+
+    if [[ $SECTION = '^' ]]
+    then
+      echo "Working: `echo $i | sed -e "s/_/ /g" -e "s/^ //g"`"
+    else
+      if [[ -f $WORKING/$i ]]
+      then
+        diff $WORKING/$i $CODE/$i > /dev/null
+        if [[ $? = 1 ]]
+        then
+          clear
+          echo "Compare Working Script:"
+          echo "< $WORKING/$i"
+          echo "with Official Distribution:"
+          echo "> $CODE/$i"
+          diff $WORKING/$i $CODE/$i
+          echo ""
+          echo -n "Replace $WORKING/$i with $CODE/$i? (y/N) "
+          read INPUT
+          if [[ $INPUT = 'y' || $INPUT = 'Y' ]]
+          then
+            cp $CODE/$i $WORKING/$i
+          fi
+        fi
+      fi
+    fi
+  done
+fi
+
+if [[ $1 = 'changelog' ]]
+then
+
+  CODE=/opt/code/changelog
+  WORKING=/var/www/html/changelog
+
+  for i in `cat /opt/code/manifest.changelog | sed -e "s/ /_/g" | egrep -v "(^#|^$)"`
+  do
+
+    SECTION=`echo $i | sed -e "s/_/ /g" | awk '{print $1}'`
+
+    if [[ $SECTION = '+' ]]
+    then
+      echo "Working: `echo $i | sed -e "s/_/ /g" -e "s/+ //g"`"
+    else
+      if [[ -f $WORKING/$i ]]
+      then
+        diff $WORKING/$i $CODE/$i > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo "Compare Working Script:"
+          echo "< $WORKING/$i"
+          echo "with Official Distribution:"
+          echo "> $CODE/$i"
+          diff $WORKING/$i $CODE/$i
+        fi
+      fi
+    fi
+  done
+fi
+
+if [[ $1 = 'status' ]]
+then
+
+  CODE=/opt/code/status
+  WORKING=/var/www/html/status
+
+  for i in `cat /opt/code/manifest.status | sed -e "s/ /_/g" | egrep -v "(^#|^$)"`
+  do
+
+    SECTION=`echo $i | sed -e "s/_/ /g" | awk '{print $1}'`
+
+    if [[ $SECTION = '+' ]]
+    then
+      echo "Working: `echo $i | sed -e "s/_/ /g" -e "s/+ //g"`"
+    else
+      if [[ -f $WORKING/$i ]]
+      then
+        diff $WORKING/$i $CODE/$i > /dev/null
+        if [[ $? = 1 ]]
+        then
+          echo "Compare Working Script:"
+          echo "< $WORKING/$i"
+          echo "with Official Distribution:"
+          echo "> $CODE/$i"
+          diff $WORKING/$i $CODE/$i
+        fi
+      fi
+    fi
+  done
+fi
+

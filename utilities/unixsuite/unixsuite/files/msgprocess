@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+#
+# msgprocess - This script processes the 'hostname'.exclude file to remove unnecessary chatter
+# from the messages log file so it can be retrieved and reviewed.
+#
+# the calling script will grep out the specific date and copy the log file to /var/tmp to be 
+# then processed by this script. This frees up this script to just process the exclusions and 
+# not be bothered with the nitty-gritty of the os side.
+#
+# 2005/05/12 v1.0 - Carl Schelin
+# 2007/12/06 v1.0 - TCS - Update for the new company
+# 2011/10/17 v1.1 - tcs - add timezone to server name so log time can be accurately determined
+# 2013/09/10 v1.2 - tcs - change to process local message files
+
+$scripts="/opt/unixsuite";
+$scripts_data="/opt/unixsuite/etc";
+$scripts_logs="/opt/unixsuite/var";
+$hostname=`hostname|cut -f1 -d.`;
+chomp $hostname;
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$date=sprintf("%4d%02d%02d", 1900+$year, $mon, $mday);
+
+# Retrieve the exclusion strings for the host and remove comments
+@exclude=`grep $hostname $scripts_data/messages.exclude | grep -v "^#"`;
+
+# Remove the trailing \n's
+for ($i=0; $i<=$#exclude; $i++) {
+  chomp $exclude[$i];
+}
+
+# Create the log file for today
+open (LOG, ">$scripts_logs/logfile.$date") or die "Unable to open report file";
+
+# Set up the start of the log files
+print LOG "\n";
+
+print LOG "BEGIN `date`";
+
+print LOG "\nProcessing $server\n";
+
+open (INPUT, "/var/tmp/messages.output") or print LOG "ERROR: Unable to open /var/tmp/messages.output\n";
+while (<INPUT>) {
+  chomp;
+
+# Scan the log and exclude the known messages
+  $dont=0;
+  for ($j=0; $j <= $#exclude; $j++) {
+    if ($_ =~ /$exclude[$j]/) {
+      $dont=1;
+    }
+  }
+  if (0 == $dont) {
+    print $_, "\n";
+  }
+}
+
+close INPUT;
+
+print LOG "\nEND   `date`\n";
+
+close LOG;
+
+exit 0;
+

@@ -1,0 +1,65 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Install the python-simplejson rpm to support Ansible
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
+if [[ -f /etc/redhat-release ]]
+then
+
+  ARCH=$(arch)
+  if [[ $ARCH = 'i686' ]]
+  then
+    PACKAGE='python-simplejson-2.0.9-8.el5.i386.rpm'
+  else
+    PACKAGE='python-simplejson-2.0.9-8.el5.x86_64.rpm'
+  fi
+
+  if [[ -f ${SCRIPTS_INSTALL}/${PACKAGE} ]]
+  then
+
+# potentially install only if the simplejson rpm is missing
+    OUTPUT=$(rpm -qa | grep simplejson)
+
+    if [[ -z $OUTPUT ]]
+    then
+
+# only install for Red Hat 5 systems
+      grep -q " 5" /etc/redhat-release > /dev/null
+
+      if [[ $? -eq 0 ]]
+      then
+
+# and install the missing rpm
+        rpm -ivh "${SCRIPTS_INSTALL}/linux-64/${PACKAGE}"
+
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Installed ${PACKAGE} to provide support for Ansible playbooks" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+        fi
+
+      fi
+
+    fi
+
+  fi
+
+fi
+

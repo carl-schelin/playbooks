@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+# retrieve load average; 1, 5, and 15
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  1) /usr/bin/tail -1 /proc/loadavg | /usr/bin/awk '{print $1}'
+     ;;
+  5) /usr/bin/tail -1 /proc/loadavg | /usr/bin/awk '{print $2}'
+     ;;
+  15) /usr/bin/tail -1 /proc/loadavg | /usr/bin/awk '{print $3}'
+     ;;
+esac
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# check        - Lists all the check files to remind me what they do and which ones are available
+
+for i in `ls /usr/local/bin/check*`
+do
+  grep "^#" $i | grep -v bash | head -1
+done
+
+echo ""
+
+ls -la /usr/local/bin/check*
+
