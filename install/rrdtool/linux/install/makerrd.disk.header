@@ -1,0 +1,6 @@
+# Store disk space information
+function diskr {
+  if [[ ! -f $RRDDATA/disk.rrd ]]
+  then
+    echo "creating disk.rrd"
+    $RRD/rrdtool create $RRDDATA/disk.rrd --step $STEP \

@@ -1,0 +1,166 @@
+#!/bin/ksh
+
+# chkraid - Capture the configuration of the raid
+# Owner: Carl Schelin
+# 20081229 - Added -S for raidctl due to newer version of commands
+# 20090306 - Added specific checks for xxxxxxxx and xxxxxxxx due to horked firmware
+# 20090630 - Added check for Adaptec Raid
+# 20090702 - Changed adaptec FLAGS from al to ld
+# 20091023 - Added new Solaris Release (5/09) to if statement
+# 20110607 - Added hpacucli utility check
+# 20110911 - updated checks for ga10 and ga20
+# 20110927 - corrected check for xxxxxxxx and xxxxxxxx, added HOSTNAME variable, pulled while loop out of if statement.
+# 20110930 - provided a way to get both RAID arrays from the ga10/20 servers
+# 20120511 - Added check for HPUX 11iv3 (VZ Alim systems) using HP raid controllers smart array utility, sautil (ppietras)  
+# 20120612 - Added default output of 'binary doesn't exist' so the .output file has something in it to be copied.
+# 20130617 - Changed arcconf check to get all the output of the controller, logical, and physical drives.
+# 20140516 - Added omreport for Dell systems and Perc controllers
+# 20160l20 - Removed -s flag from sautil, need logical volume information (jschroet)
+# 20170126 - Added hpssacli Smart Array Controller utility
+# 20181228 - Updated path for omreport from /usr/bin to /opt/dell/srvadmin/bin
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+PROGNAME="chkraid"
+REL=""
+
+if [[ $OS = "SunOS" ]]
+then
+  if [[ -f /etc/release ]]
+  then
+    REL=`head -1 /etc/release | awk '{print $3}'`
+  else 
+    REL="1/02"
+  fi
+fi
+
+# create the holding directory
+
+if [[ ! -d ${SCRIPTS_LOGS} ]]
+then
+  mkdir ${SCRIPTS_LOGS}
+fi
+
+# There are 8 tools we are capturing data for right now:
+# /usr/sbin/metastat|metadb - Sun's Disk Suite
+# /usr/sbin/megarc - Megaraid controller
+# /usr/sbin/raidctl - LSI controller
+# /opt/StorMan/arcconf - Adaptec controller
+# /usr/sbin/hpacucli - HP controller
+# /usr/sbin/hpssacli - HP Super Smart Array Controller
+# /usr/sbin/sautil - HP Smart Array Controller
+# /opt/dell/srvadmin/bin/omreport - Dell Open Manage utility
+
+for CONTENT in metastat metadb megarc raidctl arcconf hpacucli hpssacli sautil omreport
+do
+
+  TIMEOUT=40
+  FLAGS=""
+  if [[ $CONTENT = "megarc" ]]
+  then
+    FLAGS="-DispCfg -a0"
+  fi
+  if [[ $CONTENT = "arcconf" ]]
+  then
+    FLAGS="getconfig 1"
+  fi
+  if [[ $CONTENT = "raidctl" ]]
+  then
+    if [[ $REL = "8/07" || $REL = "5/08" || $REL = "5/09" ]]
+    then
+      FLAGS="-S"
+    fi
+  fi
+  if [[ $CONTENT = "hpacucli" ]]
+  then
+    FLAGS="ctrl all show config"
+  fi
+  if [[ $CONTENT = "hpssacli" ]]
+  then
+    FLAGS="ctrl all show config"
+  fi
+  if [[ $CONTENT = "sautil" ]]
+  then
+    FLAGS="/dev/ciss*"
+  fi
+
+# Delete the old output file. This lets us know if there's a problem 
+# with the tool completing
+
+  if [[ -f ${SCRIPTS_LOGS}/$CONTENT.output ]]
+  then
+    rm ${SCRIPTS_LOGS}/$CONTENT.output
+  fi
+
+# run the command to get the expected output
+
+  if [[ -f /usr/sbin/$CONTENT ]]
+  then
+    /usr/sbin/$CONTENT $FLAGS > ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+    PID=$!
+  else
+# If using omreport look in /opt/dell/srvadmin/bin
+    if [[ -f /opt/dell/srvadmin/bin/$CONTENT ]]
+    then
+      /opt/dell/srvadmin/bin/$CONTENT storage pdisk controller=0 >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+      /opt/dell/srvadmin/bin/$CONTENT storage vdisk controller=0 >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+      PID=$!
+# If using arcconf (adaptec) append to raidctl output file
+    else
+      if [[ -f /opt/StorMan/$CONTENT ]]
+      then
+        /opt/StorMan/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+        PID=$!
+      else
+        if [[ -f /usr/bin/$CONTENT ]]
+        then
+          /usr/bin/$CONTENT $FLAGS >> ${SCRIPTS_LOGS}/$CONTENT.output 2>&1 &
+          PID=$!
+        else
+          echo "RAID: $CONTENT binary is not installed" > ${SCRIPTS_LOGS}/$CONTENT.output
+        fi
+      fi
+    fi
+  fi
+
+# wait for the specified number of seconds for the command to complete
+# if the timeout is exceeded, kill the process and move on to the next command
+
+  while [[ $TIMEOUT -gt 0 ]]
+  do
+    /usr/bin/ps -p $PID > /dev/null 2>&1
+    if [[ $? -ne 0 ]]
+    then
+      break
+    fi
+    TIMEOUT=$(($TIMEOUT - 1))
+    sleep 1
+  done
+
+# if the timeout reaches 0, then the process was killed.
+
+  if [[ $TIMEOUT -le 0 ]]
+  then
+    kill -KILL $PID
+  fi
+
+  if [[ -f ${SCRIPTS_LOGS}/raidctl.$HOSTNAME ]]
+  then
+    cat ${SCRIPTS_LOGS}/raidctl.$HOSTNAME >> ${SCRIPTS_LOGS}/raidctl.output
+    rm ${SCRIPTS_LOGS}/raidctl.$HOSTNAME
+  fi
+
+done
+
+exit 0
+

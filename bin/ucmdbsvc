@@ -1,0 +1,51 @@
+#!/bin/ksh
+
+# Carl Schelin
+# Update the ucmdbsvc key pair
+#
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+UCMDBSVC=$(grep ucmdbsvc /etc/passwd | cut -f1 -d:)
+UCMDBDIR=$(grep ucmdbsvc /etc/passwd | cut -f6 -d:)
+UCMDBGRP=$(grep ucmdbsvc /etc/group | cut -f1 -d:)
+
+if [[ -z ${UCMDBGRP} ]]
+then
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    UCMDBGRP='users'
+  fi
+  if [[ ${OS} = 'SunOS' ]]
+  then
+    UCMDBGRP='others'
+  fi
+fi
+
+if [[ -d ${UCMDBDIR} ]]
+then
+  if [[ ! -d ${UCMDBDIR}/.ssh ]]
+  then
+    mkdir "${UCMDBDIR}/.ssh"
+    chown "${UCMDBSVC}:${UCMDBGRP}" "${UCMDBDIR}/.ssh"
+    chmod 700 "${UCMDBDIR}/.ssh"
+  fi
+
+  if [[ -f ${SCRIPTS_DATA}/ucmdbsvc.id_rsa.pub ]]
+  then
+    cp "${SCRIPTS_DATA}/ucmdbsvc.id_rsa.pub" "${UCMDBDIR}/.ssh/authorized_keys"
+    chown -R "${UCMDBSVC}:${UCMDBGRP}" "${UCMDBDIR}"
+    chmod 400 "${UCMDBDIR}/.ssh/authorized_keys"
+  fi
+fi
+

@@ -1,0 +1,48 @@
+#!/bin/ksh
+
+# chkprinter by xxxxxxxxxxx - Check status of CUPS printers and email if one or more are down
+# xxxxxxxxxxx - 10/30/09 - Initial script
+# xxxxxxxxxxx - 11/16/10 - Add path to cupsenable and change to https for website link
+# xxxxxxxxxxx - 8/9/11 - wrapper PRINTER in brackets to indicate it's a variable and not the command to pass to cupsenable.
+# xxxxxxxxxxx - 3/1/12 - Add check for hung lpstat processes and kill them, rewrite of variables
+
+BASENAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+LPSTAT=$(/usr/bin/lpstat -p |grep disabled)
+MAIL="/bin/mailx"
+PROC=$(ps -ef |grep lpstat |grep -v grep)
+
+# Check for hung lpstat processes, kill any that are found
+if [ ! -z "$PROC" ]; then
+  for pid in $(ps -ef |grep lpstat |grep -v grep |awk '{print $2}')
+  do
+    kill "${pid}"
+  done
+fi
+
+# Check for any disabled printers, email team if any found
+if [ ! -z "$LPSTAT" ]; then
+  hostname > "${SCRIPTS_DATA}/${BASENAME}.output"
+  date >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  /usr/bin/lpstat -p |grep disabled >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "" >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "One or more printers are disabled on ${HOSTNAME}! Manual intervention is required." >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "Please run the command \"sudo /usr/sbin/cupsenable \[PRINTER\]\" on each disabled printer." >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "See \"https://localwiki/wiki/index.php/Fixing_disabled_printers_in_CUPS\"." for details. >> "${SCRIPTS_DATA}/${BASENAME}.output"
+  ${MAIL} -s "${HOSTNAME}: Printer Disabled!!" ${WHOCARES} < "${SCRIPTS_DATA}/${BASENAME}.output"
+ else
+  date > "${SCRIPTS_DATA}/${BASENAME}.output"
+  hostname > "${SCRIPTS_DATA}/${BASENAME}.output"
+  echo "All printers online." >> "${SCRIPTS_DATA}/${BASENAME}.output"
+fi
+

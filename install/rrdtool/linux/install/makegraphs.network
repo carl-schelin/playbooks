@@ -1,0 +1,33 @@
+#    --upper-limit 30000000 \
+function netg {
+  $RRD/rrdtool graph $GRAPHS/int.${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "${1} Throughput" \
+    --vertical-label "packets/s" \
+    --lower-limit 0 \
+    DEF:${1}r=$RRDDATA/net.rrd:${1}r:AVERAGE \
+      VDEF:max${1}R=${1}r,MAXIMUM \
+      VDEF:min${1}R=${1}r,MINIMUM \
+      VDEF:avg${1}R=${1}r,AVERAGE \
+      VDEF:sum${1}R=${1}r,TOTAL \
+    DEF:${1}w=$RRDDATA/net.rrd:${1}w:AVERAGE \
+      VDEF:max${1}W=${1}w,MAXIMUM \
+      VDEF:min${1}W=${1}w,MINIMUM \
+      VDEF:avg${1}W=${1}w,AVERAGE \
+      VDEF:sum${1}W=${1}w,TOTAL \
+    AREA:${1}r#00B5E3:"Receive " \
+    LINE1:${1}r#0085B3: \
+      GPRINT:max${1}R:"Max %6.2lf %s" \
+      GPRINT:min${1}R:"Min %6.2lf %s" \
+      GPRINT:avg${1}R:"Avg %6.2lf %s" \
+      GPRINT:sum${1}R:"Sum %6.2lf %s\n" \
+    LINE1:${1}w#E32D00:"Transmit" \
+      GPRINT:max${1}W:"Max %6.2lf %s" \
+      GPRINT:min${1}W:"Min %6.2lf %s" \
+      GPRINT:avg${1}W:"Avg %6.2lf %s" \
+      GPRINT:sum${1}W:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+

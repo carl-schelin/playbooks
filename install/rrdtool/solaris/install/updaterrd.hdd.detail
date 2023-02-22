@@ -1,0 +1,1 @@
+    HDD="${HDD}:`$SCRIPTS/hddstat REPLACE R`:`$SCRIPTS/hddstat REPLACE W`:`$SCRIPTS/hddstat REPLACE U`"

@@ -1,0 +1,1126 @@
+#!/bin/bash
+
+# chksys - Script to parse system info for the inventory
+# Carl Schelin
+# Description: Script to parse hardware, software (OS), interface, routing, and filesystem details 
+# to make inventory update or insertion simple and automatic.
+# make the output comma delimited and then create a script that parses it for import to the 
+# inventory.
+# 2014-02-04 CS: Oracle Unbreakable Linux has 2 lines in the redhat-release file. Only take the last one
+# 2014-02-04 CS: Fixed error where 5.1 and 5.2 Linux errored; due to putting `` in an evaluation variable (MEMTOTAL)
+# 2014-02-09 CS: Check for blank data and not write the line if so
+# 2014-02-10 CS: Add SunOS id command and set up defaults for linux and solaris.
+# 2014-02-20 CS: Associate netback and ovo with backups and monitoring
+# 2014-04-02 CS: Add adinfo for centrify
+# 2014-04-22 CS: added retrievals for sudo, httpd, and mysql
+# 2015-01-13 CS: added retrievals for oracle instances
+# 2015-07-18 CS: added retrievals for postgres versions
+# 2015-07-18 CS: added retrievals for informix versions
+# 2015-07-21 CS: updated sunos to do cpus/cores vs all cores
+# 2015-07-23 CS: updated linux to do cpus/cores vs all cores
+# 2015-08-05 CS: updated hp-ux to do memory and cpus/cores
+# 2016-02-26 CS: added kernel install date on red hat/centos linux to show the last time the system was updated.
+# 2016-02-29 CS: added QPKBASE check on hp-ux to show the last time the patchlevel was was updated.
+# 2016-05-25 CS: Added IP checking through 'ip' or if not available, 'ifconfig' for linux.
+# 2016-05-26 CS: Fixed SunOS IP6 table and added designation of IPv4 (0) or IPv6 (1).
+# 2017-01-09 CS: Retrieve the gateway from the routing table or route file if it exists for Red Hat
+# 2017-01-10 CS: Retrieve the gateway from the routing table for HP-UX and Solaris
+# 2017-02-02 KZ: Rewritten to use functions, find main at the bottom
+# 2017-02-02 KZ: Added function for parsing resolv.conf
+# 2017-02-03 KZ: Removed echo to LOG statemens and replaced with logit function
+# 2017-02-03 KZ: Updated routing and interface functions to use network as a subsystem
+# 2017-02-03 KZ: Updated resolv function to use config as a subsystem
+# 2017-02-03 KZ: Updated filesystem function to use system as a subsystem
+# 2017-02-21 CS: Updated network_iface function to accommodate multiple ips associated with an interface; virtual IPs (:1, :2, :n)
+# 2017-02-28 CS: Added system_uuid to pull the uuid from linux systems (dmidecode).
+# 2017-02-28 CS: Added system_uuid to pull the uuid from solaris systems (smbios).
+# 2017-04-13 CS: Don't log entry if data is missing for kernel dates. older systems won't have a date
+# 2017-04-13 CS: Fix IP6 report on some systems where the last item isn't the interface name.
+# 2017-09-18 CS: Updated to add Solaris check of SUNWcsl install date for the kernel date
+
+## Search for 'main function' to get to the meat
+
+BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+LOG=${SCRIPTS_LOGS}/chksys.import
+TIMEZONE=$(date +"%Z")
+
+function logit {
+  SUBSYS=$1
+  MODULE=$2
+  SMDATA=$3
+  echo "${HOSTNAME},${SUBSYS},${MODULE},${SMDATA}" >> $LOG
+}
+
+function system {
+  logit "system" "timezone" ${TIMEZONE}
+  logit "system" "hostname" ${HOSTNAME}
+  logit "system" "fqdn" ${FQDN}
+
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
+    then
+      KERNEL=$(rpm -q kernel --queryformat '%{installtime}\n' | sort -n | tail -1)
+      KERNELDATE=$(date -d @${KERNEL} +"%Y-%m-%d")
+    fi
+
+    if [[ ${KERNELDATE} != '' ]]
+    then
+      logit "system" "kernel" ${KERNELDATE}
+    fi
+  elif [[ $OS = 'HP-UX' ]]
+  then
+    SWLIST=$(swlist -l bundle | grep QPKBASE)
+    SWYEAR=$(echo $SWLIST | awk '{print $NF}')
+    SWOUTPUT=$(echo $SWLIST | sed -e "s/$SWYEAR//g")
+    SWMONTH=$(echo $SWOUTPUT | awk '{print $NF}')
+
+    case $SWMONTH in
+      January)   MONC=01 ;;
+      February)  MONC=02 ;;
+      March)     MONC=03 ;;
+      April)     MONC=04 ;;
+      May)       MONC=05 ;;
+      June)      MONC=06 ;;
+      July)      MONC=07 ;;
+      August)    MONC=08 ;;
+      September) MONC=09 ;;
+      October)   MONC=10 ;;
+      November)  MONC=11 ;;
+      December)  MONC=12 ;;
+    esac
+
+    logit "system" "kernel" "${SWYEAR}-${MONC}-01"
+
+  elif [[ $OS = 'SunOS' ]]
+  then
+    INSTYEAR=$(pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $4}')
+    INSTMONTH=$(pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $2}')
+    INSTDAY=$(pkginfo -l SUNWcsl | grep INSTDATE | awk '{print $3}')
+
+    case $INSTMONTH in
+      Jan)  MONC=01 ;;
+      Feb)  MONC=02 ;;
+      Mar)  MONC=03 ;;
+      Apr)  MONC=04 ;;
+      May)  MONC=05 ;;
+      Jun)  MONC=06 ;;
+      Jul)  MONC=07 ;;
+      Aug)  MONC=08 ;;
+      Sep)  MONC=09 ;;
+      Oct)  MONC=10 ;;
+      Nov)  MONC=11 ;;
+      Dec)  MONC=12 ;;
+    esac
+
+    logit "system" "kernel" "${INSTYEAR}-${MONC}-${INSTDAY}"
+
+  fi
+}
+
+function hardware_cpu {
+  if [[ $OS = 'Linux' ]]
+  then
+    CPU=$(grep "model name" /proc/cpuinfo | awk -F: '{print $2}' | head -1)
+    NUMPHYS=$(grep "physical id" /proc/cpuinfo | sort -u | wc -l | awk '{print $1}')
+    if [[ -z $NUMPHYS ]]
+    then
+      NUMPHYS=-1
+    fi
+    NUMCORES=$(grep "cpu cores" /proc/cpuinfo | sort -u | awk '{print $4}')
+    if [[ -z $NUMCORES ]]
+    then
+      NUMPHYS=$(grep -c processor /proc/cpuinfo)
+      NUMCORES=1
+    fi
+  elif [[ $OS = 'HP-UX' ]]
+  then
+    NUMPHYS=$(machinfo | grep 'Number of CPUs' | awk '{print $NF}')
+    if [[ ! -z $NUMPHYS ]]
+    then
+      NUMCORES=$NUMPHYS
+      NUMPHYS=1
+      CPU=$(machinfo | grep "processor model" | cut -c43-)
+    else
+      NUMPHYS=$(machinfo | grep 'Processor' | awk '{print $1}')
+      CPU=$(machinfo | grep 'Processor' | cut -c5-)
+      NUMCORES=$(machinfo | grep 'processors' | cut -f2 -d\( | awk '{print $1}')
+    fi
+  elif [[ $OS = 'SunOS' ]]
+  then
+
+    # run psrinfo -p to get the number of physical processors
+    # run psrinfo to get the number of virtual processors
+    # if -p > 0, divide virtual by physical to get number of cores per processor
+    # then for number of physical processors, get the -v output
+    # needs to be 1, 1+cores, 1+cores+cores, etc
+    # ultimately cpu, type, cores in the output to LOG
+
+    # if blank, psrinfo errored; make NUMCORES=psrinfo
+    NUMPHYS=$(psrinfo -p)
+    if [[ -z $NUMPHYS ]]
+    then
+      NUMPHYS=$(psrinfo | wc -l | awk '{print $1}')
+    fi
+    NUMVIRT=$(psrinfo | wc -l | awk '{print $1}')
+    NUMCORES=$(( $NUMVIRT / $NUMPHYS ))
+  elif [[ $OS = 'OpenBSD' ]]
+  then
+    # run sysctl hw.model for processor type
+    # run sysctl hw.ncpus for number of processors
+
+    NUMPHYS=$(sysctl hw.ncpu | cut -f2 -d=)
+    NUMCORES=1
+  fi
+
+  if [[ $NUMCORES -gt 1 ]]
+  then
+    CORES="$NUMCORES cores"
+  else
+    CORES="$NUMCORES core"
+  fi
+
+  if [[ $OS = 'SunOS' ]]
+  then
+    # doesn't work on the mlc's due to a skip in the output of psrinfo (48 cores, skips to 64 at number 48)
+    LOOP=0
+    while [[ $LOOP -lt $NUMVIRT ]]
+    do
+      CPU=$(psrinfo -v $LOOP \
+         | grep 'processor operates' \
+         | awk '{print $2" "$6" "$7}' \
+         | sed -e "s/,//g")
+      logit "hardware" "cpu" "${CPU},${CORES}"
+      LOOP=$(( $LOOP + $NUMCORES ))
+    done
+    # check to see if prtconf has halted due to picld problem
+    # kill -HUP it if it has
+    OUTPUT=$(ps -e | grep prtconf)
+    if [[ ! -z $OUTPUT ]]
+    then
+      OUTPUT=$(ps -e | grep picld | awk '{print $1}')
+      kill -HUP $OUTPUT
+      sleep 5
+    fi
+  elif [[ $OS = 'OpenBSD' ]]
+  then
+    logit "hardware" "cpu" "${NUMPHYS},${NUMCORES}"
+  else
+    LOOP=1
+    while [[ $LOOP -le $NUMPHYS ]]
+    do
+      NEWCPU=$(echo $CPU | sed -e 's/,/_/g')
+      logit "hardware" "cpu" "${NEWCPU},${CORES}"
+      LOOP=$(( $LOOP + 1 ))
+    done
+  fi
+}
+
+function hardware_mem {
+  if [[ $OS = 'Linux' ]]
+  then
+    MEMVALUE=$(grep 'MemTotal' /proc/meminfo | awk '{print $2" "$3}')
+  elif [[ $OS = 'SunOS' ]]
+  then
+    MEMVALUE=$(prtconf | grep Memory | awk '{print $3" "$4}')
+  elif [[ $OS = 'HP-UX' ]]
+  then
+    MEMVALUE=$(machinfo | grep Memory: | awk '{print $2" MB"}')
+    if [[ -z ${MEMVALUE} ]]
+    then
+      MEMVALUE=$(machinfo | grep "Memory =" | awk '{print $3" MB"}')
+    fi
+  elif [[ $OS = 'OpenBSD' ]]
+  then
+    MEMVALUE=$(sysctl hw.physmem | cut -f2 -d=)
+  fi
+
+  if [[ ! -z ${MEMVALUE} ]]
+  then
+    logit "hardware" "memory" "${MEMVALUE}"
+  fi
+}
+
+function hardware_disk {
+  if [[ $OS = 'Linux' ]]
+  then
+    ls /dev/sda > /dev/null 2>&1
+    if [[ $? -eq 0  ]]
+    then
+      for i in $(ls /dev/sd?)
+      do
+        DISKINFO=$(fdisk -l $i | grep "^Disk $i" | awk '{print $3" "$4}' | cut -f1 -d,)
+        if [[ ! -z ${DISKINFO} ]]
+        then
+          logit "hardware" "hard disk" "${DISKINFO}"
+        fi
+      done
+    fi
+    # under KVM the devices are 'vda' and not 'sda'
+    ls /dev/vda > /dev/null 2>&1
+    if [[ $? -eq 0  ]]
+    then
+      for i in $(ls /dev/vd?)
+      do
+        DISKINFO=$(fdisk -l $i | grep "^Disk $i" | awk '{print $3" "$4}' | cut -f1 -d,)
+        if [[ ! -z ${DISKINFO} ]]
+        then
+          logit "hardware" "hard disk" "${DISKINFO}"
+        fi
+      done
+    fi
+  fi
+}
+
+function system_uuid {
+  if [[ $OS = 'Linux' ]]
+  then
+    UUID=$(dmidecode | grep UUID | awk '{print $2}')
+    if [[ ! -z $UUID ]]
+    then
+      logit "system" "uuid" "${UUID}"
+    fi
+  fi
+  if [[ $OS = 'SunOS' ]]
+  then
+    UUID=$(smbios | grep -i uuid | awk '{print $2}')
+    if [[ ! -z $UUID ]]
+    then
+      logit "system" "uuid" "${UUID}"
+    fi
+  fi
+}
+
+
+function software {
+  for pkg in httpd informix java mysqld openjdk opnet oracle ovc:monitor postgres sudo vmtoolsd wildfly
+  do
+    if [[ -n "$(echo $pkg | awk -F: '{print $2}')" ]]
+    then
+      sftpkg=$(echo $pkg | awk -F: '{print $1}')
+      pkgname=$(echo $pkg | awk -F: '{print $2}')
+    else
+      sftpkg=$pkg
+      pkgname=$pkg
+    fi
+ 
+    if [[ -f ${SCRIPTS_LOGS}/${sftpkg}.version ]]
+    then
+      SFTWARE=$(head -1 ${SCRIPTS_LOGS}/${sftpkg}.version)
+      if [[ -n "${SFTWARE}" ]]
+      then
+        logit "software" "${pkgname}" "${SFTWARE}"
+      fi
+    fi
+  done
+}
+
+function software_os {
+  case ${OS} in 
+  'Linux')
+    # various linux installations
+    # for redhat, if the release file has 2 lines, it's Oracle Unbreakable Linux
+    OSV='Unknown'
+    if [[ -f /etc/redhat-release ]]
+    then
+      COUNT=$(wc -l /etc/redhat-release | awk '{print $1}')
+      if [[ $COUNT = 1 ]]
+      then
+        OSV=$(cat /etc/redhat-release)
+      fi
+      if [[ $COUNT = 2 ]]
+      then
+        OSV="Oracle $(head -1 /etc/redhat-release)"
+      fi
+    fi
+    if [[ -f /etc/debian_version ]]
+    then
+      OSV="Debian $(cat /etc/debian_version)"
+    fi
+    if [[ -f /etc/SUSE-build ]]
+    then
+      OSV="SUSE $(tail -1 /etc/SUSE-brand | awk '{print $3}')"
+    fi
+  ;;
+  'SunOS') 
+    OSV=$(head -1 /etc/release)
+  ;;
+  'HP-UX' | 'OSF1' | 'FreeBSD' | 'OpenBSD')
+    OSV=$(uname -sr)
+  ;;
+  esac
+
+  if [[ ! -z "${OSV}" ]]
+  then
+    logit "software" "os" "${OSV}"
+  fi
+}
+
+function software_centrify {
+  which adinfo > /dev/null 2>&1
+  if [[ $? -eq 0 ]]
+  then
+    OUTPUT=$(adinfo | head -1)
+    if [[ ! $OUTPUT = "Not joined to any domain" ]]
+    then
+      CMON=$(ls -ld /usr/share/centrifydc | awk '{print $6}')
+      CDAY=$(ls -ld /usr/share/centrifydc | awk '{print $7}')
+      CYEAR=$(ls -ld /usr/share/centrifydc | awk '{print $8}')
+
+      case $CMON in
+        Jan) MONC=01 ;;
+        Feb) MONC=02 ;;
+        Mar) MONC=03 ;;
+        Apr) MONC=04 ;;
+        May) MONC=05 ;;
+        Jun) MONC=06 ;;
+        Jul) MONC=07 ;;
+        Aug) MONC=08 ;;
+        Sep) MONC=09 ;;
+        Oct) MONC=10 ;;
+        Nov) MONC=11 ;;
+        Dec) MONC=12 ;;
+      esac
+
+      DOMAIN=$(adinfo | grep 'Joined to domain:' | awk '{print $4}')
+      BASENAME=$(adinfo | grep 'Zone:' | awk '{print $2}')
+      ZONE=$(basename $BASENAME)
+      logit "software" "centrify" "${CYEAR}-${MONC}-${CDAY},${ZONE},${DOMAIN}"
+    fi
+  fi
+}
+
+function network_routing {
+  case $OS in 
+  'Linux')
+    # get the default gateway
+    DEFGATE=''
+    DEFDEV=''
+    DEFROUTE=0
+
+#default via 10.0.2.2 dev enp0s3 proto dhcp metric 100
+#10.0.2.0/24 dev enp0s3 proto kernel scope link src 10.0.2.15 metric 100
+    which ip > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      for i in $(ip route | awk '{print $1":"$2":"$3":"$4":"$5}')
+      do
+        VERSION=0
+
+# can be 'default' which won't have a mask
+        SOURCE=$(echo $i | cut -f1 -d:)
+        MASK=$(echo $SOURCE | cut -f2 -d/)
+        SOURCE=$(echo $SOURCE | cut -f1 -d/)
+        if [[ $SOURCE = 'default' ]]
+        then
+          SOURCE='0.0.0.0'
+          MASK='0.0.0.0'
+        fi
+
+# for a normal line, device is 5
+        DEVICE=$(echo $i|cut -f5 -d:)
+
+        GATEWAY=$(echo $i|cut -f3 -d:)
+# if 'dev' then gateway is default and device is what gateway is now
+        CHECK=$(echo $i|cut -f2 -d:)
+        if [[ $CHECK = 'dev' ]]
+        then
+          DEVICE=$GATEWAY
+          GATEWAY='0.0.0.0'
+        fi
+
+    # identify the default gateway and interface
+        if [[ $SOURCE = '0.0.0.0' ]]
+        then
+          DEFGATE=$GATEWAY
+          DEFDEV=$DEVICE
+          DEFROUTE=1
+        fi
+
+# looking for the static routes. Not all files will have the interface name in the line so just search for the IP and gateway.
+        STATIC=0
+        if [[ -f /etc/sysconfig/network-scripts/route-${DEVICE} ]]
+        then
+          egrep "${SOURCE}.*${GATEWAY}" /etc/sysconfig/network-scripts/route-${DEVICE} > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            STATIC=1
+          fi
+        fi
+
+        logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE,$STATIC"
+      done
+    else
+#Kernel IP routing table
+#Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+#0.0.0.0         10.0.2.2        0.0.0.0         UG        0 0          0 enp0s3
+#10.0.2.0        0.0.0.0         255.255.255.0   U         0 0          0 enp0s3
+      which netstat > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        for i in $(netstat -rn | egrep -v "(Kernel|Destination)" | awk '{print $1":"$2":"$3":"$8}')
+        do
+          VERSION=0
+          SOURCE=$(echo $i|cut -f1 -d:)
+          GATEWAY=$(echo $i|cut -f2 -d:)
+          MASK=$(echo $i|cut -f3 -d:)
+          DEVICE=$(echo $i|cut -f4 -d:)
+
+    # identify the default gateway and interface
+          if [[ $SOURCE = '0.0.0.0' ]]
+          then
+            DEFGATE=$GATEWAY
+            DEFDEV=$DEVICE
+            DEFROUTE=1
+          fi
+
+# looking for the static routes. Not all files will have the interface name in the line so just search for the IP and gateway.
+          STATIC=0
+          if [[ -f /etc/sysconfig/network-scripts/route-${DEVICE} ]]
+          then
+            egrep "${SOURCE}.*${GATEWAY}" /etc/sysconfig/network-scripts/route-${DEVICE} > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              STATIC=1
+            fi
+          fi
+
+          logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE,$STATIC"
+        done
+      fi
+    fi
+  ;;
+
+  'SunOS')
+    #SunOS:cschelin@cafmcc1$ netstat -rnv
+    #
+    #IRE Table: IPv4
+    #  Destination             Mask           Gateway          Device Mxfrg Rtt   Ref Flg  Out  In/Fwd
+    #-------------------- --------------- -------------------- ------ ----- ----- --- --- ----- ------
+    #default              0.0.0.0         10.109.195.124               1500*    0   1 UG  2971356      0
+    #10.100.1.0           255.255.255.0   10.109.192.253               1500*    0   1 UG    7106      0
+    #10.104.64.0          255.255.192.0   10.109.192.253               1500*    0   1 UG      61      0
+    #10.109.192.0         255.255.255.0   10.109.192.31        e1000g1  1500*    0   1 U   226301      0
+    #
+    #IRE Table: IPv6
+    #  Destination/Mask            Gateway                    If    PMTU   Rtt  Ref Flags  Out   In/Fwd
+    #--------------------------- --------------------------- ----- ------ ----- --- ----- ------ ------
+    #fe80::/10                   fe80::215:17ff:febe:eaf0    e1000g1  1500*     0   1 U          4      0
+    #fe80::/10                   fe80::221:28ff:fe44:3033    nge1   1500*     0   1 U          0      0
+    #ff00::/8                    fe80::215:17ff:febe:eaf0    e1000g1  1500*     0   1 U          0      0
+    #::1                         ::1                         lo0    8252*     0   1 UH        52      0
+
+    for i in $(netstat -rnv | egrep -v "(^$|IRE Table|Destination|---------)" \
+                             | awk '{print $1"@"$2"@"$3"@"$4}' | sed -e "s/1500\*//g")
+    do
+      VERSION=0
+      SOURCE=$( echo $i|cut -f1 -d@)
+      MASK=$(   echo $i|cut -f2 -d@)
+      GATEWAY=$(echo $i|cut -f3 -d@)
+      DEVICE=$( echo $i|cut -f4 -d@)
+
+    # if IP6, mask is / something
+      OUTPUT=$(echo $SOURCE | grep /)
+      if [[ ! -z $OUTPUT ]]
+      then
+        VERSION=1
+        DEVICE=$GATEWAY
+        GATEWAY=$MASK
+
+        MASK=$(echo $SOURCE | awk -F/ '{print $2}')
+        SOURCE=$(echo $SOURCE | awk -F/ '{print $1}')
+      fi
+
+    # if ::1 then this is the IP6 loopback
+      if [[ $SOURCE = "::1" ]]
+      then
+        VERSION=1
+        MASK=64
+        GATEWAY="::1"
+        DEVICE="lo0"
+      fi
+
+      logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE"
+    done
+  ;;
+
+  'HP-UX')
+    DEFGATE=''
+    DEFDEV=''
+    DEFROUTE=0
+    for i in $(netstat -rnv | bin/egrep -v "(Routing tables|Dest/Netmask)" | awk '{print $1":"$2":"$5}')
+    do
+      VERSION=0
+      SOURCE=$(echo $i|cut -f1 -d: | cut -f1 -d/)
+      MASK=$(echo $i|cut -f1 -d: | cut -f2 -d/)
+      GATEWAY=$(echo $i|cut -f2 -d:)
+      DEVICE=$(echo $i|cut -f3 -d:)
+
+    # identify the default gateway and interface
+      if [[ $SOURCE = 'default' ]]
+      then
+        DEFGATE=$GATEWAY
+        DEFDEV=$DEVICE
+        DEFROUTE=1
+      fi
+
+      logit "network" "routing" "$VERSION,$SOURCE,$GATEWAY,$MASK,$DEVICE"
+    done
+  ;;
+  esac
+}
+
+function network_iface {
+  case $OS in 
+  'Linux')
+    # with newer Red Hat, ip becomes the proper tool.
+    # and now virtual interfaces will be presented as 'global secondary'
+    which ip > /dev/null 2>&1
+    if [[ $? -eq 0 ]]
+    then
+
+# get the gateway for this interface if it exists
+      GATEWAY=""
+      for INTERFACE in $(ip a | grep -v "^ " | awk '{print $2}' | cut -f1 -d: | cut -f1 -d@)
+      do
+        if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
+        then
+          GATEWAY=$(ip route show table all | grep "^default " | grep "dev $INTERFACE " | awk '{print $3}')
+        fi
+
+        if [[ $DISTRO = "Debian" ]]
+        then
+          GATEWAY=$(ip route show table all | grep "^default " | grep "dev $INTERFACE " | awk '{print $3}')
+        fi
+
+        TEST=$(ip addr show $INTERFACE)
+        if [[ $? -eq 0 ]]
+        then
+          MAC=$(ip addr show $INTERFACE | grep 'link/ether' | awk '{print $2}')
+	  FLAG=0
+
+          OUTGATE=''
+          OUTROUTE=''
+          for j in $(ip addr show $INTERFACE | grep "inet " | awk '{print $2"#"$NF}')
+          do
+            ADDR=$(     echo $j | cut -f1 -d#)
+            INTERFACE=$(echo $j | cut -f2 -d#)
+            IP=$(       echo $ADDR | cut -f1 -d/)
+            IPV6=0
+            NETMASK=$(  echo $ADDR | cut -f2 -d/)
+
+            OUTGATE=''
+            OUTROUTE=''
+# found the default gateway information
+            if [[ $DEFDEV = $INTERFACE ]]
+            then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
+# any other interfaces were found in a route file
+            elif [[ $DEVICE = $INTERFACE ]]
+            then
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
+
+	    FLAG=1
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+          done
+
+# now process ipv6 addresses
+          for j in $(ip addr show $INTERFACE | grep "inet6 " | awk '{print $2"#"$NF}')
+          do
+            ADDR=$(     echo $j | cut -f1 -d#)
+            IFACE=$(echo $j | cut -f2 -d#)
+            IPV6=1
+            if [[ $IFACE != 'link' ]] && [[ $IFACE != 'host' ]]
+            then
+              INTERFACE=$IFACE
+            fi
+            IP=$(       echo $ADDR | cut -f1 -d/)
+            NETMASK=$(  echo $ADDR | cut -f2 -d/)
+
+            OUTGATE=''
+            OUTROUTE=''
+
+	    FLAG=1
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+          done
+
+# if an interface doesn't have an init or init6 line but is active, display it anyway.
+	  if [[ $FLAG -eq 0 ]]
+          then
+            logit "network" "interface" "$INTERFACE,$IP,$IPV6,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+	  fi
+        fi
+      done
+    else
+# we really shouldn't ever get here. the iproute2 packages have been available since around 2000. But just in case.
+      which ifconfig > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+  
+        for INTERFACE in $(ifconfig | grep -v "^ " | awk '{print $1}' | cut -f1 -d:)
+        do
+
+          if [[ $DISTRO = 'Red Hat' ]] || [[ $DISTRO = 'CentOS' ]]
+          then
+            GATEWAY=$(netstat -rn | grep $INTERFACE | grep "^0.0.0.0" | awk '{print $2}')
+          fi
+
+    # now check for a valid interface
+          TEST=$(ifconfig $INTERFACE)
+          if [[ $? -eq 0 ]]
+          then
+
+            IP=$(ifconfig $INTERFACE | grep 'inet ' | awk '{print $2}')
+            if [[ $INTERFACE = 'lo' ]]
+            then
+              NETMASK=$(ifconfig $INTERFACE | grep 'netmask' | awk '{print $4})
+            else
+              NETMASK=$(ifconfig $INTERFACE | grep 'netmask' | awk '{print $4})
+            fi
+            IPTMP=$(ifconfig $INTERFACE | grep 'inet6 ' | awk '{print $3}')
+            IP6=$(echo $IPTMP | cut -f1 -d/)
+            NETMASK66=$(echo $IPTMP | cut -f2 -d/)
+            MAC=$(ifconfig $INTERFACE | grep 'HWaddr' | awk '{print $5}')
+
+    # not the default and no route file found.
+            OUTGATE=''
+            OUTROUTE=''
+    # found the default gateway information
+            if [[ $DEFDEV = $INTERFACE ]]
+            then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
+            elif [[ $DEVICE = $INTERFACE ]]
+            then
+    # any other interfaces were found in a route file
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
+            logit "network" "interface" "$INTERFACE,$IP,0,$NETMASK,$MAC,,$OUTGATE,$OUTROUTE"
+
+            if [[ ! -z $IP6 ]]
+            then
+              logit "network" "interface" "$INTERFACE,$IP6,1,$NETMASK6,$MAC,,,"
+            fi
+          fi
+        done
+      fi
+    fi
+  ;;
+  'SunOS')
+    DEFGATE=$(route -n get default | grep gateway: | awk '{print $2}')
+    DEFDEV=$(route get default | grep interface: | awk '{print $2}')
+    DEFROUTE=1
+
+    for i in $(ifconfig -a | egrep -v "(inet|groupname|ether)" | awk '{print $1}' | sed -e "s/:$//g")
+    do
+
+      INTERFACE=$i
+      IP=$(ifconfig $INTERFACE | grep 'inet ' | awk '{print $2}')
+      MASK=$(ifconfig $INTERFACE | grep ' netmask ' | awk '{print $4}')
+      NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+      IPTMP=$(ifconfig $INTERFACE | grep 'inet6 addr' | awk '{print $3}')
+      IP6=$(echo $IPTMP | cut -f1 -d/)
+      NETMASK6=$(echo $IPTMP | cut -f2 -d/)
+      MAC=$(ifconfig $INTERFACE | grep 'ether ' | awk '{print $2}')
+
+    # get the group info
+      GROUP=''
+      GROUPFLAG=0
+      if [[ -f /etc/hostname.${INTERFACE} ]]
+      then
+        for k in $(cat /etc/hostname.${INTERFACE})
+        do
+          if [[ $GROUPFLAG = 1 ]]
+          then
+            GROUP=$k
+            GROUPFLAG=0
+          fi
+          if [[ $k = 'group' ]]
+          then
+            GROUPFLAG=1
+          fi
+        done
+      fi
+
+    # save the default route
+      if [[ $DEFDEV = $INTERFACE ]]
+      then
+        OUTGATE=${DEFGATE}
+        OUTROUTE=${DEFROUTE}
+      else
+        OUTGATE=''
+        OUTROUTE=0
+      fi
+      logit "network" "interface" "${INTERFACE},${IP},0,${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},"
+
+      if [[ ! -z $IP6 ]];then
+        logit "network" "interface" "${INTERFACE},${IP6},1,${NETMASK6},${MAC},${GROUP}"
+      fi
+    done
+  ;;
+  'HP-UX')
+# interface configuration is /etc/rc.config.d/netconf
+# link aggregate (apa) is /etc/rc.config.d/hp_apaconf
+# and /etc/rc.config.d/hp_apaportconf
+# and /etc/lanmon/lanconfig.ascii
+
+# output is 'server,network,interface,IP,ip6?,netmask,mac,groupname,gateway,defaultgw?,parent'
+    which nwmgr > /dev/null 2>&1
+    if [[ $? -eq 0 ]]
+    then
+      GROUP=''
+      IP6=0
+      for i in $(nwmgr | awk '/ UP /{print $1":"$3":"$6}')
+      do
+        INTERFACE=$(echo $i | cut -f1 -d:)
+        PARENT=$(echo $i | cut -f3 -d:)
+        # converting 0x123456789ABC to 12:34:56:78:9A:BC
+        MAC=$(echo $i | awk -F: '{ printf "%s:%s:%s:%s:%s:%s",
+                                           substr($2,3,2),
+                                           substr($2,5,2),
+                                           substr($2,7,2),
+                                           substr($2,9,2),
+                                           substr($2,11,2),
+                                           substr($2,13,2)}')
+# we have to get IP information from the netconf file if it returns 'no such interface'.
+# Otherewise it's an apa interface and we can get it from ifconfig (or hp_apaconf)
+        ISTATUS=$(ifconfig $INTERFACE 2>&1 | grep -v 'no such interface')
+        if [[ -n $ISTATUS ]]
+        then
+          IP=$(ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}')
+          MASK=$(ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}')
+          NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+        else
+# netconf file output
+#INTERFACE_NAME[2]="lan6"
+#IP_ADDRESS[2]="192.168.2.1"
+#SUBNET_MASK[2]="255.255.255.0"
+#BROADCAST_ADDRESS[2]=""
+#INTERFACE_STATE[2]="up"
+#DHCP_ENABLE[2]="0"
+#INTERFACE_MODULES[2]=""
+#INTERFACE_SKIP[2]=""
+
+#ROUTE_DESTINATION[0]="default"
+#ROUTE_MASK[0]=""
+#ROUTE_GATEWAY[0]="10.80.142.254"
+#ROUTE_COUNT[0]="1"
+#ROUTE_ARGS[0]=""
+#ROUTE_SOURCE[0]=""
+#ROUTE_SKIP[0]=""
+
+          INSTANCE=$(egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\])
+          IP=$(egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+          NETMASK=$(egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+          GATEWAY=$(egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+        fi
+  
+      # found the default gateway information
+        if [[ $DEFDEV = $INTERFACE ]]
+        then
+          OUTGATE=${DEFGATE}
+          OUTROUTE=${DEFROUTE}
+        else
+# where to get route information for apa interfaces? from the interface returned above?
+          OUTGATE=${GATEWAY}
+          OUTROUTE=0
+        fi
+        logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
+      done
+    else
+      which lanscan > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+
+        if [[ -f /etc/lanmon/lanconfig.ascii ]]
+        then
+          IP6=0
+          for i in $(egrep -v "^(#|$)" /etc/lanmon/lanconfig.ascii | egrep "(FAILOVER_GROUP|PRIMARY|STANDBY)" | awk '{print $1":"$2}')
+          do
+            KEY=$(echo $i | cut -f1 -d:)
+            VALUE=$(echo $i | cut -f2 -d:)
+            PARENT=''
+
+            if [[ $KEY = 'FAILOVER_GROUP' ]]
+            then
+              MAC=$(lanscan | grep $VALUE | awk '{ printf "%s:%s:%s:%s:%s:%s",
+                                         substr($2,3,2),
+                                         substr($2,5,2),
+                                         substr($2,7,2),
+                                         substr($2,9,2),
+                                         substr($2,11,2),
+                                         substr($2,13,2)}')
+              IP=$(ifconfig $VALUE 2>1 | awk '/inet /{print $2}')
+              MASK=$(ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}')
+              NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+              PARENTALUNIT=$VALUE
+            fi
+
+            if [[ $KEY = 'PRIMARY' ]] || [[ $KEY = 'STANDBY' ]]
+            then
+# first, see if it's in the output of lanscan in order to get the MAC
+              LANSCAN=$(lanscan | grep $VALUE)
+              MAC=""
+              if [[ ! -z $LANSCAN ]]
+              then
+                MAC=$(lanscan | grep $VALUE | '{ printf "%s:%s:%s:%s:%s:%s",
+                                         substr($2,3,2),
+                                         substr($2,5,2),
+                                         substr($2,7,2),
+                                         substr($2,9,2),
+                                         substr($2,11,2),
+                                         substr($2,13,2)}')
+              fi
+
+              ISTATUS=$(ifconfig $VALUE 2>1 | grep -v "no such interface")
+              if [[ ! -z $ISTATUS ]]
+              then
+                IP=$(ifconfig $VALUE 2>1 | awk '/inet /{print $2}')
+                MASK=$(ifconfig $VALUE 2>1 | awk '/ netmask /{print $4}')
+                NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| ed 's/../0x& /g'))
+              else
+                INSTANCE=$(egrep "^INTERFACE_NAME.*${VALUE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\])
+                IP=$(egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+                MASK=$(egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+
+# some are 0xffff, some are 255.255.255
+                echo $MASK | grep "0x" > /dev/null 2>&1
+                if [[ $? -eq 0 ]]
+                then
+                  NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed -e "s/0x//g" | sed 's/../0x& /g'))
+                else
+                  NETMASK=$MASK
+                fi
+
+                GATEWAY=$(egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+                PARENT=$PARENTALUNIT
+              fi
+            fi
+
+      # found the default gateway information
+            if [[ $DEFDEV = $VALUE ]]
+            then
+              OUTGATE=${DEFGATE}
+              OUTROUTE=${DEFROUTE}
+            else
+# where to get route information for apa interfaces? from the interface returned above?
+              OUTGATE=${GATEWAY}
+              OUTROUTE=0
+            fi
+  
+            logit "network" "interface" "${VALUE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},${PARENT}"
+
+          done
+        fi
+
+        IP6=0
+        for i in $(lanscan | egrep -v "^(Hardware|Path|LinkAgg)" | grep -v DOWN | awk '{print $5":"$2}')
+        do
+          INTERFACE=$(echo $i | cut -f1 -d:)
+          # converting 0x123456789ABC to 12:34:56:78:9A:BC
+          MAC=$(echo $i | awk -F: '{ printf "%s:%s:%s:%s:%s:%s",
+                                         substr($2,3,2),
+                                         substr($2,5,2),
+                                         substr($2,7,2),
+                                         substr($2,9,2),
+                                         substr($2,11,2),
+                                         substr($2,13,2)}')
+
+# we have to get IP information from the netconf file if it returns 'no such interface'.
+# Otherewise it's an apa interface and we can get it from ifconfig (or hp_apaconf)
+          ISTATUS=$(ifconfig $INTERFACE 2>&1 | grep -v "no such interface")
+          if [[ -n $ISTATUS ]]
+          then
+            IP=$(ifconfig $INTERFACE 2>1 | awk '/inet /{print $2}')
+            MASK=$(ifconfig $INTERFACE 2>1 | awk '/ netmask /{print $4}')
+            NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+          else
+            INSTANCE=$(egrep "^INTERFACE_NAME.*${INTERFACE}" /etc/rc.config.d/netconf | cut -f2 -d\[ | cut -f1 -d\])
+            IP=$(egrep "^IP_ADDRESS\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+            MASK=$(egrep "^SUBNET_MASK\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+
+# some are 0xffff, some are 255.255.255
+            echo $MASK | grep "0x" > /dev/null 2>&1
+            if [[ $? -eq 0 ]]
+            then
+              NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+            else
+              NETMASK=$MASK
+            fi
+
+            GATEWAY=$(egrep "^ROUTE_GATEWAY\[${INSTANCE}\]" /etc/rc.config.d/netconf | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+          fi
+
+      # found the default gateway information
+          if [[ $DEFDEV = $INTERFACE ]]
+          then
+            OUTGATE=${DEFGATE}
+            OUTROUTE=${DEFROUTE}
+          else
+# where to get route information for apa interfaces? from the interface returned above?
+            OUTGATE=${GATEWAY}
+            OUTROUTE=0
+          fi
+
+          logit "network" "interface" "${INTERFACE},${IP},${IP6},${NETMASK},${MAC},${GROUP},${OUTGATE},${OUTROUTE},"
+        done
+      fi
+    fi
+
+# loopback interface
+    IP=$(ifconfig lo0 2>1 | grep 'inet ' | /usrawk '{print $2}')
+    MASK=$(ifconfig lo0 2>1 | /usrgrep ' netmask ' | /usrawk '{print $4}')
+    NETMASK=$(printf "%d.%d.%d.%d\n" $(echo "$MASK"| sed 's/../0x& /g'))
+    logit "network" "interface" "lo0,${IP},0,${NETMASK},lo0,,,0,"
+
+  ;;
+  esac
+}
+
+function filesystem {
+  case $OS in
+  'Linux')
+    for i in $(df -kP | grep -v Filesystem | grep "^/" | awk '{print $1","$2","$6","$3","$4","$5}')
+    do
+      logit "system" "filesystem" "$i"
+    done
+  ;;
+  'SunOS')
+    for i in $(df -l| cut -f1 -d\( | awk '{print $1}')
+    do
+  
+      MOUNT=$i
+  
+      DEVICE=$(df -k $MOUNT | grep -v Filesystem | awk '{print $1}')
+      SPACE=$(df -k $MOUNT | grep -v Filesystem | awk '{print $2}')
+      AVAIL=$(df -k $MOUNT | grep -v Filesystem | awk '{print $3}')
+      USED=$(df -k $MOUNT | grep -v Filesystem | awk '{print $4}')
+      PERCENT=$(df -k $MOUNT | grep -v Filesystem | awk '{print $5}')
+
+      if [[ ! $SPACE = 0 ]]
+      then
+        logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT,$AVAIL,$USED,$PERCENT"
+      fi
+    done
+  ;;
+  'HP-UX')
+    for i in $(df -kl | grep '^/' | awk '{print $1","$2","$4","$5}')
+    do
+      MOUNT=$(echo $i|cut -f1 -d,)
+      DEVICE=$(echo $i|cut -f2 -d, | sed -e "s/(//g" | sed -e "s/)//g")
+
+      SPACE=$(echo $i|cut -f3 -d,)
+      if [[ $SPACE = ':' ]]
+      then
+        SPACE=$(echo $i|cut -f4 -d,)
+      fi
+
+      AVAIL=$(df -kl $MOUNT | grep 'free allocated' | awk '{print $1}')
+      USED=$(df -kl $MOUNT | grep 'used allocated' | awk '{print $1}')
+      PERCENT=$(df -kl $MOUNT | grep 'allocation used' | awk '{print $1"%"}')
+
+      logit "system" "filesystem" "$DEVICE,$SPACE,$MOUNT,$AVAIL,$USED,$PERCENT"
+    done
+  ;;
+  esac
+}
+
+function resolv {
+  if [[ ! -f /etc/resolv.conf ]]
+  then
+    logit "config" "resolv" "none"
+  else
+    if [[ $(grep '^nameserver' /etc/resolv.conf | wc -l) -lt 1 ]]
+    then
+      logit "config" "resolv" "none"
+    else
+      if [[ -n $(grep '^domain' /etc/resolv.conf) ]];then
+        logit "config" "resolv" "domain,$(grep '^domain' /etc/resolv.conf | awk '{print $2}')"
+      fi
+      if [[ -n $(grep '^search' /etc/resolv.conf) ]];then
+        logit "config" "resolv" "search,$(grep '^search' /etc/resolv.conf | cut -c8-)"
+      fi
+
+      NLIST=''
+      grep '^nameserver' /etc/resolv.conf | while read MYLINE
+      do
+        if [[ -z $NLIST ]]
+        then
+          NLIST="$(echo $MYLINE | awk '{print $2}')"
+        else
+          NLIST="${NLIST},$(echo $MYLINE | awk '{print $2}')"
+        fi
+      done
+      logit "config" "resolv" "nameserver,$NLIST"
+      
+      OPTS="$(grep option /etc/resolv.conf)"
+      if [[ $(grep '^option' /etc/resolv.conf | wc -l) -gt 0 ]]
+      then
+        OLIST=''
+        grep '^option' /etc/resolv.conf | while read MYLINE
+        do
+          if [[ -z $OLIST ]]
+          then
+            OLIST="$(echo $MYLINE | awk '{print $2}')"
+          else
+            OLIST="${OLIST},$(echo $MYLINE | awk '{print $2}')"
+          fi
+        done
+        logit "config" "resolv" "options,$OLIST"
+      fi
+    fi
+  fi
+}
+
+### main function
+
+## Are you root?
+RUNBY=5000
+case $OS in
+('Linux' | 'HP-UX' | 'FreeBSD' | 'OSF1' | 'OpenBSD')
+  RUNBY=$(id -u)
+;;
+('SunOS')
+  RUNBY=$(id -u)
+;;
+esac
+
+if [[ ! "$RUNBY" = 0 ]]
+then
+  echo "Note: You must be root (you need to run fdisk -l and only root can do that)."
+  exit 1
+fi
+
+## If output file exists, kill it
+if [[ -f $LOG ]]
+then
+  rm $LOG
+fi
+
+system
+system_uuid
+hardware_cpu
+hardware_mem
+hardware_disk
+software
+software_os
+software_centrify
+network_routing
+network_iface
+filesystem
+resolv

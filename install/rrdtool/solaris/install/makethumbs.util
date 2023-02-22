@@ -1,0 +1,10 @@
+function utilg {
+  $RRD/rrdtool graph $GRAPHS/u${2}.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --upper-limit 100 \
+    DEF:${1}u=$RRDDATA/hdd.rrd:${1}u:AVERAGE \
+    AREA:${1}u#48C3EB:
+}
+

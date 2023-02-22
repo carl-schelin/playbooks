@@ -1,0 +1,36 @@
+#
+# Note: I'm populating the databases backwards. So the buffer and cached variables are backwards
+# in order to get the right data.
+#
+
+function ramg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    DEF:cached=$RRDDATA/memory.rrd:buffer:AVERAGE \
+    DEF:buffer=$RRDDATA/memory.rrd:cached:AVERAGE \
+    DEF:free=$RRDDATA/memory.rrd:free:AVERAGE \
+    DEF:total=$RRDDATA/memory.rrd:total:AVERAGE \
+    CDEF:bo=total,UN,0,total,IF,0,GT,UNKN,INF,IF \
+    AREA:bo#DDDDDD: \
+    CDEF:tot=total,1024,* \
+    CDEF:fre=free,1024,* \
+    CDEF:freP=fre,100,*,tot,/ \
+    CDEF:buf=buffer,1024,* \
+    CDEF:bufP=buf,100,*,tot,/ \
+    CDEF:cac=cached,1024,* \
+    CDEF:cacP=cac,100,*,tot,/ \
+    CDEF:tmp=free,cached,+,buffer,+ \
+    CDEF:use=total,tmp,-,1024,* \
+    CDEF:useP=use,100,*,tot,/ \
+    CDEF:l=use,1,1,IF \
+    AREA:use#CC3300: \
+    LINE2:l#AC1300::STACK \
+    AREA:cac#FF9900::STACK \
+    LINE2:l#DF7900::STACK \
+    AREA:buf#FFCC00::STACK \
+    LINE2:l#DFAC00::STACK \
+    AREA:fre#FFFFCC::STACK
+}
+

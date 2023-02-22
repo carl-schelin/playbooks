@@ -1,0 +1,33 @@
+#!/bin/ksh
+
+# retrieve swap usage; max and in use
+
+. /opt/unixsuite/rrdtool/config
+
+OUTPUT=`/usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $16}'`
+
+case $1 in
+  M) STAT=`/usr/bin/tail -1 $DATA/swap.output | /usr/bin/awk '{print $3}'`
+     STAT=`echo "$STAT * 1024" | /usr/bin/bc`
+     echo $STAT
+     ;;
+  U) STAT=`/usr/bin/tail -1 $DATA/swap.output | /usr/bin/awk '{print $4}'`
+     STAT=`echo "$STAT * 1024" | /usr/bin/bc`
+     echo $STAT
+     ;;
+  I) if [[ -z $OUTPUT ]]
+     then
+       /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $6}'
+     else
+       /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $7}'
+     fi
+     ;;
+  O) if [[ -z $OUTPUT ]]
+     then
+       /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $7}'
+     else
+       /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $8}'
+     fi
+     ;;
+esac
+

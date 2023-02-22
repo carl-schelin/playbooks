@@ -1,0 +1,7 @@
+function ntpg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "NTP Disp" \
+    --upper-limit 16000 \

@@ -1,0 +1,338 @@
+function e1000g0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Management (e1000g0) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g0r=$RRDDATA/net.rrd:e1000g0r:AVERAGE \
+      VDEF:maxR=e1000g0r,MAXIMUM \
+      VDEF:minR=e1000g0r,MINIMUM \
+      VDEF:avgR=e1000g0r,AVERAGE \
+      VDEF:totR=e1000g0r,TOTAL \
+    DEF:e1000g0w=$RRDDATA/net.rrd:e1000g0w:AVERAGE \
+      VDEF:maxW=e1000g0r,MAXIMUM \
+      VDEF:minW=e1000g0r,MINIMUM \
+      VDEF:avgW=e1000g0r,AVERAGE \
+      VDEF:totW=e1000g0r,TOTAL \
+    AREA:e1000g0r#00B5E3:"Receive " \
+    LINE1:e1000g0r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:e1000g0w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+
+function e1000g1g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "(e1000g1) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g1r=$RRDDATA/net.rrd:e1000g1r:AVERAGE \
+      VDEF:maxR=e1000g1r,MAXIMUM \
+      VDEF:minR=e1000g1r,MINIMUM \
+      VDEF:avgR=e1000g1r,AVERAGE \
+      VDEF:totR=e1000g1r,TOTAL \
+    DEF:e1000g1w=$RRDDATA/net.rrd:e1000g1w:AVERAGE \
+      VDEF:maxW=e1000g1r,MAXIMUM \
+      VDEF:minW=e1000g1r,MINIMUM \
+      VDEF:avgW=e1000g1r,AVERAGE \
+      VDEF:totW=e1000g1r,TOTAL \
+    AREA:e1000g1r#00B5E3:"Receive " \
+    LINE1:e1000g1r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:e1000g1w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+
+function e1000g2g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "(e1000g2) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g2r=$RRDDATA/net.rrd:e1000g2r:AVERAGE \
+      VDEF:maxR=e1000g2r,MAXIMUM \
+      VDEF:minR=e1000g2r,MINIMUM \
+      VDEF:avgR=e1000g2r,AVERAGE \
+      VDEF:totR=e1000g2r,TOTAL \
+    DEF:e1000g2w=$RRDDATA/net.rrd:e1000g2w:AVERAGE \
+      VDEF:maxW=e1000g2r,MAXIMUM \
+      VDEF:minW=e1000g2r,MINIMUM \
+      VDEF:avgW=e1000g2r,AVERAGE \
+      VDEF:totW=e1000g2r,TOTAL \
+    AREA:e1000g2r#00B5E3:"Receive " \
+    LINE1:e1000g2r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:e1000g2w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+
+function e1000g46g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "VIP (e1000g4+e1000g6) Throughput" \
+    --vertical-label "g6 - pkts/s g4" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g4r=$RRDDATA/net.rrd:e1000g4r:AVERAGE \
+      VDEF:max4R=e1000g4r,MAXIMUM \
+      VDEF:min4R=e1000g4r,MINIMUM \
+      VDEF:avg4R=e1000g4r,AVERAGE \
+      VDEF:tot4R=e1000g4r,TOTAL \
+    DEF:e1000g4w=$RRDDATA/net.rrd:e1000g4w:AVERAGE \
+      VDEF:max4W=e1000g4w,MAXIMUM \
+      VDEF:min4W=e1000g4w,MINIMUM \
+      VDEF:avg4W=e1000g4w,AVERAGE \
+      VDEF:tot4W=e1000g4w,TOTAL \
+    DEF:e1000g6r=$RRDDATA/net.rrd:e1000g6r:AVERAGE \
+      VDEF:max6R=e1000g6r,MAXIMUM \
+      VDEF:min6R=e1000g6r,MINIMUM \
+      VDEF:avg6R=e1000g6r,AVERAGE \
+      VDEF:tot6R=e1000g6r,TOTAL \
+    DEF:e1000g6w=$RRDDATA/net.rrd:e1000g6w:AVERAGE \
+      VDEF:max6W=e1000g6w,MAXIMUM \
+      VDEF:min6W=e1000g6w,MINIMUM \
+      VDEF:avg6W=e1000g6w,AVERAGE \
+      VDEF:tot6W=e1000g6w,TOTAL \
+    AREA:e1000g4r#48C3EB:"g4 Rcvs" \
+      GPRINT:max4R:"Max %6.2lf %s" \
+      GPRINT:min4R:"Min %6.2lf %s" \
+      GPRINT:avg4R:"Avg %6.2lf %s" \
+      GPRINT:tot4R:"Sum %6.2lf %s\n" \
+    AREA:e1000g4w#7648EB:"g4 Xmts" \
+      GPRINT:max4W:"Max %6.2lf %s" \
+      GPRINT:min4W:"Min %6.2lf %s" \
+      GPRINT:avg4W:"Avg %6.2lf %s" \
+      GPRINT:tot4W:"Sum %6.2lf %s\n" \
+    CDEF:base=0,e1000g6r,e1000g6w,+,- \
+    LINE1:base \
+    AREA:e1000g6w#7648EB:"g6 Xmts":STACK \
+      GPRINT:max6W:"Max %6.2lf %s" \
+      GPRINT:min6W:"Min %6.2lf %s" \
+      GPRINT:avg6W:"Avg %6.2lf %s" \
+      GPRINT:tot6W:"Sum %6.2lf %s\n" \
+    AREA:e1000g6r#48C3EB:"g6 Rcvs":STACK \
+      GPRINT:max6R:"Max %6.2lf %s" \
+      GPRINT:min6R:"Min %6.2lf %s" \
+      GPRINT:avg6R:"Avg %6.2lf %s" \
+      GPRINT:tot6R:"Sum %6.2lf %s\n" \
+    HRULE:0#000000 \
+    COMMENT:"$DATE\r"
+}
+
+function e1000g57g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "App (e1000g5+e1000g7) Throughput" \
+    --vertical-label "g7 - pkts/s g5" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:e1000g5r=$RRDDATA/net.rrd:e1000g5r:AVERAGE \
+      VDEF:max5R=e1000g5r,MAXIMUM \
+      VDEF:min5R=e1000g5r,MINIMUM \
+      VDEF:avg5R=e1000g5r,AVERAGE \
+      VDEF:tot5R=e1000g5r,TOTAL \
+    DEF:e1000g5w=$RRDDATA/net.rrd:e1000g5w:AVERAGE \
+      VDEF:max5W=e1000g5w,MAXIMUM \
+      VDEF:min5W=e1000g5w,MINIMUM \
+      VDEF:avg5W=e1000g5w,AVERAGE \
+      VDEF:tot5W=e1000g5w,TOTAL \
+    DEF:e1000g7r=$RRDDATA/net.rrd:e1000g7r:AVERAGE \
+      VDEF:max7R=e1000g7r,MAXIMUM \
+      VDEF:min7R=e1000g7r,MINIMUM \
+      VDEF:avg7R=e1000g7r,AVERAGE \
+      VDEF:tot7R=e1000g7r,TOTAL \
+    DEF:e1000g7w=$RRDDATA/net.rrd:e1000g7w:AVERAGE \
+      VDEF:max7W=e1000g7w,MAXIMUM \
+      VDEF:min7W=e1000g7w,MINIMUM \
+      VDEF:avg7W=e1000g7w,AVERAGE \
+      VDEF:tot7W=e1000g7w,TOTAL \
+    AREA:e1000g5r#48C3EB:"g5 Rcvs" \
+      GPRINT:max5R:"Max %6.2lf %s" \
+      GPRINT:min5R:"Min %6.2lf %s" \
+      GPRINT:avg5R:"Avg %6.2lf %s" \
+      GPRINT:tot5R:"Sum %6.2lf %s\n" \
+    AREA:e1000g5w#7648EB:"g5 Xmts" \
+      GPRINT:max5W:"Max %6.2lf %s" \
+      GPRINT:min5W:"Min %6.2lf %s" \
+      GPRINT:avg5W:"Avg %6.2lf %s" \
+      GPRINT:tot5W:"Sum %6.2lf %s\n" \
+    CDEF:base=0,e1000g7r,e1000g7w,+,- \
+    LINE1:base \
+    AREA:e1000g7w#7648EB:"g7 Xmts":STACK \
+      GPRINT:max7W:"Max %6.2lf %s" \
+      GPRINT:min7W:"Min %6.2lf %s" \
+      GPRINT:avg7W:"Avg %6.2lf %s" \
+      GPRINT:tot7W:"Sum %6.2lf %s\n" \
+    AREA:e1000g7r#48C3EB:"g7 Rcvs":STACK \
+      GPRINT:max7R:"Max %6.2lf %s" \
+      GPRINT:min7R:"Min %6.2lf %s" \
+      GPRINT:avg7R:"Avg %6.2lf %s" \
+      GPRINT:tot7R:"Sum %6.2lf %s\n" \
+    HRULE:0#000000 \
+    COMMENT:"$DATE\r"
+}
+
+function nge0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "(nge0) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 30000000 \
+    DEF:nge0r=$RRDDATA/net.rrd:nge0r:AVERAGE \
+      VDEF:maxR=nge0r,MAXIMUM \
+      VDEF:minR=nge0r,MINIMUM \
+      VDEF:avgR=nge0r,AVERAGE \
+      VDEF:totR=nge0r,TOTAL \
+    DEF:nge0w=$RRDDATA/net.rrd:nge0w:AVERAGE \
+      VDEF:maxW=nge0r,MAXIMUM \
+      VDEF:minW=nge0r,MINIMUM \
+      VDEF:avgW=nge0r,AVERAGE \
+      VDEF:totW=nge0r,TOTAL \
+    AREA:nge0r#00B5E3:"Receive " \
+    LINE1:nge0r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:nge0w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+
+function bge0g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Management (bge0) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 30000000 \
+    DEF:bge0r=$RRDDATA/net.rrd:bge0r:AVERAGE \
+      VDEF:maxR=bge0r,MAXIMUM \
+      VDEF:minR=bge0r,MINIMUM \
+      VDEF:avgR=bge0r,AVERAGE \
+      VDEF:totR=bge0r,TOTAL \
+    DEF:bge0w=$RRDDATA/net.rrd:bge0w:AVERAGE \
+      VDEF:maxW=bge0r,MAXIMUM \
+      VDEF:minW=bge0r,MINIMUM \
+      VDEF:avgW=bge0r,AVERAGE \
+      VDEF:totW=bge0r,TOTAL \
+    AREA:bge0r#00B5E3:"Receive " \
+    LINE1:bge0r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:bge0w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+
+function bge1g {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "App (bge1) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 30000000 \
+    DEF:bge1r=$RRDDATA/net.rrd:bge1r:AVERAGE \
+      VDEF:maxR=bge1r,MAXIMUM \
+      VDEF:minR=bge1r,MINIMUM \
+      VDEF:avgR=bge1r,AVERAGE \
+      VDEF:totR=bge1r,TOTAL \
+    DEF:bge1w=$RRDDATA/net.rrd:bge1w:AVERAGE \
+      VDEF:maxW=bge1r,MAXIMUM \
+      VDEF:minW=bge1r,MINIMUM \
+      VDEF:avgW=bge1r,AVERAGE \
+      VDEF:totW=bge1r,TOTAL \
+    AREA:bge1r#00B5E3:"Receive " \
+    LINE1:bge1r#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:bge1w#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+ 
+function log {
+  $RRD/rrdtool graph $GRAPHS/$2.png $6 \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --title "Loopback (lo) Throughput" \
+    --vertical-label "pkts/s" \
+    --upper-limit 3000000 \
+    --lower-limit -3000000 \
+    DEF:lor=$RRDDATA/net.rrd:lor:AVERAGE \
+      VDEF:maxR=lor,MAXIMUM \
+      VDEF:minR=lor,MINIMUM \
+      VDEF:avgR=lor,AVERAGE \
+      VDEF:totR=lor,TOTAL \
+    DEF:low=$RRDDATA/net.rrd:low:AVERAGE \
+      VDEF:maxW=low,MAXIMUM \
+      VDEF:minW=low,MINIMUM \
+      VDEF:avgW=low,AVERAGE \
+      VDEF:totW=low,TOTAL \
+    AREA:lor#00B5E3:"Receive " \
+    LINE1:lor#0085B3: \
+      GPRINT:maxR:"Max %6.2lf %s" \
+      GPRINT:minR:"Min %6.2lf %s" \
+      GPRINT:avgR:"Avg %6.2lf %s" \
+      GPRINT:totR:"Sum %6.2lf %s\n" \
+    LINE1:low#E32D00:"Transmit" \
+      GPRINT:maxW:"Max %6.2lf %s" \
+      GPRINT:minW:"Min %6.2lf %s" \
+      GPRINT:avgW:"Avg %6.2lf %s" \
+      GPRINT:totW:"Sum %6.2lf %s\n" \
+    COMMENT:"$DATE\r"
+}
+

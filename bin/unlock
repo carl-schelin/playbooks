@@ -1,0 +1,252 @@
+#!/bin/ksh
+
+# unlock - Carl Schelin
+# Unlock a user account
+# derived from the resethp script
+# 2017-11-02 - Initial
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+# if a changefreeze is in effect, stop the execution of the script.
+if [[ -f ${SCRIPTS_DATA}/changefreeze ]]
+then
+  exit 0
+fi
+
+CENTRIFY='no'
+DEBUG="no"
+DEBUG="yes"
+# override whocares during testing
+if [[ ${DEBUG} = 'yes' ]]
+then
+  WHOCARES="${CARLCARES}"
+fi
+
+if [[ $OS = "Linux" ]]
+then
+  if [[ $(id -u) -ne 0 ]]
+  then
+    echo "This script must be run by root."
+    exit 1
+  fi
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  if [[ $(id -u) -ne 0 ]]
+  then
+    echo "This script must be run by root."
+    exit 1
+  fi
+fi
+
+if [[ $OS = "SunOS" ]]
+then
+  if [[ $(id | cut -f2 -d= | cut -f1 -d\() -ne 0 ]]
+  then
+    echo "This script must be run by root."
+    exit 1
+  fi
+fi
+
+# check parameters
+if [[ -z $1 ]]
+then
+  echo "unlock - No username"
+  echo ""
+  echo "Usage:"
+  echo "unlock username user@email"
+  echo ""
+  exit 1
+else
+  USER_LOCKED="${1}"
+fi
+
+if [[ -z $2 ]]
+then
+  echo "unlock - No email address"
+  echo ""
+  echo "Usage:"
+  echo "unlock username user@email"
+  echo ""
+  exit 1
+else
+  USER_EMAIL="${2}"
+fi
+
+# check for centrify and bail if installed and running
+if [[ -f /usr/sbin/adclient ]]
+then
+  CENTRIFY=$(ps -e | grep adclient)
+  if [[ ! -z $CENTRIFY ]]
+  then
+    /usr/bin/adinfo > /dev/null
+    if [[ $? -eq 10 ]]
+    then
+      CENTRIFY='no'
+    else
+# we'll remove this later once we figure out how to unlock or just ignore it
+      echo "Accounts on ${HOSTNAME} is managed through Active Directory and cannot be unlocked via email." | mailx -s "Managed account ${HOSTNAME}" "${USER_EMAIL}"
+      echo "${USER_LOCKED} attempted an account unlock on a Centrify managed system." | mailx -s "Centrify account unlock failure on ${HOSTNAME}" "${WHOCARES}"
+      CENTRIFY='yes'
+      exit 1
+    fi
+  fi
+fi
+
+# check to see if the user has an account in HP-UX and FreeBSD.
+if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
+then
+  USER=$(grep "^${USER_LOCKED}:" /etc/passwd | cut -f1 -d:)
+  if [[ -z $USER ]]
+  then
+    echo "You do not have an account on ${HOSTNAME}" | mailx -s "No account on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "${USER_LOCKED} attempted an account unlock on a system where they don't have an account." | mailx -s "User account doesn't exist unlock failure on ${HOSTNAME}" "${WHOCARES}"
+    exit 1
+  fi
+fi
+
+# other systems use getent so check this way.
+if [[ $OS = 'SunOS' ]] || [[ $OS = 'Linux' ]]
+then
+  getent passwd "${USER_LOCKED}"
+  if [[ $? -eq 2 ]]
+  then
+    echo "You do not have an account on ${HOSTNAME}" | mailx -s "No account on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "${USER_LOCKED} attempted an account unlock on a system where they don't have an account." | mailx -s "User account doesn't exist unlock failure on ${HOSTNAME}" "${WHOCARES}"
+    exit 1
+  fi
+fi
+
+# Now see if the user is actually locked. No need to unlock/changelog an account if they're not actually locked out.
+if [[ $OS = 'SunOS' ]]
+then
+  STATUS=$(passwd -s "${USER_LOCKED}" | awk '{print $2}')
+  if [[ $STATUS = 'PS' ]]
+  then
+    echo "Your account (${USER_LOCKED}) is not locked on ${HOSTNAME}" | mailx -s "Not locked on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "${USER_LOCKED} attempted an account unlock where the account wasn't locked." | mailx -s "User account unlock request but not locked on ${HOSTNAME}" "${WHOCARES}"
+    exit 1
+  fi
+fi
+
+if [[ $OS = 'HP-UX' ]]
+then
+# getting them all but only LIFETIME, EXCEEDED, and LOCKED are ones we'll check
+  GETPRPW_LIFETIME=$(/usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c1)
+  GETPRPW_EXCEEDED=$(/usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c4)
+  GETPRPW_LOCKED=$(  /usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c6)
+  if [[ $GETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_LOCKED = '0' ]]
+  then
+    echo "Your account (${USER_LOCKED}) is not locked or disabled on ${HOSTNAME}" | mailx -s "Not locked or disabled on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "${USER_LOCKED} attempted an account unlock or enable where the account wasn't disabled." | mailx -s "User account unlock request but not locked on ${HOSTNAME}" "${WHOCARES}"
+    exit 1
+  fi
+fi
+
+if [[ $OS = 'Linux' ]]
+then
+  STATUS=$(passwd -S "${USER_LOCKED}" | awk '{print $2}')
+  if [[ $STATUS = 'PS' ]]
+  then
+    echo "Your account (${USER_LOCKED}) is not locked on ${HOSTNAME}" | mailx -s "Not locked on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "${USER_LOCKED} attempted an account unlock where the account wasn't locked." | mailx -s "User account unlock request but not locked on ${HOSTNAME}" "${WHOCARES}"
+    exit 1
+  fi
+fi
+
+# now that we're done verifying, unlock the user
+if [[ $OS = 'HP-UX' ]]
+then
+# doing a -v -k reset password then -e fails to reset a disabled user account.
+# doing -v -k -e reset password then -v -k -e seems to clear disabled user accounts.
+  /usr/lbin/modprpw -v "${USER_LOCKED}"
+  /usr/lbin/modprpw -k "${USER_LOCKED}"
+  /usr/lbin/modprpw -e "${USER_LOCKED}"
+  STATUS=$(passwd -s "${USER_LOCKED}" | awk '{print $2}')
+  NEWGETPRPW_LIFETIME=$(/usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c1)
+  NEWGETPRPW_EXCEEDED=$(/usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c4)
+  NEWGETPRPW_LOCKED=$(  /usr/lbin/getprpw -r -m lockout "${USER_LOCKED}" | cut -c6)
+  if [[ $NEWGETPRPW_LIFETIME = '0' ]] && [[ $GETPRPW_LIFETIME = '1' ]]
+  then
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
+    echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
+  fi
+  if [[ $NEWGETPRPW_EXCEEDED = '0' ]] && [[ $GETPRPW_EXCEEDED = '1' ]]
+  then
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
+    echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
+  fi
+  if [[ $NEWGETPRPW_LOCKED = '0' ]] && [[ $GETPRPW_LOCKED = '1' ]]
+  then
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
+    echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
+  fi
+  if [[ $NEWGETPRPW_LIFETIME = '1' ]] || [[ $NEWGETPRPW_EXCEEDED = '1' ]] || [[ $NEWGETPRPW_LOCKED  = '1' ]]
+  then
+    echo "Failed to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "Failed to unlock ${USER_LOCKED}'s account" | mailx -s "Account Unlock Failure on ${HOSTNAME}" "${WHOCARES}"
+  fi
+fi
+
+if [[ $OS = 'Linux' ]]
+then
+  passwd -u "${USER_LOCKED}"
+  STATUS=$(passwd -S "${USER_LOCKED}" | awk '{print $2}')
+  if [[ $STATUS = "PS" ]]
+  then
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
+    echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
+  else
+    echo "Failed to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "Failed to unlock ${USER_LOCKED}'s account" | mailx -s "Account Unlock Failure on ${HOSTNAME}" "${WHOCARES}"
+  fi
+fi
+
+if [[ $OS = 'SunOS' ]]
+then
+  passwd -u "${USER_LOCKED}"
+  STATUS=$(passwd -S "${USER_LOCKED}" | awk '{print $2}')
+  if [[ $STATUS = "PS" ]]
+  then
+    echo "Account unlocked." | mailx -s "User account unlocked on ${HOSTNAME}" "${USER_EMAIL}"
+    if [[ ${CHANGELOG} != '' ]]
+    then
+      echo "Unlocked ${USER_LOCKED}'s account" | mailx -s "${HOSTNAME}" "${CHANGELOG}"
+    fi
+  else
+    echo "Failed to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
+    echo "Failed to unlock ${USER_LOCKED}'s account" | mailx -s "Account Unlock Failure on ${HOSTNAME}" "${WHOCARES}"
+  fi
+fi
+
+if [[ $OS = 'FreeBSD' ]]
+then
+  echo "Unable to unlock ${USER_LOCKED}'s account. Please open a ticket." | mailx -s "User account unlock failed on ${HOSTNAME}" "${USER_EMAIL}"
+  echo "Unable to unlock ${USER_LOCKED}'s password on FreeBSD via switch." | mailx -s "Unable to unlock on ${HOSTNAME}" "${WHOCARES}"
+fi
+
+exit 0
+

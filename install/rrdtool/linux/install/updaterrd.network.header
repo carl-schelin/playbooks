@@ -1,0 +1,4 @@
+  # get network statistics
+  { 
+    DATE=`date`
+    NET="N"

@@ -1,0 +1,55 @@
+#!/bin/ksh
+
+# search the ansible hosts file for headers. 
+# straight search returns all the headers where passing a parameter will search headers for the search string
+
+LOCATION="/usr/local/admin/etc/hosts"
+
+if [[ -z $1 ]]
+then
+  echo "Searching Ansible hosts file"
+  grep -i "\[" $LOCATION
+  exit $?
+else
+#  grep -i "\[" $LOCATION | grep -i $1
+#  exit $?
+#fi
+
+# loop through the hosts file
+# if search string is found, display it
+# continue to display lines until a blank line is found
+# then stop displaying
+
+  echo "Searching Ansible hosts file for [$1]"
+  DISPLAY='no'
+  for i in `cat $LOCATION`
+  do
+
+# if we find $1, then start displaying lines
+    echo $i | grep -i "^\[$1\]" > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      DISPLAY='yes'
+    fi
+
+# if we find an open bracket; we've reached the next section
+    echo $i | grep -i "^\[" > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+# and it's not the original search
+      echo $i | grep -i "^\[$1\]" > /dev/null
+      if [[ $? -gt 0 ]]
+      then
+        DISPLAY='no'
+      fi
+    fi
+
+# display lines as long as it's not blank
+    if [[ $DISPLAY = 'yes' ]]
+    then
+      echo $i
+    fi
+
+  done
+fi
+

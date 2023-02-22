@@ -1,0 +1,87 @@
+#!/bin/ksh
+
+# chketh by Carl Schelin
+# Capture the current network settings; up, link speed, etc
+# modify the script to check for, and kill the dladm or ethtool process if it's taking too long
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+CONTENT="chketh"
+TIMEOUT=40
+LOG=${SCRIPTS_LOGS}/unixsuite.log
+
+if [[ -f ${SCRIPTS_LOGS}/${CONTENT}.output ]]
+then
+  rm "${SCRIPTS_LOGS}/${CONTENT}.output"
+fi
+
+# the process for checking the interfaces on a Sun system
+if [[ $OS = "SunOS" ]]
+then
+  /usr/sbin/dladm show-dev > "${SCRIPTS_LOGS}/${CONTENT}.output"
+  PID=$!
+
+  while [[ $TIMEOUT -gt 0 ]]
+  do
+    /usr/bin/ps -p "${PID}" > /dev/null 2>&1
+    if [[ $? -ne 0 ]]
+    then
+      break
+    fi
+    TIMEOUT=$(( $TIMEOUT - 1 ))
+    sleep 1
+  done
+
+# if the timeout reaches 0, then the process was killed.
+
+  if [[ $TIMEOUT -le 0 ]]
+  then
+    kill -KILL "${PID}"
+    echo "ERROR: $CONTENT process killed" >> "${LOG}"
+  fi
+fi
+
+
+# the process for checking the interfaces on a Linux system
+if [[ $OS = "Linux" ]]
+then
+  for i in $(ls /etc/sysconfig/network-scripts/ifcfg*)
+  do
+    IF=$(echo "${i}" | cut -f3 -d\-)
+
+    /sbin/ethtool "${IF}" >> "${SCRIPTS_LOGS}/${CONTENT}.output"
+    PID=$!
+
+    while [[ $TIMEOUT -gt 0 ]]
+    do
+      /usr/bin/ps -p "${PID}" > /dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        break
+      fi
+      TIMEOUT=$(( $TIMEOUT - 1 ))
+      sleep 1
+    done
+
+# if the timeout reaches 0, then the process was killed.
+
+    if [[ $TIMEOUT -le 0 ]]
+    then
+      kill -KILL "${PID}"
+      echo "ERROR: $CONTENT process killed" >> "${LOG}"
+    fi
+  done
+fi
+
+exit 0
+

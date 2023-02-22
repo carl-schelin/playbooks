@@ -1,0 +1,1 @@
+    DEF:dispNUMBER=$RRDDATA/ntp.rrd:dispNUMBER:AVERAGE \

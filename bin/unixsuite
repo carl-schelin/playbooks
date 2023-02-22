@@ -1,0 +1,590 @@
+#!/bin/ksh
+
+# unixsuite - Carl Schelin - 2011-05-24
+# Script to manage the unixsuite directory structure and execute unixsuite specific scripts
+#
+# Note: This script only runs the one-time only scripts. Anything that needs to run often 
+# during the day such as suitecheck or the rrdtool scripts should have their own entries in cron
+#
+# Note renamed to unixsuite
+#
+# Changelog:
+# 2011-07-18 - Add logic for processing tasks weekly or monthly.
+# 2011-07-19 - Add rrdtool and unixsuite.log rolling.
+# 2011-08-17 - Correct chkusers.contrib to add bin to the path for the -f check. Added copy of anaconda-ks.cfg to etc if it exists.
+# 2011-08-18 - Correct script to run chkusers for all systems. Added a permissions change at the end of the script run as well.
+# 2011-08-20 - Added chkversion script, mainly to get monitoring agent version but others in the future.
+# 2011-09-06 - Added logroll option for some HP-UX boxes.
+# 2011-09-06 - Added logroll and scanraid option for some OSF1 boxes.
+# 2011-09-10 - added runscript function to ensure the completion of all scripts before final cleanup
+# 2011-09-22 - added a cleanup script
+# 2011-09-29 - Added the permissions and rights update to the various messages files.
+# 2011-09-30 - Added a capture of the output of prtdiag on Sun systems.
+# 2011-10-04 - Added a special cfg2html if statement for FreeBSD systems
+# 2011-10-05 - Added runmrc script check to retrieve the megarc configuration file
+# 2011-10-05 - Added run of sun explorer file
+# 2011-10-10 - Moved explorer run to the first of the month
+# 2011-10-12 - Moved chksudoers to run after chkusers since it depends on chkusers.dat
+# 2011-10-12 - Added a log entry in the runscript function to log if a script doesn't exist.
+# 2011-11-07 - Added a section for server specific execution requirements; wiki server being the first.
+# 2011-11-11 - Changed the above section so that it's looking for the specific $HOSTNAME and runs that as the script
+# 2011-11-29 - Added a weekly server specific execution method. Add .weekly to the hostname filename to execute scripts on Sunday mornings.
+# 2011-12-01 - Added the chksecurity script to check system security
+# 2011-12-06 - Change log file to go to the /opt/unixsuite/var directory
+# 2011-12-06 - Added a find statement to delete /opt/unixsuite/etc files that are older than 24 hours. This ensures valid values in the event of a failed script.
+# 2011-12-07 - Added directory creation code for the /opt/unixsuite/var and /opt/unixsuite/etc directories in case they're not created during installation
+# 2011-12-07 - Added chkarray for OSF1 systems (mainly lldb01)
+# 2012-01-21 - Added chksan for Sun and Linux systems.
+# 2012-02-27 - Added chkports to list the open ports and what program and owner has the port open
+# 2012-03-01 - Moved the roll/compress logs code section to the beginning of the script so logs for the 1st are written to a new log file.  
+# 2012-04-29 - Added the deletion of old rrdtool.gz files and clearing of the .output files (iostat, mpstat, and vmstat).
+# 2012-06-26 - Corrected an error in the rrdtool log section and added 'disk' as one of the rrdtool log files to be managed
+# 2012-09-05 - Added chkcluster to validate cluster state for those servers running either HP's Serviceguard or Redhat's cluster software. 
+# 2012-09-18 - Added a third chkusers script (chkusrs.Q4) for systems with ancient perl installations (4.0).
+# 2012-10-03 - Added chkapa script for HPUX bonding. Only runs on boxes where OS = hpux.         
+# 2013-01-09 - Modified the chksudoers portion for HP-UX to keep it from running on the HP boxes due to timeout issues; chksudoers needs to be rewritten
+# 2013-01-21 - Added the rolling of wtmps files on the ALI nodes once a month.
+# 2013-02-19 - KZ: Reduced timeout polling interval to 5 seconds in the runscript function
+# 2013-06-26 - The picld on Sun boxes can cause prtdiag and cfg2html to hang until it's restarted. Added a restart item to be run once a month on Solaris systems.
+# 2013-09-11 - Added chkmessages, msgprocess, and hostname.exclude files to preprocess message log files
+# 2014-01-30 - Added chksys script which attempts to parse system info on Linux systems and write out a comma delimited file suitable for import.
+# 2014-02-06 - Added the management of an etc.tar.gz file to be used to do a mass download vs individual downloads.
+# 2014-03-12 - Restart picld every night
+# 2014-03-26 - Run a pwck script to validate the password and shadow files
+# 2014-04-01 - Added the ovupdate script which only runs 20140402 (one time)
+# 2014-04-16 - Remove the version files so the chkversion script generates a new set of files.
+# 2014-10-01 - Added check for bash vulnerability
+# 2014-10-11 - Removed gzip for etc due to not available in all locations.
+# 2014-10-23 - Changed clearing of the rrdtool .output files to cat /dev/null to the file to zero it out
+# 2014-11-09 - Added package capture scripts
+# 2014-11-12 - Added crash dump check script
+# 2015-01-19 - Added crash dump check script
+# 2015-02-19 - Added chkvx check script
+# 2015-06-09 - Added chkcentrify check script
+# 2015-06-12 - Added chkbackups to check whether backups are working or not.
+# 2015-06-22 - Added chkghost to parse out ghost vulnerabilities on Linux systems.
+# 2015-08-21 - Added chkmachinfo to gather the machinfo data from HP-UX systems.
+# 2015-10-01 - Added a 5 minute pause before creating the etc.tar file due to some slow processes (backups output for instance).
+# 2015-12-10 - Added a random start for the chkbackups scripts, using a time range between 2min-30min
+#            - Requested by JJ East through Remedy WO0000000007931
+#            - To be implemented starting on Mon 12/14/15
+# 2015-12-21 - Capture start/end time stamps of each script and output them along with elapsed time.
+# 2016-03-25 - Add update nessus key to the nessus account
+# 2016-05-19 - Added chktime to get chrony.conf, ntp.conf, and the output of time commands
+# 2016-07-07 - Added chksync to provide a report on the status of sync'd repos in Satellite.
+# 2016-11-10 - Added simplejson check for older RHEL5 systems.
+# 2016-11-13 - Added modifysudo script to add the unixsvc account to sudoers with NOPASSWD for Ansible usage
+# 2016-11-13 - Added lockuser script and lockuser.dat file in order to automatically lock users who have left the company
+# 2017-05-03 - Added chkroutes script
+# 2017-06-23 - Added SKIPRANDOM variable check. if it's set to anything, skip the random pause for the chkbackups script
+# 2017-06-26 - Added chkserver script
+# 2017-07-07 - Added update.gecos script
+# 2017-09-07 - Added update.groups script
+# 2017-09-14 - Updated to check for centrify and change group ownerships to uxadmins vs sysadmin
+# 2017-09-25 - Fixed to use a better method of figuring out groups
+# 2017-11-10 - added getovconf to get the monitoring agent configuration
+# 2019-11-07 - Renamed to unixsuite
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+HOSTNAME=`hostname|cut -f1 -d.`
+LOG=${SCRIPTS_LOGS}/unixsuite.log
+EXITCODE=0
+OS=`uname`
+GROUP=sysadmin
+DATE=`date +"%Y%m%d"`
+# Day of Week 1=Monday, 7=Sunday
+DOWEEK=`date +"%u"`
+# Day of Month, 01-31
+DOMONTH=`date +"%d"`
+
+# Roll and compress the logs at the beginning of the month
+if [[ $DOMONTH = '01' ]]
+then
+  cp $LOG $LOG.$DATE
+  cat /dev/null > $LOG
+  gzip -9 $LOG.$DATE
+fi
+
+if [[ -f /etc/cron.allow ]]
+then
+  cp /etc/cron.allow ${SCRIPTS_LOGS}
+fi
+if [[ -f /etc/cron.deny ]]
+then
+  cp /etc/cron.deny ${SCRIPTS_LOGS}
+fi
+
+# ensure directories exist and are writeable
+if [[ ! -d ${SCRIPTS_LOGS} ]]
+then
+  mkdir -p ${SCRIPTS_LOGS}
+  chown unixsvc:${GROUP} ${SCRIPTS_LOGS}
+  chmod 770 ${SCRIPTS_LOGS}
+fi
+if [[ ! -d ${SCRIPTS_DATA} ]]
+then
+  mkdir -p ${SCRIPTS_DATA}
+  chown unixsvc:${GROUP} ${SCRIPTS_DATA}
+  chmod 770 ${SCRIPTS_DATA}
+fi
+
+if [[ -d /opt/kubernetes ]]
+then
+  chmod -R 775 /opt/kubernetes
+  chown -R unixsvc:sysadmin /opt/kubernetes
+fi
+
+echo "`date` unixsuite script started" >> $LOG
+
+# First ensure the /opt/unixsuite directory structure is owned properly so data files can be written
+chown -R unixsvc:${GROUP} ${SCRIPTS}
+chmod -R 770 ${SCRIPTS}
+
+# function to run the scripts and set a timeout. this ensures all scripts exit before the final cleanup
+runscript () {
+
+  if [[ -f ${SCRIPTS_BINS}/$1 ]]
+  then
+    ${SCRIPTS_BINS}/$1 >> $LOG &
+    PID=$!
+    BSTAMP=`date`
+
+# really just waiting for the scripts to end. don't expect it to take long.
+    TIMEOUT=600
+
+    while [[ $TIMEOUT -gt 0 ]]
+    do
+      /usr/bin/ps -p $PID > /dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        break
+      fi
+      TIMEOUT=$(($TIMEOUT - 5))
+      sleep 5
+    done
+    ESTAMP=`date`
+
+# if the timeout reaches 0, then the process was killed. report something
+
+    if [[ $TIMEOUT -le 0 ]]
+    then
+      echo "ERROR: $1 failed to exit in $TIMEOUT seconds ($BSTAMP / $ESTAMP)" >> $LOG
+      kill -KILL $PID
+    else
+      FINISHED=$((600 - $TIMEOUT))
+      echo "$1 ran in $FINISHED seconds ($BSTAMP / $ESTAMP)" >> $LOG
+    fi
+  else
+    echo "$1 script doesn't exist" >> $LOG
+  fi
+
+# pause to let the scripts finish 
+  sleep 3
+
+  return
+}
+
+# Next run any universal scripts; script that check for the operating system or are generic enough
+
+# Check for backups. Run early since it can take a few minutes to get the information
+# Added random start for the chkbackups scripts, using a range to between 2min-30min
+# Requested by JJ East through Remedy WO0000000007931
+# To be implemented starting on Mon 12/14/15
+if [[ -z "$SKIPRANDOM" ]]
+then
+  rnumber=$((RANDOM%(1800-120+1)+120))
+  sleep $rnumber
+fi
+runscript chkbackups
+
+# Ensures there's at least one entry in syslog
+runscript logme
+
+# Get interface information for the database
+runscript chkif
+
+# check for defunct processes
+runscript chkdef
+
+# Produces the output of the TMPROOT variable in sudoers
+#runscript chksudo
+
+# check all raid devices
+runscript chkraid
+
+# check ethernet settings using ethtool
+runscript chketh
+
+# check security and performance settings
+runscript chkstack
+
+# retrieve version information from installed tools
+# first clean out the old version files
+if [[ $DOMONTH = '01' ]]
+then
+  rm ${SCRIPTS_LOGS}/*.version
+fi
+runscript chkversion
+
+# get prtdiag -lv from sun servers. Internal check of OS so only runs on Sun
+runscript chkprtdiag
+
+# initially get the setting for permitrootlogin from sshd_config. Others will be added.
+#runscript chksecurity
+
+# get any san configuration info
+runscript chksan
+
+# gather and validate the open ports
+runscript chkports
+
+# gather and report on time
+#runscript chktime
+
+# gather cluster state info 
+runscript chkcluster
+
+# gather cluster state info 
+runscript chkapa
+
+# gather system information
+runscript chksys
+
+# check the sync status of Satellite
+#runscript chksync
+
+# gather system information
+runscript chkpwck
+
+# check for bash vulnerabiity
+runscript chkbash
+
+# check for ghost vulnerabiity
+runscript chkghost
+
+# Check for crash dumps
+runscript chkcrash
+
+# pre-process the messages files
+runscript chkmessages
+
+# check yum if it exists
+runscript chkyum
+
+# Update the nessus key
+runscript nessus
+
+# Update the ucmdbsvc key
+runscript ucmdbsvc
+
+# install simplejson if it exists
+runscript simplejson
+
+# modify sudoers to add unixsvc as NOPASSWD for Ansible
+runscript modifysudo
+
+# lock users listed in the lockuser.dat file
+runscript lockuser
+
+# Check the server configuration
+runscript chkserver
+
+# back up the various management servers which are running mysql/mariadb
+runscript mysql.backup
+
+# Update GECOS for all users if needed
+runscript update.gecos
+
+# Update motd and issue file
+runscript update.motd
+
+# Update /etc/groups based on the group.master file
+runscript update.groups
+
+# Update /etc/rsyslog.d/LogRhythm.conf
+runscript update.rsyslog
+
+# Update root's .forward
+runscript update.forward
+
+# get the yum history output
+runscript gethistory
+
+# clean up on aisle three
+runscript cleanup
+
+# run spectre-meltdown
+${SCRIPTS_BINS}/spectre_meltdown.sh > ${SCRIPTS_LOGS}/spectre_meltdown.output 2>&1
+
+# testing
+#runscript mailcarl
+
+###
+# any general processes
+###
+
+# a run once script
+#if [[ $DATE = '20140402' ]]
+#then
+#  runscript ovupdate
+#fi
+
+## Kevins ov hotfix check - retired 12/28/2015
+## runscript ovhfchk
+
+## Kevins setcentrify script
+runscript setcentrify
+
+# only on the first of the month
+if [[ $DOMONTH = '01' ]]
+then
+# run cfg2html on the first of the month
+  if [[ $OS = "FreeBSD" ]]
+  then
+    ${SCRIPTS}/cfghtml/cfg2html > ${SCRIPTS}/cfghtml/$HOSTNAME.html
+  else
+    ${SCRIPTS}/cfghtml/cfg2html >> $LOG
+  fi
+
+# run explorer if it exists
+  if [[ $OS = "SunOS" ]]
+  then
+    if [[ -f /opt/SUNWexplo/bin/explorer ]]
+    then
+      /opt/SUNWexplo/bin/explorer -q -P >> $LOG
+    fi
+  fi
+
+# compress the rrdtool logs if they exist
+  if [[ -d /var/rrdtool ]]
+  then
+    for i in cpu disk hdd load mem net ntp 
+    do
+      if [[ -f /var/rrdtool/data/rrdtool.$i ]]
+      then
+        mv -f /var/rrdtool/data/rrdtool.$i /var/rrdtool/data/rrdtool.$i.$DATE
+        gzip -9 /var/rrdtool/data/rrdtool.$i.$DATE
+        echo "Compressing rrdtool.$i" >> $LOG
+        find /var/rrdtool/data -name rrdtool.$i.*.gz -atime +90 -exec rm {} \;
+      fi
+    done
+
+# swap is overwritten each time; the others need a couple of runs for it to start presenting correct data
+    for i in iostat mpstat vmstat
+    do
+      cat /dev/null > /var/rrdtool/data/$i.output
+    done
+  fi
+
+# save the megarc configuration file
+  runscript runmrc
+
+fi
+
+
+# Now any unique OS based scripts. For instance, HP-UX has perl in two different locations
+
+# Linux
+if [[ $OS = "Linux" ]]
+then
+
+# Get interface information for the database
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+# make a backup of the anaconda kickstart config file
+  if [[ -f /root/anaconda-ks.cfg ]]
+  then
+    cp -p /root/anaconda-ks.cfg ${SCRIPTS_LOGS} >> $LOG
+  fi
+
+# ensure log files are set up correctly
+  chown root:${GROUP} /var/log/messages*
+  chmod 644 /var/log/messages*
+
+fi
+
+# SunOS
+if [[ $OS = "SunOS" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+# ensure log files are set up correctly
+  chown root:${GROUP} /var/adm/messages*
+  chmod 644 /var/adm/messages*
+
+# picl: Platform Information and Control Library
+# reset the picld daemon once a month as it causes cfg2html to stick.
+# restarting it releases the stuck processes so it doesn't matter when it's 
+# run (check path for systems not running svcs such as Solaris 8)
+# change it to run nightly since other processes might use it
+  if [[ -f /usr/sbin/svcadm ]]
+  then
+    /usr/sbin/svcadm restart picl
+  fi
+fi
+
+# HP-UX
+if [[ $OS = "HP-UX" ]]
+then
+
+# some systems have an updated perl in a Q4 directory
+  if [[ -f /usr/contrib/Q4/bin/perl ]]
+  then
+    runscript chkusers.Q4
+  else 
+    if [[ -f /usr/contrib/bin/perl ]]
+    then
+      runscript chkusers.contrib
+    fi
+  fi
+  if [[ -f /usr/bin/perl ]]
+  then
+    runscript chkusers
+  fi
+# retrieve sudoers information
+  runscript chksudoers
+
+  if [[ $DOWEEK = '7' ]]
+  then
+    runscript logroll
+  fi
+
+  if [[ $DOMONTH = '01' ]]
+  then
+    if [[ -f ${SCRIPTS_BINS}/$HOSTNAME ]]
+    then
+      runscript $HOSTNAME
+    fi
+  fi
+
+
+# ensure log files are set up correctly
+  chown root:${GROUP} /var/adm/syslog/syslog.log
+  chmod 644 /var/adm/syslog/syslog.log
+
+  #Retrieve VX information
+  runscript chkvx
+
+# Retrieve machinfo data
+  runscript chkmachinfo
+
+fi
+
+# Tru64
+if [[ $OS = "OSF1" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+  runscript chksudoers
+
+  if [[ $DOWEEK = '2' ]]
+  then
+    runscript logroll
+  fi
+
+# ensure log files are set up correctly
+  chown root:${GROUP} /var/cluster/members/{memb]/adm/messages*
+  chmod 644 /var/cluster/members/{memb]/adm/messages*
+
+fi
+
+# FreeBSD
+if [[ $OS = "FreeBSD" ]]
+then
+
+# Retrieve user information and status of account
+  runscript chkusers
+
+# retrieve sudoers information
+    runscript chksudoers
+
+# ensure log files are set up correctly
+  chown root:${GROUP} /var/log/messages*
+  chmod 644 /var/log/messages*
+
+fi
+
+#====================================================================
+# Run chk_centrify - Verfiy Centrify is in a connected State
+#====================================================================
+runscript chkcentrify
+
+#====================================================================
+# Section for server specific scripts
+# to use, create a script that's the same as the output of the hostname command
+# any commands in that script will be executed only on that system.
+# make sure it matches `hostname` and not what is used to access the host as that 
+# can be two different things.
+#====================================================================
+
+if [[ -f ${SCRIPTS_BINS}/$HOSTNAME ]]
+then
+  runscript $HOSTNAME
+fi
+
+# added bit to identify and run scripts that run weekly. simply add the extension '.weekly.' to 
+# hostname of the server as the file name to execute scripts on Sunday's run.
+if [[ $DOWEEK = "07" ]]
+then
+  if [[ -f ${SCRIPTS_BINS}/$HOSTNAME.weekly ]]
+  then
+    runscript $HOSTNAME.weekly
+  fi
+fi
+
+# And finish the log; extra lines to ensure a clean last line
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo "`date` unixscript script ended" >> $LOG
+echo "======================" >> $LOG
+
+# Ensure the /opt/unixscript directory structure is owned properly so data files can be read
+chown -R unixsvc:${GROUP} ${SCRIPTS}
+chmod -R 770 ${SCRIPTS}
+find ${SCRIPTS_DATA} -type f -exec chmod 660 {} \;
+find ${SCRIPTS_LOGS} -type f -exec chmod 660 {} \;
+
+# Clean up the old data files in case they exist.
+find ${SCRIPTS_LOGS} -atime +1 -exec rm {} \;
+
+# Finally create a tar file of all the data. Basically what SCRIPTS_LOGS points to. Give it 5 minutes before performing this step
+sleep 300
+if [[ -f ${SCRIPTS}/etc.tar.gz ]]
+then
+  rm ${SCRIPTS}/etc.tar.gz
+fi
+if [[ -f ${SCRIPTS}/etc.tar ]]
+then
+  rm ${SCRIPTS}/etc.tar
+fi
+cd ${SCRIPTS_LOGS}
+tar cf ../etc.tar *
+gzip -9 ../etc.tar
+
+exit $EXITCODE
+

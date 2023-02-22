@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+DATE=`date +"%Y/%m/%d %H\:%M\:%S %Z"`
+
+# ensure only one copy of makethumbs runs
+RRDTHUMBS=/var/run/rrdthumb.pid
+
+if [[ -f $RRDTHUMBS ]]
+then
+  exit 0
+fi
+
+echo $$ > $RRDTHUMBS
+
+. /opt/unixsuite/rrdtool/config
+

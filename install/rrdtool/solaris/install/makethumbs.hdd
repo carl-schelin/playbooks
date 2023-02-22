@@ -1,0 +1,15 @@
+function hddg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    --rigid \
+    DEF:${1}r=$RRDDATA/hdd.rrd:${1}r:AVERAGE \
+    DEF:${1}w=$RRDDATA/hdd.rrd:${1}w:AVERAGE \
+    AREA:${1}r#48C3EB: \
+    CDEF:base=0,${1}w,0,+,- \
+    LINE1:base \
+    AREA:${1}w#7648EB::STACK \
+    HRULE:0#000000
+}
+

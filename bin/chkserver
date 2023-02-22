@@ -1,0 +1,4380 @@
+#!/bin/bash
+
+# chkserver - Check the postinstall steps where possible
+# Owner: Carl Schelin
+# $Id $
+# 2013/05/21
+# Description: Run through the defined steps to quickly see what might need to be done
+#   on a system to complete the installation.
+# 2013/05/21 - CS - Fixed spelling on a couple of items. Added check of root's cron if unixsuite script hasn't been run yet
+# 2017/02/21 - CS - Checked in to RCS
+# 2017/05/22 - CS - Removed extra interfaces, count interfaces to see if routes need to be checked
+# 2017/06/20 - CS - added chkserver.input validation steps.
+# 2017/06/22 - CS - Updated to add color and add more things to check
+# 2017/06/22 - CS - Updated to check for vmtools installation
+# 2017/06/22 - CS - Added color and clean up some of the messages
+# 2017/06/26 - CS - write out to .output file like all the others.
+# 2017/06/26 - CS - Updated to manage gateways better
+# 2017/06/27 - CS - Updated to check all admin default passwords, not just unixsvc
+# 2017/06/27 - CS - Updated to show root in the listing
+# 2017/06/27 - CS - Updated to fine the right path to the ip command
+# 2017/06/29 - CS - Updated the check with grep
+# 2017/06/30 - CS - Added subscription manager check, added group membership check
+# 2017/06/30 - CS - Fixed typo
+# 2017/06/30 - CS - Updated with the correct info
+# 2017/06/30 - CS - Remove extra quotes from check
+# 2017/06/30 - CS - Fixed the output of grep
+# 2017/07/03 - CS - Updated to check for the RemoveIPC value (set to yes; warning)
+# 2017/07/03 - CS - Updated to manage colors better (warning, error, and good)
+# 2017/07/05 - CS - Updated to fix messages
+# 2017/07/05 - CS - Updated to add a security check
+# 2017/07/05 - CS - Fixed log info. Fixed data file parse. Updated to check the interface file for Gateway info in addition to the network file
+# 2017/07/05 - CS - Updated to change the title and to add the email check for user access
+# 2017/07/05 - CS - Updated text
+# 2017/07/05 - CS - Updated to add every GATEWAY to the output
+# 2017/07/06 - CS - Fix grep output (was displaying emails; add -q to quiet) also added -i to ignore case
+# 2017/07/06 - CS - Check for locked account in order to filter messages out
+# 2017/07/06 - CS - Add check for Mail Server access
+# 2017/07/06 - CS - Added OpNet check
+# 2017/07/06 - CS - Update message display
+# 2017/07/06 - CS - Add a trailing $ to the IP check to keep from multiple hits due to single digit host IPs
+# 2017/07/06 - CS - Updated to add a message for the email check
+# 2017/07/10 - CS - Update warning messages with appropriate color
+# 2017/07/10 - CS - Added check for access to the management server
+# 2017/07/10 - CS - Added check for time
+# 2017/07/11 - CS - Removed private networks from gateway ping test
+# 2017/07/11 - CS - updated to ping servers before checking functionality
+# 2017/07/13 - CS - Add check of the route table. Just parrot the routetable.output file
+# 2017/07/17 - CS - Backup check
+# 2017/07/19 - CS - Added user doesn't exist error for users who may not be in the right group
+# 2017/07/20 - CS - Moved further app tests from inside the chkserver.input file and out where it executes if it finds the agent
+# 2017/07/21 - CS - Added a specific check for bits for nginx
+# 2017/07/24 - CS - Added bits for Solaris (need to pull out common bits to functions.
+# 2017/07/25 - CS - Updated to properly locate Panorama
+# 2017/07/25 - CS - Updated to block out nc checks if netcat isn't found.
+# 2017/07/25 - CS - Added status messages for nc to identify when it's stopped.
+# 2017/07/25 - CS - Put in more status messages for ping to show where slowdowns are.
+# 2017/07/26 - CS - Moving code blocks into functions and updating for different versions where appropriate
+# 2017/07/26 - CS - Updated time server check to include seeing if the time servers can sync
+# 2017/07/27 - CS - Fixed first/New opnet server access port (443)
+# 2017/07/27 - CS - Updated to support HP-UX
+# 2017/07/27 - CS - Switch to ksh (need to fix error output)
+# 2017/07/28 - CS - Updated so colors work again. Updated to add path info as overnight runs seem to be reporting errors that were corrected
+# 2017/07/28 - CS - Updated HP sections for password and expiration dates
+# 2017/07/28 - CS - Updated to use dig instead of nslookup with a timeout and outside the ping test
+# 2017/07/28 - CS - Updated to check time servers even if ping failed
+# 2017/07/31 - CS - Check nsswitch.conf to see if DNS is enabled before doing DNS checks
+# 2017/07/31 - CS - fix extra "m" in the backup output
+# 2017/07/31 - CS - check ethernet address to see if a vm before checking for vmware tools. if 00:50:56, then VMWare, for now.
+# 2017/08/02 - CS - Updated group check to use getent vs parsing the passwd and group files
+# 2017/08/02 - CS - Added kubernetes check
+# 2017/08/03 - CS - HP-UX doesn't have getent. Add bits to accommodate hp-ux for user capture info
+# 2017/08/03 - CS - Updated time check to check to see if it's installed and if it's running before pinging or nc'ing anything
+# 2017/08/04 - CS - Fixed chage check for service accounts to just look for 'never'
+# 2017/08/04 - CS - Fixed chage again. Trying to get the last item was returning never\n7 for some reason.
+# 2017/08/04 - CS - Minor missing $ error
+# 2017/08/04 - CS - Update to show service account password that has to be changed
+# 2017/08/07 - CS - Added check_log to make sure messages file is being updated
+# 2017/08/09 - CS - Updated to make checking the time servers generic (variable and a loop)
+# 2017/08/09 - CS - Moved two more code bits into functions.
+# 2017/08/09 - CS - Removed extra code and have a single block of 'checkid' type checks before bailing.
+# 2017/08/10 - CS - Older Red Hat's didn't like execute ticks within $(( )). Moved Memory check execute out of $(( )) to fix error.
+# 2017/08/10 - CS - Updated to support FreeBSDisms plus moving bits around to accommodate FreeBSD.
+# 2017/08/14 - CS - Updated the group.master file to add *:or hostname: so updated the check_groupmembership to account for this.
+# 2017/08/14 - CS - Replaced all the grep -q with > /dev/null  Erroring out on Sun and probably HP-UX
+# 2017/08/15 - CS - Ping on SunOS is ip count where count has to follow ip. HP has -n 2 and works either before or after and Linux has -c 2, same as HP
+# 2017/08/15 - CS - Added debugging options
+# 2017/08/15 - CS - Changed grep of log to only look at the last line (lots of logs in some places and only the last line really matters).
+# 2017/08/17 - CS - Updated to report non-standard groups on a system
+# 2017/08/21 - CS - Added cron check
+# 2017/08/21 - CS - Updated to check files on different OSs (different locations)
+# 2017/08/22 - CS - Add check for centrify to add more groups to the check script.
+# 2017/08/22 - CS - Updated group loop check to use getent to determine if a group exists on the system
+# 2017/08/23 - CS - Updated group_membership to properly check for users not in the right group when checking a specific host vs any host via * or ?
+# 2017/08/24 - CS - Added check_disk_suite to check the status of SDS
+# 2017/08/24 - CS - Added check_interfaces to check for FAILED interfaces
+# 2017/09/05 - CS - Fixed group.master check.
+# 2017/09/05 - CS - Added a check_lsof function to identify deleted logs
+# 2017/09/11 - CS - Check for swap space; limited right now but will expand as we progress
+# 2017/09/14 - CS - fix metadb check to only check the first 20 characters due to drive names with caps
+# 2017/09/19 - CS - Updated to exclude checks due to them being acceptible
+# 2017/09/26 - CS - Added memory exclude check for servers with a large amount of ram.
+# 2017/09/27 - CS - Added nrpe (Nagios) check function
+# 2017/09/27 - CS - Updated time to check the config file and properly check or display error if unable
+# 2017/09/28 - CS - Increased debugging and add more debugging inside functions where added
+# 2017/09/29 - CS - Increased debugging info again
+# 2017/10/02 - CS - Updated check_sudoers to verify group entries in the sudoers file exist on the system
+# 2017/10/02 - CS - Updated check_group to check for a centrify group
+# 2017/10/21 - CS - Fix hosts.allow check to permit spaces
+# 2017/10/21 - CS - Added check_cpus
+# 2017/10/21 - CS - Added check_addresses
+# 2017/10/24 - CS - Reorder time check to avoid extra unnecessary errors
+# 2017/10/24 - CS - Some ntpdate checks fail even though ntp is working. Put the check back in but still in a reverse order
+# 2017/10/30 - CS - Added check_selinux to check selinux status
+# 2017/11/06 - CS - Added check_installation to check to see if the installation directories exists.
+# 2017/11/06 - CS - Added a commented "number of checks" to be able to calculate totals.
+# 2017/11/15 - CS - Added disk space check
+# 2017/11/16 - CS - Added a check_management_route function and added it to all the functions where we're looking for access
+# 2017/11/16 - CS - Updated the satellite check to ping and netcat check ports
+# 2017/12/02 - CS - Added a check for oom-killer messages
+# 2017/12/02 - CS - check for katello-ca certificate rpm and katello-agent agent rpm installations
+# 2017/12/03 - CS - Only check for Katello if system is or was subscribed
+# 2017/12/10 - CS - Check for active ctrl-alt-del flag but only on VMs.
+# 2017/12/10 - CS - Check to see if remote root access is permitted; leveraging etc/chksecurity.output
+# 2017/12/27 - CS - Updated management interface check; if on the same network it fails
+# 2017/12/27 - CS - Brought IPs and servers to the top to make managing listing easier; added loops in case more than one is added
+# 2018/01/01 - CS - Add check for kubernetes/docker issue
+# 2018/01/01 - CS - Change ports being monitored for inventory and kickstart
+# 2018/01/09 - CS - Added a check for the floppy device on VMs.
+# 2018/02/01 - CS - Further refined the management route check to report correct when we're on the server we're checking for.
+# 2018/02/02 - CS - Better define what backup servers are where and checking only the correct ones.
+# 2018/02/06 - CS - Incorporate a .config file to isolate site specific locations.
+# 2018/02/09 - CS - add a /var/crash check
+# 2018/02/15 - CS - Added chk_eeprom for the Sun systems
+# 2018/02/19 - CS - Updated the check_route function to check HP-UX route configurations.
+# 2018/02/21 - CS - Added check of 'Enabled' services
+# 2018/02/23 - CS - Updated the check_resolv function to try and resolve this hostname and IP
+# 2018/02/26 - CS - Added doc information to functions.
+# 2018/03/08 - CS - Updated the check_resolv dns check of the server IPs to return better answers. the hostname isn't always a FQDN and isn't always resolvable.
+# 2018/03/09 - CS - Fixed dig to only grep PTR records when doing an IP lookup
+# 2018/03/09 - CS - Changed dig -x into a loop due to multiple PTR records for an IP.
+# 2018/03/15 - CS - Added a check_scanner function to check routes back to the scanner IPs
+# 2018/03/26 - CS - Improved the debugging for the management route function. Removed ipv6 from the IP check.
+# 2018/04/17 - CS - Added a check of installed policies and report an issue if none are installed.
+# 2018/05/17 - CS - Added a check of the CLIENT_NAME in bp.conf
+# 2018/05/20 - CS - Updated for esinet systems; ends in bu and not the hostname
+# 2018/05/21 - CS - Updated bp.conf check for servers in other data centers 
+# 2018/05/24 - CS - Updated bp.conf check to use just hostname and check for e911 entry for longmont
+# 2018/06/20 - CS - Updated kubernetes check to include etcd and apiserver checks
+# 2018/07/02 - CS - Added a check of a service to see if it's running
+# 2018/09/20 - CS - Counting the number of defunct processes
+# 2018/09/21 - CS - Updated to check for either satellite server
+# 2018/09/24 - CS - Moved the functionality of the chkroutetable script into the chkserver script
+# 2018/09/27 - CS - Added a check for the vpn routes as configured in .config
+# 2018/09/27 - CS - Updated several functions so the Doc part was accurate.
+# 2018/09/28 - CS - Moved the service check scripts into the check_service function
+# 2018/09/28 - CS - Moved the group check scripts into the check_group function
+# 2018/09/28 - CS - Moved the individual lines of function calls into a loop to make it easier to interrupt
+# 2018/09/28 - CS - Moved all the config checks to functions to clean up the actual checking area
+# 2018/09/28 - CS - Added the ability to just check one function by passing view [value]. The config checks are not part of this check
+# 2018/09/28 - CS - Moved the chksecurity (remote root access) logic into the function
+# 2018/10/03 - CS - Added an artifactory function plus cleaned up the various management ping and port checks
+# 2018/10/04 - CS - Moved the chkvx functionality into the script
+# 2018/10/08 - CS - Added a comparison function and a check of suid and guid files
+# 2018/10/15 - CS - Added the check_apa and check_passwd comparison check functions
+# 2018/10/18 - CS - Added the check_service function to check and see if services have changed on a system
+# 2018/10/18 - CS - Added the check_config_disabled function to check and report if a service that is supposed to be disabled is enabled.
+# 2018/10/18 - CS - Added the check_packages function to check and see if installed packages have changed on a system
+# 2018/11/06 - CS - Added a trailer note to confirm successful completion of the script run.
+# 2018/11/07 - CS - Removed chksuid and chkguid checks for Sun systems. 'find' is getting 'lost'.
+# 2018/12/19 - CS - Fixed kubernetes check for 1.2 clusters
+# 2019/01/09 - CS - added a check_routes function which just checks basic routes vs something more complicated
+# 2019/03/06 - CS - Added satellite check for Red Hat so it doesn't check CentOS or Debian systems for access to Satellite
+# 2019/03/07 - CS - Set up disable options for various functions, added check_grpck function
+# 2019/05/06 - CS - Set up disable options for various functions, added check_grpck function
+# 2019/09/06 - CS - Added a check_inode function to return errors if inode usage is 85 or 95%
+# 2019/10/11 - CS - Added a check_config_versionlock function to return errors if a lock isn't in place
+# 2019/10/23 - CS - Fixed swap to return 0 even if swap isn't found
+# 2019/10/24 - CS - Updated to better check for enabled servers and to use the pipe for or'd services (ntp or chrony). 
+# 2019/10/24 - CS - Fixed the timecheck to check for the running service since both ntp and chrony could be installed
+# 2020/03/02 - CS - Added a bigfix client check
+# 2020/04/28 - CS - Added a tanium client check, ciscoamp, and logrhythm
+# 2020/05/05 - CS - Updated cisco amp to check for the daemons
+# 2020/10/15 - CS - Updated to not send a changelog if CHANGELOG is blank
+
+BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+VERSION="${BASENAME} v1.292"
+COUNT=0
+GATEWAY=''
+GWFLAG='no'
+GWMSG=''
+CENTRIFY='no'
+GREEN="\033[32m"
+RED="\033[31m"
+YELLOW="\033[33m"
+RESET="\033[0m"
+LOG=${SCRIPTS_LOGS}/chkserver.output
+SEVEN=$(( 86400 * 7 ))
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/opt/csw/bin:/usr/contrib/bin; export PATH
+
+OSMAJOR=0
+if [[ -f /etc/redhat-release ]]
+then
+  OUTPUT=$(grep 'release 7' /etc/redhat-release)
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=7
+  fi
+  OUTPUT=$(grep 'release 6' /etc/redhat-release)
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=6
+  fi
+  OUTPUT=$(grep 'release 5' /etc/redhat-release)
+  if [[ ! -z $OUTPUT ]]
+  then
+    OSMAJOR=5
+  fi
+fi
+
+# enable debugging
+VIEW="0"
+DEBUG='0'
+if [[ ! -z $1 ]]
+then
+
+# expand the output for one check
+  if [[ $1 = 'debug' ]]
+  then
+    if [[ ! -z $2 ]]
+    then
+      DEBUG=$2
+      VIEW=$2
+    else
+      DEBUG='Yes'
+    fi
+  fi
+
+# only run one check identified by the function number
+  if [[ $1 = 'view' ]]
+  then
+    if [[ ! -z $2 ]]
+    then
+      VIEW=$2
+    fi
+  fi
+
+fi
+
+if [[ -f "${LOG}" ]]
+then
+  rm "${LOG}"
+fi
+
+# the sun nc doesn't handle -w wait flag well so we'll blank it if something's passed on the command line
+if [[ $OS = 'SunOS' ]] && [[ ! -z $1 ]]
+then
+  NETCAT=''
+else
+  OUTPUT=`which nc | awk '{print $1}'`
+  if [[ $OUTPUT = 'no' ]]
+  then
+    NETCAT=''
+  else
+    NETCAT='nc'
+    if [[ $(${NETCAT} --help | grep -- --zero | wc -l) -gt 0 ]]
+    then
+      NETCAT='nc -z'
+    fi
+  fi
+fi
+
+# The ping count flags are different on the three OSs'
+# location of cron.allow and cron.deny are different
+
+PINGCT="-c 1"
+CRONALLOW="/etc/cron.allow"
+CRONDENY="/etc/cron.deny"
+if [[ $OS = "SunOS" ]]
+then
+  PINGCT="2"
+  CRONALLOW="/etc/cron.d/cron.allow"
+  CRONDENY="/etc/cron.d/cron.deny"
+fi
+if [[ $OS = 'HP-UX' ]]
+then
+  PINGCT="-n 2"
+  CRONALLOW="/var/adm/cron/cron.allow"
+  CRONDENY="/var/adm/cron/cron.deny"
+fi
+
+# sun freeware install
+if [[ -f /opt/sfw/etc/sudoers ]]
+then
+  SUDOERS='/opt/sfw/etc/sudoers'
+fi
+
+# defualt installation of sudoers
+if [[ -f /etc/sudoers ]]
+then
+  SUDOERS='/etc/sudoers'
+fi
+
+# sudoers custom install
+if [[ -f /usr/local/etc/sudoers ]]
+then
+  SUDOERS='/usr/local/etc/sudoers'
+fi
+
+# hp-ux location
+if [[ -f /opt/iexpress/sudo/etc/sudoers ]]
+then
+  SUDOERS='/opt/iexpress/sudo/etc/sudoers'
+fi
+
+# check if a virtual machine
+# if virtual, first 6 will be 00:50:56
+if [[ $OS = 'HP-UX' ]]
+then
+  OUTPUT=$(lanscan | grep " 0x005056")
+else
+  if [[ $OS = 'Linux' ]]
+  then
+    OUTPUT=$(ip addr | grep ether | grep " 00:50:56")
+  else
+    OUTPUT=$(ifconfig -a | grep ether | grep " 0:50:56")
+  fi
+fi
+# if a vmware interface mac was found
+if [[ ! -z ${OUTPUT} ]]
+then
+  VMWARE='Yes'
+else
+  VMWARE='No'
+fi
+
+######################
+### Return the epoch
+######################
+
+#Get date values of the date to be converted for second, minute, hour, day, month, year.
+#day=(year*365)+(year/4)-(year/100)+(year/400)+(month*306001/10000)+day
+#days_since_epoch=day-719591 (which is Jan 1 1970)
+#seconds_since_epoch=(days_since_epoch*86400)+(hour*3600)+(minute*60)+seconds
+
+epoch() {
+  EP_YEAR=$1
+  EP_MONTH=$2
+  EP_DAY=$3
+
+  if [[ $OS = 'SunOS' ]]
+  then
+    NUMBER_DAYS=$(( $EP_YEAR * 365 ))
+    LEAP_YEARS=$(( $EP_YEAR / 4 ))
+    LEAP_CENTURY=$(( $EP_YEAR / 100 ))
+    LEAP_CENTURIES=$(( $EP_YEAR / 400 ))
+    DAYS_IN_MONTH=$(( $EP_MONTH * 306001 / 10000 ))
+    EXPIRE=$(( ( $NUMBER_DAYS + $LEAP_YEARS - $LEAP_CENTURY + $LEAP_CENTURIES + $DAYS_IN_MONTH + $EP_DAY ) * 86400 ))
+  fi
+
+  echo $EXPIRE
+}
+
+EPYEAR=$(date +"%Y")
+EPMONTH=$(date +"%m")
+EPDAY=$(date +"%d")
+EPOCH=$(epoch $EPYEAR $EPMONTH $EPDAY)
+
+
+######################
+### Check the Management Interface for the passed Destination IP Address
+### Management traffic, opnet, etc goes out the management interface.
+### This function checks that.
+######################
+
+check_management_route() {
+  IPADDRESS=${1}
+  CHECKED=${2}
+
+  if [[ ${CHECKED} = 'Backups' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:BackupInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
+# use the default management interface if backup isn't defined
+    if [[ ${MANAGEMENT_INTERFACE} = '' ]]
+    then
+      CHECKED="Management"
+    fi
+  fi
+  if [[ ${CHECKED} = 'Monitoring' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:MonitoringInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
+  fi
+  if [[ ${CHECKED} = 'Management' ]]
+  then
+    MANAGEMENT_INTERFACE=$(grep "^${HOSTNAME}:ManagementInterface:" "${SCRIPTS_DATA}/chkserver.input" | cut -f3 -d:)
+  fi
+
+  if [[ ${MANAGEMENT_INTERFACE} = '' ]]
+  then
+    printf "%b\n" "    ${RED}Unable to locate ${HOSTNAME} in chkserver.input file to verify Route Configuration${RESET}" >> "${LOG}"
+  else
+# just checking for Linux now
+    if [[ ${OS} = "Linux" ]]
+    then
+      if [[ -f /sbin/ip ]] || [[ -f /bin/ip ]]
+      then
+
+        if [[ ${DEBUG} = 'Yes' ]]
+        then
+          echo "ip route get ${IPADDRESS} | head -1 | awk '{print $5}'"
+        fi
+        ROUTE=$(ip route get ${IPADDRESS} | head -1 | awk '{print $5}')
+        if [[ ${DEBUG} = 'Yes' ]]
+        then
+          echo "ROUTE: ${ROUTE}"
+        fi
+        if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
+        then
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
+        else
+# if on the same network; the 'via' is missing so only get the 3rd item which is the device
+          if [[ ${DEBUG} = 'Yes' ]]
+          then
+            echo "ip route get ${IPADDRESS} | head -1 | awk '{print $3}'"
+          fi
+          ROUTE=$(ip route get ${IPADDRESS} | head -1 | awk '{print $3}')
+          if [[ ${DEBUG} = 'Yes' ]]
+          then
+            echo "ROUTE: ${ROUTE}"
+          fi
+          if [[ ${ROUTE} = ${MANAGEMENT_INTERFACE} ]]
+          then
+            printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
+          else
+# and of course, if the IP is the system we're on (1 out of how many so last on the check), we're good.
+            if [[ ${DEBUG} = 'Yes' ]]
+            then
+              echo "ip addr | grep \" ${IPADDRESS}/\""
+              ip addr | grep " ${IPADDRESS}/"
+            fi
+            ip addr | grep " ${IPADDRESS}/" > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}We're on ${IPADDRESS} so we're good.${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> "${LOG}"
+            fi
+          fi
+        fi
+
+      else
+
+        ROUTE=$(netstat -rn | egrep "^${IPADDRESS}.*${EXPECTED_INTERFACE}")
+        if [[ -z ${ROUTE} ]]
+        then
+          printf "%b\n" "    ${GREEN}Route to ${IPADDRESS} is correct.${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "    ${YELLOW}Route to ${IPADDRESS} missing.${RESET}" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+}
+
+# report if a .valid file doesn't exist or if the .diff file is > 0 bytes in size indicating something's changed
+compare_files() {
+  CF_PASSED=${1}
+
+  if [[ ! -f ${SCRIPTS_LOGS}/${CF_PASSED}.review ]]
+  then
+    printf "%b\n" "  ${YELLOW}${CF_PASSED}.review file doesn't exist.${RESET}" >> "${LOG}"
+  else
+    if [[ ! -f ${SCRIPTS_LOGS}/${CF_PASSED}.valid ]]
+    then
+      printf "%b\n" "  ${YELLOW}${CF_PASSED}.valid file doesn't exist.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
+    else
+      diff ${SCRIPTS_LOGS}/${CF_PASSED}.review ${SCRIPTS_LOGS}/${CF_PASSED}.valid > ${SCRIPTS_LOGS}/${CF_PASSED}.diff
+      if [[ -s ${SCRIPTS_LOGS}/${CF_PASSED}.diff ]]
+      then
+        printf "%b\n" "  ${RED}${CF_PASSED}.diff is indicating changes have occurred on the system and review is required.${RESET} ${SCRIPTS_BINS}/review ${CF_PASSED}" >> "${LOG}"
+      fi
+    fi
+  fi
+}
+
+
+###################################
+### Functions:
+###   Note that functions are in alphabetical order where defined here but in logical, checkbox order in the OS specific check areas
+###################################
+
+
+######################
+### Doc: Function: check_active_employees(1) - (number of users) * 3 Checks
+### Doc: * Using the chksudo.dat file, loops through the /etc/passwd file
+### Doc: ** If the user is not in the users.exclude file (consists of service and system accounts)
+### Doc: ** Checks to see if the user account is locked.
+### Doc: ** If the account is not locked, retrieve the email address from the GECOS field
+### Doc: ** If the email address is _not_ in the company.email file
+### Doc: ** Report it as an error (missing user is not locked).
+######################
+
+check_active_employees() {
+# active employee check
+# loop through the users on a system
+# exclude users in the users.exclude file
+# exclude locked users
+# once passes, check gecos field for email
+# check company.email for email
+# report error if it doesn't exist.
+# found == 0
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_active_employees(1)"
+  fi
+  if [[ -f ${SCRIPTS_DATA}/chksudo.dat ]]
+  then
+    printf "%b\n" "  ${GREEN}Active employee verification${RESET}" >> "${LOG}"
+    for j in $(cut -f1 -d: /etc/passwd)
+    do
+      grep -i "^${j}$" ${SCRIPTS_DATA}/users.exclude > /dev/null
+      if [[ $? -eq 1 ]]
+      then
+
+        LOCKED=''
+        if [[ ${OS} = 'Linux' ]]
+        then
+          LOCKED=$(passwd -S ${j} | awk '{print $2}')
+          if [[ ${LOCKED} = "L" ]] || [[ ${LOCKED} = 'locked.' ]]
+          then
+            LOCKED="LK"
+          fi
+        else
+          if [[ ${OS} = 'HP-UX' ]]
+          then
+# is the system "TRUSTED"?
+            if [[ -f "/tcb/files/auth/system/default" ]]
+            then
+              LOCKED=$(/usr/lbin/getprpw -m alock ${j})
+              if [[ ${LOCKED} = "alock=YES" ]]
+              then
+                LOCKED="LK"
+              fi
+# untrusted so check normally
+            else
+              LOCKED=$(passwd -s ${j} | awk '{print $2}')
+            fi
+          else
+            if [[ ${OS} = 'FreeBSD' ]]
+            then
+              LOCKED=$(grep ${j} /etc/master.passwd | grep "*LOCKED*")
+              if [[ ! -z ${LOCKED} ]]
+              then
+                LOCKED="LK"
+              fi
+            else
+              LOCKED=$(passwd -s ${j} | awk '{print $2}')
+            fi
+          fi
+        fi
+
+        if [[ ! $LOCKED = 'LK' ]]
+        then
+          EMAIL=$(grep "^${j}:" /etc/passwd | cut -f5 -d: | cut -f2 -d,)
+          if [[ ! -z $EMAIL ]]
+          then
+            grep -i "^${EMAIL}$" ${SCRIPTS_DATA}/company.email > /dev/null
+            if [[ $? -eq 1 ]]
+            then
+              printf "%b\n" "    ${RED}${j}/${EMAIL} was not found in the ${SCRIPTS_DATA}/company.email file and the account isn't locked.${RESET}" >> "${LOG}"
+            fi
+          fi
+        fi
+      fi
+    done
+  fi
+  if [[ ${DEBUG} = '1' ]]
+  then
+    echo "Exiting check_active_employees()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_apa(61) - 
+### Doc: Extracted from chkapa by Paul Pietras
+### Doc: *
+######################
+
+check_apa() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_apa(61)"
+  fi
+
+  CHKAPA="${SCRIPTS_LOGS}/chkapa.review"
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    if [[ -s /etc/lanmon/lanconfig.ascii ]]
+    then
+      if [[ ${KERNELVERS} = 'B.11.31' ]]
+      then
+        # use nwmgr utility
+        echo "APA Configured Interfaces" > "${CHKAPA}"
+        echo "-------------------------" >> "${CHKAPA}"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${CHKAPA}"
+        echo "Active Interfaces" >> "${CHKAPA}"
+        echo "-----------------" >> "${CHKAPA}"
+        nwmgr | grep UP >> "${CHKAPA}"
+        echo "APA interfaces and active membership" >> "${CHKAPA}"
+        echo "------------------------------------" >> "${CHKAPA}"
+        nwmgr -S apa | grep -v Not_Enabled >> "${CHKAPA}"
+      else
+        # grab the failover groups from the APA config file
+        echo "APA Configured Interfaces" > "${CHKAPA}"
+        echo "-------------------------" >> "${CHKAPA}"
+        egrep 'FAILOVER_GROUP|PRIMARY|STANDBY' /etc/lanmon/lanconfig.ascii | grep -v ^# >> "${CHKAPA}"
+        echo "Active Interfaces" >> "${CHKAPA}"
+        echo "-----------------" >> "${CHKAPA}"
+        lanscan | grep UP >> "${CHKAPA}"
+        echo "APA interfaces and active membership" >> "${CHKAPA}"
+        echo "------------------------------------" >> "${CHKAPA}"
+        for i in `grep 'FAILOVER_GROUP' /etc/lanmon/lanconfig.ascii | grep -v ^# | awk '{print $2}' | sed 's/^lan//'`
+        do
+          lanscan -q | grep $i >> "${CHKAPA}"
+        done
+      fi
+
+      compare_files chkapa
+
+    fi
+  fi
+  if [[ ${DEBUG} = '61' ]]
+  then
+    echo "Exiting check_apa()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_artifactory(57) - 
+### Doc: *
+######################
+
+check_artifactory() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_artifactory(57)"
+  fi
+  if [[ ! ${CHECK_ARTIFACTORY} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Artifactory Check${RESET}" >> "${LOG}"
+    return
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking Artifactory Access${RESET}" >> "${LOG}"
+  for j in ${ARTIFACTORY_SERVERS}
+  do
+    CA_SITE=$(echo $j | cut -f1 -d:)
+    CA_IP=$(echo $j | cut -f2 -d:)
+    CA_PROTOCOL=$(echo $j | cut -f3 -d:)
+    CA_PORTS=$(echo $j | cut -f4 -d: | sed -e "s/,/ /g")
+
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=$(grep -i "^${HOSTNAME}:Artifactory:${CA_IP}" ${SCRIPTS_DATA}/chkserver.exclude)
+    if [[ "${APPROVED}" = "" ]]
+    then
+      if [[ ${DEBUG} = 57 ]]
+      then
+        echo "  Beginning check of Artifactory Server: ${CA_SITE}:${CA_IP}:${CA_PORTS}"
+      fi
+      check_management_route ${CA_IP} Management
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${CA_IP} > /dev/null
+      else
+        ping ${CA_IP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Artifactory site ${CA_SITE}:${CA_IP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
+        then
+          for k in ${CA_PORTS}
+          do
+            echo "quit" | ${NETCAT} -w 2 -vn ${CA_IP} ${k} > /dev/null 2>&1
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Artifactory Server ${CA_SITE}:${CA_IP}:${k} is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${YELLOW}Artifactory Server ${CA_SITE}:${CA_IP}:${k} is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      else
+        printf "%b\n" "    ${RED}Artifactory Server ${CA_SITE}:${CA_IP} is not pingable${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}Artifactory Server ${CA_SITE}:${CA_IP} check was skipped.${RESET}" >> "${LOG}"
+    fi
+  done
+
+  if [[ ${DEBUG} = '57' ]]
+  then
+    echo "Exiting check_artifactory()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_cfg2html(28) - 2 checks
+### Doc: * Is cfg2html installed
+### Doc: * Has it be run at least once
+######################
+
+check_cfg2html() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_cfg2html(28)"
+  fi
+  if [[ ! -d ${SCRIPTS}/cfghtml ]]
+  then
+    printf "%b\n" "  ${YELLOW}cfg2html not installed${RESET}" >> "${LOG}"
+  else
+    if [[ ! -f ${SCRIPTS}/cfghtml/$HOSTNAME.html ]]
+    then
+      printf "%b\n" "  ${RED}cfg2html has not been run${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '28' ]]
+  then
+    echo "Exiting check_cfg2html()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_addresses(40) - 6 Checks
+### Doc: * Check to make sure interface starts on boot
+### Doc: * Check the IP Address to make sure it's in /etc/hosts
+### Doc: * Note: Unix uses 192.168.0.0/24 for Private Networks.
+### Doc: ** Check the supplied gateway to see if the interface is on a private network
+### Doc: ** Ignore if private
+### Doc: ** Try to ping the gateway to ensure the interface is up if not private.
+### Doc: * See if the gateway is the default gateway (in /etc/sysconfig/netowrk)
+### Doc: * See if the gateway is configured in the interface file (/etc/sysconfig/network-scripts/ifcfg-xxx)
+######################
+
+check_config_addresses() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_addresses(40)"
+  fi
+  if [[ $OS = 'Linux' ]]
+  then
+    OUTPUT=$(ip addr | grep " ${FIELD3}/")
+  fi
+  if [[ ! -z $OUTPUT ]]
+  then
+    INTERFACE=$(egrep "(\"|)${FIELD3}(\"|)$" /etc/sysconfig/network-scripts/ifcfg-* | cut -f1 -d: | cut -f3 -d-)
+    printf "%b\n" "  ${GREEN}IP $FIELD3 configured as ${INTERFACE}${RESET}" >> "${LOG}"
+    egrep -i "onboot.*yes" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}${INTERFACE} is configured to start on boot${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${RED}${INTERFACE} is not configured to start on boot${RESET}" >> "${LOG}"
+    fi
+    grep -i ${FIELD3} /etc/hosts > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${YELLOW}${FIELD3} is not in /etc/hosts${RESET}" >> "${LOG}"
+    fi
+    PRIVATE=$(ipcalc -n ${FIELD4}/24 | cut -f2 -d=)
+    if [[ ${PRIVATE} = '192.168.0.0' ]]
+    then
+      printf "%b\n" "    ${GREEN}Gateway ${FIELD4} is on a Private network${RESET}" >> "${LOG}"
+    else
+      echo "  ping check of the gateway: ${FIELD4}"
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${FIELD4} > /dev/null
+      else
+        ping ${FIELD4} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Gateway ${FIELD4} accessible${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}Gateway ${FIELD4} is not responding to ping${RESET}" >> "${LOG}"
+      fi
+    fi
+    GATEWAY="${GATEWAY} ${FIELD4}"
+    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network:GATEWAY=${FIELD4} configured${RESET}\n"
+      GWFLAG='yes'
+    fi
+# check the interface file too
+    grep "GATEWAY=${FIELD4}" /etc/sysconfig/network-scripts/ifcfg-${INTERFACE} > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      GWMSG="${GWMSG}    ${GREEN}/etc/sysconfig/network-scripts/ifcfg-${INTERFACE}:GATEWAY=${FIELD4} configured${RESET}\n"
+      GWFLAG='yes'
+    fi
+  else
+    printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in ip addr output${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '40' ]]
+  then
+    echo "Exiting check_config_addresses()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_centrify(47) - 1 check
+### Doc: * Verify that centrify is installed
+######################
+
+check_config_centrify() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_centrify(47)"
+  fi
+  if [[ ! -f /usr/sbin/adclient ]]
+  then
+    printf "%b\n" "  ${RED}Centrify is not installed${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '47' ]]
+  then
+    echo "Exiting check_config_centrify()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_cpus(41) - 1 check
+### Doc: * Checks the number of CPUs against the expected number from the chkserver.input file.
+######################
+
+check_config_cpus() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_cpus(41)"
+  fi
+  COUNT=$(grep -c processor /proc/cpuinfo)
+  if [[ $COUNT -ne $FIELD3 ]]
+  then
+    printf "%b\n" "  ${RED}System shows $COUNT CPUs where expected is $FIELD3 CPUs${RESET}" >> "${LOG}"
+  else
+    printf "%b\n" "  ${GREEN}$COUNT CPUs as expected${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '41' ]]
+  then
+    echo "Exiting check_config_cpus()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_cron(48) - 2 checks
+### Doc: * Checks service account against cron.allow file
+### Doc: * Checks service account against cron.deny file
+######################
+
+check_config_cron() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_cron(48)"
+  fi
+# if cron.allow exists, cron.deny is ignored
+  if [[ -f ${CRONALLOW} ]]
+  then
+    grep -i "${FIELD3}" "^${CRONALLOW}$" > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+      then
+        TICKET=""
+        if [[ ! -z ${FIELD5} ]]
+        then
+          TICKET=" per ticket: ${FIELD5}"
+        fi
+        printf "%b\n" "    ${GREEN}Adding ${FIELD3} to ${CRONALLOW}${TICKET}${RESET}" >> "${LOG}"
+        echo "${FIELD3}" >> "${CRONALLOW}"
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Added ${FIELD3} to ${CRONALLOW}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
+      else
+        printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Add ${FIELD3} to ${CRONALLOW}" >> "${LOG}"
+      fi
+    fi
+  else
+    if [[ -f ${CRONDENY} ]]
+    then
+      grep -i "${FIELD3}" "^${CRONDENY}$" > /dev/null
+      if [[ $? -eq 0 ]]
+      then
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          printf "%b\n" "    ${GREEN}Removing ${FIELD3} from ${CRONDENY}${TICKET}${RESET}" >> "${LOG}"
+          grep -v "^${FIELD3}$" "${CRONDENY}" > /var/tmp/cron.deny
+          cp /var/tmp/cron.deny "${CRONDENY}"
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Removed ${FIELD3} from ${CRONDENY}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+        else
+          printf "%b\n" "  ${RED}${FIELD3} is not allowed to use cron${RESET} Remove ${FIELD3} from ${CRONDENY}" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '48' ]]
+  then
+    echo "Exiting check_config_cron()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_datapalette(49) - 1 check
+### Doc: * Has data palette been installed
+######################
+
+check_config_datapalette() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_datapalette(49)"
+  fi
+  if [[ ! -f /opt/datapalette/bin/datapal ]]
+  then
+    printf "%b\n" "  ${RED}Data Palette is not installed${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '49' ]]
+  then
+    echo "Exiting check_config_datapalette()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_disabled(63) - 1 check
+### Doc: * Linux only, verify a service is not enabled
+######################
+
+check_config_disabled() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_disabled(63)"
+  fi
+  grep "^${HOSTNAME}:Enabled:${FIELD3}" "${SCRIPTS_DATA}/chkserver.exclude" > /dev/null
+  if [[ $? -gt 0 ]]
+  then
+    if [[ ${OS} = 'Linux' ]]
+    then
+      if [[ ${OSMAJOR} = '7' ]]
+      then
+        systemctl is-enabled "$FIELD3" > /dev/null 2>&1
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+        fi
+      else
+        chkconfig "${FIELD3}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "  ${RED}${FIELD3} is not disabled${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "  ${GREEN}${FIELD3} is disabled${RESET}" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '63' ]]
+  then
+    echo "Exiting check_config_disabled()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_enabled(50) - 1 check
+### Doc: * Linux only, verify a service is enabled
+######################
+
+check_config_enabled() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_enabled(50)"
+  fi
+  if [[ ${OS} = 'Linux' ]]
+  then
+# Use the '|' check for services where it could be one or the other but not both.
+    MATCH1=$(echo ${FIELD3} | cut -f1 -d\|)
+    MATCH2=$(echo ${FIELD3} | cut -f2 -d\|)
+
+# if a Red Hat system with systemctl is installed; it's 7 or 8
+    if [[ -f /bin/systemctl ]]
+    then
+      systemctl is-enabled "$MATCH1" > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${GREEN}${MATCH1} is enabled${RESET}" >> "${LOG}"
+      else
+# check for the second one in case it's a pair check
+        if [[ ! -z ${MATCH2} ]]
+        then
+          systemctl is-enabled "$MATCH2" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
+          fi
+        else
+          printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
+        fi
+      fi
+    else
+      chkconfig "${MATCH1}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${GREEN}${MATCH1} is enabled${RESET}" >> "${LOG}"
+      else
+        if [[ ! -z ${MATCH2} ]]
+        then
+          chkconfig "${MATCH2}" --level="$(who -r | awk '{print $2}')" > /dev/null 2>&1
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "  ${GREEN}${MATCH2} is enabled${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}${FIELD3} is not enabled${RESET}" >> "${LOG}"
+          fi
+        else
+          printf "%b\n" "  ${RED}${MATCH1} is not enabled${RESET}" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '50' ]]
+  then
+    echo "Exiting check_config_enabled()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_group(43) - 1 checks
+### Doc: * Verifies that a group exists
+######################
+
+check_config_group() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_group(43)"
+  fi
+  if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
+  then
+    grep "^${FIELD3}:" /etc/group > /dev/null
+  else
+    getent group "${FIELD3}" > /dev/null
+  fi
+  if [[ $? -eq 0 ]]
+  then
+    printf "%b\n" "  ${GREEN}Group ${FIELD3} exists${RESET}" >> "${LOG}"
+  else
+    printf "%b\n" "  ${RED}Unable to locate ${FIELD3} group${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '43' ]]
+  then
+    echo "Exiting check_config_group()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_memory(44) - 1 check
+### Doc: * Verify the expected amount of RAM is installed
+######################
+
+check_config_memory() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_memory(44)"
+  fi
+
+  if [[ ${OS} = 'Linux' ]]
+  then
+# in kb
+    MEMORY=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+    COUNT=$(( $MEMORY / 1024 / 1024 + 1 ))
+  fi
+
+  if [[ ${OS} = 'SunOS' ]]
+  then
+# in mb
+    MEMORY=$(prtconf | awk '/Memory/{print $3}')
+    COUNT=$(( $MEMORY / 1024 + 1 ))
+  fi
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+# in mb
+    MEMORY=$(machinfo | awk '/Memory:/{print $2}/Memory =/{print $3}')
+#    if [[ -z ${MEMORY} ]]
+#    then
+#      MEMORY=$(machinfo | grep "Memory =" | awk '{print $3}')
+#    fi
+    COUNT=$(( $MEMORY / 1024 + 1 ))
+  fi
+
+  APPROVED=$(grep -i "^${HOSTNAME}:Memory:${COUNT}" ${SCRIPTS_DATA}/chkserver.exclude)
+# if blank, then we didn't find an approved value, continue with the check
+  if [[ "${APPROVED}" = "" ]]
+  then
+    if [[ $COUNT -ne $FIELD3 ]]
+    then
+      printf "%b\n" "  ${RED}System shows ${COUNT}G where expected is ${FIELD3}G${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "  ${GREEN}${COUNT}G of Memory as expected${RESET}" >> "${LOG}"
+    fi
+  else
+    printf "%b\n" "  ${GREEN}${COUNT}G of Memory as approved${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '44' ]]
+  then
+    echo "Exiting check_config_memory()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_opnet(53) - 1 check
+### Doc: * is opnet installed
+######################
+
+check_config_opnet() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_opnet(53)"
+  fi
+  if [[ ! -d /opt/Panorama ]]
+  then
+    printf "%b\n" "  ${RED}OpNet is not installed${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '53' ]]
+  then
+    echo "Exiting check_config_opnet()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_running(54) - 1 check
+### Doc: * Linux only, is a called service running
+######################
+
+check_config_running() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_running(54)"
+  fi
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${OSMAJOR} = '7' ]]
+    then
+      systemctl status "$FIELD3" > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "  ${RED}${FIELD3} is not running${RESET}" >> "${LOG}"
+      fi
+    else
+      service "${FIELD3}" status > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "  ${GREEN}${FIELD3} is running${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "  ${RED}${FIELD3} is not running${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '54' ]]
+  then
+    echo "Exiting check_config_running()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_service_account(45) - 6 checks
+### Doc: * determine if an account exists
+### Doc: * verifies if an account password expires
+### Doc: * verifies if an account expires
+### Doc: * if the account is nginx,
+### Doc: ** check log rotate config
+### Doc: ** check log permissions
+### Doc: ** check log rights
+######################
+
+check_config_service_account() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_service(45)"
+  fi
+  grep "^${FIELD3}:" /etc/passwd > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    printf "%b\n" "  ${GREEN}Service Account ${FIELD3} exists${RESET}" >> "${LOG}"
+
+    if [[ ${OS} = 'Linux' ]]
+    then
+      PASSWORD=$(chage -l "${FIELD3}" | egrep -i "password expires.*never")
+      if [[ ! -z ${PASSWORD} ]]
+      then
+        printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
+      else
+        PASSWORD=$(chage -l "${FIELD3}" | egrep -i "password expires.*changed")
+        if [[ ! -z ${PASSWORD} ]]
+        then
+          printf "%b\n" "    ${RED}Password must be changed${RESET}" >> "${LOG}"
+        else
+          if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            TICKET=""
+            if [[ ! -z ${FIELD5} ]]
+            then
+              TICKET=" per ticket: ${FIELD5}"
+            fi
+            printf "%b\n" "    ${GREEN}Setting Password to not expire${TICKET}${RESET}" >> "${LOG}"
+            chage -E -1 -M -1 -I -1 ${FIELD3}
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+          fi
+        fi
+      fi
+      ACCOUNT=$(chage -l "${FIELD3}" | egrep -i "account expires.*never")
+      if [[ ! -z ${ACCOUNT} ]]
+      then
+        printf "%b\n" "    ${GREEN}Account doesn't expire${RESET}" >> "${LOG}"
+      else
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          printf "%b\n" "    ${GREEN}Setting Account to not expire${TICKET}${RESET}" >> "${LOG}"
+          chage -E -1 -M -1 -I -1 ${FIELD3}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set account to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+        else
+          printf "%b\n" "    ${RED}Account expires${RESET} chage -E -1 -M -1 -I -1 ${FIELD3}" >> "${LOG}"
+        fi
+      fi
+    fi
+
+    if [[ ${OS} = 'HP-UX' ]]
+    then
+      PASSWORD=$(passwd -s "${FIELD3}" | awk '{print $5}')
+      if [[ ${PASSWORD} = '0' ]] || [[ -z ${PASSWORD} ]]
+      then
+        printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
+      else
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          if [[ -f "/tcb/files/auth/system/default" ]]
+          then
+            /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}
+          else
+            passwd -x -1 ${FIELD3}
+          fi
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+        else
+          if [[ ${PASSWORD} = 'password must be changed' ]]
+          then
+            printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} You must change the service account password: ${FIELD3}" >> "${LOG}"
+          else
+# if a trusted system:
+# /usr/lbin/modprpw -l -m mintm=0,exptm=0 username
+            if [[ -f "/tcb/files/auth/system/default" ]]
+            then
+              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Password expires date/message: ${PASSWORD}${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+            fi
+          fi
+        fi
+      fi
+    fi
+
+    if [[ ${OS} = 'SunOS' ]]
+    then
+      PASSWORD=$(grep "^${FIELD3}:" /etc/shadow | cut -f5 -d:)
+      if [[ ${PASSWORD} = '' ]]
+      then
+        printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
+      else
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          passwd -x -1 ${FIELD3}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+        else
+          PASSWORD=$(passwd -s | awk '{print $3}')
+          if [[ ${PASSWORD} = '00/00/00' ]]
+          then
+            printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          fi
+        fi
+      fi
+    fi
+
+    if [[ ${OS} = 'FreeBSD' ]]
+    then
+      PASSWORD=$(grep "^${FIELD3}:" /etc/master.passwd | cut -f5 -d:)
+      if [[ ${PASSWORD} = '' ]]
+      then
+        printf "%b\n" "    ${GREEN}Password doesn't expire${RESET}" >> "${LOG}"
+      else
+        if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+        then
+          TICKET=""
+          if [[ ! -z ${FIELD5} ]]
+          then
+            TICKET=" per ticket: ${FIELD5}"
+          fi
+          passwd -x -1 ${FIELD3}
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Set password to not expire for service account ${FIELD3}${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+        else
+          PASSWORD=$(passwd -s | awk '{print $3}')
+          if [[ ${PASSWORD} = '00/00/00' ]]
+          then
+            printf "%b\n" "    ${RED}Password has not been changed since the account was created and has expired.${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          else
+            printf "%b\n" "    ${RED}Password expires${RESET} passwd -x -1 ${FIELD3}" >> "${LOG}"
+          fi
+        fi
+      fi
+    fi
+
+  else
+    printf "%b\n" "  ${RED}Unable to locate ${FIELD3} in /etc/passwd${RESET}" >> "${LOG}"
+# if FIELD4 == 'Update', the account is created.
+# lock the account, set to not expire
+    if [[ ${FIELD4} = 'Update' ]] && [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+    then
+      TICKET=""
+      if [[ ! -z ${FIELD5} ]]
+      then
+        TICKET=" per ticket: ${FIELD5}"
+      fi
+# check the valid.email file for the GECOS field for this account
+      GECOS=$(grep ${FIELD3} ${SCRIPTS_DATA}/valid.email | cut -f2 -d:)
+      if [[ ${OS} = 'Linux' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+# prevent password and account from expiring
+        chage -E -1 -M -1 -I -1 ${FIELD3}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set account and password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
+      fi
+      if [[ ${OS} = 'HP-UX' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+# if trusted
+        if [[ -f "/tcb/files/auth/system/default" ]]
+        then
+          /usr/lbin/modprpw -l -m mintm=0,exptm=0 ${FIELD3}
+        else
+          passwd -x -1 ${FIELD3}
+        fi
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
+      fi
+      if [[ ${OS} = 'SunOS' ]]
+      then
+# add and lock the user
+        useradd -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+        passwd -x -1 ${FIELD3}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
+      fi
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+# add and lock the user
+        adduser -c "${GECOS}" -m ${FIELD3}
+        passwd -l ${FIELD3}
+        passwd -x -1 ${FIELD3}
+        if [[ ${CHANGELOG} != '' ]]
+        then
+          echo "Created account ${FIELD3}, locked, set password to not expire${TICKET}" | mailx -s ${HOSTNAME} ${CHANGELOG}
+        fi
+      fi
+    fi
+  fi
+
+# special checks for special accounts.
+  if [[ ${FIELD3} = 'nginx' ]]
+  then
+    grep -i 640 /etc/logrotate.d/nginx > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${RED}Update /etc/logrotate.d/nginx create permissions to 644.${RESET} vi /etc/logrotate.d/nginx" >> "${LOG}"
+    fi
+    grep -i nginx "${SUDOERS}" > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${RED}Update sudoers to add the Web Apps nginx rule.${RESET}" >> "${LOG}"
+    fi
+    ls -l /var/log/nginx/* | head -1 | grep "^-rw-r-----" > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${RED}Change the permissions of /var/log/nginx to 644.${RESET} chmod 644 /var/log/nginx/*" >> "${LOG}"
+    fi
+  fi
+
+  if [[ ${DEBUG} = '45' ]]
+  then
+    echo "Exiting check_config_service()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_sudoers(55) - 2 checks
+### Doc: * Note if the sudoers is unable to be located
+### Doc: * Verify the expected group exists in sudoers
+######################
+
+check_config_sudoers() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_sudoers(55)"
+  fi
+  if [[ ! -z ${SUDOERS} ]]
+  then
+    grep "^%${FIELD3}" "${SUDOERS}" > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "  ${GREEN}Sudoers group %${FIELD3} exists${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "  ${YELLOW}Unable to locate %${FIELD3} in ${SUDOERS}${RESET}" >> "${LOG}"
+    fi
+  else
+    printf "%b\n" "  ${YELLOW}Unable to locate sudoers file.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '55' ]]
+  then
+    echo "Exiting check_config_sudoers()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_config_versionlock(69) - 1 check
+### Doc: * Note if the requested bit is in the file
+######################
+
+check_config_versionlock() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_config_versionlock(69)"
+  fi
+  if [[ -f /etc/yum/pluginconf.d/versionlock.list ]]
+  then
+    grep ":${FIELD3}$" /etc/yum/pluginconf.d/versionlock.list > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "  ${GREEN}${FIELD3} lock exists${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "  ${RED}Unable to locate %${FIELD3} in /etc/yum/pluginconf.d/versionlock.list${RESET}" >> "${LOG}"
+    fi
+  else
+    printf "%b\n" "  ${RED}/etc/yum/pluginconf.d/versionlock.list doesn't exist.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '69' ]]
+  then
+    echo "Exiting check_config_versionlock()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_crash(39) - 1 check
+### Doc: * Depending on OS, checks the crash dump directory for any files.
+######################
+
+check_crash() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_crash(39)"
+  fi
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    OUTPUT=$(find /var/adm/crash -type f -print)
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> "${LOG}"
+      find /var/adm/crash -type f -print >> "${LOG}"
+    else
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> "${LOG}"
+    fi
+  else
+    OUTPUT=$(find /var/crash -type f -print)
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "  ${RED}Crash dump files exist${RESET}" >> "${LOG}"
+      find /var/crash -type f -print >> "${LOG}"
+    else
+      printf "%b\n" "  ${GREEN}Crash dump directory is empty${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '39' ]]
+  then
+    echo "Exiting check_crash()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_default_gateway(56) - 0 checks
+### Doc: * reports on whether or not the default gateway was found in the expected location. This is a reporting function.
+### Doc: * Since the IP config check has multiple lines (potentially) this needs to run after all the chkserver.input checks have run.
+######################
+
+check_default_gateway() {
+# if gateway has been found (eg there are IP entries)
+# this function has to be run after the last configuration check
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_default_gateway(56)"
+  fi
+  if [[ ! -z ${GATEWAY} ]]
+  then
+    printf "%b\n" "  ${GREEN}Default gateway entry found${RESET}" >> "${LOG}"
+    if [[ ${GWFLAG} = 'yes' ]]
+    then
+      if [[ ! -z ${GWMSG} ]]
+      then
+        printf "%b\n" "$GWMSG" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${RED}None of the configured interface gateways were found in /etc/sysconfig/network${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '56' ]]
+  then
+    echo "Exiting check_default_gateway()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_default_passwords(4) - (users, root, service account) checks
+### Doc: * Depending on OS, checks each system admin to see if the installation password is still set to the default
+######################
+
+check_default_passwords() {
+# check the password against the kickstart default
+# leave root and all the admins in the listing, even the ones that are gone, as they may still be set to default
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_default_passwords(4)"
+  fi
+  printf "%b\n" "  ${GREEN}Account password verification${RESET}" >> "${LOG}"
+  for j in root ${SYSADMINS}
+  do
+    UNIXDEF='$1$YDorwFsD$0/fIFtn7YZhMvZjAUZ.V./'
+
+# hp-ux; get the first character of the user name
+# then go to /tcb/files/auth/[userchar]/username
+# grep :u_pwd=, cut on colon and equal to get unixpw
+# since it's not a kickstart, it's unlikely to be set on HP or Solaris systems
+    UNIXPW=""
+    if [[ $OS = 'HP-UX' ]]
+    then
+      FIRSTCHAR=$(echo $j | cut -c1)
+      if [[ -f /tcb/files/auth/${FIRSTCHAR}/${j} ]]
+      then
+        UNIXPW=$(grep ":u_pwd=${UNIXDEF}$" /tcb/files/auth/${FIRSTCHAR}/${j})
+      fi
+    else
+      if [[ $OS = 'FreeBSD' ]]
+      then
+        UNIXPW=$(grep "^${j}:" /etc/master.passwd | grep ":${UNIXDEF}:")
+      else
+        UNIXPW=$(grep "^${j}:" /etc/shadow | grep ":${UNIXDEF}:")
+      fi
+    fi
+    if [[ ! -z $UNIXPW ]]
+    then
+      printf "%b\n" "    ${RED}${j} account password is still set to the default${RESET}" >> "${LOG}"
+    fi
+  done
+  if [[ ${DEBUG} = '4' ]]
+  then
+    echo "Exiting check_default_passwords()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_defunct_processes(42) - 1 check
+### Doc: * Counting the number of defunct processes
+######################
+
+check_defunct_processes() {
+# count the number of defunct processes
+# one one system, a perl script is not exiting correctly so generating a lot of defunct processes
+# this function counts and reports them.
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_defunct_processes(42)"
+  fi
+  printf "%b\n" "  ${GREEN}Defunct Process Check${RESET}" >> "${LOG}"
+
+  DEFUNCT=$(ps -ef | grep defunct | grep -v grep | wc -l)
+  if [[ ${DEFUNCT} -gt 0 ]]
+  then
+    printf "%b\n" "    ${RED}There are ${DEFUNCT} defunct processes${RESET}" >> "${LOG}"
+  fi
+
+  if [[ ${DEBUG} = '42' ]]
+  then
+    echo "Exiting check_defunct_processes()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_inode_usage(68) - 3 checks
+### Doc: Depending on the OS, checks the inode usage for standard file systems
+### Doc: Reports a warning if over 85%
+### Doc: Reports an error if over 95%
+######################
+
+check_inode_usage() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_inode_usage(68)"
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking inode usage${RESET}" >> "${LOG}"
+  INODES=${SCRIPTS_LOGS}/inode.output
+# for the solaris output
+  DISKSPACE=${SCRIPTS_LOGS}/diskspace.output
+  if [[ $OS = "HP-UX" ]]
+  then
+# example:
+#Filesystem          kbytes    used   avail %used  iused  ifree %iuse Mounted on
+#/dev/vx/dsk/dg00/e911
+#                   104857600 15466530 83804197   16% 210416 22347764    1% /e911
+    bdf -il > ${INODES}
+  fi
+  if [[ $OS = "Linux" ]]
+  then
+# example:
+#Filesystem             Inodes  IUsed   IFree IUse% Mounted on
+#/dev/mapper/vg00-tmp   262144     42  262102    1% /tmp
+    df -klPi > ${INODES}
+  fi
+  if [[ $OS = "SunOS" ]]
+  then
+# Solaris is odd. You have to run the normal df -k to get the list of file systems, 
+# parse them out, and then run a df -g [filesystem] and grep out total files and 
+# free files, then calculate the percentage.
+# this process will rebuild the output to show inodes instead of space
+#
+# example:
+#$ df -g /export/home/kzupan/san
+#/export/home/kzupan/san(sanpool/kzupan    ):   131072 block size           512 frag size
+#6308757504 total blocks 2347049175 free blocks 2347049175 available       2347175746 total files
+#2347049175 free files     47513607 filesys id
+
+# I only need the first and last columns. The rest will be rebuilt to fit the expected format
+    echo "Filesystem            inodes    used   avail capacity  Mounted on" > ${INODES}
+    df -kl > ${DISKSPACE}
+    for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $1":"$NF}')
+    do
+      DEVICE=$(echo $j | cut -f1 -d:)
+      FILESYSTEM=$(echo $j | cut -f2 -d:)
+
+      TOTALINODES=$(df -g ${FILESYSTEM} | grep "total files" | awk '{print $9}')
+      FREEINODES=$(df -g ${FILESYSTEM} | grep "free files" | awk '{print $1}')
+      USEDINODES=$(echo $(( ${TOTALINODES} - ${FREEINODES} )) )
+      CAPACITY=$( echo "${USEDINODES} / ${TOTALINODES} * 100" | bc -l | cut -f1 -d.)
+      if [[ -z ${CAPACITY} ]]
+      then
+        CAPACITY=0
+      fi
+
+      echo "${DEVICE}   ${TOTALINODES}   ${USEDINODES}   ${FREEINODES}   ${CAPACITY}%   ${FILESYSTEM}" >> ${INODES}
+
+    done
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+# freebsd adds the inode information to the line vs replacing so I need to process the output to remove the extra columns and add an itotal column
+# example:
+# /dev/da0s1h    5062880 1574924 3082928    34%   18368 298430    6%   /home
+    df -kli > ${DISKSPACE}
+    echo "Filesystem  itotal  iused  ifree %iused  Mounted on" > ${INODES}
+    for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $1":"$6":"$7":"$8":"$9}')
+    do
+      DEVICE=$(echo $j | cut -f1 -d:)
+      USEDINODES=$(echo $j | cut -f2 -d:)
+      FREEINODES=$(echo $j | cut -f3 -d:)
+      CAPACITY=$(echo $j | cut -f4 -d:)
+      FILESYSTEM=$(echo $j | cut -f5 -d:)
+
+      TOTALINODES=$(( ${USEDINODES} + ${FREEINODES} ))
+
+      echo "${DEVICE}   ${TOTALINODES}   ${USEDINODES}   ${FREEINODES}   ${CAPACITY}   ${FILESYSTEM}" >> ${INODES}
+    done
+  fi
+
+  for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${INODES} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}')
+  do
+    FILESYSTEM=$(echo $j | cut -f1 -d:)
+    USAGE=$(echo $j | cut -f2 -d: | cut -f1 -d%)
+    WARNING=85
+    ERROR=95
+
+    if [[ $USAGE -ge $ERROR ]]
+    then
+      printf "%b\n" "    ${RED}${FILESYSTEM} inode usage has reached or exceeded 95% (${USAGE})%${RESET}" >> "${LOG}"
+    else
+      if [[ $USAGE -ge $WARNING ]]
+      then
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} inode usage has reached or exceeded 85% (${USAGE})%${RESET}" >> "${LOG}"
+      fi
+    fi
+  done
+  if [[ ${DEBUG} = '68' ]]
+  then
+    echo "Exiting check_inode_usage()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_disk_space(31) - 3 checks
+### Doc: Depending on the OS, checks the disk space for standard file systems
+### Doc: Reports a warning if over 85%
+### Doc: Reports an error if over 95%
+######################
+
+check_disk_space() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_disk_space(31)"
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking disk space${RESET}" >> "${LOG}"
+  DISKSPACE=${SCRIPTS_LOGS}/diskspace.output
+  if [[ $OS = "HP-UX" ]]
+  then
+    bdf -l > ${DISKSPACE}
+  fi
+  if [[ $OS = "Linux" ]]
+  then
+    df -klP > ${DISKSPACE}
+  fi
+  if [[ $OS = "SunOS" ]]
+  then
+    df -kl > ${DISKSPACE}
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+    df -kl > ${DISKSPACE}
+  fi
+
+  for j in $(egrep "^(/dev|all_space|cloifs_pool|diskpool|rpool|sanpool|space|syslog_local|syslog_san)/" ${DISKSPACE} | egrep -v "^(/dev/loop)" | awk '{print $NF":"$5}')
+  do
+    FILESYSTEM=$(echo $j | cut -f1 -d:)
+    SPACE=$(echo $j | cut -f2 -d: | cut -f1 -d%)
+    WARNING=85
+    ERROR=95
+
+    if [[ $SPACE -ge $ERROR ]]
+    then
+      printf "%b\n" "    ${RED}${FILESYSTEM} has reached or exceeded 95% (${SPACE})%${RESET}" >> "${LOG}"
+    else
+      if [[ $SPACE -ge $WARNING ]]
+      then
+        printf "%b\n" "    ${YELLOW}${FILESYSTEM} has reached or exceeded 85% (${SPACE})%${RESET}" >> "${LOG}"
+      fi
+    fi
+  done
+  if [[ ${DEBUG} = '31' ]]
+  then
+    echo "Exiting check_disk_space()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_disk_suite(5) - 2 checks
+### Doc: * Checks for capital letters in the output of metadb indicating a failed disk
+### Doc: * Checks for the word 'metareplace' metastat indicating a failed disk
+######################
+
+check_disk_suite() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_disk_suite(5)"
+  fi
+
+  if [[ -f /usr/sbin/metadb ]] && [[ -f /usr/sbin/metastat ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking Solaris Disk Suite.${RESET}" >> "${LOG}"
+
+    OUTPUT=$(metadb | awk '/[WMDFSR]/{print $NF;exit}')
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Disk Suite metadb error on ${OUTPUT}.${RESET} /usr/sbin/metadb" >> "${LOG}"
+    fi
+
+    OUTPUT=$(metastat | awk '/metareplace/{print $3,$4;exit}')
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Disk Suite metastat error on ${OUTPUT}.${RESET} /usr/sbin/metastat" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '5' ]]
+  then
+    echo "Exiting check_disk_suite()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_eeprom(37) - 1 check
+### Doc: * Checks the output of eeprom on Solaris for the auto-boot? setting. False == the system won't boot to the OS
+######################
+
+check_eeprom() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_eeprom(37)"
+  fi
+
+  if [[ -f /usr/sbin/eeprom ]] 
+  then
+    printf "%b\n" "  ${GREEN}Checking Solaris auto-boot setting.${RESET}" >> "${LOG}"
+
+    OUTPUT=$(eeprom | grep "auto-boot?=false")
+    if [[ ! -z $OUTPUT ]]
+    then
+      printf "%b\n" "    ${RED}Sun system is not configured to automatically start on boot.${RESET} /usr/sbin/eeprom" >> "${LOG}"
+    fi
+
+  fi
+  if [[ ${DEBUG} = '37' ]]
+  then
+    echo "Exiting check_eeprom()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_email(32) - 2 checks * email servers
+### Doc: * Checks to see if the email server(s) can be pinged
+### Doc: * Checks to see if the email server(s) can be accessed
+######################
+
+check_email() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_email(32)"
+  fi
+  if [[ ! ${CHECK_EMAIL} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping EMail Check${RESET}" >> "${LOG}"
+    return
+  fi
+
+  for i in ${EMAIL_SERVERS}
+  do
+    EMAILSITE=$(echo $i | cut -f1 -d:)
+    EMAILIP=$(echo $i | cut -f2 -d:)
+    EMAILPROTOCOL=$(echo $i | cut -f3 -d:)
+    EMAILPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
+
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=$(grep -i "^${HOSTNAME}:Email:${EMAILIP}" ${SCRIPTS_DATA}/chkserver.exclude)
+    if [[ "${APPROVED}" = "" ]]
+    then
+      if [[ ${DEBUG} = 32 ]]
+      then
+        echo "  Beginning check of Email Server: ${EMAILSITE}:${EMAILIP}:${EMAILPORTS}"
+      fi
+      check_management_route ${EMAILIP} Management
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${EMAILIP} > /dev/null
+      else
+        ping ${EMAILIP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Email server ${EMAILSITE}:${EMAILIP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
+        then
+          for j in ${EMAILPORTS}
+          do
+            echo "quit" | ${NETCAT} -w 2 -vn ${EMAILIP} ${j} > /dev/null 2>&1
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Email server (${EMAILSITE}:${EMAILIP}:${j}) is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Email server (${EMAILSITE}:${EMAILIP}:${j}) is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      else
+        printf "%b\n" "    ${RED}Email server ${EMAILSITE}:{$EMAILIP} is not pingable${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}Email Server ${EMAILSITE}:${EMAILIP} check was skipped.${RESET}" >> "${LOG}"
+    fi
+  done
+
+  if [[ ${DEBUG} = '32' ]]
+  then
+    echo "Exiting check_email()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_floppy(35) - 1 check
+### Doc: * Only for VMware systems, check to see if the Floppy device exists.
+######################
+
+check_floppy() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_floppy(35)"
+  fi
+  if [[ ${VMWARE} = 'Yes' ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking for a floppy device${RESET}" >> "${LOG}"
+    if [[ ${OS} = 'Linux' ]]
+    then
+      if [[ -d /dev/fd ]]
+      then
+        printf "%b\n" "    ${RED}Floppy device directory /dev/fd exists${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '35' ]]
+  then
+    echo "Exiting check_floppy()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_group_membership(6) - 7 checks * the number of groups
+### Doc: * Collects all the groups from the system and from any external groups (Centrify)
+### Doc: * Loops through the group listing on the system and checks the group against the group.master file.
+### Doc: ** Reports if a group is not standard (webadmins vs standard webapps for example)
+### Doc: * Loops through the group.master list of users for the found group
+### Doc: ** reports if a user should and doesn't have an account on the system
+### Doc: ** reports if a user should be a member of the system group and is not
+### Doc: * Loops through the user list for the system group and reports if the user isn't in the group.master file
+######################
+
+# todo: check for centrify to be installed
+# need to check groups and if centrify, check centrify groups
+# need to get group id and check passwd as well
+# 
+
+check_group_membership() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_group_membership(6)"
+  fi
+  printf "%b\n" "  ${GREEN}Group membership verification${RESET}" >> "${LOG}"
+
+  GROUPLIST=$(cut -f1 -d: /etc/group)
+  if [[ ${CENTRIFY} = 'yes' ]]
+  then
+    GROUPLIST="${GROUPLIST} $(adquery group | cut -f1 -d:)"
+  fi
+
+# check all system groups to see if they're in the group.master file
+  for i in ${GROUPLIST}
+  do
+# look for the hostname first then see if the system is centrified, otherwise check all servers
+    GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^${HOSTNAME}:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+    if [[ -z ${GROUP} ]]
+    then
+      if [[ ${CENTRIFY} = 'yes' ]]
+      then
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^centrify:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+      else
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\*:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+      fi
+# check non-standard groups if not found
+      if [[ -z ${GROUP} ]]
+      then
+        GROUP=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\?:${i}:" | cut -f3 -d: | sed -e "s/,/ /g")
+        if [[ ! -z ${GROUP} ]]
+        then
+          printf "%b\n" "    ${RED}${i} is a non-standard group and needs to be corrected${RESET}" >> "${LOG}"
+        fi
+      fi
+    fi
+
+    if [[ ! -z ${GROUP} ]]
+    then
+# found the group in the group.master file. Now check all users in group.master list against /etc/group list and throw an error if not found
+      for j in ${GROUP}
+      do
+        if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
+        then
+          grep -i "^${j}:" /etc/passwd > /dev/null
+          if [[ $? -eq 1 ]]
+          then
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> "${LOG}"
+          fi
+          egrep -i "^${i}.*(:|,)${j}(,|$)" /etc/group > /dev/null
+          if [[ $? -eq 1 ]]
+          then
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group in /etc/group${RESET}" >> "${LOG}"
+          fi
+        else
+# getent will pull from whatever database is in place; on board, idm, or centrify
+          getent passwd ${j} > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}${j} does not have a login on this system${RESET}" >> "${LOG}"
+          fi
+          getent group ${i} | egrep "(:|,)${j}(,|$)" > /dev/null
+          if [[ $? -ne 0 ]]
+          then
+            printf "%b\n" "    ${RED}${j} was not found in the ${i} group${RESET}" >> "${LOG}"
+          fi
+        fi
+      done
+
+# now check all users in /etc/group against group.master and throw an error if found
+      if [[ $OS = 'HP-UX' ]] || [[ $OS = 'FreeBSD' ]]
+      then
+        USERLIST=$(grep "^${i}:" /etc/group | cut -f4 -d: | sed -e "s/,/ /g")
+      else
+        USERLIST=$(getent group ${i} | cut -f4 -d: | sed -e "s/,/ /g") > /dev/null
+      fi
+
+      for j in ${USERLIST}
+      do
+# look for the hostname first, if not found, then check the centrify flag and * if not centrified, then check the questionable groups
+        GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^${HOSTNAME}:${i}:")
+        if [[ -z ${GRPFND} ]]
+        then
+          if [[ ${CENTRIFY} = 'yes' ]]
+          then
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^centrify:${i}:")
+          else
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\*:${i}:")
+          fi
+          if [[ -z ${GRPFND} ]]
+          then
+            GRPFND=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | grep -i "^\?:${i}:")
+            if [[ ! -z ${GRPFND} ]]
+            then
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^\?:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              FOUND="?:${i}"
+            fi
+          else
+            if [[ ${CENTRIFY} = 'yes' ]]
+            then
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^centrify:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              FOUND="centrify:${i}"
+            else
+              PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^\*:${i}:" | egrep -i "(:|,)${j}(,|$)")
+              FOUND="*:${i}"
+            fi
+          fi
+        else
+          PRESENT=$(grep -v "^#" ${SCRIPTS_DATA}/group.master | egrep -i "^${HOSTNAME}:${i}:" | egrep -i "(:|,)${j}(,|$)")
+          FOUND="${HOSTNAME}:${i}"
+        fi
+
+# if the user wasn't found in the group.master list for the host, * or ? config, call it out.
+        if [[ -z ${PRESENT} ]]
+        then
+          printf "%b\n" "    ${RED}${j} was found in the ${i} group but not in ${FOUND} in group.master${RESET}" >> "${LOG}"
+        fi
+      done
+    fi
+  done
+  if [[ ${DEBUG} = '6' ]]
+  then
+    echo "Exiting check_group_membership()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_grpck(67) - 
+### Doc: 
+######################
+
+check_grpck() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_grpck(67)"
+  fi
+
+  CHKGRPCK="${SCRIPTS_LOGS}/chkgrpck.review"
+
+  grpck -r > "${CHKGRPCK}"
+
+  if [[ ${CHECK_GRPCK} = 'Yes' ]]
+  then
+    compare_files chkgrpck
+  fi
+
+  if [[ ${DEBUG} = '67' ]]
+  then
+    echo "Exiting check_grpck()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_guid(60) - 
+### Doc: * 
+######################
+
+check_guid() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_guid(60)"
+  fi
+
+  if [[ ${CHECK_GUID} = 'Yes' ]]
+  then
+# find gets lost on some Sun boxes.
+    if [[ ${OS} != 'SunOS' ]]
+    then
+      CHKGUID="${SCRIPTS_LOGS}/chkguid.review"
+
+      find / -user root -perm -2000 | sort > "${CHKGUID}"
+    fi
+
+    compare_files chkguid
+  fi
+
+  if [[ ${DEBUG} = '60' ]]
+  then
+    echo "Exiting check_guid()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_hostname(7) - 1 check
+### Doc: * Verify hostname is in /etc/hosts
+######################
+
+check_hostname() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_hostname(7)"
+  fi
+  HOSTNAME=$(hostname|cut -f1 -d.)
+  grep -i ${HOSTNAME} /etc/hosts > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    printf "%b\n" "  ${GREEN}${HOSTNAME} is in /etc/hosts${RESET}" >> "${LOG}"
+  else
+    printf "%b\n" "  ${YELLOW}${HOSTNAME} not in /etc/hosts${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '7' ]]
+  then
+    echo "Exiting check_hostname()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_interfaces(33) - 1 check
+### Doc: * Check for FAILED interfaces
+######################
+
+check_interfaces() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_interfaces(33)"
+  fi
+  printf "%b\n" "  ${GREEN}Checking Network Interfaces${RESET}" >> "${LOG}"
+  if [[ $OS = 'SunOS' ]]
+  then
+    OUTPUT=$(ifconfig -a | grep FAILED)
+  fi
+  if [[ $OS = 'Linux' ]]
+  then
+    OUTPUT=$(ifconfig | grep FAILED)
+  fi
+  if [[ $OS = 'HP-UX' ]]
+  then
+    OUTPUT=''
+    for i in $(lanscan | grep lan | awk '{print $5}')
+    do
+      OUTPUT="${OUTPUT}$(ifconfig $i | grep FAILED)"
+    done
+  fi
+  if [[ $OS = 'FreeBSD' ]]
+  then
+    OUTPUT=$(ifconfig | grep FAILED)
+  fi
+
+  if [[ ! -z ${OUTPUT} ]]
+  then
+    printf "%b\n" "    ${RED}Failed Interface found.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '33' ]]
+  then
+    echo "Exiting check_interfaces()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_ksh(10) - 1 check
+### Doc: * Verifies /usr/bin/ksh exists as all scripts are using this shell
+######################
+
+check_ksh() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_ksh(10)"
+  fi
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ ! -f /usr/bin/ksh ]]
+    then
+      printf "%b\n" "  ${RED}Need to create a symbolic link between /bin/ksh and /usr/bin/ksh${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '10' ]]
+  then
+    echo "Exiting check_ksh()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_kubernetes(11) - 3 + 2 * number of containers to check
+### Doc: * If on a master server
+### Doc: ** checks etcd health
+### Doc: ** checks local apiserver health
+### Doc: ** checks vip apiserver health
+### Doc: ** checks the binaries/pods to make sure they're healthy
+### Doc: ** checks the containers in the various namespaces for health
+######################
+
+check_kubernetes() {
+# check the status of etcd
+# check the status of the apiserver
+# enumerate namespaces to see what's running on the server.
+# then get the number of processes and report any containers that aren't fully running
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_kubernetes(11)"
+  fi
+# if 1.9+:
+  if [[ -f /opt/kubernetes/.config ]]
+  then
+    KUBE_ETCD_CERTS=`grep "^ETCD_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_KUBERNETES_CERTS=`grep "^KUBERNETES_CERTS=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_API_SERVER=`grep "^EXTERNAL_IP=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_CA_FILE="ca.pem"
+    KUBE_WORKER_FILE="kubernetes.pem"
+    KUBE_WORKER_KEY_FILE="kubernetes-key.pem"
+  fi
+# if 1.2
+  if [[ -f /var/tmp/kubernetes/.config ]]
+  then
+    KUBE_ETCD_CERTS="/etc/etcd/tls"
+    KUBE_KUBERNETES_CERTS="/etc/kubernetes/tls"
+    KUBE_API_SERVER=`grep "^SERVICE_IP=" /opt/kubernetes/.config | cut -f2 -d= | sed -e "s/\"//g"`
+    KUBE_CA_FILE="kube-ca.pem"
+    KUBE_WORKER_FILE="worker.pem"
+    KUBE_WORKER_KEY_FILE="worker-key.pem"
+  fi
+
+# on 1.2 it's in /bin, on 1.11 it's in /usr/local/bin.
+  if [[ -f /bin/etcdctl ]] || [[ -f /usr/local/bin/etcdctl ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "etcdctl found; etcdctl cluster-health"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes etcd status${RESET}" >> "${LOG}"
+
+    etcdctl --ca-file=${KUBE_ETCD_CERTS}/${KUBE_CA_FILE} --key-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_KEY_FILE} --cert-file=${KUBE_ETCD_CERTS}/${KUBE_WORKER_FILE} --endpoint=https://${INTERNAL_IP}:2379 cluster-health > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}etcd cluster healthy${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${RED}etcd cluster is not healthy${RESET}" >> "${LOG}"
+    fi
+  fi
+
+# check the local apiserver response. note that only the VIP is important. local can fail for whatever reason and as long as the VIP is successful, the cluster is functioning.
+  if [[ -f /bin/kube-apiserver ]] || [[ -f /usr/local/bin/kube-apiserver ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "kube-apiserver found; kube-apiserver version check"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes local apiserver status${RESET}" >> "${LOG}"
+    curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://${INTERNAL_IP}/version > /dev/null 2>&1
+    if [[ $? -eq 0 ]]
+    then
+      printf "%b\n" "    ${GREEN}Local apiserver query reply success${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${YELLOW}Local apiserver query failed${RESET}" >> "${LOG}"
+    fi
+
+# assumption of a 1.2 cluster for the location of the .config file for the api_server variable.
+    if [[ -f /var/tmp/kubernetes/.config ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking Kubernetes apiserver VIP status${RESET}" >> "${LOG}"
+      curl -vvv --cert ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_FILE} --key ${KUBE_KUBERNETES_CERTS}/${KUBE_WORKER_KEY_FILE} --cacert ${KUBE_KUBERNETES_CERTS}/${KUBE_CA_FILE} https://${KUBE_API_SERVER}/version > /dev/null 2>&1
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}apiserver VIP query success${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}apiserver VIP query failed${RESET}" >> "${LOG}"
+      fi
+    fi
+  fi
+
+  if [[ -f /bin/kubectl ]] || [[ -f /usr/local/bin/kubectl ]]
+  then
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "kubectl found; kubectl get nodes"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Node status${RESET}" >> "${LOG}"
+    for i in $(kubectl get nodes | grep -v NAME | awk '{print $1":"$2}')
+    do
+      if [[ ${DEBUG} = '11' ]]
+      then
+        echo $i
+      fi
+      NODE=$(echo $i | cut -f1 -d:)
+# management nodes are 'Ready,SchedulingDisabled'; just looking for 'Ready' or not.
+      STATUS=$(echo $i | cut -f2 -d: | cut -f1 -d,)
+
+      if [[ ! ${STATUS} = 'Ready' ]]
+      then
+        printf "%b\n" "    ${RED}Node ${NODE} is currently not in Ready state (${STATUS})${RESET} kubectl describe node ${NODE}" >> "${LOG}"
+      fi
+    done
+
+    if [[ ${DEBUG} = '11' ]]
+    then
+      echo "kubectl get namespaces"
+    fi
+    printf "%b\n" "  ${GREEN}Checking Kubernetes Container status${RESET}" >> "${LOG}"
+    for i in $(kubectl get namespaces | grep Active | egrep -v "(NAME|default)")
+    do
+      FLAG=0
+      for j in $(kubectl --namespace=${i} get pods | awk '{print $1":"$2":"$3":"$4}')
+      do
+        CONTAINER=$(echo ${j} | cut -f1 -d:)
+        ACTIVE=$(echo ${j} | cut -f2 -d: | cut -f1 -d/)
+        EXPECTED=$(echo ${j} | cut -f2 -d: | cut -f2 -d/)
+        ERROR=$(echo ${j} | cut -f3 -d:)
+        DAYS=$(echo ${j} | cut -f4 -d:)
+        if [[ ${DEBUG} = '11' ]]
+        then
+          echo ${j}
+        fi
+
+        if [[ ${ACTIVE} -ne ${EXPECTED} ]]
+        then
+          if [[ ${FLAG} -eq 0 ]]
+          then
+            printf "%b\n" "    ${RED}Namespace ${i} is reporting errors:${RESET}" >> "${LOG}"
+            FLAG=1
+          fi
+# normally you should see 3/3 however if the ERROR is Completed, the output is 0/1 and is fine.
+          if [[ ${ERROR} != 'Completed' ]]
+          then
+            printf "%b\n" "      ${RED}Container ${CONTAINER} has failed. ${ACTIVE} of ${EXPECTED} containers are running. Reported error: ${ERROR}${RESET}" >> "${LOG}"
+          fi
+        fi
+      done
+    done
+  fi
+  if [[ ${DEBUG} = '11' ]]
+  then
+    echo "Exiting check_kubernetes()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_logs(12) - 1 check
+### Doc: * Verifies there was a log entry for the day. The logme script runs logger to create a single entry so there should always be one entry
+######################
+
+check_logs() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_logs(12)"
+  fi
+  CL_TODAY=$(date +"%b %e")
+
+# default logfile for Solaris
+  PLOG="/var/adm/messages"
+  if [[ $OS = "Linux" ]]
+  then
+    PLOG="/var/log/messages"
+  fi
+  if [[ $OS = "FreeBSD" ]]
+  then
+    PLOG="/var/log/messages"
+  fi
+  if [[ $OS = "HP-UX" ]]
+  then
+    PLOG="/var/adm/syslog/syslog.log"
+  fi
+
+  printf "%b\n" "  ${GREEN}Checking ${PLOG} for ${CL_TODAY}.${RESET}" >> "${LOG}"
+
+  OUTPUT=$(tail -1 ${PLOG} | grep "^${CL_TODAY}")
+  if [[ -z $OUTPUT ]]
+  then
+    printf "%b\n" "    ${RED}${PLOG} has no log entries for today.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '12' ]]
+  then
+    echo "Exiting check_logs()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_lsof(13) - 1 check
+### Doc: * Checking for deleted processes in lsof. Mainly looking for failed log roll processes.
+######################
+
+check_lsof() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_lsof(13)"
+  fi
+  which lsof
+  if [[ $? -eq 0 ]]
+  then
+    OUTPUT=$(lsof | grep "(deleted)" | wc -l)
+    if [[ $OUTPUT -gt 0 ]]
+    then
+      printf "%b\n" "  ${RED}lsof is reporting ${OUTPUT} deleted processes.${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '13' ]]
+  then
+    echo "Exiting check_lsof()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_management(9) - 2 checks * the number of management servers
+### Doc: * Checks to see if a management server is pingable
+### Doc: * Checks to see if a management server port is accessible
+######################
+
+check_management() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_management(9)"
+  fi
+  if [[ ! ${CHECK_MANAGEMENT} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
+    return
+  fi
+
+  for i in ${MANAGEMENT_SERVERS}
+  do
+    MGTSITE=$(echo  $i | cut -f1 -d:)
+    MGTIP=$(echo  $i | cut -f2 -d:)
+    MGTPROTOCOL=$(echo $i | cut -f3 -d:)
+    MGTPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /")
+
+# looking for a skip entry in the chkserver.exclude file
+    APPROVED=$(grep -i "^${HOSTNAME}:Management:${MGTIP}" ${SCRIPTS_DATA}/chkserver.exclude)
+    if [[ "${APPROVED}" = "" ]]
+    then
+      if [[ ${DEBUG} = 9 ]]
+      then
+        echo "  Beginning check of Management Server: ${MGTSITE}:${MGTIP}:${MGTPORTS}"
+      fi
+      check_management_route ${MGTIP} Management
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${MGTIP} > /dev/null
+      else
+        ping ${MGTIP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP} is pingable${RESET}" >> "${LOG}"
+        if [[ ! -z ${NETCAT} ]]
+        then
+          for k in ${MGTPORTS}
+          do
+            echo "\n\n" | ${NETCAT} -w 2 -vn ${MGTIP} ${k} > /dev/null 2>&1
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Management server ${MGTSITE}:${MGTIP}:${k} is accessible${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Management server ${MGTSITE}:${MGTIP}:${k} is not accessible${RESET}" >> "${LOG}"
+            fi
+          done
+        fi
+      else
+        printf "%b\n" "    ${RED}Management server ${MGTSITE}:${MGTIP} is not pingable${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}Artifactory Server ${MGTSITE}:${MGTIP} check was skipped.${RESET}" >> "${LOG}"
+    fi
+  done
+
+  if [[ ${DEBUG} = '9' ]]
+  then
+    echo "Exiting check_management()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_nrpe(15) - 2 checks
+### Doc: * Verifies that the agent is installed
+### Doc: * Verifies that the agent is running
+######################
+
+check_nrpe() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_nrpe(15)"
+  fi
+  if [[ -f /usr/sbin/nrpe ]]
+  then
+    printf "%b\n" "  ${GREEN}The NRPE agent is installed${RESET}" >> "${LOG}"
+    NAGIOS=$(ps -e | grep nrpe)
+    if [[ -z $NAGIOS ]]
+    then
+      printf "%b\n" "    ${RED}The NRPE agent is not running${RESET}" >> "${LOG}"
+    else
+      printf "%b\n" "    ${GREEN}The NRPE agent is running${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '15' ]]
+  then
+    echo "Exiting check_nrpe()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_oomkiller(34) - 1 check
+### Doc: * Count the number of oom-killer messages
+######################
+
+check_oomkiller() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_oomkiller(34)"
+  fi
+  printf "%b\n" "  ${GREEN}Checking for out-of-memory errors${RESET}" >> "${LOG}"
+  grep "invoked oom-killer" ${PLOG} > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    printf "%b\n" "    ${RED}Found oom-killer messages in ${PLOG}${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '34' ]]
+  then
+    echo "Exiting check_oomkiller()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_packages(65) - 
+### Doc: * 
+######################
+
+check_packages() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_packages(65)"
+  fi
+
+  CHKPACKAGES="${SCRIPTS_LOGS}/chkpackages.review"
+
+  if [[ $OS = "Linux" ]]
+  then
+    if [[ -f /etc/redhat-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/centos-release ]]
+    then
+      /bin/rpm -qa | sort > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/debian_version ]]
+    then
+      /usr/bin/dpkg-query -l | grep "^ii " | awk '{print $2"-"$3}' > "${CHKPACKAGES}"
+    fi
+    if [[ -f /etc/SUSE-brand ]]
+    then
+      /usr/bin/zypper se -s > "${CHKPACKAGES}"
+    fi
+  fi
+
+  if [[ $OS = "SunOS" ]]
+  then
+    /usr/bin/pkginfo -l > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "HP-UX" ]]
+  then
+    /usr/sbin/swlist | grep "^ " | awk '{print $1"-"$2}' > "${CHKPACKAGES}"
+  fi
+
+  if [[ $OS = "OSF1" ]]
+  then
+    /usr/sbin/swlist > "${CHKPACKAGES}"
+  fi
+
+  if [[ ${CHECK_PACKAGES} = 'Yes' ]]
+  then
+    compare_files chkpackages
+  fi
+
+  if [[ ${DEBUG} = '65' ]]
+  then
+    echo "Exiting check_packages()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_passwd(62) - 
+### Doc: 
+######################
+
+check_passwd() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_passwd(62)"
+  fi
+
+  CHKPWCK="${SCRIPTS_LOGS}/chkpwck.review"
+
+  pwck -r > "${CHKPWCK}"
+
+  if [[ ${CHECK_PWCK} = 'Yes' ]]
+  then
+    compare_files chkpwck
+  fi
+
+  if [[ ${DEBUG} = '62' ]]
+  then
+    echo "Exiting check_passwd()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_privileged_access(18) - 
+### Number of Checks: 2 * [Number of users on the system]
+######################
+
+check_privileged_access() {
+# see if the user is in the chksudoers.dat file. This indicates the user has privileged access.
+# check for * for sysadmins who should be on every server
+# error if the user is not in the chksudo.dat file.
+# error if the date is older than the expiration date.
+#inventory:user:user,useremail@inventory.internal.pri:yes:Expired
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_privileged_access(18)"
+  fi
+  if [[ -f ${SCRIPTS_DATA}/chksudo.dat ]]
+  then
+    printf "%b\n" "  ${GREEN}Privileged access review${RESET}" >> "${LOG}"
+    for j in $(awk -F: '{print $1":"$2":"$4}' ${SCRIPTS_LOGS}/chksudoers.dat)
+    do
+      SERVER=$(echo $j | cut -f1 -d:)
+      USER=$(echo $j | cut -f2 -d:)
+      ROOT=$(echo $j | cut -f3 -d:)
+
+      if [[ ${ROOT} = 'yes' ]]
+      then
+        OUTPUT=$(grep "^\*:${USER}:" ${SCRIPTS_DATA}/chksudo.dat)
+        if [[ -z $OUTPUT ]]
+        then
+          OUTPUT=$(grep "^${SERVER}:${USER}:" ${SCRIPTS_DATA}/chksudo.dat)
+          if [[ -z $OUTPUT ]]
+          then
+            printf "%b\n" "    ${RED}${USER} has undocumented privileged access${RESET}" >> "${LOG}"
+          fi
+        fi
+
+        if [[ ! -z $OUTPUT ]]
+        then
+# only need the date
+#wkkihiecerb21:escott:999999:30010101
+          EXPIREDATE=$(echo $OUTPUT | cut -f4 -d:)
+          if [[ $OS = 'Linux' ]]
+          then
+            EXPIRE=$(date --date="${EXPIREDATE}" +"%s")
+          else
+            EXYEAR=$(echo $EXPIREDATE | cut -c1-4)
+            EXMONTH=$(echo $EXPIREDATE | cut -c5-6)
+            EXDAY=$(echo $EXPIREDATE | cut -c7-8)
+            EXPIRE=$(epoch $EXYEAR $EXMONTH $EXDAY)
+          fi
+          if [[ ${EPOCH} -gt ${EXPIRE} ]]
+          then
+            printf "%b\n" "    ${RED}${USER} has privileged access which expired: ${EXPIREDATE}${RESET}" >> "${LOG}"
+          fi
+        fi
+      fi
+    done
+  fi
+  if [[ ${DEBUG} = '18' ]]
+  then
+    echo "Exiting check_privileged_access()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_redhat_subscription(19) - 5 checks
+### Doc: * checks to see if the satellite server is pingable
+### Doc: * checks to see if the satellite server ports are accessible
+### Doc: * checks to see if subscription manager is installed
+### Doc: ** if installed, checks the subscription status
+### Doc: * checks to see if the katello agent is installed
+######################
+
+check_redhat_subscription() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_redhat_subscription(19)"
+  fi
+  if [[ ! ${CHECK_SATELLITE} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Satellite Check${RESET}" >> "${LOG}"
+    return
+  fi
+  if [[ ${DISTRO} = "Red Hat" ]]
+  then
+    if [[ ${DEBUG} = '19' ]]
+    then
+      echo "  Red Hat System"
+    fi
+    for i in ${SATELLITE_SERVERS}
+    do
+      SATSITE=$(echo $i | cut -f1 -d:)
+      SATIP=$(echo $i | cut -f2 -d:)
+      SATPROTOCOL=$(echo $i | cut -f3 -d:)
+      SATPORTS=$(echo $i | cut -f4 -d: | sed -e "s/,/ /g")
+
+      printf "%b\n" "  ${GREEN}Checking access to Satellite Server ${SATSITE}:${SATIP}${RESET}" >> "${LOG}"
+      check_management_route ${SATIP} Management
+      if [[ ${DEBUG} = 19 ]]
+      then
+        echo "  ping check of Red Hat Satellite Server: ${SATIP}"
+      fi
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${SATIP} > /dev/null
+      else
+        ping ${SATIP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "    ${GREEN}Satellite Server ${SATSITE}:${SATIP} is pingable${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${RED}Satellite Server ${SATSITE}:${SATIP} is not pingable${RESET}" >> "${LOG}"
+      fi
+
+# since it's a block of ports; easier to check outside the normal variable setup.
+      if [[ ${DEBUG} = '19' ]]
+      then
+        printf "  nc check of Satellite Server ports:"
+      fi
+      for j in ${SATPORTS}
+      do
+        if [[ ${DEBUG} = '19' ]]
+        then
+          printf " $j"
+        fi
+        echo "quit" | ${NETCAT} -w 2 -vn ${SATIP} ${j} > /dev/null 2>&1
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "    ${GREEN}Satellite Server (${SATSITE}:${SATIP}:${j}) is accessible${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "    ${RED}Satellite Server (${SATSITE}:${SATIP}:${j}) is not accessible${RESET}" >> "${LOG}"
+        fi
+      done
+      if [[ ${DEBUG} = '19' ]]
+      then
+        printf "\n"
+      fi
+    done
+
+    if [[ ! -f /usr/bin/subscription-manager ]]
+    then
+      printf "%b\n" "  ${RED}Subscription-Manager not installed${RESET}" >> "${LOG}"
+    else
+      if [[ ${DEBUG} = '19' ]]
+      then
+        echo "  Subscription Manager is installed, query server"
+      fi
+
+      printf "%b\n" "    ${GREEN}Subscription-Manager is installed${RESET}" >> "${LOG}"
+
+      STATUS=$(/usr/bin/subscription-manager list | awk '/^Status:/{print $2}')
+      if [[ ${DEBUG} = '19' ]]
+      then
+        echo "  Returned status: ${STATUS}"
+      fi
+      if [[ ${STATUS} = 'Unknown' ]]
+      then
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
+      fi
+      if [[ ${STATUS} = 'No' ]] || [[ ${STATUS} = 'Not' ]]
+      then
+        printf "%b\n" "      ${RED}System is not subscribed to Satellite${RESET}" >> "${LOG}"
+      fi
+      if [[ ${STATUS} = 'Subscribed' ]]
+      then
+        printf "%b\n" "      ${GREEN}System is subscribed to Satellite${RESET}" >> "${LOG}"
+      fi
+      if [[ ${STATUS} = 'Expired' ]]
+      then
+        printf "%b\n" "      ${YELLOW}System subscription has expired${RESET}" >> "${LOG}"
+      fi
+
+      if [[ ${STATUS} = 'Subscribed' ]] || [[ ${STATUS} = 'Expired' ]]
+      then
+        RPM=$(rpm -qa | egrep 'katello-ca-consumer')
+        if [[ -z ${RPM} ]]
+        then
+          printf "%b\n" "      ${RED}Katello Certificate RPM is not installed${RESET} rpm -qa | egrep katello-ca-consumer" >> "${LOG}"
+        fi
+        RPM=$(rpm -qa | grep 'katello-agent')
+        if [[ -z ${RPM} ]]
+        then
+          printf "%b\n" "      ${RED}Katello Agent RPM is not installed${RESET} rpm -qa | grep katello-agent" >> "${LOG}"
+        fi
+      fi
+
+    fi
+  fi
+  if [[ ${DEBUG} = '19' ]]
+  then
+    echo "Exiting check_redhat_subscription()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_removeips(20) - 1 check
+### Doc: * checks to see if removeipc is set to yes or commented out
+######################
+
+check_removeips() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_removeips(20)"
+  fi
+  if [[ -f /etc/redhat-release ]]
+  then
+# removeips=yes is causing a problem with non-system accounts. best is to just disable it on server.
+# if without comments it's yes, report an error
+# if blank and with comments it's yes, report an error
+    if [[ -f /etc/systemd/logind.conf ]]
+    then
+# get the answer
+      OUTPUT=$(grep -v "^#" /etc/systemd/logind.conf | grep removeipc | cut -f2 -d=)
+      if [[ $OUTPUT = 'yes' ]]
+      then
+        printf "%b\n" "  ${RED}Change RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
+      fi
+      if [[ -z $OUTPUT ]]
+      then
+        OUTPUT=$(grep -i removeipc /etc/systemd/logind.conf | cut -f2 -d=)
+        if [[ $OUTPUT = 'yes' ]]
+        then
+          printf "%b\n" "  ${RED}Set RemoveIPC to no in /etc/systemd/logind.conf${RESET} systemctl restart systemd-logind.service" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '20' ]]
+  then
+    echo "Exiting check_removeips()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_resolver(21) - 2 checks * number of name server entries
+### Doc: *
+######################
+
+check_resolver() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_resolver(21)"
+  fi
+  if [[ -f /etc/nsswitch.conf ]]
+  then
+    OUTPUT=$(grep -i ^hosts: /etc/nsswitch.conf | grep -i dns)
+    if [[ -z $OUTPUT ]]
+    then
+      printf "%b\n" "  ${GREEN}Name services in /etc/nsswitch.conf not enabled${RESET}" >> "${LOG}"
+    else
+      if [[ -f /etc/resolv.conf ]]
+      then
+        COUNT=$(grep -v "^#" /etc/resolv.conf | grep -c nameserver)
+        if [[ $COUNT = 0 ]]
+        then
+          printf "%b\n" "  ${RED}No nameserver entries found in /etc/resolv.conf${RESET}" >> "${LOG}"
+        else
+          for i in $(awk '/^[^#]?nameserver/{print $2}' /etc/resolv.conf)
+          do
+            printf "%b\n" "  ${GREEN}Found nameserver ${i} in /etc/resolv.conf${RESET}" >> "${LOG}"
+            check_management_route ${i} Management
+            if [[ ${DEBUG} = 21 ]]
+            then
+              echo "  ping check of nameserver: ${i}"
+            fi
+            if [[ ${OS} = 'FreeBSD' ]]
+            then
+              ping ${PINGCT} ${i} > /dev/null
+            else
+              ping ${i} ${PINGCT} > /dev/null
+            fi
+            if [[ $? -eq 0 ]]
+            then
+              printf "%b\n" "    ${GREEN}Nameserver ${i} pingable${RESET}" >> "${LOG}"
+            else
+              printf "%b\n" "    ${RED}Nameserver ${i} is not pingable${RESET}" >> "${LOG}"
+            fi
+            if [[ ${CHECK_MANAGEMENT} = 'Yes' ]]
+            then
+              for j in ${MANAGEMENT_SERVERS}
+              do
+                MGTSITE=$(echo $j | cut -f1 -d:)
+                MGTIP=$(echo $j | cut -f2 -d:)
+                MGTPROTOCOL=$(echo $j | cut -f3 -d:)
+                MGTPORT=$(echo $j | cut -f4 -d:)
+
+                OUTPUT=$(dig @${i} +time=1 ${MGTSITE} | grep -v "^;" | grep "${MGTIP}")
+                if [[ -z $OUTPUT ]]
+                then
+                  printf "%b\n" "    ${RED}Unable to resolve ${MGTSITE}${RESET}" >> "${LOG}"
+                else
+                printf "%b\n" "    ${GREEN}Resolved ${MGTSITE}${RESET}" >> "${LOG}"
+                fi
+              done
+            else
+              printf "%b\n" "    ${GREEN}Skipping Management Server Check${RESET}" >> "${LOG}"
+            fi
+          done
+
+# check all the IPv4 IPs on the system; exclude loopback and private IPs
+          for HOSTIP in $(ip addr | grep inet | egrep -v "(inet6|127.0.0.1|192.168.0.)" | awk '{print $2}' | cut -f1 -d/)
+          do
+            if [[ ${DEBUG} = 21 ]]
+            then
+              echo "IP to be checked: ${HOSTIP}"
+            fi
+# lookup the IP address in DNS; response is the hostname
+            for HOSTNM in $(dig -x ${HOSTIP} | egrep -v "^(;|$)" | grep PTR | awk '{print $NF}')
+            do
+              if [[ ${DEBUG} = 21 ]]
+              then
+                echo "---------------------"
+                dig -x ${HOSTIP} | egrep -v "^(;|$)" | grep PTR | awk '{print $NF}'
+                echo "Found IP, Hostname is: ${HOSTNM}"
+                echo "---------------------"
+              fi
+              if [[ -z ${HOSTNM} ]]
+              then
+                printf "%b\n" "    ${RED}${HOSTIP} unable to be found in DNS.${RESET} dig -x ${HOSTIP}" >> "${LOG}"
+              else
+# got a hostname back, check both that there's a response (not blank)
+                HOSTPTR=$(dig ${HOSTNM} | egrep -v "^(;|$)" | grep ${HOSTIP} | awk '{print $NF}')
+                if [[ ${DEBUG} = 21 ]]
+                then
+                  echo "---------------------"
+                  dig ${HOSTNM} | egrep -v "^(;|$)" | grep ${HOSTIP} | awk '{print $NF}'
+                  echo "Found Hostname, IP is: ${HOSTPTR}"
+                  echo "---------------------"
+                fi
+                if [[ -z ${HOSTPTR} ]]
+                then
+                  printf "%b\n" "    ${RED}${HOSTNM} unable to be found in DNS.${RESET} dig ${HOSTNM}" >> "${LOG}"
+                else
+# and that the returned IP matches the found one
+                  if [[ ! ${HOSTPTR} = ${HOSTIP} ]]
+                  then
+                    printf "%b\n" "    ${RED}${HOSTNM} doesn't resolve to ${HOSTIP} in DNS.${RESET} dig ${HOSTNM}" >> "${LOG}"
+                  fi
+                fi
+              fi
+            done
+          done
+        fi
+        if [[ $COUNT -gt 3 ]]
+        then
+          printf "%b\n" "  ${RED}More than 3 nameserver entries found in /etc/resolv.conf${RESET}" >> "${LOG}"
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '21' ]]
+  then
+    echo "Exiting check_resolver()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_routes(66) - 
+### Doc: * Just check an IP address to make sure it uses the management interface
+### Doc: * Check to see if the IP is pingable
+######################
+
+check_routes() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_routes(66)"
+  fi
+
+  if [[ ${CHECK_ROUTES} = 'Yes' ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking general route entries.${RESET}" >> "${LOG}"
+    for i in ${ROUTE_SERVERS}
+    do
+      ROUTE_NAME=$(echo $i | cut -f1 -d:)
+      ROUTE_IP=$(echo $i | cut -f2 -d:)
+
+      check_management_route ${ROUTE_IP} Management
+      if [[ ${DEBUG} = 0 ]]
+      then
+        echo "  ping check of server: ${ROUTE_IP}"
+      fi
+      if [[ ${OS} = 'FreeBSD' ]]
+      then
+        ping ${PINGCT} ${ROUTE_IP} > /dev/null
+      else
+        ping ${ROUTE_IP} ${PINGCT} > /dev/null
+      fi
+      if [[ $? -eq 0 ]]
+      then
+        printf "%b\n" "      ${GREEN}Server ${i} is pingable.${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "      ${RED}Server ${i} is not pingable.${RESET}" >> "${LOG}"
+      fi
+    done
+  fi
+
+  if [[ ${DEBUG} = '66' ]]
+  then
+    echo "Exiting check_routes()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_routetable(22) - 
+### Doc: *
+######################
+
+check_routetable() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_routetable(22)"
+  fi
+  printf "%b\n" "  ${GREEN}Checking routing.${RESET}" >> "${LOG}"
+
+# Check routes on a Linux box
+  if [[ ${OS} = "Linux" ]]
+  then
+    DEFAULTGATEWAY=$(grep -i gateway /etc/sysconfig/network | cut -f2 -d= | sed -e "s/\"//g")
+    DEFAULTDEVICE=$(netstat -rn | grep "^0.0.0.0.*10.109.242.254" | awk '{print $NF}')
+
+    for i in $(ip addr | egrep -v "(^ |lo:)" | awk '{print $2}' | sed -e "s/://g")
+    do
+      if [[ -f /etc/sysconfig/network-scripts/route-${i} ]]
+      then
+        for j in $(egrep -v "^(#|$)" /etc/sysconfig/network-scripts/route-"${i}" | awk '{print $1":"$2":"$3":"$4":"$5}')
+        do
+          CHKADDR='yes'
+# check for '=' implying alternate network route configuration then build a line to be then parsed as if it was a single line
+          echo "${j}" | grep '=' > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+# give me the increment number; 0 - x
+            INCREMENT=$(echo "${j}" | cut -f1 -d= | sed -e "s/ADDRESS//g")
+# get the actual line name; add the '=' to make sure we don't match on 10 _and_ 100
+            CHKADDR="$(echo "${j}" | cut -f1 -d=)="
+# get the actual address; due to the line, it'll have a bunch of ':' following the line
+#            ALTRADDR=$(echo "${j}" | cut -f2 -d= | cut -f1 -d:)
+# search for and get the matching netmask.
+#            ALTRMASK=$(grep "NETMASK${INCREMENT}=" /etc/sysconfig/network-scripts/route-"${i}" | cut -f2 -d=)
+# search for and get the matching gateway.
+            ALTRGATE=$(grep "GATEWAY${INCREMENT}=" /etc/sysconfig/network-scripts/route-"${i}" | cut -f2 -d=)
+
+# build a replacement line
+            j="$ADDRESS/0:via:$ALTRGATE:dev:$i"
+
+# tell the rest to process the line
+            if [[ $CHKADDR = "ADDRESS${INCREMENT}=" ]]
+            then
+              CHKADDR='yes'
+            else
+              CHKADDR='no'
+            fi
+          fi
+
+          if [[ $CHKADDR = 'yes' ]]
+          then
+            ADDR=$(   echo "${j}" | cut -f1 -d:)
+            VIA=$(    echo "${j}" | cut -f2 -d:)
+            GATEWAY=$(echo "${j}" | cut -f3 -d:)
+            DEV=$(    echo "${j}" | cut -f4 -d:)
+            DEVICE=$( echo "${j}" | cut -f5 -d:)
+
+# check ip address and mask
+# check via keyword
+            if [[ ${VIA} != 'via' ]]
+            then
+              printf "%b\n" "    ${RED}${ADDR} line 'via' is incorrect: ${VIA}.${RESET}" >> "${LOG}"
+            fi
+# check gateway
+# check dev keyword; if blank then dev is default to the file name interface name
+            if [[ -z ${DEV} ]]
+            then
+              DEVICE=${i}
+            else
+              if [[ ${DEV} != 'dev' ]]
+              then
+                printf "%b\n" "    ${RED}${ADDR} line 'dev' is incorrect: ${DEV}.${RESET}" >> "${LOG}"
+              fi
+            fi
+# check unnecessary routes
+# if the route is in the default route interface, it's probably needed.
+# if the default route entry has been set (/etc/sysconfig/network)
+# and if the gateway in the file has been set (should have been) /etc/sysconfig/network-scripts/ifcfg-interface
+# and the default gateway is the same as the gateway in the file
+# and the device is not the same as the default device
+            if [[ ! -z ${DEFAULTGATEWAY} ]] && [[ ! -z ${GATEWAY} ]] && [[ ${DEFAULTGATEWAY} = "${GATEWAY}" ]] && [[ ! ${DEVICE} = "${DEFAULTDEVICE}" ]]
+            then
+              printf "%b\n" "    ${YELLOW}${ADDR} uses ${DEFAULTGATEWAY} as its gateway and ${GATEWAY} is the default gateway so the route probably isn't needed.${RESET}" >> "${LOG}"
+            fi
+          fi
+        done
+
+# now check existing routes against the file
+        for j in $(netstat -rn | grep "${i}" | awk '{print $1":"$2}' | egrep -v "(^|:)0.0.0.0(:|$)")
+        do
+          ADDR=$(   echo "${j}" | cut -f1 -d:)
+          GATEWAY=$(echo "${j}" | cut -f2 -d:)
+
+          OUTPUT=$(grep "${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" | grep "${GATEWAY}")
+          if [[ -z ${OUTPUT} ]]
+          then
+# check for the ADDRESS0=address and GATEWAY0=address lines if the via line above doesn't work
+            egrep "ADDRESS.*=${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" > /dev/null
+            if [[ $? -eq 0 ]]
+            then
+              INCREMENT=$(egrep "ADDRESS.*=${ADDR}" /etc/sysconfig/network-scripts/route-"${i}" | cut -f1 -d= | sed -e "s/ADDRESS//g")
+              egrep "GATEWAY${INCREMENT}=${GATEWAY}" /etc/sysconfig/network-scripts/route-"${i}" > /dev/null
+              if [[ $? -gt 0 ]]
+              then
+                printf "%b\n" "    ${RED}Gateway missing from /etc/sysconfig/network-scripts/route-${i}: ADDRESS${INCREMENT}=${ADDR}  GATEWAY${INCREMENT}=${GATEWAY}.${RESET}" >> "${LOG}"
+              fi
+            else
+              printf "%b\n" "    ${RED}Route missing from /etc/sysconfig/network-scripts/route-${i}: ${ADDR} ${GATEWAY}.${RESET}" >> "${LOG}"
+            fi
+          fi
+        done
+      fi
+    done
+  fi
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+# checking the HP configuration. Per the docs, there should be incremented changes
+# for each route. The ROUTE_NUMBER command should also equal the number of routes
+    echo "  Checking HP-UX Route Configuration"
+    COUNT=$(grep -v "^#" /etc/rc.config.d/netconf | grep -c ROUTE_DESTINATION)
+# doing a sort in case there are more than one ROUTE_COUNT entries and then just grabbing the last one
+    ACTUAL=$(grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_COUNT | sort | tail -1 | cut -f2 -d= | sed -e "s/\"//g")
+
+    if [[ ! ${COUNT} = ${ACTUAL} ]]
+    then
+      printf "%b\n" "    ${RED}/etc/rc.config.d/netconf indicates there are ${ACTUAL} route(s) but the configuration defines ${COUNT}.${RESET}" >> "${LOG}"
+    fi
+
+# each ROUTE_DESTINATION line should have unique [x] values
+    for j in $(grep -v "^#" /etc/rc.config.d/netconf | grep ROUTE_DESTINATION | cut -f2 -d\[ | cut -f1 -d\] | sort -n | uniq)
+    do
+      COUNT=$(grep -v "^#" /etc/rc.config.d/netconf | grep -c "ROUTE_DESTINATION\[${j}\]")
+      if [[ ${COUNT} -gt 1 ]]
+      then
+        printf "%b\n" "    ${RED}/etc/rc.config.d/netconf has defined ROUTE_DESTINATION[$j] ${COUNT} times.${RESET}" >> "${LOG}"
+      fi
+    done
+
+  fi
+  if [[ ${DEBUG} = '22' ]]
+  then
+    echo "Exiting check_routetable()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_scanners(38) - 1 check
+### Doc: * checks to make sure the security scanners are using the correct network route
+######################
+
+check_scanners() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_scanners(38)"
+  fi
+  if [[ ${CHECK_SECURITY} = 'Yes' ]]
+  then
+    printf "%b\n" "  ${GREEN}Checking security scanner routes${RESET}" >> "${LOG}"
+    for j in ${SECURITY_SERVERS}
+    do
+      SECSITE=$(echo $j | cut -f1 -d:)
+      SECZONE=$(echo $j | cut -f2 -d:)
+      SECIP=$(echo $j | cut -f3 -d:)
+
+      if [[ ${SERVER_SITE} = ${SECSITE} ]]
+      then
+        if [[ ${SERVER_ZONE} = ${SECZONE} ]]
+        then
+          check_management_route ${SECIP} Management
+        fi
+      fi
+    done
+  fi
+  if [[ ${DEBUG} = '38' ]]
+  then
+    echo "Exiting check_scanners()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_security(36) - 1 check
+### Doc: * checks to see if remote root access via ssh is enabled
+######################
+
+check_security() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_security(36)"
+  fi
+  if [[ $OS = "OSF1" ]]
+  then
+    if [[ -f /etc/ssh2/sshd2_config ]]
+    then
+    SSHD="/etc/sshd2/ssh2_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "HP-UX" ]]
+  then
+    if [[ -f /opt/ssh/etc/sshd_config ]]
+    then
+      SSHD="/opt/ssh/etc/sshd_config"
+    fi
+    if [[ -f /opt/openssh-3.7.1p1/sshd_config ]]
+    then
+      SSHD="/opt/openssh-3.7.1p1/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "SunOS" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+    if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/centrifydc/ssh/sshd_config"
+  fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
+      if [[ -z $PRL ]]
+      then
+        CONSOLE=$(grep -v "^#" /etc/default/login | grep -i console)
+        if [[ -z $CONSOLE ]]
+        then
+          PRL="yes"
+        else
+          PRL="without-password"
+        fi
+      fi
+    fi
+  fi
+
+  if [[ $OS = "Linux" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+    if [[ -f /etc/centrifydc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/centrifydc/ssh/sshd_config"
+    fi
+    if [[ -f /usr/local/etc/sshd_config ]]
+    then
+      SSHD="/usr/local/etc/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ $OS = "FreeBSD" ]]
+  then
+    if [[ -f /etc/ssh/sshd_config ]]
+    then
+      SSHD="/etc/ssh/sshd_config"
+    fi
+
+    if [[ ! -z $SSHD ]]
+    then
+      PRL=$(grep -v "^#" $SSHD | grep -i permitrootlogin | awk '{print $NF}')
+      if [[ -z $PRL ]]
+      then
+        PRL="yes"
+      fi
+    fi
+  fi
+
+  if [[ ${PRL} = 'yes' ]]
+  then
+    printf "%b\n" "  ${RED}Remote root access via ssh is permitted${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '36' ]]
+  then
+    echo "Exiting check_security()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_selinux(29) - 2 checks
+### Doc: * If Linux, checks to see if selinux is enabled
+### Doc: * If so, return the status
+######################
+
+check_selinux() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_selinux(29)"
+  fi
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${DEBUG} = '29' ]]
+    then
+      echo ""
+    fi
+    printf "%b\n" "  ${GREEN}Checking selinux status${RESET}" >> "${LOG}"
+    SESTATUS=$(sestatus | awk '/status/ {print $3}')
+    if [[ ${SESTATUS} = 'enabled' ]]
+    then
+      ENABLED=$(sestatus | awk '/Current mode:/ {print $3}')
+      if [[ ${ENABLED} = 'enforcing' ]]
+      then
+        printf "%b\n" "    ${RED}selinux is in Enforcing mode${RESET}" >> "${LOG}"
+      fi
+      if [[ ${ENABLED} = 'permissive' ]]
+      then
+        printf "%b\n" "    ${YELLOW}selinux is in Permissive mode${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${GREEN}selinux is Disabled${RESET}" >> "${LOG}"
+    fi
+  fi
+  if [[ ${DEBUG} = '29' ]]
+  then
+    echo "Exiting check_selinux()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_services(64) - 
+### Doc: * 
+######################
+
+check_services() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_services(64)"
+  fi
+
+  CHKSERVICES="${SCRIPTS_LOGS}/chkservices.review"
+
+  if [[ ${OS} = 'Linux' ]]
+  then
+    if [[ ${DEBUG} = '64' ]]
+    then
+      echo "  Linux system. Checking config"
+    fi
+# both 7 and lower have chkconfig to show services and status
+    chkconfig > "${CHKSERVICES}"
+    if [[ ${DEBUG} = '64' ]]
+    then
+      echo "  chkconfig output generated"
+    fi
+    if [[ ${OSMAJOR} = '7' ]]
+    then
+      if [[ ${DEBUG} = '64' ]]
+      then
+        echo "  RH7, systemctl output"
+      fi
+      systemctl list-unit-files >> "${CHKSERVICES}"
+    fi
+  fi
+
+  if [[ ${CHECK_SERVICES} = 'Yes' ]]
+  then
+      compare_files chkservices
+  fi
+
+  if [[ ${DEBUG} = '64' ]]
+  then
+    echo "Exiting check_services()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_sudoers(24) - 3 checks
+### Doc: * Verifies sudoers is in a known location
+### Doc: * Verifies that the hostname is in the sudoers file
+### Doc: * verifies that a group configured in sudoers is configured on the system
+######################
+
+check_sudoers() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_sudoers(24)"
+  fi
+  printf "%b\n" "  ${GREEN}Checking sudoers.${RESET}" >> "${LOG}"
+  if [[ -f ${SUDOERS} ]]
+  then
+    if [[ ${DEBUG} = '24' ]]
+    then
+      echo "  Found ${SUDOERS}"
+    fi
+# check the status of the sudoers file. -c check -s strict
+    visudo -c -s > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${RED}sudoers file has errors${RESET} visudo -c -s" >> "${LOG}"
+    fi
+    grep -i ${HOSTNAME} ${SUDOERS} > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+      printf "%b\n" "    ${YELLOW}${SUDOERS} doesn't contain ${HOSTNAME} alias${RESET}" >> "${LOG}"
+    fi
+
+# now check to make sure groups in sudoers are present.
+    if [[ ${DEBUG} = '24' ]]
+    then
+      echo "  Checking groups are a real group."
+    fi
+    for i in $(awk '/^%/{sub(/%/,"",$1);print $1}' ${SUDOERS})
+    do
+      if [[ ${OS} = 'HP-UX' ]] || [[ ${OS} = 'FreeBSD' ]]
+      then
+        if [[ ${DEBUG} = '24' ]]
+        then
+          OUTPUT=$(grep "^${i}:" /etc/group)
+          echo "    Checking ^${i}: in /etc/group. Found: ${OUTPUT}"
+        fi
+        grep "^${i}:" /etc/group > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+          printf "%b\n" "    ${RED}sudoers group ${i} doesn't exist in /etc/group${RESET}" >> "${LOG}"
+        fi
+      else
+        if [[ ${DEBUG} = '24' ]]
+        then
+          OUTPUT=$(getent group ${i})
+          echo "    Checking for ^${i}:. Found: ${OUTPUT}"
+        fi
+        getent group ${i} > /dev/null
+        if [[ $? -ne 0 ]]
+        then
+          printf "%b\n" "    ${RED}sudoers group ${i} doesn't exist${RESET}" >> "${LOG}"
+        fi
+      fi
+    done
+
+  else
+    printf "%b\n" "    ${RED}sudoers file not found${RESET}" >> "${LOG}"
+  fi
+
+  if [[ ${DEBUG} = '24' ]]
+  then
+    echo "Exiting check_sudoers()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_suid(59) - 
+### Doc: * 
+######################
+
+check_suid() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_suid(59)"
+  fi
+
+  if [[ ${CHECK_SUID} = 'Yes' ]]
+  then
+# find gets lost on some Sun boxes.
+    if [[ ${OS} != "SunOS" ]]
+    then
+      CHKSUID="${SCRIPTS_LOGS}/chksuid.review"
+
+      find / -user root -perm -4000 | sort > "${CHKSUID}"
+    fi
+
+    compare_files chksuid
+  fi
+
+  if [[ ${DEBUG} = '59' ]]
+  then
+    echo "Exiting check_suid()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_swap(25) - 1 check
+### Doc: * Verify that swap matches the expected size. equals ram up to 8G and 8G for greater than that.
+######################
+
+check_swap() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_swap(25)"
+  fi
+  APPROVED=$(grep -i "^${HOSTNAME}:Swap" ${SCRIPTS_DATA}/chkserver.exclude | cut -f3 -d:)
+  if [[ $OS = 'Linux' ]]
+  then
+    if [[ -f /usr/sbin/lvdisplay ]]
+    then
+      SWAP=$(awk '/swap/{print $1}' /etc/fstab)
+      SIZE=$(lvdisplay ${SWAP} | awk '/LV Size/{print $3}')
+      TOTAL=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+      MEMORY=$(( ${TOTAL} / 1024 / 1024 + 1 ))
+
+      if [[ ${DEBUG} = '25' ]]
+      then
+        echo "  Values, Swap: ${SWAP}, Size: ${SIZE}, Total: ${TOTAL}, Memory: ${MEMORY}"
+      fi
+
+# try this with free instead
+      SWAP=$(free | awk '/Swap/{print $2}')
+
+      if [[ ${SWAP} = '' ]]
+      then
+        SWAP=0
+      fi
+
+      ADDED=$(echo "${SWAP} / 1024 / 1024" | bc)
+      SIZE=$(echo "(${SWAP} / 1024 + ${ADDED}) / 1024" | bc)
+
+      if [[ ${DEBUG} = '25' ]]
+      then
+        echo "  Values, Swap: ${SWAP}, Size: ${SIZE}, Total: ${TOTAL}, Memory: ${MEMORY}"
+      fi
+
+#if memory <= 8 and swap < memory then error
+#if memory >= 8 and swap < 8 then error
+
+      if [[ ! -z ${APPROVED} ]] && [[ ${SIZE} -eq ${APPROVED} ]]
+      then
+        printf "%b\n" "  ${GREEN}Swap is correct at ${SIZE} Gig.${RESET}" >> "${LOG}"
+      else
+        if [[ ${MEMORY} -gt 8 ]] && [[ ${SIZE} -lt 8 ]]
+        then
+          printf "%b\n" "  ${YELLOW}Memory is ${MEMORY} Gig but Swap is ${SIZE} Gig.${RESET}" >> "${LOG}"
+        else
+          if [[ ${MEMORY} -le 8 ]] && [[ ${SIZE} -lt ${MEMORY} ]]
+          then
+            printf "%b\n" "  ${YELLOW}Swap is ${SIZE} Gig which is less than Memory which is ${MEMORY} Gig.${RESET}" >> "${LOG}"
+          fi
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '25' ]]
+  then
+    echo "Exiting check_swap()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_installation(30) - 1 check
+### Doc: * Do one of the installation directories exist
+######################
+
+check_installation() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_installation(30)"
+  fi
+  if [[ -d /opt/install ]]
+  then
+    printf "%b\n" "  ${YELLOW}The installation directory still exists${RESET}" >> "${LOG}"
+  fi
+
+  if [[ -d /opt/install70 ]]
+  then
+    printf "%b\n" "  ${YELLOW}The new installation directory still exists${RESET}" >> "${LOG}"
+  fi
+
+  if [[ ${DEBUG} = '30' ]]
+  then
+    echo "Exiting check_installation()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_time(26) - 6 checks
+### Doc: *
+######################
+
+check_time() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_time(26)"
+  fi
+# exit if not checking
+  if [[ ! ${CHECK_TIME} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping Time Server Check${RESET}" >> "${LOG}"
+    return
+  fi
+  printf "%b\n" "  ${GREEN}Checking time synchronization.${RESET}" >> "${LOG}"
+  T_MSG=''
+  T_COMMAND=''
+  T_CONFIG=''
+  T_RUNNING=''
+# if chrony is running (Red Hat 7 mostly)
+  ps -e | grep chronyd > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    T_MSG='chrony'
+    T_COMMAND='/bin/chronyc -n sources'
+    T_CONFIG='/etc/chrony.conf'
+    T_RUNNING=$(ps -e | grep chronyd)
+  fi
+
+# everything else; Sun and older Red Hat
+  ps -e | egrep "(xntpd|ntpd)" > /dev/null
+  if [[ $? -eq 0 ]]
+  then
+    T_MSG='ntp'
+    T_COMMAND='/usr/sbin/ntpq -pn'
+    if [[ $OS = 'SunOS' ]]
+    then
+      T_CONFIG='/etc/inet/ntp.conf'
+    else
+      T_CONFIG='/etc/ntp.conf'
+    fi
+    T_RUNNING=$(ps -e | egrep "(xntpd|ntpd)")
+  fi
+
+# is it installed?
+  if [[ ! -z ${T_MSG} ]]
+  then
+    printf "%b\n" "    ${GREEN}Checking ${T_MSG} time server.${RESET}" >> "${LOG}"
+    if [[ ! -z ${T_RUNNING} ]]
+    then
+      printf "%b\n" "    ${GREEN}Time server is running.${RESET}" >> "${LOG}"
+      printf "%b\n" "    ${GREEN}Checking ${T_MSG} time sources.${RESET}" >> "${LOG}"
+
+      for i in ${TIME_SERVERS}
+      do
+        TIME_SITE=$(echo $i | cut -f1 -d:)
+        TIME_IP=$(echo $i | cut -f2 -d:)
+        TIME_PROTOCOL=$(echo $i | cut -f2 -d:)
+        TIME_PORT=$(echo $i | cut -f2 -d:)
+
+        check_management_route ${TIME_IP} Management
+        if [[ ${DEBUG} = 26 ]]
+        then
+          echo "  ping check of time server: ${TIME_IP}"
+        fi
+        if [[ ${OS} = 'FreeBSD' ]]
+        then
+          ping ${PINGCT} ${TIME_IP} > /dev/null
+        else
+          ping ${TIME_IP} ${PINGCT} > /dev/null
+        fi
+        if [[ $? -eq 0 ]]
+        then
+          printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is pingable.${RESET}" >> "${LOG}"
+        else
+          printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not pingable.${RESET}" >> "${LOG}"
+        fi
+        OUTPUT=$(grep -v "^#" ${T_CONFIG} | grep ${TIME_IP})
+        if [[ -z $OUTPUT ]]
+        then
+          printf "%b\n" "      ${RED}GPS Server ${TIME_IP} is not in the ${T_CONFIG} configuration file.${RESET}" >> "${LOG}"
+        else
+          if [[ ${DEBUG} = 26 ]]
+          then
+            echo "  time check of time server: ${TIME_IP}"
+          fi
+          ntpdate -q ${TIME_IP} > /dev/null
+          if [[ $? -eq 0 ]]
+          then
+            printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} is providing time.${RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "      ${RED}GPS Server ${TIME_IP}:${TIME_PROTOCOL}/${TIME_PORT} is not reachable.${RESET} ntpdate -q ${TIME_IP} failed" >> "${LOG}"
+          fi
+
+# Updated NTP check - validates ticker status as well as reachability
+# The modified T_COMMAND/awk pipelines now return a string with only "<status> <reachability>" for the provided IP
+          if [[ $T_MSG = 'chrony' ]]
+          then
+            OUTPUT=$(${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,2,1),$5}')
+          fi
+          if [[ $T_MSG = 'ntp' ]]
+          then
+            OUTPUT=$(${T_COMMAND} | awk /${TIME_IP}/'{print substr($1,1,1),$7}')
+          fi
+# Then these ksh constructs split out the status and reachability values without a fork/exec subshell by
+# trimming a prefix/suffix from the combined string using built-in parameter expansion
+          REACH="${OUTPUT##* }"
+          STATUS="${OUTPUT%% *}"
+          if [[ -z ${REACH} ]]
+          then
+            printf "%b\n" "      ${RED}Unable to determine Reachability for GPS Server ${TIME_IP}.${RESET}" >> "${LOG}"
+          else
+# Reachability should always be 377 - anything else is a problem of some kind, regardless of status or a recent reboot and rerun
+            if [[ $REACH = '377' ]]
+            then
+# But even if reachability is 377, status must be '*' or '+' also or there's a different kind of problem.
+              if [[ $STATUS = '*' ]] || [[ $STATUS = '+' ]]
+              then
+                printf "%b\n" "      ${GREEN}GPS Server ${TIME_IP} Reachability and Status (${REACH}/${STATUS}) are good.${RESET}" >> "${LOG}"
+# commenting out for now as this depends on network; converting to rrdtool graph
+#              else
+#                printf "%b\n" "      ${RED}GPS Server ${TIME_IP} Reachability is good, but Status (${STATUS}) is not.${RESET}" >> "${LOG}"
+              fi
+            else
+              printf "%b\n" "      ${RED}GPS Server ${TIME_IP} Reachability (${REACH}) is not 377. Status is ${STATUS}.${RESET}" >> "${LOG}"
+            fi
+          fi
+        fi
+      done
+
+      DRIFTFILE=$(awk '/^[^#]?driftfile/{df=$2}END{print df}' ${T_CONFIG})
+      DRIFTPATH=$(dirname ${DRIFTFILE})
+      if [[ -d ${DRIFTPATH} ]]
+      then
+        if [[ ! -f ${DRIFTFILE} ]]
+        then
+          printf "%b\n" "      ${YELLOW}${T_MSG} drift file (${DRIFTFILE}) does not exist.${RESET}" >> "${LOG}"
+        fi
+      else
+        printf "%b\n" "      ${RED}${T_MSG} drift path (${DRIFTPATH}) does not exist.${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "    ${RED}Time service is not running.${RESET}" >> "${LOG}"
+    fi
+  else
+    printf "%b\n" "    ${RED}No time servers installed.${RESET}" >> "${LOG}"
+  fi
+  if [[ ${DEBUG} = '26' ]]
+  then
+    echo "Exiting check_time()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_vmware_agent(27) - 3 checks
+### Doc: * See if vmtoolsd is installed
+### Doc: * VMware Agent is running
+### Doc: * verify that the ctl-alt-del configuration is disabled (vm admins have accidentally ctrl-alt-del vms so they're disabled on vmware servers)
+######################
+
+# check ethernet addresses. if 00:50:56, then it's a VMWare vm
+# linux would be 00:50:56
+# solaris would be 0:50:56
+# hpux would be 0x005056
+
+check_vmware_agent() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_vmware_agent(27)"
+  fi
+  if [[ ${VMWARE} = 'Yes' ]]
+  then
+    if [[ -f /usr/bin/vmtoolsd ]] || [[ -f /usr/sbin/vmtoolsd ]]
+    then
+      printf "%b\n" "  ${GREEN}VMWare Agent is installed${RESET}" >> "${LOG}"
+      VMTOOLS=$(ps -e | grep vmtoolsd)
+      if [[ -z ${VMTOOLS} ]]
+      then
+        printf "%b\n" "    ${YELLOW}VMWare Agent is not running${RESET}" >> "${LOG}"
+      else
+        printf "%b\n" "    ${GREEN}VMWare Agent is running${RESET}" >> "${LOG}"
+      fi
+    else
+      printf "%b\n" "  ${YELLOW}VMWare Agent is not installed${RESET}" >> "${LOG}"
+    fi
+# check the status of ctrl-alt-del service but only on virtual machines (hence why it's here)
+    if [[ ${OS} = 'Linux' ]]
+    then
+      if [[ ${OSMAJOR} = '7' ]]
+      then
+        OUTPUT=$(systemctl status ctrl-alt-del.target | grep "Loaded: masked")
+        if [[ -z ${OUTPUT} ]]
+        then
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            systemctl mask ctrl-alt-del.target > /dev/null
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Masked ctrl-alt-del.target to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
+            printf "%b\n" "  ${GREEN}Masked Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del target is not masked${RESET} systemctl status ctrl-alt-del.target" >> "${LOG}"
+          fi
+        fi
+      fi
+# RH6 uses a control-alt-delete.override file to bypass this check. let's check for that first, then check for it being updated even though it's not supposed to be changed.
+      if [[ ${OSMAJOR} = '6' ]]
+      then
+        if [[ ! -f /etc/init/control-alt-delete.override ]]
+        then
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
+            echo "exec true" >> /etc/init/control-alt-delete.override
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Overrode control-alt-delete.conf to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
+            printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del override file does not exist so target is enabled${RESET}" >> "${LOG}"
+          fi
+        fi
+# and fix an override file if it's incorrect
+        OUTPUT=$(egrep "^exec true" /etc/init/control-alt-delete.override)
+        if [[ -z ${OUTPUT} ]]
+        then
+          echo "exec /usr/bin/logger -p authpriv.notice -t init \"Ctrl-Alt-Del was pressed and ignored\"" > /etc/init/control-alt-delete.override
+          echo "exec true" >> /etc/init/control-alt-delete.override
+          if [[ ${CHANGELOG} != '' ]]
+          then
+            echo "Corrected control-alt-delete.override to prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+          fi
+          printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
+        fi
+      fi
+      if [[ ${OSMAJOR} = '5' ]]
+      then
+        OUTPUT=$(grep "^ca::ctrlaltdel" /etc/inittab)
+        if [[ ! -z ${OUTPUT} ]]
+        then
+          if [[ ! -f ${SCRIPTS_DATA}/changefreeze ]]
+          then
+            sed -i -e "s/^ca::ctrlaltdel/#ca::ctrlaltdel/g" /etc/inittab
+            if [[ ${CHANGELOG} != '' ]]
+            then
+              echo "Commented out ca::ctrlaltdel in /etc/inittab prevent accidental reboots of virtual servers." | mailx -s ${HOSTNAME} ${CHANGELOG}
+            fi
+            printf "%b\n" "  ${GREEN}Disabled Ctrl-Alt-Del{RESET}" >> "${LOG}"
+          else
+            printf "%b\n" "  ${RED}Ctrl-Alt-Del is enabled${RESET} grep '^ca::ctrlaltdel' /etc/inittab" >> "${LOG}"
+          fi
+        fi
+      fi
+    fi
+  fi
+  if [[ ${DEBUG} = '27' ]]
+  then
+    echo "Exiting check_vmware_agent()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_vpn_route(46) - 1 check
+### Doc: * Verify access to the VPN via the management interface
+######################
+
+check_vpn_route() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_vpn_route(46)"
+  fi
+# exit if not checking
+  if [[ ! ${CHECK_VPN} = 'Yes' ]]
+  then
+    printf "%b\n" "    ${GREEN}Skipping VPN Route Check${RESET}" >> "${LOG}"
+    return
+  fi
+  printf "%b\n" "  ${GREEN}Checking VPN Routes.${RESET}" >> "${LOG}"
+  for routes in ${VPN_ROUTES}
+  do
+    check_management_route ${routes} Management
+  done
+  if [[ ${DEBUG} = '46' ]]
+  then
+    echo "Exiting check_vpn_route()"
+  fi
+}
+
+
+######################
+### Doc: Function: check_vxprint_vxdisk(58) - 4 checks
+### Doc: * Checks for the number of stale drives
+### Doc: * Checks for the number of failed drives
+### Doc: * Report if there are not 4 spare drives
+### Doc: * Report if data is found on a spare drive - typically drives are moved back when replacements are found
+######################
+
+check_vxprint_vxdisk() {
+  if [[ ! ${DEBUG} = 'no' ]]
+  then
+    echo "Entering check_vxprint_vxdisk(58)"
+  fi
+
+  if [[ ${OS} = 'HP-UX' ]]
+  then
+    if [[ -f /sbin/vxprint ]] && [[ -f /sbin/vxdisk ]]
+    then
+      printf "%b\n" "  ${GREEN}Checking vxvm Status${RESET}" >> "${LOG}"
+
+      VXPRINTOUT="${SCRIPTS_LOGS}/vxprint.output"
+      VXDISKOUT="${SCRIPTS_LOGS}/vxdisk.output"
+
+      vxprint > ${VXPRINTOUT}
+      vxdisk list > ${VXDISKOUT}
+
+# Test for stale condition
+      NUMX=$(grep -ci "stale" ${VXPRINTOUT})
+      if [[ ${NUMX} -gt 0 ]]
+      then
+        printf "%b\n" "    ${RED}Stale (failing) drives found: ${NUMX}.${RESET}" >> "${LOG}"
+      fi
+
+# Test for failed drive
+      NUMF=$(grep -ci "fail" ${VXDISKOUT})
+      if [[ ${NUMF} -gt 0 ]]
+      then
+        printf "%b\n" "    ${RED}Failed drives found: ${NUMF}.${RESET}" >> "${LOG}"
+      fi
+
+# Spares should be 4
+      NUMS=$(grep -c "spare" ${VXDISKOUT})
+      if [[ ${NUMS} -ne 4 ]]
+      then
+        printf "%b\n" "    ${YELLOW}Incorrect number of spares found: ${NUMS}.${RESET}" >> "${LOG}"
+      fi
+
+      for drive in $(awk '/spare/ {print $3}' ${VXDISKOUT})
+      do
+        DATA=$(awk -v search="$drive" '$2 ~ search && $7 != "SPARE" {print $2"  "$3}' ${VXPRINTOUT})
+        if [ ! -z ${DATA} ]
+        then
+          printf "%b\n" "    ${YELLOW}Data found on spare drive ${drive}: ${DATA}.${RESET}" >> "${LOG}"
+        fi
+      done
+    fi
+  fi
+
+  if [[ ${DEBUG} = '58' ]]
+  then
+    echo "Exiting check_vxprint_vxdisk()"
+  fi
+}
+
+
+# show documentation for the script
+if [[ ! -z $1 ]] && [[ "$1" = '-h' ]]
+then
+  grep "### Doc: " $0 | grep -v grep | sed -e "s/### Doc: //g" | sed -e "s/^Function:/\nFunction:/g"
+  exit 1
+fi
+
+######################
+### End of Functions
+######################
+
+echo "" > "${LOG}"
+echo "================================" >> "${LOG}"
+echo "Running System Validation Script" >> "${LOG}"
+echo "${VERSION}" >> "${LOG}"
+echo "================================" >> "${LOG}"
+echo "" >> "${LOG}"
+
+printf "%b\n" "${GREEN}Passed${RESET} - Test or value was successful" >> "${LOG}"
+printf "%b\n" "${YELLOW}Warning${RESET} - Setting should be reviewed and corrected if appropriate" >> "${LOG}"
+printf "%b\n" "${RED}Error${RESET} - Must be corrected due to vulnerability or system stability issue" >> "${LOG}"
+echo "" >> "${LOG}"
+
+echo "Note:"
+echo "  Ping checks have a count of 1"
+echo "  Port access checks via netcat have a wait of 2"
+echo "  ./chkserver debug [number] displays more messages for that function"
+echo "  ./chkserver view [number] executes just the single function. System config checks are excluded from this."
+echo ""
+
+
+###########
+### Linux
+### Red Hat
+###########
+
+if [[ ${OS} = "Linux" ]]
+then
+  if [[ $(id -u) -ne 0 ]]
+  then
+    printf "%b" "${RED}Due to the checks, this script must be run by root.${RESET}\n"
+    exit 0
+  fi
+fi
+
+###########
+### HP-UX
+###########
+
+if [[ ${OS} = "HP-UX" ]]
+then
+  if [[ $(id -u) -ne 0 ]]
+  then
+    printf "%b\n" "${RED}Due to the checks, this script must be run by root.${RESET}"
+    exit 0
+  fi
+fi
+
+###########
+### Solaris
+### SunOS
+###########
+
+if [[ ${OS} = "SunOS" ]]
+then
+  if [[ $(id | cut -f2 -d= | cut -f1 -d\() -ne 0 ]]
+  then
+    printf "%b\n" "${RED}Due to the checks, this script must be run by root.${RESET}"
+    exit 0
+  fi
+fi
+
+
+
+##########
+### Start the function checks
+##########
+
+echo "${VERSION}"
+
+
+###############
+####
+#### !!!!!IMPORTANT!!!!!
+#### Execute any function outside the loop the first time it needs to be run. It's easier to troubleshoot otherwise.
+####
+##############
+
+for i in check_hostname:7 check_sudoers:24 check_selinux:29 check_resolver:21 check_routetable:22 check_time:26 check_email:32 check_management:9 check_redhat_subscription:19 check_interfaces:33 check_swap:25
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+for i in check_crash:39 check_logs:12 check_group_membership:6 check_default_passwords:4 check_scanners:38 check_security:36 check_privileged_access:18 check_active_employees:1
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+# disable as it's really not helping; lots of deleted files on all systems.
+# function stil exists though
+#check_lsof:13
+
+for i in check_kubernetes:11 check_defunct_processes:42 check_disk_suite:31 check_eeprom:37 check_disk_space:31 check_oomkiller:34 check_vmware_agent:27 check_vpn_route:46 check_cfg2html:28
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+# disable as unable to actually confirm floppy. it's a device even when not configured in vmware.
+#check_floppy:35
+for i in check_ksh:10 check_removeips:20 check_nrpe:15
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+for i in check_artifactory:57 check_vxprint_vxdisk:58 check_suid:59 check_guid:60 check_apa:61 check_passwd:62 check_services:64 check_packages:65 check_routes:66 check_grpck:67 check_inode_usage:68 
+do
+  FUNCTION_CALL=$(echo $i | cut -f1 -d:)
+  FUNCTION_NUMBER=$(echo $i | cut -f2 -d:)
+
+  if [[ $VIEW -eq $FUNCTION_NUMBER ]] || [[ $VIEW -eq 0 ]]
+  then
+    $FUNCTION_CALL
+  fi
+done
+
+
+# if viewing only one bit, don't do a config check
+if [[ $VIEW -eq 0 ]]
+then
+# these checks are pulled from the auto-generated chkserver.input file.
+  if [[ -f ${SCRIPTS_DATA}/chkserver.input ]]
+  then
+
+    if [[ ! ${DEBUG} = 'no' ]]
+    then
+      echo "Entering chkserver.input system configuration check"
+    fi
+
+# checking for server specific checks or all server checks.
+    for j in $(egrep "^(${HOSTNAME}|\*):" ${SCRIPTS_DATA}/chkserver.input)
+    do
+
+      FIELD2=$(echo "${j}" | cut -f2 -d:)
+      FIELD3=$(echo "${j}" | cut -f3 -d:)
+      FIELD4=$(echo "${j}" | cut -f4 -d:)
+      FIELD5=$(echo "${j}" | cut -f5 -d:)
+      FIELD6=$(echo "${j}" | cut -f6 -d:)
+
+      if [[ ${FIELD2} = 'CPU' ]]
+      then
+        check_config_cpus
+      fi
+    
+      if [[ ${FIELD2} = 'Memory' ]]
+      then
+        check_config_memory
+      fi
+    
+      if [[ ${FIELD2} = 'IP' ]]
+      then
+        check_config_addresses
+      fi
+
+      if [[ ${FIELD2} = 'ServiceAccount' ]]
+      then
+        check_config_service_account
+      fi
+    
+      if [[ ${FIELD2} = 'Group' ]]
+      then
+        check_config_group
+      fi
+
+      if [[ ${FIELD2} = 'Sudoers' ]]
+      then
+        check_config_sudoers
+    fi
+
+# it's supposed to be installed, let's check
+      if [[ ${FIELD2} = 'OpNet' ]]
+      then
+        check_config_opnet
+      fi
+
+# check to see if an account is supposed to be allowed to use cron
+      if [[ ${FIELD2} = 'Cron' ]]
+      then
+        check_config_cron
+      fi
+
+# check for services that should be enabled.
+      if [[ ${FIELD2} = 'Enabled' ]]
+      then
+        check_config_enabled
+      fi
+
+# check for services that should not be enabled.
+      if [[ ${FIELD2} = 'Disabled' ]]
+      then
+        check_config_disabled
+      fi
+
+# check for services that should be running.
+      if [[ ${FIELD2} = 'Running' ]]
+      then
+        check_config_running
+      fi
+
+# check for versionlock requirements
+      if [[ ${FIELD2} = 'Versionlock' ]]
+      then
+        check_config_versionlock
+      fi
+
+    done
+
+# this must be run only after the configuation check due to checking for the gateway in the configs in the system configuration
+    check_default_gateway
+
+  else 
+    printf "%b\n" "${RED}chkserver.input file not found${RESET}" >> "${LOG}"
+  fi
+fi
+
+print "\n+++chkserver script run completed: `date +\"%Y%m%d %H%M%S\"`\n" >> "${LOG}"
+
+if [[ ! -z $1 ]]
+then
+  if [[ $1 = 'p' ]]
+  then
+    ${SCRIPTS_BINS}/profile
+  else
+    cat "${LOG}"
+  fi
+fi
+

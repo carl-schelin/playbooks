@@ -1,0 +1,18 @@
+function swapg {
+  $RRD/rrdtool graph $GRAPHS/$2.png \
+    --width $4 \
+    --height $5 \
+    --start now-$3 \
+    DEF:swap_avail=$RRDDATA/memory.rrd:swap_avail:AVERAGE \
+    DEF:swap_used=$RRDDATA/memory.rrd:swap_used:AVERAGE \
+    CDEF:total=swap_used,swap_avail,+ \
+    CDEF:crit=97,100,/,total,* \
+    CDEF:maj=94,100,/,total,* \
+    CDEF:warn=89,100,/,total,* \
+    AREA:swap_used#FF0000: \
+    AREA:swap_avail#339900::STACK \
+    LINE1:crit#ff0000 \
+    LINE1:maj#ffff00 \
+    LINE1:warn#0000ff
+}
+

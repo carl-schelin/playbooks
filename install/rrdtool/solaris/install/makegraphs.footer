@@ -1,0 +1,51 @@
+function dograph {
+    echo $1
+    $2g $1 $1-day-big 1d 1000 300 $3
+    $2g $1 $1-day 1d 400 120 $3
+    $2g $1 $1-week-big 7d 1000 300 $3
+    $2g $1 $1-week 7d 400 120 $3
+    $2g $1 $1-long-big 50d 1000 300 $3
+    $2g $1 $1-long 50d 900 40 $3
+}
+
+#rm $GRAPHS/*.png
+
+
+dograph lo lo
+dograph mem mem
+dograph swap swap
+dograph cpu cpu
+dograph load load
+
+for i in $INTERFACES
+do
+  INT1=`echo $i | cut -f1 -d:`
+  INT2=`echo $i | cut -f2 -d:`
+
+  dograph $INT1 $INT2
+done
+
+for i in $DRIVES
+do
+  DRV1=`echo $i | cut -f1 -d:`
+  DRV2=`echo $i | cut -f2 -d:`
+
+  dograph $DRV1 hdd $DRV2
+  dograph $DRV1 util $DRV2
+done
+
+for i in $CPUS
+do
+  dograph $i icpu
+done
+
+DATE=`date +"%H"`
+
+if [[ $DATE -eq 0 ]]
+then
+  cat /dev/null > /var/rrdtool/data/iostat.output
+  cat /dev/null > /var/rrdtool/data/vmstat.output
+fi
+
+/opt/unixsuite/rrdtool/makethumbs
+

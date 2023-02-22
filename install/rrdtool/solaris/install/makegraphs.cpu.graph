@@ -1,0 +1,23 @@
+    AREA:boREPLACE#DDDDDD: \
+    LINE1:sysREPLACE#COLORSYS:'System':STACK \
+    LINE1:lREPLACE#COLORSYS::STACK \
+      VDEF:maxREPLACES=sysREPLACE,MAXIMUM \
+      VDEF:minREPLACES=sysREPLACE,MINIMUM \
+      VDEF:avgREPLACES=sysREPLACE,AVERAGE \
+      GPRINT:maxREPLACES:"Max %6.2lf%%" \
+      GPRINT:minREPLACES:"Min %6.2lf%%" \
+      GPRINT:avgREPLACES:"Avg %6.2lf%%\n" \
+    LINE1:usrREPLACE#COLORUSR:'User  ':STACK \
+    LINE1:lREPLACE#COLORUSR::STACK \
+      VDEF:maxREPLACEU=usrREPLACE,MAXIMUM \
+      VDEF:minREPLACEU=usrREPLACE,MINIMUM \
+      VDEF:avgREPLACEU=usrREPLACE,AVERAGE \
+      VDEF:maxREPLACEI=idlREPLACE,MAXIMUM \
+      VDEF:minREPLACEI=idlREPLACE,MINIMUM \
+      VDEF:avgREPLACEI=idlREPLACE,AVERAGE \
+      GPRINT:maxREPLACEU:"Max %6.2lf%%" \
+      GPRINT:minREPLACEU:"Min %6.2lf%%" \
+      GPRINT:avgREPLACEU:"Avg %6.2lf%%\n" \
+      GPRINT:maxREPLACEI:"  Idle    Max %6.2lf%%" \
+      GPRINT:minREPLACEI:"Min %6.2lf%%" \
+      GPRINT:avgREPLACEI:"Avg %6.2lf%%\n" \

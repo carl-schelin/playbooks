@@ -1,0 +1,6 @@
+# Store data from the output of netstat -iar
+function netr {
+  if [[ ! -f $RRDDATA/net.rrd ]]
+  then
+    echo "creating net.rrd"
+    $RRD/rrdtool create $RRDDATA/net.rrd --step $STEP \

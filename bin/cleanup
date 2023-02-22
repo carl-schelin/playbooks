@@ -1,0 +1,118 @@
+#!/bin/ksh
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+if [[ -d /etc/sysconfig/network-scripts ]]
+then
+  chmod 644 /etc/sysconfig/network-scripts/ifcfg-*
+  chmod 644 /etc/sysconfig/network-scripts/route-*
+fi
+
+if [[ -f /tmp/newuser ]]
+then
+  rm /tmp/newuser
+  rm /tmp/newuser.add
+  rm /tmp/newuser.pw
+  rm /tmp/newuser.users
+fi
+
+if [[ ! -f /usr/bin/ksh ]]
+then
+  if [[ -f /bin/ksh ]]
+  then
+    ln -s /bin/ksh /usr/bin/ksh
+  fi
+fi
+
+# change ownership of unixsvc authorized_keys file
+UNIXSVC=$(grep "^unixsvc:" /etc/passwd | cut -f6 -d:)
+if [[ ! -z ${UNIXSVC} ]]
+then
+  chown unixsvc:unixsvc "${UNIXSVC}"/.ssh/*
+  chmod 600 "${UNIXSVC}"/.ssh/*
+  chmod 700 "${UNIXSVC}"/.ssh
+fi
+
+# remove log files older than 10 days
+find ${SCRIPTS_LOGS} -name logfile.* -mtime +10 -exec rm {} \;
+
+# and remove old log files than 90 days (3 files)
+find ${SCRIPTS_LOGS} -name unixsuite.log.* -mtime +92 -exec rm {} \;
+
+
+# standardizing rsync to /usr/local/bin/rsync so the unixsuite scripts can be rsync'd instead of just copied.
+if [[ ! -f /usr/local/bin/rsync ]]
+then
+  if [[ -f /usr/bin/rsync ]]
+  then
+    ln /usr/bin/rsync /usr/local/bin/rsync
+  fi
+fi
+
+# clean up old crash dump files
+if [[ -f /var/crash ]]
+then
+  find /var/crash -atime +32 -exec rm -f {} \;
+
+# delete any empty directories now
+  cd /var/crash
+  for i in `find . -maxdepth 1 -type d -empty`
+  do
+    rmdir $i
+  done
+
+fi
+
+# install the /usr/local/bin scripts as required.
+# this depends on which server we're on
+# this is for the various servers
+
+for i in ${MANAGEMENTSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    cp ${SCRIPTS_INSTALL}/scripts/inventory /usr/local/bin/
+    cp ${SCRIPTS_INSTALL}/scripts/newserver /usr/local/bin/
+  fi
+done
+
+for i in ${TOOLSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]] 
+  then
+    for j in inventory newserver import context searchansible
+    do
+      cp ${SCRIPTS_INSTALL}/scripts/$j /usr/local/bin/
+    done
+  fi
+done
+
+for i in ${GITSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    cp ${SCRIPTS_INSTALL}/scripts/context /usr/local/bin/
+  fi
+done
+
+for i in ${DEVSERVER}
+do
+  if [[ ${HOSTNAME} = ${i} ]]
+  then
+    for j in check checkall checkdiff checkin checkinstall checkout checkrw install playbooks
+    do
+      cp ${SCRIPTS_INSTALL}/scripts/$j /usr/local/bin/
+    done
+  fi
+done
+

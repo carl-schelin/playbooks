@@ -1,0 +1,66 @@
+#!/bin/ksh
+
+# chkif by Carl Schelin
+# updated to redirect output to SUITE/etc/ifconfig.output
+# updated to capture netstat output; checking for collisions
+# changed netstat output to go to a unique file
+# added netstat capture for linux; capturing the collisions and other errors to check against
+# added route table capture
+# modified route table to show the first two or three columns based on the OS
+# added a general capture of the route table (although it should be in the output of cfg2html as well)
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+if [[ $OS = "SunOS" ]]
+then
+  /usr/sbin/ifconfig -a > "${SCRIPTS_LOGS}/ifconfig.output"
+  /usr/bin/netstat -i | /usr/bin/awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$6"\t"$8"\t"$9}' > "${SCRIPTS_LOGS}/netstat.output"
+  /usr/bin/netstat -rvn | awk '{printf "%21s %21s %21s\n", $1, $2, $3}' > "${SCRIPTS_LOGS}/routes.output"
+  /usr/bin/netstat -rvn > "${SCRIPTS_LOGS}/routes"
+fi
+
+if [[ $OS = "Linux" ]]
+then
+  /sbin/ifconfig > "${SCRIPTS_LOGS}/ifconfig.output"
+  /bin/netstat -i | /usr/bin/awk '{print $1"\t"$5"\t"$6"\t"$7"\t"$9"\t"$10"\t"$11}' > "${SCRIPTS_LOGS}/netstat.output"
+  /bin/netstat -rn | awk '{printf "%21s %21s %21s\n", $1, $2, $3}' > "${SCRIPTS_LOGS}/routes.output"
+  /bin/netstat -rn > "${SCRIPTS_LOGS}/routes"
+fi
+
+if [[ $OS = "OSF1" ]]
+then
+  /sbin/ifconfig -a > "${SCRIPTS_LOGS}/ifconfig.output"
+  /usr/sbin/netstat -rn | awk '{printf "%21s %21s\n", $1, $2}' > "${SCRIPTS_LOGS}/routes.output"
+  /usr/sbin/netstat -rn > "${SCRIPTS_LOGS}/routes"
+fi
+
+if [[ $OS = "HP-UX" ]]
+then
+  /usr/sbin/lanscan > "${SCRIPTS_LOGS}/ifconfig.output"
+  /usr/sbin/ifconfig lo0 >> "${SCRIPTS_LOGS}/ifconfig.output"
+  for i in $(/usr/sbin/lanscan | /usr/bin/grep UP | /usr/bin/awk '{print $5}')
+  do
+    /usr/sbin/ifconfig "${i}" >> "${SCRIPTS_LOGS}/ifconfig.output"
+  done
+  /usr/bin/netstat -i | /usr/bin/awk '{print $1"\t"$6"\t"$8"\t"$9}' > "${SCRIPTS_LOGS}/netstat.output"
+  /usr/bin/netstat -rvn | awk '{printf "%21s %21s\n", $1, $2}' > "${SCRIPTS_LOGS}/routes.output"
+  /usr/bin/netstat -rvn > "${SCRIPTS_LOGS}/routes"
+fi
+
+if [[ $OS = "FreeBSD" ]]
+then
+  /sbin/ifconfig -u > "${SCRIPTS_LOGS}/ifconfig.output"
+  /usr/bin/netstat -rn | awk '{printf "%21s %21s\n", $1, $2}' > "${SCRIPTS_LOGS}/routes.output"
+  /usr/bin/netstat -rn > "${SCRIPTS_LOGS}/routes"
+fi
+

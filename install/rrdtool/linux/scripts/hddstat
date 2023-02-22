@@ -1,0 +1,17 @@
+#!/bin/ksh
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  R) STAT=`/bin/grep "$2 " $DATA/iostat.output | /usr/bin/tail -1 | /usr/bin/awk '{print $8}' | /usr/bin/cut -f1 -d.`
+     STAT=$(($STAT * 1024))
+     echo $STAT
+     ;;
+  W) STAT=`/bin/grep "$2 " $DATA/iostat.output | /usr/bin/tail -1 | /usr/bin/awk '{print $9}' | /usr/bin/cut -f1 -d.`
+     STAT=$(($STAT * 1024))
+     echo $STAT
+     ;;
+  U) /bin/grep "$2 " $DATA/iostat.output | /usr/bin/tail -1 | /usr/bin/awk '{print $NF}' | /usr/bin/cut -f1 -d.
+     ;;
+esac
+

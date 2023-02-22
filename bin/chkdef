@@ -1,0 +1,20 @@
+#!/bin/ksh
+
+# Report on defunct processes
+
+#BASENAME=$(basename "${0}")
+DIRNAME=$(dirname "${0}")
+
+if [[ ! -f ${DIRNAME}/../.config ]]
+then
+  echo "Unable to locate ${DIRNAME}/../.config. Exiting."
+  exit 1
+fi
+
+# Source the configuration file
+. "${DIRNAME}"/../.config
+
+ps -ef | grep defunct | grep -v grep > ${SCRIPTS_LOGS}/defunct.data
+
+exit 0
+

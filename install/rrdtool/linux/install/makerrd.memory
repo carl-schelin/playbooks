@@ -1,0 +1,23 @@
+# Store memory and swap related information
+function memoryr {
+  if [[ ! -f $RRDDATA/memory.rrd ]]
+  then
+    echo "creating memory.rrd"
+    $RRD/rrdtool create $RRDDATA/memory.rrd --step $STEP \
+      DS:rproc:GAUGE:$HEARTBEAT:0:U      \
+      DS:bproc:GAUGE:$HEARTBEAT:0:U      \
+      DS:page_in:GAUGE:$HEARTBEAT:0:U    \
+      DS:page_out:GAUGE:$HEARTBEAT:0:U   \
+      DS:swap_avail:GAUGE:$HEARTBEAT:0:U \
+      DS:swap_used:GAUGE:$HEARTBEAT:0:U  \
+      DS:cached:GAUGE:$HEARTBEAT:0:U     \
+      DS:buffer:GAUGE:$HEARTBEAT:0:U     \
+      DS:free:GAUGE:$HEARTBEAT:0:U       \
+      DS:total:GAUGE:$HEARTBEAT:0:U      \
+      RRA:AVERAGE:0.5:$MINUTE:1440       \
+      RRA:AVERAGE:0.5:$HOUR:1440
+  else
+    echo "memory.rrd already exists"
+  fi
+}
+

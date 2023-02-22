@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+# retrieve queue usage; runqueue blockedqueue
+
+. /opt/unixsuite/rrdtool/config
+
+case $1 in
+  R) /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $1}'
+     ;;
+  B) /usr/bin/tail -1 $DATA/vmstat.output | /usr/bin/awk '{print $2}'
+     ;;
+esac
+

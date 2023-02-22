@@ -1,0 +1,6 @@
+
+function hddr {
+  if [[ ! -f $RRDDATA/hdd.rrd ]]
+  then
+    echo "creating hdd.rrd"
+    $RRD/rrdtool create $RRDDATA/hdd.rrd --step $STEP \
