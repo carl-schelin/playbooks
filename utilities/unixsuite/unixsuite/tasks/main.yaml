@@ -44,8 +44,8 @@
     group: sysadmin
     mode: 0770
   with_items:
-    - 0100
-    - always
+    - '0100'
+    - 'always'
 
 - name: Install the scripts
   ansible.builtin.copy:
