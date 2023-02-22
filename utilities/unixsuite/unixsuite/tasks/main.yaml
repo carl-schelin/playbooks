@@ -49,18 +49,16 @@
 
 - name: Install the scripts
   ansible.builtin.copy:
-    source: '.config'
-    path: '/opt/unixsuite/.config'
-    state: present
+    src: '../files/.config'
+    dest: '/opt/unixsuite/.config'
     owner: unixsvc
     group: sysadmin
     mode: 0660
 
 - name: Install the scripts
   ansible.builtin.copy:
-    source: '../files/{{ item }}'
-    path: '/opt/unixsuite/bin/{{ item }}'
-    state: present
+    src: '../files/{{ item }}'
+    dest: '/opt/unixsuite/bin/{{ item }}'
     owner: unixsvc
     group: sysadmin
     mode: 0770
