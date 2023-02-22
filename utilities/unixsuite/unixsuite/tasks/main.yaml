@@ -58,7 +58,7 @@
 
 - name: Install the scripts
   ansible.builtin.copy:
-    source: '{{ item }}'
+    source: '../files/{{ item }}'
     path: '/opt/unixsuite/bin/{{ item }}'
     state: present
     owner: unixsvc
