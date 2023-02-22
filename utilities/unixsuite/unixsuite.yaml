@@ -1,9 +1,0 @@
-#  ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder' unixsuite.yaml
----
-- hosts: "{{ pattern }}"
-  become: true
-  become_user: root
-  gather_facts: no
-
-  roles:
-    - unixsuite

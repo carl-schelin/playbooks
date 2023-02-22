@@ -118,7 +118,7 @@
     src: '/opt/unixsuite/bin/{{ item.src }}'
     dest: '/opt/unixsuite/run.d/0100/{{ item.dest }}'
     state: hard
-  loop:
+  with_items:
     - { src: chkserver,      dest: chkserver }
     - { src: chksys,         dest: chksys }
     - { src: chkusers,       dest: chkusers }
