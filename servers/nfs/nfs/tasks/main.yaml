@@ -21,7 +21,7 @@
     - rpc-bind
     - mountd
 
-- name: Adding service network restrictions
+- name: Adding network restrictions
   firewalld:
     zone: nfs
     source: "{{ item }}"
