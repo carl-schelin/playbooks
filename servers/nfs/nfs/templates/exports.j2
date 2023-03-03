@@ -1,0 +1,4 @@
+{{ nfs_dir.root_dir }}              {{ nfs.subnet_range }}(rw,sync,no_subtree_check,crossmnt,fsid=0)
+{{ nfs_dir.registry_mount_location }}     {{ nfs.subnet_range }}(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure,fsid=1)
+{{ nfs_dir.storage_mount_location }}     {{ nfs.subnet_range }}(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure,fsid=2)
+
