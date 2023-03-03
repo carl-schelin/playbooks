@@ -1,6 +1,3 @@
-# Carl Schelin
-# Ensure all certificates are installed
-# ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=boulder:&elk' certificates.yaml -C
 ---
 - hosts: "{{ pattern }}"
   become: true

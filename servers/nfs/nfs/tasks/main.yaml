@@ -1,0 +1,80 @@
+---
+- name: Install NFS
+  dnf:
+    name: ['nfs-utils', 'python3-libselinux']
+    state: present
+
+- name: Create the new NFS zone
+  firewalld:
+    zone: nfs
+    state: present
+    permanent: yes
+
+- name: Adding NFS Services
+  firewalld:
+    zone: nfs
+    service: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - nfs
+    - rpc-bind
+    - mountd
+
+- name: Adding service network restrictions
+  firewalld:
+    zone: nfs
+    source: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - "{{ nfs.subnet_range }}"
+
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+
+- name: Create the NFS root directory
+  file:
+    path: "{{ nfs_dir.root_dir }}"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: Create the final NFS registry mount point
+  file:
+    path: "{{ nfs_dir.registry_mount_location }}"
+    state: directory
+    mode: 0755
+    group: nobody
+    owner: nobody
+
+- name: Create the final NFS storage mount point
+  file:
+    path: "{{ nfs_dir.storage_mount_location }}"
+    state: directory
+    mode: 0755
+    group: nobody
+    owner: nobody
+
+- name: Write out exports file
+  template:
+    src: exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Exporting the shares
+  shell: exportfs -ra
+
+- name: Start the nfs-server Service
+  systemd:
+    name: nfs-server
+    enabled: yes
+    state: restarted
+
