@@ -5,6 +5,20 @@ This is the playbook subdirectory for Kubernetes work.
 
 ### Sections
 
+    - { role: bridge,       tags: ["bridge"]       }
+    - { role: swap,         tags: ["swap"]         }
+    - { role: packages,     tags: ["packages"]     }
+    - { role: clustername,  tags: ["clustername"]  }
+    - { role: kubelet,      tags: ["kubelet"]      }
+    - { role: certificates, tags: ["certificates"] }
+    - { role: logging,      tags: ["logging"]      }
+    - { role: permissions,  tags: ["permissions"]  }
+    - { role: kubeadm,      tags: ["kubeadm"]      }
+    - { role: versionlock,  tags: ["versionlock"]  }
+    - { role: postinstall,  tags: ["postinstall"]  }
+
+
+The kubernetes.yaml file can be run with tags= if you need to run a specific play.
 
 #### Bridge
 
@@ -14,24 +28,63 @@ The core-dns container in Kubernetes has a bug in that if a container shares a w
 Since there are generally a pair of core-dns containers, the resolution lookup can succeed which throws off troubleshooting.
 The solution is to enable the three bridge kernel rules and enable the bridge module.
 
+#### Swap
+
+Kubernetes requires that swap be disabled on all nodes. This playbook removes swap from the system including as an option in the kernel.
+
+#### Packages
+
+
+
+#### Clustername
+
+
+
+#### Kubelet
 
 
 
 
+#### Certificates
 
 
 
-The playbooks are created to be run in order vs trying to figure out which ones to run.
 
-Playbooks 01-07 were used to initially set up the Kubernetes servers for the 1.14.7 installations.
+#### Logging
 
-Playbook 08 is a security update, making sure files and directories are correct.
 
-Playbook 09 is used to tear down a kubernetes cluster that was created by kubeadm. Deletes all directories, etc.
 
-Playbooks 10-11 is used to upgrade the cluster binaries to 1.15.7. After the upgrade, log in to the first master and as root upgrade the server to 1.15.7. Then run playbook 11 which restarts both kubelet and docker
+#### Permissions
 
-  * Removes the 1.14.7 versionlock
-  * Adds the 1.15.7 versionlock
-  * Upgrades kubelet, kubectl, and kubeadm
+This is a security update, making sure all files and directories are correct.
+
+
+#### Kubeadm
+
+At this step, you'll log in to the control nodes and run kubeadm in order to install kubernetes.
+
+
+#### Versionlock
+
+This play ensures that during upgrades, you don't accidentally upgrade the Kubernetes componants.
+
+
+### Postinstall
+
+This play should generally be extracted out to perform the above tasks.
+
+
+
+### Plays
+
+Run the following commands to run the playbook
+
+
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0" kubernetes.yaml --tags=bridge
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0" kubernetes.yaml --tags=bridge
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0" kubernetes.yaml --tags=bridge
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1" kubernetes.yaml --tags=bridge
+
+
+
 

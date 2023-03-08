@@ -1,0 +1,29 @@
+# there's just the one server so call it out specifically
+---
+- hosts: "bldr0cuomrepo1"
+  become: yes
+  become_user: root
+
+  pre_tasks:
+  - name: Make sure ansible is reasonably current
+    assert:
+      that:
+        - "{{ ansible_version.string is version_compare('2.9', '>=') }}"
+      msg: This playbook works best when Ansible 2.9 or above is installed
+
+  - name: Include common variables
+    include_vars:
+      file: ../../vars/common.yaml
+    tags:
+      - always
+
+  - name: Include boulder specific variables
+    include_vars:
+      file: ../../vars/boulder.yaml
+    when: "'bldr0' in inventory_hostname"
+    tags:
+      - always
+
+  roles:
+    - { role: dns,   tags: ["repository"] }
+

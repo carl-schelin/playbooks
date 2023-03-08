@@ -1,0 +1,19 @@
+---
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Start the registry Service
+  systemd:
+    name: docker-directory
+    state: restarted
+    enabled: yes
+
+- name: Start the httpd Service
+  systemd:
+    name: httpd
+    state: restarted
+    enabled: yes
+
