@@ -1,0 +1,61 @@
+<html>
+<head>
+<title>List of Docker Images</title>
+</head>
+<body>
+
+<h3>Docker Images</h3>
+
+<table>
+<tr>
+  <th>Docker Image</th>
+  <th>Docker Tag</th>
+  <th>Pull String</th>
+</tr>
+<?php
+
+$dirpath = "/var/lib/registry/docker/registry/v2/repositories";
+
+$directories = array_diff(scandir($dirpath), array("..", "."));
+
+foreach ($directories as $key => $value) {
+
+  $subdirectories = array_diff(scandir($dirpath . "/" . $value), array("..", "."));
+
+  foreach ($subdirectories as $key => $subdir) {
+
+    if ($subdir == '_manifests') {
+      $manifests = array_diff(scandir($dirpath . "/" . $value . "/" . $subdir . "/tags"), array("..", "."));
+
+      foreach ($manifests as $key => $subval) {
+
+        print "<tr>\n";
+        print "  <td>" . $value . "</td>\n";
+        print "  <td>" . $subval . "</td>\n";
+        print "  <td>{{ ansible_fqdn }}:5000/" . $value . ":" . $subval . "</td>\n";
+        print "</tr>\n";
+      }
+    } else {
+# second level containers
+      if ($subdir != '_layers') {
+        $manifests = array_diff(scandir($dirpath . "/" . $value . "/" . $subdir . "/_manifests/tags"), array("..", "."));
+
+        foreach ($manifests as $key => $subval) {
+
+          print "<tr>\n";
+          print "  <td>" . $value . "</td>\n";
+          print "  <td>" . $subval . "</td>\n";
+          print "  <td>{{ ansible_fqdn }}:5000/" . $value . "/" . $subdir . ":" . $subval . "</td>\n";
+          print "</tr>\n";
+        }
+      }
+    }
+  }
+}
+
+
+?>
+</table>
+
+</body>
+</html>
