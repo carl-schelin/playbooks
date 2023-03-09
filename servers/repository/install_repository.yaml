@@ -25,5 +25,5 @@
       - always
 
   roles:
-    - { role: dns,   tags: ["repository"] }
+    - { role: repository,   tags: ["repository"] }
 
