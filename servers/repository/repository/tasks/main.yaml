@@ -1,6 +1,6 @@
 ---
 - name: Install docker-distribution
-  dnf:
+  yum:
     name: ['docker-distribution']
     state: present
     update_cache: yes
@@ -8,13 +8,13 @@
   - Start the registry Service
 
 - name: Install php for the website to display an image listing
-  dnf:
+  yum:
     name: ['php']
     state: present
     update_cache: yes
 
 - name: Install the httpd server
-  dnf:
+  yum:
     name: ['httpd']
     state: present
     update_cache: yes
