@@ -11,6 +11,7 @@
   roles:
     - { role: bridge,       tags: ["bridge"]       }
     - { role: swap,         tags: ["swap"]         }
+    - { role: firewall,     tags: ["firewall"]     }
     - { role: packages,     tags: ["packages"]     }
     - { role: clustername,  tags: ["clustername"]  }
     - { role: kubelet,      tags: ["kubelet"]      }

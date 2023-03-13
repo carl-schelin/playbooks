@@ -1,0 +1,17 @@
+---
+- name: Add firewall services
+  firewalld:
+    zone: public
+    permanent: yes
+    immediate: yes
+    state: enabled
+    service: "{{ item }}"
+  with_items:
+    - 6443
+    - 2379
+    - 2380
+    - 10250
+    - 10251
+    - 10252
+  notify: Start the firewalld Service
+
