@@ -5,7 +5,7 @@
     permanent: yes
     immediate: yes
     state: enabled
-    service: "{{ item }}"
+    port: "{{ item }}/tcp"
   with_items:
     - "6443"
     - "2379"
@@ -22,7 +22,7 @@
     permanent: yes
     immediate: yes
     state: enabled
-    service: "{{ item }}"
+    port: "{{ item }}/tcp"
   with_items:
     - "10250"
     - "30000-32767"
