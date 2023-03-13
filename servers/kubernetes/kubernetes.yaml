@@ -2,7 +2,7 @@
 # Purpose:
 # This playbook runs all the different tasks that are needed to build the kubernetes environment.
 ---
-- name: Configure the bridge module and kernel settings for the core-dns container
+- name: Configure the Kubernetes Servers
   hosts: "{{ pattern }}"
   become: true
   become_user: root
