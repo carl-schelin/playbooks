@@ -7,19 +7,28 @@
 
 
 - name: Install kubernetes.repo
-  file:
+  copy:
     src: kubernetes.repo
     dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: "0600"
 
 - name: Install stable.repo
-  file:
+  copy:
     src: stable.repo
     dest: /etc/yum.repos.d/stable.repo
+    owner: root
+    group: root
+    mode: "0600"
 
 - name: Install crio.repo
-  file:
+  copy:
     src: crio.repo
     dest: /etc/yum.repos.d/crio.repo
+    owner: root
+    group: root
+    mode: "0600"
   when: "'kube' in inventory_hostname"
 
 
