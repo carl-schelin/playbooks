@@ -53,5 +53,6 @@
 
   roles:
     - { role: haproxy,    tags: ["haproxy"] }
+    - { role: keepalived, tags: ["keepalived"] }
     - { role: monit,      tags: ["monit"] }
 
