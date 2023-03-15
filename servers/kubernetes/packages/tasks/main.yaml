@@ -83,8 +83,8 @@
 - name: Lock kubernetes-cni at 1.2.0-0
   command: /usr/bin/yum versionlock add "kubernetes-cni-1.2.0-0*"
 
-- name: Lock cri-o at 1.24.4-3.2
-  command: /usr/bin/yum versionlock add "cri-o-1.24.4-3.2*"
+- name: Lock cri-o at 1.24.4
+  command: /usr/bin/yum versionlock add "cri-o-1.24.4*"
   when: "'kube' in inventory_hostname"
 
 - name: Lock docker at 1.13.1-209
@@ -126,7 +126,7 @@
 
 - name: Install cri-o
   yum:
-    name: cri-o-1.24.4-3.2
+    name: cri-o-1.24.4
     state: present
     disable_gpg_check: yes
   when: "'kube' in inventory_hostname"
