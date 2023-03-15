@@ -1,6 +1,18 @@
 ---
-- name: Update kernel net.bridge.bridge-nf-call-iptables
-  ansible.posix.sysctl:
+- name: Load the overlay module
+  modprobe:
+    name: overlay
+    state: present
+    persistent: present
+
+- name: Load the bridge module
+  modprobe:
+    name: br_netfilter
+    state: present
+    persistent: present
+
+- name: Update kernel settings
+  sysctl:
     name: "{{ item }}"
     value: '1'
     sysctl_set: true
@@ -11,27 +23,4 @@
     - net.bridge.bridge-nf-call-iptables
     - net.bridge.bridge-nf-call-ip6tables
     - net.ipv4.ip_forward
-
-- name: To ensure the br_netfilter.conf file exists, touch it
-  file:
-    path: /etc/modules-load.d/br_netfilter.conf
-    state: touch
-
-- name: Update the /etc/modules-load.d/br_netfilter.conf file to add the kubernetes comment
-  lineinfile:
-    path: /etc/modules-load.d/br_netfilter.conf
-    regexp: '^# Load bridge netfilter'
-    line: "# Load bridge netfilter module at boot. This is required by Kubernetes to allow bridging for iptables address translation."
-
-- name: Update the /etc/modules-load.d/br_netfilter.conf file to activate the overlay module
-  lineinfile:
-    path: /etc/modules-load.d/br_netfilter.conf
-    regexp: '^overlay'
-    line: "overlay"
-
-- name: Update the /etc/modules-load.d/br_netfilter.conf file to activate the bridge module
-  lineinfile:
-    path: /etc/modules-load.d/br_netfilter.conf
-    regexp: '^br_netfilter'
-    line: "br_netfilter"
 
