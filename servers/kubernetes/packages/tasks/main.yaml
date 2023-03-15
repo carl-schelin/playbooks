@@ -102,6 +102,7 @@
     name: kubelet-1.25.4-0.x86_64
     state: present
     disable_gpg_check: yes
+  notify: Start the kubelet Service
 
 - name: Install kubectl
   yum:
@@ -121,11 +122,13 @@
     state: present
     disable_gpg_check: yes
 
+
 - name: Install cri-o
   yum:
     name: cri-o-1.24.4
     state: present
     disable_gpg_check: yes
+  notify: Start the crio Service
 
 
 - name: Install docker
