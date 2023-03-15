@@ -3,13 +3,27 @@
   modprobe:
     name: overlay
     state: present
-    persistent: present
+
+- name: Copy the overlay config file
+  file:
+    src: overlay.conf
+    dest: /etc/modprobe.d/overlay.conf
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Load the bridge module
   modprobe:
     name: br_netfilter
     state: present
-    persistent: present
+
+- name: Copy the br_netfilter config file
+  file:
+    src: br_netfilter.conf
+    dest: /etc/modprobe.d/br_netfilter.conf
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Update kernel settings
   sysctl:
