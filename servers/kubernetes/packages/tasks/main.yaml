@@ -20,6 +20,7 @@
   file:
     src: crio.repo
     dest: /etc/yum.repos.d/crio.repo
+  when: "'kube' in inventory_hostname"
 
 
 - name: Delete versionlock for kubelet
@@ -41,6 +42,7 @@
 - name: Delete versionlock for cri-o
   command: /usr/bin/yum versionlock delete "cri-o.*"
   ignore_errors: yes
+  when: "'kube' in inventory_hostname"
 
 
 - name: Delete versionlock for docker-rhel-push-plugin
@@ -74,6 +76,7 @@
 
 - name: Lock cri-o at 1.24.4-3.2
   command: /usr/bin/yum versionlock add "cri-o-1.24.4-3.2*"
+  when: "'kube' in inventory_hostname"
 
 - name: Lock docker at 1.13.1-209
   command: /usr/bin/yum versionlock "docker-1.13.1-209.*"
@@ -117,6 +120,7 @@
     name: cri-o-1.24.4-3.2
     state: present
     disable_gpg_check: yes
+  when: "'kube' in inventory_hostname"
 
 
 - name: Install docker
