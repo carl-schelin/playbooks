@@ -5,7 +5,7 @@
     state: present
 
 - name: Copy the overlay config file
-  file:
+  copy:
     src: overlay.conf
     dest: /etc/modprobe.d/overlay.conf
     owner: root
@@ -18,7 +18,7 @@
     state: present
 
 - name: Copy the br_netfilter config file
-  file:
+  copy:
     src: br_netfilter.conf
     dest: /etc/modprobe.d/br_netfilter.conf
     owner: root
