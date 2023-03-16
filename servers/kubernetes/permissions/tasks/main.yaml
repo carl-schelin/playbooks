@@ -1,16 +1,103 @@
 ---
-- name: Ensure manifest file permissions
-  file:
-    path: "/etc/kubernetes/manifests/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: kube-apiserver.yaml,          owners: root, groups: root, modes: '644' }
-     - { name: kube-controller-manager.yaml, owners: root, groups: root, modes: '644' }
-     - { name: kube-scheduler.yaml,          owners: root, groups: root, modes: '644' }
-     - { name: etcd.yaml,                    owners: root, groups: root, modes: '644' }
-  when: "'kube' in inventory_hostname"
+- name: Set all the control plane permissions
+  block:
+    - name: Ensure manifest file permissions
+      file:
+        path: "/etc/kubernetes/manifests/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: kube-apiserver.yaml,          owners: root, groups: root, modes: '644' }
+         - { name: kube-controller-manager.yaml, owners: root, groups: root, modes: '644' }
+         - { name: kube-scheduler.yaml,          owners: root, groups: root, modes: '644' }
+         - { name: etcd.yaml,                    owners: root, groups: root, modes: '644' }
+
+    - name: Ensure permissions for /var/lib/etcd
+      file:
+        path: /var/lib/etcd
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Ensure CNI file permissions
+      file:
+        path: "/etc/kubernetes/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: admin.conf,              owners: root, groups: root, modes: '644' }
+         - { name: scheduler.conf,          owners: root, groups: root, modes: '644' }
+         - { name: controller-manager.conf, owners: root, groups: root, modes: '644' }
+
+    - name: Ensure permissions for /etc/kubernetes/pki
+      file:
+        path: /etc/kubernetes/pki
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Ensure pki *.crt/*.pub file permissions
+      file:
+        path: "/etc/kubernetes/pki/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: ca.crt,                       owners: root, groups: root, modes: '644' }
+         - { name: apiserver.crt,                owners: root, groups: root, modes: '644' }
+         - { name: apiserver-kubelet-client.crt, owners: root, groups: root, modes: '644' }
+         - { name: front-proxy-ca.crt,           owners: root, groups: root, modes: '644' }
+         - { name: front-proxy-client.crt,       owners: root, groups: root, modes: '644' }
+         - { name: sa.pub,                       owners: root, groups: root, modes: '644' }
+
+    - name: Ensure pki *.key file permissions
+      file:
+        path: "/etc/kubernetes/pki/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: ca.key,                       owners: root, groups: root, modes: '600' }
+         - { name: apiserver.key,                owners: root, groups: root, modes: '600' }
+         - { name: apiserver-kubelet-client.key, owners: root, groups: root, modes: '600' }
+         - { name: front-proxy-ca.key,           owners: root, groups: root, modes: '600' }
+         - { name: front-proxy-client.key,       owners: root, groups: root, modes: '600' }
+         - { name: sa.key,                       owners: root, groups: root, modes: '600' }
+
+    - name: Ensure permissions for /etc/kubernetes/pki/etcd
+      file:
+        path: /etc/kubernetes/pki/etcd
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Ensure etcd *.crt/*.pub file permissions
+      file:
+        path: "/etc/kubernetes/pki/etcd/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: ca.crt,                 owners: root, groups: root, modes: '644' }
+         - { name: server.crt,             owners: root, groups: root, modes: '644' }
+         - { name: peer.crt,               owners: root, groups: root, modes: '644' }
+         - { name: healthcheck-client.crt, owners: root, groups: root, modes: '644' }
+
+    - name: Ensure pki *.key file permissions
+      file:
+        path: "/etc/kubernetes/pki/etcd/{{ item.name }}"
+        owner: "{{ item.owners }}"
+        group: "{{ item.groups }}"
+        mode: "{{ item.modes }}"
+      with_items:
+         - { name: ca.key,                 owners: root, groups: root, modes: '600' }
+         - { name: server.key,             owners: root, groups: root, modes: '600' }
+         - { name: peer.key,               owners: root, groups: root, modes: '600' }
+         - { name: healthcheck-client.key, owners: root, groups: root, modes: '600' }
+    when: "'kube' in inventory_hostname"
+
 
 - name: Ensure CNI file permissions
   file:
@@ -21,96 +108,4 @@
   with_items:
      - { name: 100-crio-bridge.conf, owners: root, groups: root, modes: '644' }
      - { name: 200-loopback.conf,    owners: root, groups: root, modes: '644' }
-
-- name: Ensure permissions for /var/lib/etcd
-  file:
-    path: /var/lib/etcd
-    owner: root
-    group: root
-    mode: '0700'
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure CNI file permissions
-  file:
-    path: "/etc/kubernetes/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: admin.conf,              owners: root, groups: root, modes: '644' }
-     - { name: scheduler.conf,          owners: root, groups: root, modes: '644' }
-     - { name: controller-manager.conf, owners: root, groups: root, modes: '644' }
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure permissions for /etc/kubernetes/pki
-  file:
-    path: /etc/kubernetes/pki
-    owner: root
-    group: root
-    mode: '0755'
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure pki *.crt/*.pub file permissions
-  file:
-    path: "/etc/kubernetes/pki/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: ca.crt,                       owners: root, groups: root, modes: '644' }
-     - { name: apiserver.crt,                owners: root, groups: root, modes: '644' }
-     - { name: apiserver-kubelet-client.crt, owners: root, groups: root, modes: '644' }
-     - { name: front-proxy-ca.crt,           owners: root, groups: root, modes: '644' }
-     - { name: front-proxy-client.crt,       owners: root, groups: root, modes: '644' }
-     - { name: sa.pub,                       owners: root, groups: root, modes: '644' }
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure pki *.key file permissions
-  file:
-    path: "/etc/kubernetes/pki/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: ca.key,                       owners: root, groups: root, modes: '600' }
-     - { name: apiserver.key,                owners: root, groups: root, modes: '600' }
-     - { name: apiserver-kubelet-client.key, owners: root, groups: root, modes: '600' }
-     - { name: front-proxy-ca.key,           owners: root, groups: root, modes: '600' }
-     - { name: front-proxy-client.key,       owners: root, groups: root, modes: '600' }
-     - { name: sa.key,                       owners: root, groups: root, modes: '600' }
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure permissions for /etc/kubernetes/pki/etcd
-  file:
-    path: /etc/kubernetes/pki/etcd
-    owner: root
-    group: root
-    mode: '0755'
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure etcd *.crt/*.pub file permissions
-  file:
-    path: "/etc/kubernetes/pki/etcd/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: ca.crt,                 owners: root, groups: root, modes: '644' }
-     - { name: server.crt,             owners: root, groups: root, modes: '644' }
-     - { name: peer.crt,               owners: root, groups: root, modes: '644' }
-     - { name: healthcheck-client.crt, owners: root, groups: root, modes: '644' }
-  when: "'kube' in inventory_hostname"
-
-- name: Ensure pki *.key file permissions
-  file:
-    path: "/etc/kubernetes/pki/etcd/{{ item.name }}"
-    owner: "{{ item.owners }}"
-    group: "{{ item.groups }}"
-    mode: "{{ item.modes }}"
-  with_items:
-     - { name: ca.key,                 owners: root, groups: root, modes: '600' }
-     - { name: server.key,             owners: root, groups: root, modes: '600' }
-     - { name: peer.key,               owners: root, groups: root, modes: '600' }
-     - { name: healthcheck-client.key, owners: root, groups: root, modes: '600' }
-  when: "'kube' in inventory_hostname"
 
