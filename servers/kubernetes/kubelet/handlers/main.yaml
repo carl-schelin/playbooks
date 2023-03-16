@@ -1,12 +1,10 @@
 ---
-- name: Restart kubelet
-  systemd:
-    daemon_reload: yes
-    name: kubelet
+- name: Start the kubelet and docker Services
+  service:
+    name: "{{ item }}"
     state: restarted
-
-- name: Restart docker
-  systemd:
-    name: docker
-    state: restarted
+    enabled: yes
+  with_items:
+    - kubelet
+    - docker
 
