@@ -10,6 +10,7 @@
      - { name: kube-controller-manager.yaml, owners: root, groups: root, modes: '644' }
      - { name: kube-scheduler.yaml,          owners: root, groups: root, modes: '644' }
      - { name: etcd.yaml,                    owners: root, groups: root, modes: '644' }
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure CNI file permissions
   file:
@@ -27,6 +28,7 @@
     owner: root
     group: root
     mode: '0700'
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure CNI file permissions
   file:
@@ -38,6 +40,7 @@
      - { name: admin.conf,              owners: root, groups: root, modes: '644' }
      - { name: scheduler.conf,          owners: root, groups: root, modes: '644' }
      - { name: controller-manager.conf, owners: root, groups: root, modes: '644' }
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure permissions for /etc/kubernetes/pki
   file:
@@ -45,6 +48,7 @@
     owner: root
     group: root
     mode: '0755'
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure pki *.crt/*.pub file permissions
   file:
@@ -59,6 +63,7 @@
      - { name: front-proxy-ca.crt,           owners: root, groups: root, modes: '644' }
      - { name: front-proxy-client.crt,       owners: root, groups: root, modes: '644' }
      - { name: sa.pub,                       owners: root, groups: root, modes: '644' }
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure pki *.key file permissions
   file:
@@ -73,6 +78,7 @@
      - { name: front-proxy-ca.key,           owners: root, groups: root, modes: '600' }
      - { name: front-proxy-client.key,       owners: root, groups: root, modes: '600' }
      - { name: sa.key,                       owners: root, groups: root, modes: '600' }
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure permissions for /etc/kubernetes/pki/etcd
   file:
@@ -80,6 +86,7 @@
     owner: root
     group: root
     mode: '0755'
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure etcd *.crt/*.pub file permissions
   file:
@@ -92,6 +99,7 @@
      - { name: server.crt,             owners: root, groups: root, modes: '644' }
      - { name: peer.crt,               owners: root, groups: root, modes: '644' }
      - { name: healthcheck-client.crt, owners: root, groups: root, modes: '644' }
+  when: "'kube' in inventory_hostname"
 
 - name: Ensure pki *.key file permissions
   file:
@@ -104,4 +112,5 @@
      - { name: server.key,             owners: root, groups: root, modes: '600' }
      - { name: peer.key,               owners: root, groups: root, modes: '600' }
      - { name: healthcheck-client.key, owners: root, groups: root, modes: '600' }
+  when: "'kube' in inventory_hostname"
 
