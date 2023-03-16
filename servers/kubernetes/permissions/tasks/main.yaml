@@ -18,8 +18,8 @@
     group: "{{ item.groups }}"
     mode: "{{ item.modes }}"
   with_items:
-     - { name: 10-calico.conflist,  owners: root, groups: root, modes: '644' }
-     - { name: calico-kubeconfig,   owners: root, groups: root, modes: '644' }
+     - { name: 100-crio-bridge.conf, owners: root, groups: root, modes: '644' }
+     - { name: 200-loopback.conf,    owners: root, groups: root, modes: '644' }
 
 - name: Ensure permissions for /var/lib/etcd
   file:
