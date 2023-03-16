@@ -96,7 +96,7 @@
          - { name: server.key,             owners: root, groups: root, modes: '600' }
          - { name: peer.key,               owners: root, groups: root, modes: '600' }
          - { name: healthcheck-client.key, owners: root, groups: root, modes: '600' }
-    when: "'kube' in inventory_hostname"
+  when: "'kube' in inventory_hostname"
 
 
 - name: Ensure CNI file permissions
