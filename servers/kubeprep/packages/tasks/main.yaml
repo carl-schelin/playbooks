@@ -6,6 +6,31 @@
     state: latest
 
 
+- name: Install kubernetes.repo
+  copy:
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Install stable.repo
+  copy:
+    src: stable.repo
+    dest: /etc/yum.repos.d/stable.repo
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Install crio.repo
+  copy:
+    src: crio.repo
+    dest: /etc/yum.repos.d/crio.repo
+    owner: root
+    group: root
+    mode: "0600"
+
+
 - name: Delete versionlock for kubelet
   command: /usr/bin/yum versionlock delete "kubelet.*"
   ignore_errors: yes
@@ -20,6 +45,10 @@
 
 - name: Delete versionlock for kubernetes-cni
   command: /usr/bin/yum versionlock delete "kubernetes-cni.*"
+  ignore_errors: yes
+
+- name: Delete versionlock for cri-o
+  command: /usr/bin/yum versionlock delete "cri-o.*"
   ignore_errors: yes
 
 
@@ -40,71 +69,83 @@
   ignore_errors: yes
 
 
-- name: Lock kubelet at 1.20.6
-  command: /usr/bin/yum versionlock add "kubelet-1.20.6-0.*"
+- name: Lock kubelet at 1.25.4
+  command: /usr/bin/yum versionlock add "kubelet-1.25.4-0.*"
 
-- name: Lock kubectl at 1.20.6
-  command: /usr/bin/yum versionlock add "kubectl-1.20.6-0.*"
+- name: Lock kubectl at 1.25.4
+  command: /usr/bin/yum versionlock add "kubectl-1.25.4-0.*"
 
-- name: Lock kubeadm at 1.20.6
-  command: /usr/bin/yum versionlock add "kubeadm-1.20.6-0.*"
+- name: Lock kubeadm at 1.25.4
+  command: /usr/bin/yum versionlock add "kubeadm-1.25.4-0.*"
 
-- name: Lock kubernetes-cni at 0.8.7
-  command: /usr/bin/yum versionlock add "kubernetes-cni-0.8.7-0*"
+- name: Lock kubernetes-cni at 1.2.0-0
+  command: /usr/bin/yum versionlock add "kubernetes-cni-1.2.0-0*"
 
-- name: Lock docker at 1.13.1-204
-  command: /usr/bin/yum versionlock "docker-1.13.1-204.*"
+- name: Lock cri-o at 1.24.4
+  command: /usr/bin/yum versionlock add "cri-o-1.24.4*"
 
-- name: Lock docker-common at 1.13.1-204
-  command: /usr/bin/yum versionlock "docker-common-1.13.1-204.*"
+- name: Lock docker at 1.13.1-209
+  command: /usr/bin/yum versionlock "docker-1.13.1-209.*"
 
-- name: Lock docker-client at 1.13.1-204
-  command: /usr/bin/yum versionlock "docker-client-1.13.1-204.*"
+- name: Lock docker-common at 1.13.1-209
+  command: /usr/bin/yum versionlock "docker-common-1.13.1-209.*"
 
-- name: Lock docker-rhel-push-plugin at 1.13.1-204
-  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-204.*"
+- name: Lock docker-client at 1.13.1-209
+  command: /usr/bin/yum versionlock "docker-client-1.13.1-209.*"
+
+- name: Lock docker-rhel-push-plugin at 1.13.1-209
+  command: /usr/bin/yum versionlock "docker-rhel-push-plugin-1.13.1-209.*"
 
 
 - name: Install kubelet
   yum:
-    name: kubelet-1.20.6-0.x86_64
+    name: kubelet-1.25.4-0.x86_64
     state: present
     disable_gpg_check: yes
+  notify: Start the kubelet Service
 
 - name: Install kubectl
   yum:
-    name: kubectl-1.20.6-0.x86_64
+    name: kubectl-1.25.4-0.x86_64
     state: present
     disable_gpg_check: yes
 
 - name: Install kubeadm
   yum:
-    name: kubeadm-1.20.6-0.x86_64
+    name: kubeadm-1.25.4-0.x86_64
     state: present
     disable_gpg_check: yes
 
 - name: Install kubernetes-cni
   yum:
-    name: kubernetes-cni-0.8.7-0.x86_64
+    name: kubernetes-cni-1.2.0-0.x86_64
     state: present
     disable_gpg_check: yes
 
 
+- name: Install cri-o
+  yum:
+    name: cri-o-1.24.4
+    state: present
+    disable_gpg_check: yes
+  notify: Start the crio Service
+
+
 - name: Install docker
   yum:
-    name: docker-1.13.1-204.git0be3e21.el7*
+    name: docker-1.13.1-209.git7d71120.el7*
     state: present
     disable_gpg_check: yes
 
 - name: Install docker-common
   yum:
-    name: docker-common-1.13.1-204.git0be3e21.el7*
+    name: docker-common-1.13.1-209.git7d71120.el7*
     state: present
     disable_gpg_check: yes
 
 - name: Install docker-client
   yum:
-    name: docker-client-1.13.1-204.git0be3e21.el7*
+    name: docker-client-1.13.1-209.git7d71120.el7*
     state: present
     disable_gpg_check: yes
 

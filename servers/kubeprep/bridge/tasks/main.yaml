@@ -1,0 +1,40 @@
+---
+- name: Load the overlay module
+  modprobe:
+    name: overlay
+    state: present
+
+- name: Copy the overlay config file
+  copy:
+    src: overlay.conf
+    dest: /etc/modprobe.d/overlay.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load the bridge module
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Copy the br_netfilter config file
+  copy:
+    src: br_netfilter.conf
+    dest: /etc/modprobe.d/br_netfilter.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Update kernel settings
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  with_items:
+    - net.bridge.bridge-nf-call-arptables
+    - net.bridge.bridge-nf-call-iptables
+    - net.bridge.bridge-nf-call-ip6tables
+    - net.ipv4.ip_forward
+

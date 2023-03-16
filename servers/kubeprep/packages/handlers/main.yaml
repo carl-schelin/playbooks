@@ -1,0 +1,13 @@
+---
+- name: Start the crio Service
+  systemd:
+    name: crio
+    state: restarted
+    enabled: yes
+
+- name: Start the kubelet Service
+  systemd:
+    name: kubelet
+    state: restarted
+    enabled: yes
+
