@@ -62,7 +62,5 @@
     - { role: certificates, tags: ["certificates"] }
     - { role: logging,      tags: ["logging"]      }
     - { role: permissions,  tags: ["permissions"]  }
-    - { role: kubeadm,      tags: ["kubeadm"]      }
-    - { role: versionlock,  tags: ["versionlock"]  }
-    - { role: postinstall,  tags: ["postinstall"]  }
+    - { role: images,       tags: ["images"]       }
 

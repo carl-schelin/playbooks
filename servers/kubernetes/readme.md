@@ -67,32 +67,32 @@ Add the cluster name to the control nodes
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=clustername
 
 Add the cluster name to the control nodes
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=clustername
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=kubelet
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=kubelet
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=kubelet
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=kubelet
 
+Add the cluster name to the control nodes
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=certificates
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=certificates
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=certificates
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=certificates
 
+Update the docker logging configurations
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=logging
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=logging
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=logging
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=logging
 
+Update the permissions of files
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=permissions
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=permissions
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=permissions
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=permissions
 
-
-
-
-  roles:
-    - { role: kubelet,      tags: ["kubelet"]      }
-    - { role: certificates, tags: ["certificates"] }
-    - { role: logging,      tags: ["logging"]      }
-    - { role: permissions,  tags: ["permissions"]  }
-    - { role: kubeadm,      tags: ["kubeadm"]      }
-    - { role: versionlock,  tags: ["versionlock"]  }
-    - { role: postinstall,  tags: ["postinstall"]  }
-
-
-
-
-
-
-
-
-
+Update the permissions of files
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=images
 

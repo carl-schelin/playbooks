@@ -2,17 +2,14 @@
 # add the correct file for docker logging
 - name: Add daemon.json
   copy:
-    src: ../files/daemon.json
+    src: daemon.json
     dest: /etc/docker/daemon.json
+  notify: Start the docker Service
 
 - name: Correct the docker file
   replace:
     path: /etc/sysconfig/docker
     regexp: '--log-driver=journald'
     replace: ''
-
-- name: Restart docker
-  systemd:
-    name: docker
-    state: restarted
+  notify: Start the docker Service
 
