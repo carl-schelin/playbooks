@@ -1,0 +1,10 @@
+---
+- name: Configure the Kubernetes Servers
+  hosts: "{{ pattern }}"
+  become: true
+  become_user: root
+  gather_facts: yes
+
+  roles:
+    - { role: revert,  tags: ["revert"]  }
+
