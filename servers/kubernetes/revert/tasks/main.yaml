@@ -1,0 +1,55 @@
+---
+- name: Update the etcd imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/etcd.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-apiserver imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-controller-manager imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update the kube-scheduler imagePullPolicy
+  replace:
+    dest: /etc/kubernetes/manifests/kube-scheduler.yaml
+    regexp: '^    imagePullPolicy: IfNotPresent'
+    replace: '    imagePullPolicy: Always'
+
+- name: Update kube-apiserver admission controller to add AlwaysPullImages and ResourceQuota
+  replace:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    - --enable-admission-plugins=.*'
+    replace: '    - --enable-admission-plugins=NodeRestriction,AlwaysPullImages,ResourceQuota'
+
+- name: Update the etcd image to point to the Artifactory Instance
+  replace:
+    dest: /etc/kubernetes/manifests/etcd.yaml
+    regexp: '^    image:.*'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/etcd:3.5.5-0'
+
+- name: Update the kube-apiserver image to point to the Artifactory Instance
+  replace:
+    dest: /etc/kubernetes/manifests/kube-apiserver.yaml
+    regexp: '^    image:.*'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-apiserver:v1.25.7'
+
+- name: Update the kube-controller-manager image to point to the Artifactory Instance
+  replace:
+    dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
+    regexp: '^    image:.*'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-controller-manager:v1.25.7'
+
+- name: Update the kube-scheduler image to point to the Artifactory Instance
+  replace:
+    dest: /etc/kubernetes/manifests/kube-scheduler.yaml
+    regexp: '^    image:.*'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-scheduler:v1.25.7'
+
