@@ -1,7 +1,7 @@
 ### Overview ###
 
-This directory structure consists of my playbooks. A lot of them are fairly small playbooks where I'm working 
-on some specific task. Some of them are larger ones such as the Kubernetes ones.
+This directory structure consists of my playbooks. I'm basically creating or updating playbooks to build my homelab 
+environment.
 
 
 ### Hosts File ###
@@ -11,84 +11,31 @@ You can add a tag to any server and the tag is then used to identify the list of
 
 `ansible-playbook -i /usr/local/admin/etc/hosts -e pattern=[pattern] [playbook].yaml -s`
 
-I am using patterns and tags for some of the playbooks. Check each yaml file for details.
+I am using patterns and tags for some of the playbooks. Check each yaml and readme.md file for details.
 
-For example, for the Kubernetes servers, if I wanted to update the masters, I'd pass in `-e 'pattern=boulder:&master' and 
+For example, for the Kubernetes servers, if I wanted to update the control plane, I'd pass in `-e 'pattern=bldr0:&control' and 
 in the playbook I'd have `- hosts: "{{ pattern }}"`. The playbook then parses the hosts file looking for hosts that have 
-the 'boulder' tag and the 'master' tag. Don't forget you can use the not (!) to exclude servers from the final host listing.
+the 'bldr0' tag and the 'control' tag. Don't forget you can use the not (!) to exclude servers from the final host listing.
 
-Note you can run the `searchansible` script (part of the unixsuite repository) to list all the available tag headers and 
+Note you can run the `searchansible` script (part of the tool server repository) to list all the available tag headers and 
 `searchansible [tag]` which will return all the servers associated with that tag.
 
 
 ### Playbook Notes ###
 
-While there are a list here, it may not be totally current as things move around, are added, and may be deleted.
+There are essentially four directories in this repository.
 
-I did review them and break them down into either the newserver builds, basically something that is done once to get a server built and configured
+* newserver - These playbooks build the VMs or install standardized configurations such as firewall settings.
+* servers - These playbooks build specific servers such as NFS server, HAProxy load balancers for Kubernetes, DNS, and so on.
+* utilities - These playbooks do some more general configurations that may not need to be run in the newserver playbooks or things that would be run more often to ensure configurations are up to date such as the Unixsuite scripts.
+* vars - This directory contains the site specific data files that list configurations, IP addresses, and other bits used by the other playbooks.
 
-I also created a servers directory which has the installation process for specific applications.
-
-Finally I created a utilities directory for things that might repeat. Maintenance type tasks.
-
-
-kubernetes - see the Kubernetes directory for notes
-
-satellite - Upgrades satellite repos for 6.5
-
-snmpd - Installs a common snmpd.conf file to /etc/snmp
-
-yumupgrade - Basically runs a 'yum upgrade -y'
-
-
-### checked in playbooks ###
-
-* ELK
-  * data
-  * kibana
-  * logstash
-  * master
-* haproxy
-* kubernetes
-  * upgrade
-  * bridge
-  * swap
-  * packages
-  * clustername
-  * kubelet
-  * certificates
-  * logging
-  * permissions
-  * destroy
-  * kubeadm
-  * versionlock
-  * configurations
-  * dnstools
-  * postinstall
-  * readme.md
-  * scripts
-* logcerts
-* mariadb
-* newserver
-  * chrony - updated to use the correct local IP
-  * firewall
-  * gecos
-  * initialize
-  * ipa-client
-  * ksh
-  * mailx
-  * snmpd
-  * sshd
-* nousers
-* resolver
-* satellite
-* sudoers
-* touchmotd
-* yumupgrade
 
 ### Update notes ###
 
 A key bit if information here is that I don't store my site specific configurations with this repository. I have a separate 
 playbooks_configs repository that's local to my site. I currently use Jenkins to merge the two repos together and then sync 
-them with the final working location.
+them with the final working location. I am trying to create dummy files so you know what files to create and manage. This is 
+specific to my environment though so your mileage may vary.
+
 
