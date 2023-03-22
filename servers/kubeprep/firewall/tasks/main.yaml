@@ -1,37 +1,7 @@
 ---
-- name: Add Control Plane firewall services including Calico ports
-  firewalld:
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
-    port: "{{ item }}"
-  with_items:
-    - "179/tcp"
-    - "443/tcp"
-    - "6443/tcp"
-    - "2379/tcp"
-    - "2380/tcp"
-    - "4789/udp"
-    - "10250/tcp"
-    - "10251/tcp"
-    - "10252/tcp"
-  when: "'kube' in inventory_hostname"
-  notify: Start the firewalld Service
-
-- name: Add Worker Node firewall services including Calico ports
-  firewalld:
-    zone: public
-    permanent: yes
-    immediate: yes
-    state: enabled
-    port: "{{ item }}"
-  with_items:
-    - "179/tcp"
-    - "4789/udp"
-    - "10250/tcp"
-    - "30000-32767/tcp"
-  when: "'knode' in inventory_hostname"
-  notify: Start the firewalld Service
-
+- name: Disable the firewall on the Kubernetes cluster due to calico being used
+  systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
 
