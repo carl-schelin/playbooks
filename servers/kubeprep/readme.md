@@ -16,7 +16,7 @@ bridge: The Bridge and Overlay kernel modules are activated and the persistent f
 
 swap: Swap is removed fully from /etc/fstab and from the /etc/default/grub file then the file is rebuilt.
 
-firewall: The firewall is configured for all the appropriate ports.
+firewall: Since we're using the Calico networking package, it takes care of access so the firewall is not needed. This playbook simply disables the firewall on all nodes.
 
 packages: The packages role installs the yum_versionlock module so we can prevent upgrades when patching servers. The kubernetes.repo, crio.repo, and crio stable.repo is installed. Any existing versionlock entries are removed and new ones for the selected version is applied. Once all that is prepared, kubeadm, kubectl, kubelet, crio, the kubernetes-cni binaries, plus all the docker files are installed. Finally kubelet is enabled and crio is enabled and activated. For kubeadm, kubelet should only be enabled as it doesn't have the configuration file yet. That's created as part of the kubeadm process.
 
@@ -67,7 +67,7 @@ Disable swap on all nodes.
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=swap
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=swap
 
-Configure the firewall on the control nodes
+Disable the firewall on all nodes
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=firewall
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=firewall
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=firewall

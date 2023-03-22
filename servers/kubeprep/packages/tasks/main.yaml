@@ -156,3 +156,16 @@
     disable_gpg_check: yes
   ignore_errors: yes
 
+
+- name: Update containers to support insecure registries
+  lineinfile:
+    path: /etc/containers/registries.conf
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - '[[registry]]'
+    - 'prefix = "bldr0cuomrepo1.dev.internal.pri:5000"'
+    - 'insecure = true'
+    - 'location = "bldr0cuomrepo1.dev.internal.pri:5000"'
+  notify: Start the crio Service
+
