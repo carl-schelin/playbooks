@@ -23,6 +23,6 @@
       file: ../../vars/common.yaml
 
   roles:
-    - tools
-
+    - { role: tools,       tags: ["tools"]       }
+    - { role: kubernetes,  tags: ["kubernetes"]  }
 

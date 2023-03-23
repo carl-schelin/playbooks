@@ -1,0 +1,27 @@
+---
+- name: Install versionlock
+  yum:
+    name: yum-plugin-versionlock
+    state: latest
+
+- name: Install kubernetes.repo
+  copy:
+    src: kubernetes.repo
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Delete versionlock for kubectl
+  command: /usr/bin/yum versionlock delete "kubectl.*"
+  ignore_errors: yes
+
+- name: Lock kubectl at 1.25.4
+  command: /usr/bin/yum versionlock add "kubectl-1.25.4-0.*"
+
+- name: Install kubectl
+  yum:
+    name: kubectl-1.25.4-0.x86_64
+    state: present
+    disable_gpg_check: yes
+
