@@ -169,3 +169,10 @@
     - 'location = "bldr0cuomrepo1.dev.internal.pri:5000"'
   notify: Start the crio Service
 
+- name: Update crio to pull pause locally
+  lineinfile:
+    path: /etc/crio/crio.conf
+    state: present
+    line: 'pause_image = "bldr0cuomrepo1.dev.internal.pri:5000/pause:3.6"
+  notify: Start the crio Service
+
