@@ -173,6 +173,15 @@
   lineinfile:
     path: /etc/crio/crio.conf
     state: present
-    line: 'pause_image = "bldr0cuomrepo1.dev.internal.pri:5000/pause:3.6"
+    line: 'pause_image = "bldr0cuomrepo1.dev.internal.pri:5000/pause:3.6"'
   notify: Start the crio Service
+
+- name: Install kubeadm-config file
+  template:
+    src: kubeadm-config.yaml
+    dest: /root/kubeadm-config.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  when: "'kube1' in inventory_hostname"
 
