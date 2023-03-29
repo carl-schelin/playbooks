@@ -1,0 +1,21 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+nodeRegistration:
+  imagePullPolicy: Always
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+clusterName: "{{ site.environment }}"
+controlPlaneEndpoint: "{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}:6443"
+etcd:
+  local:
+    imageRepository: "bldr0cuomrepo1.dev.internal.pri:5000"
+imageRepository: "bldr0cuomrepo1.dev.internal.pri:5000"
+ind: ClusterConfiguration
+kubernetesVersion: 1.25.7
+networking:
+  podSubnet: 10.42.0.0/16
+  serviceSubnet: 10.69.0.0/16
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+serverTLSBootstrap: true
