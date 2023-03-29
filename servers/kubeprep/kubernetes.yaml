@@ -5,6 +5,14 @@
   become_user: root
   gather_facts: no
 
+
+pre_tasks:
+  - name: Include common variables
+    include_vars:
+      file: ../../vars/common.yaml
+    tags:
+      - always
+
   roles:
     - { role: bridge,       tags: ["bridge"]       }
     - { role: swap,         tags: ["swap"]         }
