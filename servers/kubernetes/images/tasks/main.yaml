@@ -33,23 +33,23 @@
   replace:
     dest: /etc/kubernetes/manifests/etcd.yaml
     regexp: '^    image:.*'
-    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/etcd:3.5.5-0'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/etcd:3.5.6-0'
 
 - name: Update the kube-apiserver image to point to the Artifactory Instance
   replace:
     dest: /etc/kubernetes/manifests/kube-apiserver.yaml
     regexp: '^    image:.*'
-    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-apiserver:v1.25.7'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-apiserver:v{{ k8s.version }}'
 
 - name: Update the kube-controller-manager image to point to the Artifactory Instance
   replace:
     dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
     regexp: '^    image:.*'
-    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-controller-manager:v1.25.7'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-controller-manager:v{{ k8s.version }}'
 
 - name: Update the kube-scheduler image to point to the Artifactory Instance
   replace:
     dest: /etc/kubernetes/manifests/kube-scheduler.yaml
     regexp: '^    image:.*'
-    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-scheduler:v1.25.7'
+    replace: '    image: bldr0cuomrepo1.dev.internal.pri:5000/kube-scheduler:v{{ k8s.version }}'
 
