@@ -11,10 +11,10 @@ etcd:
     imageRepository: "bldr0cuomrepo1.dev.internal.pri:5000"
 imageRepository: "bldr0cuomrepo1.dev.internal.pri:5000"
 ind: ClusterConfiguration
-kubernetesVersion: 1.25.7
+kubernetesVersion: "{{ k8s.version }}"
 networking:
-  podSubnet: 10.42.0.0/16
-  serviceSubnet: 10.69.0.0/16
+  podSubnet: "{{ k8s.pod_network }}"
+  serviceSubnet: "{{ k8s.service_network }}"
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
