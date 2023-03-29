@@ -69,14 +69,14 @@
   ignore_errors: yes
 
 
-- name: Lock kubelet at 1.25.4
-  command: /usr/bin/yum versionlock add "kubelet-1.25.4-0.*"
+- name: Lock kubelet at {{ k8s.version }}
+  command: /usr/bin/yum versionlock add "kubelet-{{ k8s.version }}-0.*"
 
-- name: Lock kubectl at 1.25.4
-  command: /usr/bin/yum versionlock add "kubectl-1.25.4-0.*"
+- name: Lock kubectl at {{ k8s.version }}
+  command: /usr/bin/yum versionlock add "kubectl-{{ k8s.version }}-0.*"
 
-- name: Lock kubeadm at 1.25.4
-  command: /usr/bin/yum versionlock add "kubeadm-1.25.4-0.*"
+- name: Lock kubeadm at {{ k8s.version }}
+  command: /usr/bin/yum versionlock add "kubeadm-{{ k8s.version }}-0.*"
 
 - name: Lock kubernetes-cni at 1.2.0-0
   command: /usr/bin/yum versionlock add "kubernetes-cni-1.2.0-0*"
@@ -99,20 +99,20 @@
 
 - name: Install kubelet
   yum:
-    name: kubelet-1.25.4-0.x86_64
+    name: kubelet-{{ k8s.version }}-0.x86_64
     state: present
     disable_gpg_check: yes
   notify: Start the kubelet Service
 
 - name: Install kubectl
   yum:
-    name: kubectl-1.25.4-0.x86_64
+    name: kubectl-{{ k8s.version }}-0.x86_64
     state: present
     disable_gpg_check: yes
 
 - name: Install kubeadm
   yum:
-    name: kubeadm-1.25.4-0.x86_64
+    name: kubeadm-{{ k8s.version }}-0.x86_64
     state: present
     disable_gpg_check: yes
 
@@ -178,7 +178,7 @@
 
 - name: Install kubeadm-config file
   template:
-    src: kubeadm-config.yaml
+    src: kubeadm-config.yaml.j2
     dest: /root/kubeadm-config.yaml
     owner: root
     group: root
