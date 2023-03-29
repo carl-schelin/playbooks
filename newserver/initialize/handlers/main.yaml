@@ -28,6 +28,7 @@
     name: telegraf
     state: started
     enabled: yes
+  ignore_errors: yes
 
 - name: Reboot Server
   reboot:
