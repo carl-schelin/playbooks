@@ -178,6 +178,7 @@
     name: telegraf
     disable_gpg_check: yes
     state: latest
+  ignore_errors: yes
 
 - name: Install main telegraf configuration
   template:
