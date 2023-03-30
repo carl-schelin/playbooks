@@ -30,6 +30,14 @@
     group: root
     mode: "0600"
 
+- name: Install calicoctl
+  copy:
+    src: calicoctl
+    dest: /usr/local/bin/calicoctl
+    owner: root
+    group: root
+    mode: "0755"
+
 
 - name: Delete versionlock for kubelet
   command: /usr/bin/yum versionlock delete "kubelet.*"
