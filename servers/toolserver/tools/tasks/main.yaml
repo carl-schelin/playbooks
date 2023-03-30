@@ -70,6 +70,14 @@
     group: root
     mode: "0755"
 
+- name: Copy calicoctl binary file
+  copy:
+    src: calicoctl
+    dest: /usr/local/bin/calicoctl
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: copy host inventory file
   copy:
     src: /usr/local/admin/etc/hosts
