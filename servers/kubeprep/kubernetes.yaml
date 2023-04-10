@@ -5,6 +5,55 @@
   become_user: root
   gather_facts: no
 
+
+  pre_tasks:
+  - name: Verify the -e variable was set
+    assert:
+      that:
+        - "false"
+      msg: You must run the playbook with -e pattern=[pattern] flag
+    when: (pattern is undefined) or (pattern | trim == '')
+
+  - name: Make sure ansible is reasonably current
+    assert:
+      that:
+        - "{{ ansible_version.string is version_compare('2.9', '>=') }}"
+      msg: This playbook works best when Ansible 2.9 or above is installed
+
+  - name: Include common variables
+    include_vars:
+      file: ../../vars/common.yaml
+    tags:
+      - always
+
+  - name: Include boulder specific variables
+    include_vars:
+      file: ../../vars/boulder.yaml
+    when: "'bldr0' in inventory_hostname"
+    tags:
+      - always
+
+  - name: Include cabo specific variables
+    include_vars:
+      file: ../../vars/cabo.yaml
+    when: "'cabo0' in inventory_hostname"
+    tags:
+      - always
+
+  - name: Include tatooine specific variables
+    include_vars:
+      file: ../../vars/tatooine.yaml
+    when: "'tato0' in inventory_hostname"
+    tags:
+      - always
+
+  - name: Include longmont specific variables
+    include_vars:
+      file: ../../vars/longmont.yaml
+    when: "'lnmt1' in inventory_hostname"
+    tags:
+      - always
+
   roles:
     - { role: bridge,       tags: ["bridge"]       }
     - { role: swap,         tags: ["swap"]         }

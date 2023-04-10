@@ -7,7 +7,7 @@
 - name: Copy the overlay config file
   copy:
     src: overlay.conf
-    dest: /etc/modprobe.d/overlay.conf
+    dest: /etc/modules-load.d/overlay.conf
     owner: root
     group: root
     mode: "0644"
@@ -20,7 +20,7 @@
 - name: Copy the br_netfilter config file
   copy:
     src: br_netfilter.conf
-    dest: /etc/modprobe.d/br_netfilter.conf
+    dest: /etc/modules-load.d/br_netfilter.conf
     owner: root
     group: root
     mode: "0644"
@@ -37,4 +37,12 @@
     - net.bridge.bridge-nf-call-iptables
     - net.bridge.bridge-nf-call-ip6tables
     - net.ipv4.ip_forward
+
+- name: Copy the kubernetes config file
+  copy:
+    src: kubernetes.conf
+    dest: /etc/sysctl.d/kubernetes.conf
+    owner: root
+    group: root
+    mode: "0644"
 

@@ -54,6 +54,30 @@
     group: sysadmin
     mode: 0775
 
+- name: Copy argocd binary file
+  copy:
+    src: argocd
+    dest: /usr/local/bin/argocd
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy helm binary file
+  copy:
+    src: helm
+    dest: /usr/local/bin/helm
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy calicoctl binary file
+  copy:
+    src: calicoctl
+    dest: /usr/local/bin/calicoctl
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: copy host inventory file
   copy:
     src: /usr/local/admin/etc/hosts

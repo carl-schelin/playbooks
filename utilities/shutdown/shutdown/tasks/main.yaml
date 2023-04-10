@@ -1,0 +1,3 @@
+---
+- name: Shutdown servers
+  community.general.shutdown:
