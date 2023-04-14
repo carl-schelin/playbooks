@@ -186,6 +186,7 @@
     dest: "/etc/telegraf/telegraf.conf"
     mode: 0644
   with_items: "{{ config }}"
+  ignore_errors: yes
   no_log: True
   notify:
   - Restart telegraf
@@ -196,6 +197,7 @@
     dest: "/etc/telegraf/telegraf.d/core.conf"
     mode: 0644
   with_items: "{{ config }}"
+  ignore_errors: yes
   no_log: True
   notify:
   - Restart telegraf
