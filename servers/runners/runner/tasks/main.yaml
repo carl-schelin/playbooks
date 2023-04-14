@@ -8,7 +8,7 @@
   with_items:
   - podman
   - podman-compose
-  when: "'ndld1cuomglrunr1' in inventory_hostname"
+  when: "'bldr0cuomglrunr1' in inventory_hostname"
 
 - name: Update containers to support insecure registries
   lineinfile:
@@ -20,7 +20,7 @@
     - 'prefix = "bldr0cuomrepo1.dev.internal.pri:5000"'
     - 'insecure = true'
     - 'location = "bldr0cuomrepo1.dev.internal.pri:5000"'
-  when: "'ndld1cuomglrunr1' in inventory_hostname"
+  when: "'bldr0cuomglrunr1' in inventory_hostname"
 
 - name: Deploy the gitlab runner rpm
   copy:
