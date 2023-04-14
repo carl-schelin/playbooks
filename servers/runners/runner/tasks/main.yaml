@@ -1,0 +1,29 @@
+---
+- name: Install podman packages
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+  - podman
+  - podman-compose
+
+- name: Update containers to support insecure registries
+  lineinfile:
+    path: /etc/containers/registries.conf
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - '[[registry]]'
+    - 'prefix = "bldr0cuomrepo1.dev.internal.pri:5000"'
+    - 'insecure = true'
+    - 'location = "bldr0cuomrepo1.dev.internal.pri:5000"'
+
+- name: Deploy the gitlab runner rpm
+  copy:
+    src: gitlab-runner_amd64.rpm
+    dest: /var/tmp
+    owner: root
+    group: root
+    mode: '0644'
+
