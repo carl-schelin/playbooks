@@ -3,6 +3,8 @@
   ansible.builtin.yum:
     name: python2-dnf
     state: latest
+  vars:
+    ansible_python_interpreter: '/usr/bin/python3'
 
 - name: Install the epel package on CentOS
   ansible.builtin.yum:
