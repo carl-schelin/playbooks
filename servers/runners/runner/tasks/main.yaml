@@ -1,0 +1,55 @@
+# for now only the boulder runner builds containers
+---
+- name: Install podman packages
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+  - podman
+  - podman-compose
+  when: "'bldr0cuomglrunr1' in inventory_hostname"
+
+- name: Update containers to support insecure registries
+  lineinfile:
+    path: /etc/containers/registries.conf
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - '[[registry]]'
+    - 'prefix = "bldr0cuomrepo1.dev.internal.pri:5000"'
+    - 'insecure = true'
+    - 'location = "bldr0cuomrepo1.dev.internal.pri:5000"'
+  when: "'bldr0cuomglrunr1' in inventory_hostname"
+
+- name: Deploy the gitlab runner rpm
+  copy:
+    src: gitlab-runner_amd64.rpm
+    dest: /var/tmp
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install gitlab runner
+  yum:
+    name: /var/tmp/gitlab-runner_amd64.rpm
+    state: present
+
+- name: "Register runner"
+  community.general.gitlab_runner:
+    api_url: http://lnmt1cuomgitlab.internal.pri/
+    registration_token: "{{ runner.registration_token }}"
+    description: "{{ ansible_fqdn }}"
+    state: present
+    active: true
+    tag_list: ['development', 'docker']
+    run_untagged: false
+    locked: false
+
+- name: Enable the gitlab runner
+  systemd:
+    name: gitlab-runner
+    state: restarted
+    enabled: true
+    daemon_reload: true
+

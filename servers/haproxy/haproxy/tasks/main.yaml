@@ -25,9 +25,17 @@
   when: "'hap2' in inventory_hostname"
   notify: Start the haproxy Service
 
+- name: Make the /var/log/haproxy directory for logs
+  file:
+    path: /var/log/haproxy
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Set the log file permissions
   file:
-    path: /var/log/haproxy.log
+    path: /var/log/haproxy/haproxy.log
     state: touch
     owner: root
     group: root

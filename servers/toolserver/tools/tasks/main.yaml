@@ -46,9 +46,25 @@
     group: sysadmin
     mode: 0775
 
+- name: Make gitops directory
+  file:
+    path: /usr/local/admin/gitops
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
 - name: Make playbooks directory
   file:
     path: /usr/local/admin/playbooks
+    state: directory
+    owner: unixsvc
+    group: sysadmin
+    mode: 0775
+
+- name: Make terraform directory
+  file:
+    path: /usr/local/admin/terraform
     state: directory
     owner: unixsvc
     group: sysadmin
