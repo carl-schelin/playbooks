@@ -70,7 +70,7 @@
     mode: 0644
 
 - name: Exporting the shares
-  shell: exportfs -ra
+  shell: /usr/sbin/exportfs -ra
 
 - name: Start the nfs-server Service
   systemd:
@@ -79,7 +79,7 @@
     state: restarted
 
 - name: Get nfs Status
-  command: showmount --exports
+  command: /usr/sbin/showmount --exports
   register: nfs_status
 
 - debug: var=nfs_status.stdout_lines
