@@ -5,7 +5,11 @@ nodeRegistration:
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 clusterName: "{{ site.environment }}"
+{% if site.name == 'prod' %}
+controlPlaneEndpoint: "{{ loadbalancer_vip.name }}.{{ site.domain }}:6443"
+{% else %}
 controlPlaneEndpoint: "{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}:6443"
+{% endif %}
 etcd:
   local:
     imageRepository: "bldr0cuomrepo1.dev.internal.pri:5000"
