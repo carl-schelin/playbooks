@@ -5,10 +5,3 @@
     dest: /lib/systemd/system/kubelet.service.d/11-cgroups.conf
   notify: Start the kubelet and docker Services
 
-- name: Update the kubelet config.yaml for the metrics-server
-  lineinfile:
-    path: /var/lib/kubelet/config.yaml
-    state: present
-    line: "serverTLSBootstrap: true"
-  notify: Start the kubelet and docker Services
-
