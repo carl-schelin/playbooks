@@ -57,7 +57,6 @@
       - always
 
   roles:
-    - { role: clustername,  tags: ["clustername"]  }
     - { role: kubelet,      tags: ["kubelet"]      }
     - { role: certificates, tags: ["certificates"] }
     - { role: logging,      tags: ["logging"]      }

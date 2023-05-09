@@ -60,19 +60,13 @@ There are three patterns:
 In addition there are multiple tasks that can be run. I should split these into unique installations but for now, make sure you use the correct pattern when running the playbook.
 
 
-Add the cluster name to the control nodes
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=clustername
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=clustername
-
-Add the cluster name to the control nodes
+Install the cgroups config file and restart kubelet
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=kubelet
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=kubelet
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=kubelet
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=kubelet
 
-Add the cluster name to the control nodes
+Install the site certificates; probably not needed for homelab but here just in case
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=certificates
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=certificates
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=certificates
@@ -90,9 +84,10 @@ Update the permissions of files
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=permissions
         ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=permissions
 
-Update the permissions of files
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&control" kubernetes.yaml --tags=images
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&control" kubernetes.yaml --tags=images
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&control" kubernetes.yaml --tags=images
-        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&control" kubernetes.yaml --tags=images
+
+Update the image load to Always, add the ResourceQuota admission controller, and point to the local image repo
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=bldr0:&kubernetes" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=cabo0:&kubernetes" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=tato0:&kubernetes" kubernetes.yaml --tags=images
+        ansible-playbook -i /usr/local/admin/etc/hosts -e "pattern=lnmt1:&kubernetes" kubernetes.yaml --tags=images
 
