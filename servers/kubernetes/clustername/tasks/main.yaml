@@ -1,9 +1,0 @@
----
-- name: Add clustername to the cluster
-  lineinfile:
-    dest: /etc/kubernetes/manifests/kube-controller-manager.yaml
-    state: present
-    regexp:       '    - --cluster-name=kubernetes'
-    insertbefore: '    - --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt'
-    line:         '    - --cluster-name={{ site.environment }}'
-
