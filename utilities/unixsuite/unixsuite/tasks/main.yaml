@@ -129,9 +129,15 @@
     - { src: update.groups,  dest: update.groups }
     - { src: update.motd,    dest: update.motd }
 
+- name: Check .config status
+  stat:
+    path: /opt/unixsuite/run.d/.config
+  register: configvar
+
 - name: Link .config
   ansible.builtin.file:
     src: /opt/unixsuite/.config
     dest: /opt/unixsuite/run.d/.config
     state: hard
+  when: configvar.stat.exists == false
 
