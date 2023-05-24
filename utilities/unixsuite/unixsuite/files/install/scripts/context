@@ -4,20 +4,10 @@
 # context
 # Lets you display your current context and change easily
 
-USERNAME=$USER
-
-if [[ ! -z $2 ]]
-then
-  LEVEL=$2
-else
-  LEVEL='admin'
-fi
-
 function usage {
-  echo "Usage: context [site] [level]"
+  echo "Usage: context [site]"
   echo "where:"
-  echo "site - site name to change contexts; both bldr and bldr0-0 will work"
-  echo "level/namespace - the access level or namespace; admin or view for access level or your namespace for namespace"
+  echo "site - site name to change contexts"
   echo ""
   kubectl config get-contexts
 }
@@ -29,13 +19,13 @@ then
 else
 
   case $1 in
-    bldr) ARG="bldr0-0"
+    bldr) ARG="bldr"
        ;;
-    cabo) ARG="cabo0-0"
+    cabo) ARG="cabo"
        ;;
-    tato) ARG="tato0-1"
+    tato) ARG="tato"
        ;;
-    lnmt) ARG="lnmt1-2"
+    lnmt) ARG="lnmt"
        ;;
     *) ARG=$1
        ;;
@@ -45,19 +35,9 @@ else
   then
     usage
   else
-    kubectl config use-context $USERNAME-$LEVEL-$ARG-context
-    PS1="`uname`:$LOGNAME@Cluster: $ARG$ "; export PS1
-    if [[ $LEVEL = 'admin' ]]
-    then
-      kubectl get nodes
-    else
-      if [[ $LEVEL = 'view' ]]
-      then
-        kubectl get namespaces
-      else
-        kubectl get pods -n $LEVEL
-      fi
-    fi
+    kubectl config use-context kubernetes-admin@${ARG}
+    PS1="`uname`:kubernetes-admin@${ARG} "; export PS1
+    kubectl get pods -A
   fi
 
 fi
