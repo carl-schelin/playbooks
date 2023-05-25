@@ -1,3 +1,5 @@
 ---
 - name: Shutdown servers
-  community.general.shutdown:
+  command:
+    /usr/sbin/shutdown -h now
+
