@@ -1,5 +1,4 @@
 ---
 - name: Shutdown servers
-  command:
-    /usr/sbin/shutdown -h now
+  command: /usr/sbin/shutdown -h now
 
