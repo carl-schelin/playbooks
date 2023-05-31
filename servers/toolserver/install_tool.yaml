@@ -22,7 +22,36 @@
     include_vars:
       file: ../../vars/common.yaml
 
+  - name: Include boulder specific variables
+    include_vars:
+      file: ../../vars/boulder.yaml
+    when: "'bldr0' in inventory_hostname"
+
+  - name: Include cabo specific variables
+    include_vars:
+      file: ../../vars/cabo.yaml
+    when: "'cabo0' in inventory_hostname"
+
+  - name: Include tatooine specific variables
+    include_vars:
+      file: ../../vars/tatooine.yaml
+    when: "'tato0' in inventory_hostname"
+
+  - name: Include longmont specific variables
+    include_vars:
+      file: ../../vars/longmont.yaml
+    when: "'lnmt1' in inventory_hostname"
+
+  - name: Include nederland specific variables
+    include_vars:
+      file: ../../vars/nederland.yaml
+    when: "'ndld1' in inventory_hostname"
+
   roles:
     - { role: tools,       tags: ["tools"]       }
     - { role: kubernetes,  tags: ["kubernetes"]  }
+    - { role: dhcp,        tags: ["dhcp"]        }
+    - { role: httpd,       tags: ["httpd"]       }
+    - { role: tftp,        tags: ["tftp"]        }
+    - { role: pxe,         tags: ["pxe"]         }
 
