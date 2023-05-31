@@ -1,6 +1,6 @@
 ---
 - name: Install DHCP
-  dnf:
+  yum:
     name: dhcp-server
     state: present
   notify:
