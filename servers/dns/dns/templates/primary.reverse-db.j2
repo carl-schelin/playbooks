@@ -126,6 +126,8 @@ $TTL 86400
 {{ syslog.ipa.split('.')[3] }}		IN	PTR	{{ syslog.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
+{{ template.ipa.split('.')[3] }}	IN	PTR	{{ template.name }}.{{ site.name }}.{{ site.domain }}.
+;
 {% if terraform is defined %}
 {{ terraform.ipa.split('.')[3] }}		IN	PTR	{{ terraform.name }}.{{ site.name }}.{{ site.domain }}.
 ;
@@ -151,9 +153,26 @@ $TTL 86400
 ;
 {% endif %}
 ;
+{% if ecat is defined %}
+; *****************************************************************************
+; Set up the ELK cluster
+; *****************************************************************************
+{% for d in edata %}
+{{ d.ipa.split('.')[3] }}			IN	PTR	{{ d.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{{ ecat.ipa.split('.')[3] }}			IN	PTR	{{ ecat.name }}.{{ site.name }}.{{ site.domain }}.
+;
+{{ elog.ipa.split('.')[3] }}			IN	PTR	{{ elog.name }}.{{ site.name }}.{{ site.domain }}.
+;
+{% for m in emasters %}
+{{ m.ipa.split('.')[3] }}			IN	PTR	{{ m.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
 {% if loadbalancer_vip is defined %}
 ; *****************************************************************************
-; Set up the kubernetes clusters
+; Set up the kubernetes cluster
 ; *****************************************************************************
 {{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}.
 {{ loadbalancer_primary.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_primary.name }}.{{ site.name }}.{{ site.domain }}.
