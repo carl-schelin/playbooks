@@ -1,0 +1,36 @@
+authoritative;
+ddns-update-style interim;
+default-lease-time 14400;
+max-lease-time 14400;
+
+subnet {{ dhcp.subnet_ipid }} netmask {{ dhcp.netmaskid }} {
+  option routers                  {{ dhcp.router }};
+  option broadcast-address        {{ dhcp.broadcast_address }};
+  option subnet-mask              {{ dhcp.subnet_mask }};
+  option domain-name-servers      {{ dns_primary.ipa }};
+  option domain-name              "{{ cluster.siteid }}.{{ cluster.domain_name }}";
+  interface {{ tool.interface }};
+
+  pool {
+    range {{ dhcp.poolstart }} {{ dhcp.poolend }};
+
+    # Bootstrap entry
+    host {{ bootstrap.name }}-{{ tool.interface }} { hardware ethernet {{ bootstrap.macaddr | regex_replace ('-', ':') }}; fixed-address {{ bootstrap.ipa }}; }
+
+    # Control Plane entries
+    {% for c in okdcontrol %}
+    host {{ c.name }}-{{ tool.interface }} { hardware ethernet {{ c.macaddr | regex_replace ('-', ':') }}; fixed-address {{ c.ipa }}; }
+    {% endfor%}
+
+    # Worker Node entries
+    {% for w in okdworkers %}
+    host {{ w.name  }}-{{ tool.interface }} { hardware ethernet {{ w.macaddr | regex_replace ('-', ':') }}; fixed-address {{ w.ipa }}; }
+    {% endfor %}
+
+    # this will not give out addresses to hosts not listed above
+    deny unknown-clients;
+    # this is PXE specific
+    filename "pxelinux.0";
+    next-server {{ tool.ipa }};
+  }
+}

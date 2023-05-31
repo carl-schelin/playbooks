@@ -1,0 +1,13 @@
+---
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    daemon_reload: yes
+
+- name: Start the dhcpd Service
+  systemd:
+    name: dhcpd
+    state: restarted
+    enabled: yes
+
