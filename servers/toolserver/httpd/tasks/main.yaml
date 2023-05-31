@@ -33,7 +33,7 @@
     mode: 0775
     group: apache
     owner: unixsvc
-  with_items: {{ httpd }}
+  with_items: "{{ httpd }}"
 
 - name: build virtual log directories
   file:
@@ -42,7 +42,7 @@
     mode: 0755
     group: root
     owner: root
-  with_items: {{ httpd }}
+  with_items: "{{ httpd }}"
 
 - name: Create OCP install directory
   file:
