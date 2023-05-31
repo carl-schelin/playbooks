@@ -1,0 +1,143 @@
+---
+- name: Create pxelinux.cfg directory
+  file:
+    path: "/var/lib/tftpboot/pxelinux.cfg"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: Create rhcos directory
+  file:
+    path: "/var/lib/tftpboot/rhcos"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+
+- name: If requested, delete the bios.raw.gz file
+  file:
+    path: "/var/www/html/install/bios.raw.gz"
+    state: absent
+  when: force_ocp_download
+
+- name: If requested, delete the initramfs, image, and kernel files
+  file:
+    path: "/var/lib/tftpboot/rhcos/"
+    state: absent
+  when: force_ocp_download
+
+- name: If requested, delete the bootstrap, control, and worker ignition files
+  file:
+    path: "/var/www/html/install/"
+    state: absent
+  when: force_ocp_download
+
+- name: If requested, delete the default, bootstrap, control, and worker PXE menu files
+  file:
+    path: "/var/lib/tftpboot/pxelinux.cfg/"
+    state: absent
+  when: force_ocp_download
+
+
+- name: Downloading OCP4 installer Bios
+  get_url:
+    url: "{{ ocp_bios }}"
+    dest: /var/www/html/install/bios.raw.gz
+    mode: 0555
+    group: root
+    owner: root
+
+- name: Downloading OCP4 installer initramfs
+  get_url:
+    url: "{{ ocp_initramfs }}"
+    dest: /var/lib/tftpboot/rhcos/initramfs.img
+    mode: 0555
+    group: root
+    owner: root
+
+- name: Downloading OCP4 installer rootfs
+  get_url:
+    url: "{{ ocp_rootfs }}"
+    dest: /var/www/html/install/rootfs.img
+    mode: 0555
+    group: root
+    owner: root
+
+- name: Downloading OCP4 installer kernel
+  get_url:
+    url: "{{ ocp_install_kernel }}"
+    dest: /var/lib/tftpboot/rhcos/kernel
+    mode: 0555
+    group: root
+    owner: root
+
+
+- name: Create the default PXE menu file
+  template:
+    src: default.j2
+    dest: /var/lib/tftpboot/pxelinux.cfg/default
+    mode: 0555
+    group: root
+    owner: root
+
+- name: Create the bootstrap PXE menu file
+  template:
+    src: pxe-bootstrap.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ bootstrap.macaddr | regex_replace (':', '-')}}"
+    mode: 0555
+    group: root
+    owner: root
+
+- name: Create the control PXE menu file
+  template:
+    src: pxe-control.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+    mode: 0555
+    group: root
+    owner: root
+  with_items: "{{ okdcontrol }}"
+
+- name: Create the worker PXE menu file
+  template:
+    src: pxe-worker.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+    mode: 0555
+    group: root
+    owner: root
+  with_items: "{{ okdworkers }}"
+
+
+- name: Download the OCP4 client
+  get_url:
+    url: "{{ ocp_client }}"
+    dest: /usr/local/src/openshift-client-linux.tar.gz
+
+- name: Download the OCP4 installer
+  get_url:
+    url: "{{ ocp_installer }}"
+    dest: /usr/local/src/openshift-install-linux.tar.gz
+
+- name: Unarchiving the OCP4 client
+  unarchive:
+    src: /usr/local/src/openshift-client-linux.tar.gz
+    dest: /usr/bin
+    remote_src: yes
+    
+- name: Unarchiving the OCP4 Installer
+  unarchive:
+    src: /usr/local/src/openshift-install-linux.tar.gz
+    dest: /usr/bin
+    remote_src: yes
+
+
+- name: Start httpd and tftp services
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - tftp
+    - httpd
+

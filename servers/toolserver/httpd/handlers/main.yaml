@@ -1,0 +1,13 @@
+---
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    daemon_reload: yes
+
+- name: Start the httpd Service
+  systemd:
+    name: httpd
+    state: restarted
+    enabled: yes
+

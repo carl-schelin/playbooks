@@ -1,0 +1,11 @@
+default menu.c32   
+ prompt 1
+ timeout 9
+ ONTIMEOUT 1
+ menu title ######## PXE Boot Menu ########  
+ label 1
+ menu label ^1) Install Control Node
+ menu default
+ kernel rhcos/kernel
+ append initrd=rhcos/initramfs.img nomodeset rd.neednet=1 coreos.inst=yes coreos.inst.insecure coreos.inst.install_dev={{ disk }} coreos.live.rootfs_url=http://{{ tool.ipa }}:8080/install/rootfs.img coreos.inst.image_url=http://{{ tool.ipa }}:8080/install/bios.raw.gz coreos.inst.ignition_url=http://{{ tool.ipa }}:8080/ignition/master.ign
+

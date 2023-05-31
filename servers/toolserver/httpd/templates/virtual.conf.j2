@@ -1,0 +1,11 @@
+{% for web in httpd %}
+<VirtualHost *:80>
+  ServerName {{ web.name }}.internal.pri
+  Serveralias {{ web.name }}.internal.pri
+  DocumentRoot /var/www/html/{{ web.root }}
+  ErrorLog /var/log/httpd/{{ web.log }}/error_log
+  CustomLog /var/log/httpd/{{ web.log }}/access_log common
+</VirtualHost>
+
+{% endfor %}
+

@@ -1,0 +1,38 @@
+---
+- name: Install DHCP
+  dnf:
+    name: dhcp-server
+    state: present
+  notify:
+  - Start the dhcpd Service
+
+- name: Adding dhcp service and making permanent
+  firewalld:
+    service: dhcp
+    zone: public
+    permanent: yes
+    state: enabled
+  notify:
+  - Start the firewalld Service
+
+- name: Adding service network restrictions
+  firewalld:
+    zone: public
+    source: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - "{{ nfs.subnet_range }}"
+  notify:
+  - Start the firewalld Service
+
+- name: Configure DHCP
+  template:
+    src: dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the dhcpd Service
+
