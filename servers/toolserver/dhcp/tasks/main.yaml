@@ -1,7 +1,8 @@
+# for 8 use dnf and install dhcp-server
 ---
 - name: Install DHCP
   yum:
-    name: dhcp-server
+    name: dhcp
     state: present
   notify:
   - Start the dhcpd Service
