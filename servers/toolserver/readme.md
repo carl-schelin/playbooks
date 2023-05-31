@@ -39,8 +39,10 @@ Execution for most tool servers:
 When installing an openshift cluster (okd4 or ocp4) only in boulder, run the following tags as well or simply run without tags to fully install:
 
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags dhcp
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags pxe
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags tftp
+
+As pxe installs some files into the tftproot directory structure, it should be run last.
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags pxe
 
 Note passing -e patch=true to the above playbooks and the guests will be patched and rebooted upon completion. It will take some time of course so be ready.
 
