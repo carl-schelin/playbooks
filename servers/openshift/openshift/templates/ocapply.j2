@@ -1,0 +1,12 @@
+#!/bin/bash
+
+for i in 1 2 3
+do
+  oc apply -f {{ site.name }}cuomctl0${i}.policy.yaml
+done
+
+for i in 1 2 3 4 5 6
+do
+  oc apply -f {{ site.name }}cuomwrk0${i}.policy.yaml
+done
+
