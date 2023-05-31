@@ -15,23 +15,7 @@ Syntax Checks
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --syntax-check -vvv
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --syntax-check -vvv
 
-Execution
-
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml
-
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' -e patch=true install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' -e patch=true install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' -e patch=true install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' -e patch=true install_tool.yaml
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' -e patch=true install_tool.yaml
-
-
-Note passing -e patch=true to the above playbooks and the guests will be patched and rebooted upon completion. It will take some time of course so be ready.
-
+Execution for most tool servers:
 
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags tools
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags tools
@@ -45,11 +29,18 @@ Note passing -e patch=true to the above playbooks and the guests will be patched
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags kubernetes
     ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags kubernetes
 
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags dhcp
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags dhcp
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml --tags dhcp
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags dhcp
-    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags httpd
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags httpd
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml --tags httpd
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags httpd
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags httpd
 
-Others are pxe, httpd, and tftp
+
+When installing an openshift cluster (okd4 or ocp4) only in boulder, run the following tags as well or simply run without tags to fully install:
+
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags pxe
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags tftp
+
+Note passing -e patch=true to the above playbooks and the guests will be patched and rebooted upon completion. It will take some time of course so be ready.
 

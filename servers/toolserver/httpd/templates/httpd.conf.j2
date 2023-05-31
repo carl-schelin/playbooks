@@ -39,6 +39,7 @@ ServerRoot "/etc/httpd"
 # prevent Apache from glomming onto all bound IP addresses.
 #
 #Listen 12.34.56.78:80
+Listen 80
 Listen 8080
 
 
@@ -159,7 +160,7 @@ DocumentRoot "/var/www/html"
     Require all granted
 </Directory>
 
-{% for web in httpde %}
+{% for web in httpd %}
 <Directory "/var/www/html/{{ web.root }}">
     Options Indexes FollowSymLinks
     AllowOverride None
