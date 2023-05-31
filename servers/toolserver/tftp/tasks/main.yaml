@@ -1,0 +1,31 @@
+---
+- name: Install TFTP related package
+  yum:
+    name: ['tftp', 'tftp-server', 'syslinux', 'wget', 'vsftpd']
+    state: present
+  notify:
+  - Start the tftp Service
+
+- name: Adding tftp service and making permanent
+  firewalld:
+    service: tftp
+    zone: public
+    permanent: yes
+    state: enabled
+  notify:
+  - Start the firewalld Service
+
+- name: Adding service network restrictions
+  firewalld:
+    zone: public
+    source: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - "{{ nfs.subnet_range }}"
+  notify:
+  - Start the firewalld Service
+
+- name: Copy over files needed for TFTP
+  shell: "cp -a /usr/share/syslinux/* /var/lib/tftpboot"
+

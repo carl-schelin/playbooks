@@ -1,0 +1,13 @@
+---
+- name: Start the firewalld Service
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: Start the tftp Service
+  systemd:
+    name: tftp
+    state: restarted
+    enabled: yes
+
