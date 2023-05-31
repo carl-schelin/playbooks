@@ -33,3 +33,23 @@ Execution
 Note passing -e patch=true to the above playbooks and the guests will be patched and rebooted upon completion. It will take some time of course so be ready.
 
 
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags tools
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags tools
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml --tags tools
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags tools
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags tools
+
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags kubernetes
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags kubernetes
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml --tags kubernetes
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags kubernetes
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags kubernetes
+
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=bldr0' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=cabo0' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=tato0' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=lnmt1' install_tool.yaml --tags dhcp
+    ansible-playbook -i /usr/local/admin/etc/hosts -e 'pattern=ndld1' install_tool.yaml --tags dhcp
+
+Others are pxe, httpd, and tftp
+

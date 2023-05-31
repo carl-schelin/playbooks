@@ -1,0 +1,86 @@
+---
+- name: Install httpd package
+  yum:
+    name: httpd
+    state: present
+  notify:
+  - Start the httpd Service
+
+- name: Write out httpd.conf file
+  template:
+    src: httpd.conf.j2
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the httpd Service
+
+- name: Write out virtual.conf file
+  template:
+    src: virtual.conf.j2
+    dest: /etc/httpd/conf.d/virtual.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - Start the httpd Service
+
+- name: build virtual web directories
+  file:
+    path: "/var/www/html/{{ item.root }}"
+    state: directory
+    mode: 0775
+    group: apache
+    owner: unixsvc
+  with_items: {{ httpd }}
+
+- name: build virtual log directories
+  file:
+    path: "/var/log/httpd/{{ item.log }}"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  with_items: {{ httpd }}
+
+- name: Create OCP install directory
+  file:
+    path: "/var/www/html/install"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: Create OCP ignition directory
+  file:
+    path: "/var/www/html/ignition"
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+
+- name: Open http port 80 for general access and port 8080 so the bootstrap server can retrieve ignition files
+  firewalld:
+    permanent: yes
+    immediate: yes
+    state: enabled
+    zone: public
+    port: "{{ item }}"
+  with_items:
+    - 80/tcp
+    - 8080/tcp
+  notify:
+  - Start the firewalld Service
+
+- name: Adding service network restrictions
+  firewalld:
+    zone: public
+    source: "{{ item }}"
+    state: enabled
+    permanent: yes
+  with_items:
+    - "{{ nfs.subnet_range }}"
+  notify:
+  - Start the firewalld Service
+
