@@ -1,0 +1,216 @@
+---
+- name: Install the jq tool for CSRs
+  ansible.builtin.yum:
+    name: jq
+    state: latest
+
+# Remove artifacts from the previous install to prevent to prevent cert issues in ignition flies.
+# Create directories, keys, ignition files and move them to correct location.
+- name: Remove previous install ignition files, keys, and openshift_install artifacts.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}"
+    state: absent
+
+- name: Create ocp4 Installation directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create ocp4 ingress directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}/ingress"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create ocp4 manage directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}/manage"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create ocp4 nmstate directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}/nmstate"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create ocp4 storage directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}/storage"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create ocp4 users directory.
+  ansible.builtin.file:
+    path: "{{ install_ocp4 }}/users"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+
+- name: Generate ssh keys.
+  openssh_keypair:
+    path: "{{ install_ocp4 }}/id_rsa"
+    state: present
+    type: rsa
+    size: 2048
+
+- name: Check the id_rsa and id_rsa.pub keys generated
+  stat:
+    path: "{{ item }}"
+  with_items:
+    - "{{ install_ocp4 }}/id_rsa"
+    - "{{ install_ocp4 }}/id_rsa.pub"
+
+- name: Capture public key
+  shell: cat {{ install_ocp4 }}/id_rsa.pub | sed 's/ *$//'
+  register: public_key
+
+- name: Set capture public key as fact
+  set_fact:
+    pub_key: "{{ public_key.stdout }}"
+
+
+- name: Create install-config.yaml file
+  template: 
+    src: install-config.j2
+    dest: "{{ install_ocp4 }}/install-config.yaml"
+    mode: 0755
+  
+- name: Generate manifest's files
+  shell: openshift-install create manifests --dir={{ install_ocp4 }}/
+
+- name: Check if manifests file exists.
+  stat:
+    path: "{{ install_ocp4 }}/manifests/cluster-scheduler-02-config.yml"
+
+- name: Set mastersSchedulable parameter value to false
+  shell: "sed -i 's/mastersSchedulable: true/mastersSchedulable: false/g' {{ install_ocp4 }}/manifests/cluster-scheduler-02-config.yml"
+
+- name: Generate ignition file.
+  shell: openshift-install create ignition-configs --dir={{ install_ocp4 }}/
+
+- name: Check if ignition files exists in Installation directory.
+  stat:
+    path: "{{ install_ocp4 }}/{{ item }}"
+  with_items: 
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+
+- name: Copy ignition files to webroot directory.
+  copy:
+    src: "{{ install_ocp4 }}/{{ item }}"
+    dest: /var/www/html/ignition/{{ item }}
+    mode: 0755
+    remote_src: yes
+  with_items:
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+
+- name: Check if ignition files exists in webroot directory
+  stat:
+    path: /var/www/html/ignition/{{ item }}
+  with_items: 
+    - bootstrap.ign
+    - master.ign
+    - worker.ign
+
+
+- name: Copy ingress files to the install directory.
+  copy:
+    src: patch.ingress
+    dest: "{{ install_ocp4 }}/ingress/patch"
+    mode: 0755
+
+- name: Copy csrs file to the manage directory.
+  copy:
+    src: csrs
+    dest: "{{ install_ocp4 }}/manage/csrs"
+    mode: 0755
+
+- name: Copy nmstate files to the install directory.
+  copy:
+    src: "{{ item }}"
+    dest: "{{ install_ocp4 }}/nmstate/{{ item }}"
+    mode: 0644
+  with_items:
+    - 01-namespace.yaml
+    - 02-operatorgroup.yaml
+    - 03-subscription.yaml
+    - 04-nmstate.yaml
+    - template.yaml
+
+- name: Copy nmstate files to the install directory.
+  copy:
+    src: convert
+    dest: "{{ install_ocp4 }}/nmstate/convert"
+    mode: 0755
+
+- name: Copy nmstate files to 
+  template: 
+    src: "{{ item }}.j2"
+    dest: "{{ install_ocp4 }}/nmstate/{{ item }}"
+    mode: 0755
+  with_items:
+    - ocapply
+    - ocremove
+
+- name: Copy nmstate files to 
+  template: 
+    src: nodes.j2
+    dest: "{{ install_ocp4 }}/nmstate/nodes"
+    mode: 0644
+
+- name: Copy storage files to the install directory.
+  copy:
+    src: patch.storage
+    dest: "{{ install_ocp4 }}/storage/patch"
+    mode: 0755
+
+- name: Copy storage files to 
+  template: 
+    src: registry_pv.yaml.j2
+    dest: "{{ install_ocp4 }}/storage/registry_pv.yaml"
+    mode: 0644
+
+- name: Copy users file to install directory.
+  copy:
+    src: provider.yaml
+    dest: "{{ install_ocp4 }}/users/provider.yaml"
+    mode: 0644
+
+- name: Copy users file to install directory.
+  copy:
+    src: "{{ item }}"
+    dest: "{{ install_ocp4 }}/users/{{ item }}"
+    mode: 0755
+  with_items:
+    - newhtpasswd
+    - updatehtpasswd
+
+- name: Copy users file to 
+  template: 
+    src: htpasswd.j2
+    dest: "{{ install_ocp4 }}/users/htpasswd"
+    mode: 0644
+
+- name: Copy users file to 
+  template: 
+    src: bindings.j2
+    dest: "{{ install_ocp4 }}/users/bindings"
+    mode: 0755
+

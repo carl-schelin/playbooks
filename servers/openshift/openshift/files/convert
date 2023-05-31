@@ -1,0 +1,24 @@
+#!/bin/bash
+
+for i in $( grep -v "^#" nodes )
+do
+  HOSTNAME=$(echo $i | cut -f1 -d,)
+  SITE=$(    echo $i | cut -f2 -d,)
+  MGTIPV4=$( echo $i | cut -f3 -d,)
+  MGTGW=$(   echo $i | cut -f4 -d,)
+  MGTMAC=$(  echo $i | cut -f5 -d,)
+  DNSPRI=$(  echo $i | cut -f6 -d,)
+  DNSSEC=$(  echo $i | cut -f7 -d,)
+
+  sed \
+    -e "s/HOSTNAME/${HOSTNAME}/g" \
+    -e "s/SITE/${SITE}/g" \
+    -e "s/MGTIPV4ADDRESS/${MGTIPV4}/g" \
+    -e "s/MGTGATEWAY/${MGTGW}/g" \
+    -e "s/MGTMACADDRESS/${MGTMAC}/g" \
+    -e "s/DNSPRIMARY/${DNSPRI}/g" \
+    -e "s/DNSSECONDARY/${DNSSEC}/g" \
+    template.yaml > ${HOSTNAME}.policy.yaml
+
+done
+

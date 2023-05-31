@@ -1,0 +1,51 @@
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  name: HOSTNAME-policy
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: HOSTNAME.SITE.internal.pri
+  desiredState:
+    interfaces:
+    - name: enp1s0
+      description: Management Network
+      ipv4:
+        address:
+        - ip: MGTIPV4ADDRESS
+          prefix-length: 24
+        dhcp: false
+        enabled: true
+      ipv6:
+        dhcp: false
+        autoconf: false
+        enabled: false
+      mac-address: MGTMACADDRESS
+      mtu: 1500
+      state: up
+      type: ethernet
+    routes:
+      config:
+      - destination: 0.0.0.0/0
+        metric: 100
+        next-hop-address: MGTGATEWAY
+        next-hop-interface: enp1s0
+        table-id: 254
+        state: absent
+      - destination: 10.90.121.195/32
+        metric: 100
+        next-hop-address: MGTGATEWAY
+        next-hop-interface: enp1s0
+        table-id: 254
+      - destination: 10.187.0.0/16
+        metric: 100
+        next-hop-address: MGTGATEWAY
+        next-hop-interface: enp1s0
+        table-id: 254
+    dns-resolver:
+      config:
+        search:
+        - SITE.internal.pri
+        server:
+        - DNSPRIMARY
+        - DNSSECONDARY
+

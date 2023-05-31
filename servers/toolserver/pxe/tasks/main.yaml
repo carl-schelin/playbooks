@@ -20,25 +20,25 @@
   file:
     path: "/var/www/html/install/bios.raw.gz"
     state: absent
-  when: force_ocp_download
+  when: force_ocp_download == true
 
 - name: If requested, delete the initramfs, image, and kernel files
   file:
     path: "/var/lib/tftpboot/rhcos/"
     state: absent
-  when: force_ocp_download
+  when: force_ocp_download == true
 
 - name: If requested, delete the bootstrap, control, and worker ignition files
   file:
     path: "/var/www/html/install/"
     state: absent
-  when: force_ocp_download
+  when: force_ocp_download == true
 
 - name: If requested, delete the default, bootstrap, control, and worker PXE menu files
   file:
     path: "/var/lib/tftpboot/pxelinux.cfg/"
     state: absent
-  when: force_ocp_download
+  when: force_ocp_download == true
 
 
 - name: Downloading OCP4 installer Bios

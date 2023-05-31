@@ -1,6 +1,6 @@
 $TTL 86400
 {{ site.name }}.{{ site.domain }}.			IN SOA                    ns1.{{ site.name }}.{{ site.domain }}. root.{{ site.name }}.{{ site.domain }}. (
-			{{ serialnumber }}		;serial
+			{{ serialnumber }}	;serial
 			28800		;refresh (8 hours)
 			3600		;retry (1 hour)
 			604800		;expire (1 week)
@@ -126,11 +126,20 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ syslog.name }}		IN	A	{{ syslog.ipa }}
 ;
 {% endif %}
+;
+{{ template.name }}		IN	A	{{ template.ipa }}
+;
+{{ template_cname.name }}		IN	CNAME	{{ template.name }}.{{ site.name }}.{{ site.domain }}.
+;
 {% if terraform is defined %}
 {{ terraform.name }}		IN	A	{{ terraform.ipa }}
 ;
 {% endif %}
 {{ tool.name }}		IN	A	{{ tool.ipa }}
+;
+{% for tl in tool_cname %}
+{{ tl.name }}		IN	CNAME	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
 ;
 {% if tower is defined %}
 {{ tower.name }}		IN	A	{{ tower.ipa }}
@@ -151,13 +160,35 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 ;
 {% endif %}
 ;
+{% if ecat is defined %}
+; *****************************************************************************
+; Set up the ELK cluster
+; *****************************************************************************
+;
+{% for d in edata %}
+{{ d.name }}		IN	A	{{ d.ipa }}
+{% endfor %}
+;
+{{ ecat.name }}		IN	A	{{ ecat.ipa }}
+;
+{{ elog.name }}		IN	A	{{ elog.ipa }}
+;
+{% for m in emasters %}
+{{ m.name }}		IN	A	{{ m.ipa }}
+{% endfor %}
+;
+{% endif %}
 {% if loadbalancer_vip is defined %}
 ; *****************************************************************************
-; Set up the kubernetes clusters
+; Set up the kubernetes cluster
 ; *****************************************************************************
 {{ loadbalancer_vip.name }}		IN	A	{{ loadbalancer_vip.ipa }}
 {{ loadbalancer_primary.name }}		IN	A	{{ loadbalancer_primary.ipa }}
 {{ loadbalancer_secondary.name }}		IN	A	{{ loadbalancer_secondary.ipa }}
+;
+{% for vip in vip_cnames %}
+{{ vip.name }}			IN	CNAME	{{ loadbalancer_vip.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
 ;
 ; *****************************************************************************
 ; The api points to the IP of your load balancer

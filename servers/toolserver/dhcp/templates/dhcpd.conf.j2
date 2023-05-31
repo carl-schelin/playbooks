@@ -8,7 +8,7 @@ subnet {{ dhcp.subnet_ipid }} netmask {{ dhcp.netmaskid }} {
   option broadcast-address        {{ dhcp.broadcast_address }};
   option subnet-mask              {{ dhcp.subnet_mask }};
   option domain-name-servers      {{ dns_primary.ipa }};
-  option domain-name              "{{ cluster.siteid }}.{{ cluster.domain_name }}";
+  option domain-name              "{{ site.name }}.{{ site.domain }}";
   interface {{ tool.interface }};
 
   pool {

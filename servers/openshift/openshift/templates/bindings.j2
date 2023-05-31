@@ -1,0 +1,12 @@
+#!/bin/bash
+
+USERS=""
+{% for u in users %}
+USERS="${USERS} {{ u.name }}"
+{% endfor %}
+
+for i in ${USERS}
+do
+  oc adm policy add-cluster-role-to-user cluster-admin ${i}
+done
+
