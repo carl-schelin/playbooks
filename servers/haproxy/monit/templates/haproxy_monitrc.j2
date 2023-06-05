@@ -176,9 +176,15 @@ set httpd
 {% if 'hap1' in ansible_hostname %}
      address {{ loadbalancer_primary.ipa }}                  # only accept connection from localhost
      allow {{ loadbalancer_primary.ipa }}/255.255.255.255    # allow localhost to connect to the server
-{% else %}
+{% elif 'hap2' in ansible_hostname %}
      address {{ loadbalancer_secondary.ipa }}                  # only accept connection from localhost
      allow {{ loadbalancer_secondary.ipa }}/255.255.255.255    # allow localhost to connect to the server
+{% elif 'hap3' in ansible_hostname %}
+     address {{ okd_lb_primary.ipa }}                  # only accept connection from localhost
+     allow {{ okd_lb_primary.ipa }}/255.255.255.255    # allow localhost to connect to the server
+{% elif 'hap4' in ansible_hostname %}
+     address {{ okd_lb_secondary.ipa }}                  # only accept connection from localhost
+     allow {{ okd_lb_secondary.ipa }}/255.255.255.255    # allow localhost to connect to the server
 {% endif %}
      allow {{ tool.ipa }}/255.255.255.255                    # allow connections from the tool server
      allow 192.168.0.0/255.255.0.0                           # allow connections from the internal servers
