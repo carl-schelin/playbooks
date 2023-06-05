@@ -60,6 +60,7 @@ backend kubernetes-api-server
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:6443 check
 {% endfor %}
+{% endif %}
 
 
 frontend machine-config-server
@@ -78,6 +79,7 @@ backend machine-config-server
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:22623 check
 {% endfor %}
+{% endif %}
 
 
 frontend ingress-http
@@ -97,6 +99,7 @@ backend ingress-http
 {% for w in workers %}
 	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:80 check
 {% endfor %}
+{% endif %}
 
 
 frontend ingress-https
@@ -116,5 +119,6 @@ backend ingress-https
 {% for w in workers %}
 	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:443 check
 {% endfor %}
+{% endif %}
 
 #---------------------------------------------------------------------
