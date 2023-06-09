@@ -191,12 +191,6 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endfor %}
 ;
 ; *****************************************************************************
-; The api points to the IP of your load balancer
-; *****************************************************************************
-api			IN	A	{{ loadbalancer_vip.ipa }}
-api-int			IN	A	{{ loadbalancer_vip.ipa }}
-;
-; *****************************************************************************
 ; Create entries for the control plane
 ; *****************************************************************************
 {% for c in control %}
@@ -207,6 +201,38 @@ api-int			IN	A	{{ loadbalancer_vip.ipa }}
 ; Create entries for the worker hosts
 ; *****************************************************************************
 {% for w in workers %}
+{{ w.name }}		IN	A	{{ w.ipa }}
+{% endfor %}
+;
+{% endif %}
+{% if okd_lb_vip is defined %}
+; *****************************************************************************
+; Set up the Openshift cluster
+; *****************************************************************************
+{{ okd_lb_vip.name }}		IN	A	{{ okd_lb_vip.ipa }}
+{{ okd_lb_primary.name }}		IN	A	{{ okd_lb_primary.ipa }}
+{{ okd_lb_secondary.name }}		IN	A	{{ okd_lb_secondary.ipa }}
+;
+{% for vip in okd_cname %}
+{{ vip.name }}			IN	CNAME	{{ okd_lb_vip.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+; *****************************************************************************
+; Create the bootstrap entry
+; *****************************************************************************
+{{ bootstrap.name }}		IN	A	{{ bootstrap.ipa }}
+;
+; *****************************************************************************
+; Create entries for the control plane
+; *****************************************************************************
+{% for c in okd_control %}
+{{ c.name }}		IN	A	{{ c.ipa }}
+{% endfor %}
+;
+; *****************************************************************************
+; Create entries for the worker hosts
+; *****************************************************************************
+{% for w in okd_workers %}
 {{ w.name }}		IN	A	{{ w.ipa }}
 {% endfor %}
 ;

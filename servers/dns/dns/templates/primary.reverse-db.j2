@@ -179,12 +179,6 @@ $TTL 86400
 {{ loadbalancer_secondary.ipa.split('.')[3] }}		IN	PTR	{{ loadbalancer_secondary.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
-; The api points to the IP of your load balancer
-; *****************************************************************************
-{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	api.{{ site.name }}.{{ site.domain }}.
-{{ loadbalancer_vip.ipa.split('.')[3] }}		IN	PTR	api-int.{{ site.name }}.{{ site.domain }}.
-;
-; *****************************************************************************
 ; Create entries for the control plane
 ; *****************************************************************************
 {% for c in control %}
@@ -195,6 +189,36 @@ $TTL 86400
 ; Create entries for the worker hosts
 ; *****************************************************************************
 {% for w in workers %}
+{{ w.ipa.split('.')[3] }}		IN	PTR	{{ w.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if okd_lb_vip is defined %}
+; *****************************************************************************
+; Set up the Openshift cluster
+; *****************************************************************************
+{{ okd_lb_vip.ipa.split('.')[3] }}		IN	PTR	{{ okd_lb_vip.name }}.{{ site.name }}.{{ site.domain }}.
+{{ okd_lb_primary.ipa.split('.')[3] }}		IN	PTR	{{ okd_lb_primary.name }}.{{ site.name }}.{{ site.domain }}.
+{{ okd_lb_secondary.ipa.split('.')[3] }}		IN	PTR	{{ okd_lb_secondary.name }}.{{ site.name }}.{{ site.domain }}.
+;
+; *****************************************************************************
+; The okd cnames point to the IP of your load balancer vip
+; *****************************************************************************
+{% for vip in okd_cname %}
+{{ okd_lb_vip.ipa.split('.')[3] }}		IN	PTR	{{ vip.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+; *****************************************************************************
+; Create entries for the control plane
+; *****************************************************************************
+{% for c in okd_control %}
+{{ c.ipa.split('.')[3] }}		IN	PTR	{{ c.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+; *****************************************************************************
+; Create entries for the worker hosts
+; *****************************************************************************
+{% for w in okd_workers %}
 {{ w.ipa.split('.')[3] }}		IN	PTR	{{ w.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
