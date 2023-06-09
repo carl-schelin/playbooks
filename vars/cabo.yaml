@@ -172,6 +172,17 @@ toolcname:
 
 
 # ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: cabo0cuomcentos7
+  ipa: 192.168.102.42
+
+template_cname:
+  name: cabo0cuomrocky8
+
+
+# ----------------------------------
 # Worker nodes for the Cabo kubernetes Cluster
 # ----------------------------------
 workers:

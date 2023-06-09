@@ -199,6 +199,18 @@ toolcname:
   - name: inventory
   - name: status
 
+
+# ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: bldr0cuomcentos7
+  ipa: 192.168.101.42
+
+template_cname:
+  name: bldr0cuomrocky8
+
+
 # ----------------------------------
 # Worker nodes for the Boulder Cluster
 # ----------------------------------

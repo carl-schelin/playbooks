@@ -355,6 +355,17 @@ toolaincname:
 
 
 # ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: ndld1cuomcentos7
+  ipa: 192.168.105.42
+
+template_cname:
+  name: ndld1cuomrocky8
+
+
+# ----------------------------------
 # Windows servers
 # ----------------------------------
 windows:

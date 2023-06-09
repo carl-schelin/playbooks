@@ -212,6 +212,17 @@ jumpstart:
 
 
 # ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: lnmt1cuomcentos7
+  ipa: 192.168.104.42
+
+template_cname:
+  name: lnmt1cuomrocky8
+
+
+# ----------------------------------
 # Ansible tower
 # ----------------------------------
 tower:
