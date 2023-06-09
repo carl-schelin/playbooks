@@ -53,6 +53,7 @@ frontend kubernetes-api-server
 backend kubernetes-api-server
 	mode tcp
 {% if 'hap3' in inventory_hostname %}
+	server {{ bootstrap.name }} {{ bootstrap.ipa }}:6443 check
 {% for c in okd_control %}
 	server {{ c.name }} {{ c.ipa }}:6443 check
 {% endfor %}
@@ -71,6 +72,7 @@ frontend machine-config-server
 backend machine-config-server
 	mode tcp
 {% if 'hap3' in inventory_hostname %}
+	server {{ bootstrap.name }} {{ bootstrap.ipa }}:6443 check
 {% for c in okd_control %}
 	server {{ c.name }} {{ c.ipa }}:22623 check
 {% endfor %}
