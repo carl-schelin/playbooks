@@ -149,12 +149,12 @@ okd_lb_secondary:
   ipa: 192.168.101.64
 
 okd_cname:
-  - api
-  - api-int
-  - console-openshift-console
-  - oauth-openshift
-  - oauth-openshift.apps
-  - console-openshift-console.apps
+  - name: api
+  - name: api-int
+  - name: console-openshift-console
+  - name: oauth-openshift
+  - name: oauth-openshift.apps
+  - name: console-openshift-console.apps
 
 
 # ----------------------------------
