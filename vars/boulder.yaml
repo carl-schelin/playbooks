@@ -305,9 +305,9 @@ okd_control:
     macaddr: "00-50-56-96-bd-a6"
 
 okdcname:
-  - etcd-0
-  - etcd-1
-  - etcd-2
+  - name: etcd-0
+  - name: etcd-1
+  - name: etcd-2
 
 
 # ----------------------------------
