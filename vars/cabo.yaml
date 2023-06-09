@@ -163,7 +163,7 @@ tool:
   interface: ens192
 
 # aliases
-toolcname:
+tool_cname:
   - name: inventory
   - name: status
   - name: cthulhu

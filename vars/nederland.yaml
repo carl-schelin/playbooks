@@ -303,7 +303,7 @@ tool:
   interface: ens192
 
 # home.internal.pri
-tooldevcname:
+tool_cname:
   - ainsley
   - cheatsheets
   - dga

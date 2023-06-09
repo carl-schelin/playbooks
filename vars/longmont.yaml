@@ -201,6 +201,9 @@ tool:
   ipa: 192.168.104.60
   interface: ens192
 
+tool_cname:
+  - name: inventory
+  - name: status
 
 solaris:
   name: "lnmt1cuom2540"

@@ -155,7 +155,7 @@ storage_nfs1:
 
 
 # ----------------------------------
-# Tool server
+# templates
 # ----------------------------------
 template:
   name: tato0cuomcentos7
