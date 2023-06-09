@@ -228,7 +228,7 @@ amazon:
 # CNAME: bootstrap
 # ----------------------------------
 bootstrap:
-  name: bldr0cuombst1
+  name: bldr0cuombst01
   ipa: 192.168.101.98
   macaddr: "00-50-56-96-43-d5"
 
