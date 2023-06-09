@@ -1,4 +1,190 @@
-# site specific variables for all servers
+# common hostnames and IPs across all sites
+# followed by more unique site type hostnames
 ---
+# ----------------------------------
+# Control plane servers for the Tatooine Cluster
+# ----------------------------------
+control:
+  - name: "tato0cuomkube1"
+    ipa: 192.168.103.160
+  - name: "tato0cuomkube2"
+    ipa: 192.168.103.161
+  - name: "tato0cuomkube3"
+    ipa: 192.168.103.162
 
-Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.
+
+# ----------------------------------
+# Basic infrastructure and kubernetes information
+# ----------------------------------
+site:
+  name: "stage"
+  domain: "internal.pri"
+  environment: "tato"
+  clusterdb: "103.168.192"
+  cluster_network: "10.100.77.0/24"
+  service_network: "10.100.78.0/24"
+
+
+# ----------------------------------
+# DHCP server - on the tool server
+# ----------------------------------
+dhcp:
+  interface: "ens192"
+  router: "192.168.103.254"
+  broadcast_address: "192.168.103.255"
+  subnet_mask: "255.255.255.0"
+  subnet_ipid: "192.168.103.0"
+  netmaskid: "255.255.255.0"
+  poolstart: "192.168.103.225"
+  poolend: "192.168.103.253"
+
+
+# ----------------------------------
+# Add DNS Servers
+# ----------------------------------
+dns_primary:
+  name: "tato0cuomdns1"
+  ipa: "192.168.103.153"
+
+dns_secondary:
+  name: "tato0cuomdns2"
+  ipa: "192.168.103.154"
+
+dns_reverse:
+  network: "103.168.192"
+
+
+# ----------------------------------
+# ELK Logging cluster
+# ----------------------------------
+edata:
+  - name: "tato0cuomdat1"
+    ipa: 192.168.103.145
+  - name: "tato0cuomdat2"
+    ipa: 192.168.103.146
+
+ecat:
+  name: "tato0cuomkat1"
+  ipa: 192.168.103.147
+
+elog:
+  name: "tato0cuomlog1"
+  ipa: 192.168.103.148
+
+emasters:
+  - name: "tato0cuommas1"
+    ipa: 192.168.103.149
+  - name: "tato0cuommas2"
+    ipa: 192.168.103.150
+  - name: "tato0cuommas3"
+    ipa: 192.168.103.151
+
+
+# ----------------------------------
+# Gitlab Runner
+# ----------------------------------
+glrunner:
+  - name: "tato0cuomglrunr1"
+    ipa: 192.168.103.54
+
+
+# ----------------------------------
+# List of all httpd httpd.conf document and virtual.conf entries
+# ----------------------------------
+
+httpd:
+  - name: inventory.stage
+    root: inventory
+    log: inventory
+  - name: status.stage
+    root: status
+    log: status
+
+
+# ----------------------------------
+# HAProxy server for the Kubernetes servers
+# ----------------------------------
+loadbalancer_vip:
+  name: "tato0cuomvip1"
+  ipa: 192.168.103.100
+
+loadbalancer_primary:
+  name: "tato0cuomhap1"
+  ipa: 192.168.103.61
+
+loadbalancer_secondary:
+  name: "tato0cuomhap2"
+  ipa: 192.168.103.62
+
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
+
+
+# ----------------------------------
+# Add NFS Setup config details
+# ----------------------------------
+nfs:
+  subnet_range: "192.168.103.0/24"
+
+
+# ----------------------------------
+# SNMP settings for the Nagios monitoring system
+# ----------------------------------
+snmp:
+  ipa: 192.168.103.101
+
+
+# ----------------------------------
+# Storage servers used by Kubernetes
+# ----------------------------------
+storage:
+  - name: "tato0cuomnfs1"
+    ipa: 192.168.103.170
+storage_nfs1:
+  name: "tato0cuomnfs1"
+  ipa: 192.168.103.170
+
+
+# ----------------------------------
+# Tool server
+# ----------------------------------
+template:
+  name: tato0cuomcentos7
+  ipa: 192.168.103.42
+
+template_cname:
+  name: tato0cuomrocky8
+
+
+# ----------------------------------
+# Tool server
+# ----------------------------------
+tool:
+  name: "tato0cuomtool11"
+  ipa: 192.168.103.90
+  interface: ens192
+
+tool_cname:
+  - name: inventory
+  - name: status
+
+
+# ----------------------------------
+# Worker nodes for the Tatooine Cluster
+# ----------------------------------
+workers:
+  - name: "tato0cuomknode1"
+    ipa: 192.168.103.163
+  - name: "tato0cuomknode2"
+    ipa: 192.168.103.164
+  - name: "tato0cuomknode3"
+    ipa: 192.168.103.165
+
+
+###############################
+# The following entries are site specific and unique to the site
+# They'll need unique checks in the DNS servers
+###############################
+

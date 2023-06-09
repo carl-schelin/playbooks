@@ -1,4 +1,178 @@
-# site specific variables for all servers
+# common hostnames and IPs across all sites
+# followed by more unique site type hostnames
 ---
+# ----------------------------------
+# Control plane servers for the Cabo Cluster
+# ----------------------------------
+control:
+  - name: "cabo0cuomkube1"
+    ipa: 192.168.102.160
+  - name: "cabo0cuomkube2"
+    ipa: 192.168.102.161
+  - name: "cabo0cuomkube3"
+    ipa: 192.168.102.162
 
-Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.
+
+# ----------------------------------
+# Basic infrastructure and kubernetes information
+# ----------------------------------
+site:
+  name: "qa"
+  domain: "internal.pri"
+  environment: "cabo"
+  clusterdb: "102.168.192"
+  cluster_network: "10.100.77.0/24"
+  service_network: "10.100.78.0/24"
+
+
+# ----------------------------------
+# DHCP server
+# ----------------------------------
+dhcp:
+  interface: "ens192"
+  router: "192.168.102.254"
+  broadcast_address: "192.168.102.255"
+  subnet_mask: "255.255.255.0"
+  subnet_ipid: "192.168.102.0"
+  netmaskid: "255.255.255.0"
+  poolstart: "192.168.102.225"
+  poolend: "192.168.102.253"
+
+
+# ----------------------------------
+# Add DNS Servers
+# ----------------------------------
+dns_primary:
+  name: "cabo0cuomdns1"
+  ipa: "192.168.102.153"
+
+dns_secondary:
+  name: "cabo0cuomdns2"
+  ipa: "192.168.102.154"
+
+dns_reverse:
+  network: "102.168.192"
+
+
+# ----------------------------------
+# ELK Logging cluster
+# ----------------------------------
+edata:
+  - name: "cabo0cuomdat1"
+    ipa: 192.168.102.145
+  - name: "cabo0cuomdat2"
+    ipa: 192.168.102.146
+
+ecat:
+  name: "cabo0cuomkat1"
+  ipa: 192.168.102.147
+
+elog:
+  name: "cabo0cuomlog1"
+  ipa: 192.168.102.148
+
+emasters:
+  - name: "cabo0cuommas1"
+    ipa: 192.168.102.149
+  - name: "cabo0cuommas2"
+    ipa: 192.168.102.150
+  - name: "cabo0cuommas3"
+    ipa: 192.168.102.151
+
+
+# ----------------------------------
+# Gitlab Runner
+# ----------------------------------
+glrunner:
+  - name: "cabo0cuomglrunr1"
+    ipa: 192.168.102.54
+
+
+# ----------------------------------
+# List of all httpd httpd.conf document and virtual.conf entries
+# ----------------------------------
+
+httpd:
+  - name: inventory.qa
+    root: inventory
+    log: inventory
+  - name: status.qa
+    root: status
+    log: status
+
+
+# ----------------------------------
+# HAProxy server for the Kubernetes servers
+# ----------------------------------
+loadbalancer_vip:
+  name: "cabo0cuomvip1"
+  ipa: 192.168.102.100
+
+loadbalancer_primary:
+  name: "cabo0cuomhap1"
+  ipa: 192.168.102.61
+
+loadbalancer_secondary:
+  name: "cabo0cuomhap2"
+  ipa: 192.168.102.62
+
+
+# ----------------------------------
+# Add NFS Setup config details
+# ----------------------------------
+nfs:
+  subnet_range: "192.168.102.0/24"
+
+
+# ----------------------------------
+# SNMP settings for the Nagios monitoring system
+# ----------------------------------
+snmp:
+  ipa: 192.168.102.101
+
+
+# ----------------------------------
+# Storage servers used by Kubernetes
+# ----------------------------------
+storage:
+  - name: "cabo0cuomnfs1"
+    ipa: 192.168.102.170
+storage_nfs1:
+  name: "cabo0cuomnfs1"
+  ipa: 192.168.102.170
+
+
+# ----------------------------------
+# Tool server, used as a jumpoff for the site
+# ----------------------------------
+tool:
+  name: "cabo0cuomtool11"
+  ipa: 192.168.102.90
+  interface: ens192
+
+# aliases
+toolcname:
+  - name: inventory
+  - name: status
+  - name: cthulhu
+  - name: guardian
+  - name: llamas
+
+
+# ----------------------------------
+# Worker nodes for the Cabo kubernetes Cluster
+# ----------------------------------
+workers:
+  - name: "cabo0cuomknode1"
+    ipa: 192.168.102.163
+  - name: "cabo0cuomknode2"
+    ipa: 192.168.102.164
+  - name: "cabo0cuomknode3"
+    ipa: 192.168.102.165
+
+
+###############################
+# The following entries are site specific and unique to the site
+# They'll need unique checks in the DNS servers
+###############################
+

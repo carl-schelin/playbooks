@@ -1,4 +1,359 @@
-# site specific variables for all servers
 ---
+# ----------------------------------
+# Ansible server
+# ----------------------------------
+ansible:
+  name: ndld1cuomans1
+  ipa: 192.168.105.131
 
-Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.
+
+# ----------------------------------
+# Database backend for the pods
+# ----------------------------------
+database:
+  - name: "ndld1cuomysql1"
+    ipa: 192.168.105.124
+
+
+# ----------------------------------
+# Development Servers
+# ----------------------------------
+development:
+  - name: ndld1cuomdev1
+    ipa: 192.168.105.52
+  - name: ndld1cuomgit1
+    ipa: 192.168.105.55
+  - name: ndld1cuomphoto1
+    ipa: 192.168.105.90
+
+# home.internal.pri
+devcname:
+  - ainsley
+  - cheatsheets
+  - dga
+  - hobgoblinconsulting
+  - inventory
+  - jackpoint
+  - llamas
+  - manager
+  - mooks
+  - rocksmith
+  - schelin
+  - shadowjack
+  - shadowrun
+  - youreadumbass
+  - bgg
+
+# shadowrun.home.internal.pri
+shacname:
+  - allflesh
+  - chicago
+  - cthulhu
+  - dawn
+  - deadlands
+  - denver
+  - ghostcartels
+  - horizon
+  - lure
+  - master
+  - newyork
+  - paranoia
+  - pathfinder
+  - playtest
+  - roguetrader
+  - savageworlds
+  - seattle
+  - shadowrun4
+  - shadowrun5
+  - shadowruncore
+  - teambuilding
+  - wiki
+
+# schelin.home.internal.pri
+schcname:
+  - wiki
+
+# ainsley.home.internal.pri
+aincname:
+  - wiki
+
+
+# ----------------------------------
+# Basic infrastructure and kubernetes information
+# ----------------------------------
+site:
+  name: "home"
+  domain: "internal.pri"
+  environment: "ndld"
+  clusterdb: "105.168.192"
+  okdcidr: "10.100.77.0/24"
+  okdsvc: "10.100.78.0/24"
+
+
+# ----------------------------------
+# DHCP server - on the tool server
+# ----------------------------------
+dhcp:
+  interface: "ens192"
+  router: "192.168.105.254"
+  broadcast_address: "192.168.105.255"
+  subnet_mask: "255.255.255.0"
+  subnet_ipid: "192.168.105.0"
+  netmaskid: "255.255.255.0"
+  poolstart: "192.168.105.225"
+  poolend: "192.168.105.253"
+
+
+# ----------------------------------
+# Add DNS Servers
+# ----------------------------------
+dns_primary:
+  name: "ndld1cuomdns1"
+  ipa: "192.168.105.153"
+
+dns_secondary:
+  name: "ndld1cuomdns2"
+  ipa: "192.168.105.154"
+
+dns_reverse:
+  network: "105.168.192"
+
+
+# ----------------------------------
+# Gitlab Runner
+# ----------------------------------
+glrunner:
+  - name: ndld1cuomglrunr1
+    ipa: 192.168.105.53
+  - name: ndld1cuomglrunr2
+    ipa: 192.168.105.54
+
+
+# ----------------------------------
+# List of all httpd httpd.conf document and virtual.conf entries
+# ----------------------------------
+
+httpd:
+  - name: ainsley.home
+    root: ainsley
+    log: ainsley
+  - name: hobgoblinconsulting.home
+    root: hobgoblin
+    log: hobgoblin
+  - name: shadowjack.home
+    root: blog.shadowjack
+    log: shadowjack
+  - name: mooks.home
+    root: mooks
+    log: mooks
+  - name: jackpoint.home
+    root: jackpoint
+    log: jackpoint
+  - name: youreadumbass.home
+    root: youreadumbass
+    log: youreadumbass
+  - name: schelin.home
+    root: photos
+    log: photos
+  - name: rocksmith.home
+    root: rocksmith
+    log: rocksmith
+  - name: inventory.home
+    root: inventory
+    log: inventory
+  - name: llamas.home
+    root: llamas
+    log: llamas
+  - name: shadowrun.home
+    root: shadowrun
+    log: shadowrun
+  - name: dga.home
+    root: dga
+    log: dga
+  - name: manager.home
+    root: manager
+    log: manager
+  - name: cheatsheets.home
+    root: cheatsheets
+    log: cheatsheets
+  - name: wiki.ainsley.home
+    root: wiki.ainsley
+    log: jwiki
+  - name: allflesh.shadowrun.home
+    root: wiki.allflesh
+    log: allflesh
+  - name: chicago.shadowrun.home
+    root: wiki.chicago
+    log: chicago
+  - name: cthulhu.shadowrun.home
+    root: wiki.cthulhu
+    log: cthulhu
+  - name: dawn.shadowrun.home
+    root: wiki.dawn
+    log: dawn
+  - name: deadlands.shadowrun.home
+    root: wiki.deadlands
+    log: deadlands
+  - name: denver.shadowrun.home
+    root: wiki.denver
+    log: denver
+  - name: dna-doa.shadowrun.home
+    root: wiki.dna-doa
+    log: dna-doa
+  - name: ghostcartels.shadowrun.home
+    root: wiki.ghostcartels
+    log: ghostcartels
+  - name: horizon.shadowrun.home
+    root: wiki.horizon
+    log: horizon
+  - name: lure.shadowrun.home
+    root: wiki.lure
+    log: lure
+  - name: master.shadowrun.home
+    root: wiki.master
+    log: master
+  - name: newyork.shadowrun.home
+    root: wiki.newyork
+    log: newyork
+  - name: paranoia.shadowrun.home
+    root: wiki.paranoia
+    log: paranoia
+  - name: pathfinder.shadowrun.home
+    root: wiki.pathfinder
+    log: pathfinder
+  - name: playtest.shadowrun.home
+    root: wiki.playtest
+    log: playtest
+  - name: roguetrader.shadowrun.home
+    root: wiki.roguetrader
+    log: roguetrader
+  - name: savageworlds.shadowrun.home
+    root: wiki.savageworlds
+    log: savageworlds
+  - name: seattle.shadowrun.home
+    root: wiki.seattle
+    log: seattle
+  - name: shadowrun4.shadowrun.home
+    root: wiki.shadowrun4
+    log: shadowrun4
+  - name: shadowrun5.shadowrun.home
+    root: wiki.shadowrun5
+    log: shadowrun5
+  - name: shadowruncore.shadowrun.home
+    root: wiki.core
+    log: core
+  - name: teambuilding.shadoowrun.home
+    root: wiki.teambuilding
+    log: teambuilding
+  - name: wiki.schelin.home
+    root: wiki.schelin
+    log: wiki
+  - name: wiki.shadowrun.home
+    root: wiki.shadowrun
+    log: srwiki
+
+
+# ----------------------------------
+# Add NFS Setup config details
+# ----------------------------------
+nfs:
+  subnet_range: "192.168.105.0/24"
+
+
+# ----------------------------------
+# SNMP settings for the Nagios monitoring system
+# ----------------------------------
+snmp:
+  ipa: 192.168.105.101
+
+
+# ----------------------------------
+# Media servers 
+# ----------------------------------
+media:
+  - name: "ndld1cuomovie1"
+    ipa: 192.168.105.97
+  - name: "ndld1cuomtv1"
+    ipa: 192.168.105.98
+
+
+# ----------------------------------
+# Storage servers 
+# ----------------------------------
+storage:
+  - name: "ndld1cuombackup1"
+    ipa: 192.168.105.91
+  - name: "ndld1cuomsamba1"
+    ipa: 192.168.105.92
+
+
+# ----------------------------------
+# Management servers
+# ----------------------------------
+tool:
+  name: ndld1cuomtool11
+  ipa: 192.168.105.130
+  interface: ens192
+
+# home.internal.pri
+tooldevcname:
+  - ainsley
+  - cheatsheets
+  - dga
+  - hobgoblinconsulting
+  - inventory
+  - jackpoint
+  - llamas
+  - manager
+  - mooks
+  - rocksmith
+  - schelin
+  - shadowjack
+  - shadowrun
+  - youreadumbass
+
+# shadowrun.home.internal.pri
+toolshacname:
+  - allflesh
+  - chicago
+  - cthulhu
+  - dawn
+  - deadlands
+  - denver
+  - dns-doa
+  - ghostcartels
+  - horizon
+  - lure
+  - master
+  - newyork
+  - paranoia
+  - pathfinder
+  - playtest
+  - roguetrader
+  - savageworlds
+  - seattle
+  - shadowrun4
+  - shadowrun5
+  - shadowruncore
+  - teambuilding
+  - wiki
+
+# schelin.home.internal.pri
+toolschcname:
+  - wiki
+
+# ainsley.home.internal.pri
+toolaincname:
+  - wiki
+
+
+# ----------------------------------
+# Windows servers
+# ----------------------------------
+windows:
+  - name: ndld1cuomwinxp
+    ipa: 192.168.105.79
+  - name: ndld1cuomwin7
+    ipa: 192.168.105.89
+
+

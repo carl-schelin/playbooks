@@ -1,4 +1,304 @@
-# site specific variables for all servers
+# common hostnames and IPs across all sites
+# followed by more unique site type hostnames
 ---
+# ----------------------------------
+# Control plane servers for the Longmont Cluster
+# ----------------------------------
+control:
+  - name: "lnmt1cuomkube1"
+    ipa: 192.168.104.160
+  - name: "lnmt1cuomkube2"
+    ipa: 192.168.104.161
+  - name: "lnmt1cuomkube3"
+    ipa: 192.168.104.162
 
-Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.
+
+# ----------------------------------
+# Basic infrastructure and kubernetes information
+# ----------------------------------
+site:
+  name: "prod"
+  domain: "internal.pri"
+  environment: "lnmt"
+  clusterdb: "104.168.192"
+  okdcidr: "10.100.77.0/24"
+  okdsvc: "10.100.78.0/24"
+
+
+# ----------------------------------
+# DHCP server - on tool server
+# ----------------------------------
+dhcp:
+  interface: "ens192"
+  router: "192.168.104.254"
+  broadcast_address: "192.168.104.255"
+  subnet_mask: "255.255.255.0"
+  subnet_ipid: "192.168.104.0"
+  netmaskid: "255.255.255.0"
+  poolstart: "192.168.104.225"
+  poolend: "192.168.104.253"
+
+
+# ----------------------------------
+# Add DNS Servers
+# ----------------------------------
+dns_primary:
+  name: "lnmt1cuomdns1"
+  ipa: "192.168.104.153"
+
+dns_secondary:
+  name: "lnmt1cuomdns2"
+  ipa: "192.168.104.154"
+
+dns_reverse:
+  network: "104.168.192"
+
+
+# ----------------------------------
+# ELK Logging cluster
+# ----------------------------------
+edata:
+  - name: "lnmt1cuomdat1"
+    ipa: 192.168.104.145
+  - name: "lnmt1cuomdat2"
+    ipa: 192.168.104.146
+
+ecat:
+  name: "lnmt1cuomkib1"
+  ipa: 192.168.104.147
+
+elog:
+  name: "lnmt1cuomlog1"
+  ipa: 192.168.104.148
+
+emasters:
+  - name: "lnmt1cuommas1"
+    ipa: 192.168.104.149
+  - name: "lnmt1cuommas2"
+    ipa: 192.168.104.150
+  - name: "lnmt1cuommas3"
+    ipa: 192.168.104.151
+
+
+# ----------------------------------
+# Gitlab cluster, master and runners
+# ----------------------------------
+gitlab:
+  name: "lnmt1cuomgitlab"
+  ipa: 192.168.104.56
+
+glrunner:
+  - name: "lnmt1cuomglrunr1"
+    ipa: 192.168.104.54
+  - name: "lnmt1cuomglrunr2"
+    ipa: 192.168.104.55
+
+
+# ----------------------------------
+# List of all httpd httpd.conf document and virtual.conf entries
+# ----------------------------------
+
+httpd:
+  - name: inventory
+    root: inventory
+    log: inventory
+  - name: status
+    root: status
+    log: status
+
+
+# ----------------------------------
+# HAProxy server for the Kubernetes servers
+# ----------------------------------
+loadbalancer_vip:
+  name: "lnmt1cuomvip1"
+  ipa: 192.168.104.100
+
+loadbalancer_primary:
+  name: "lnmt1cuomhap1"
+  ipa: 192.168.104.61
+
+loadbalancer_secondary:
+  name: "lnmt1cuomhap2"
+  ipa: 192.168.106.62
+
+
+# ----------------------------------
+# Add NFS Setup config details
+# ----------------------------------
+nfs:
+  subnet_range: "192.168.104.0/24"
+
+
+# ----------------------------------
+# Jenkins server and agents
+# ----------------------------------
+jenkins:
+  - name: "lnmt1cuomjkns1"
+    ipa: 192.168.104.83
+  - name: "lnmt1cuomjkns2"
+    ipa: 192.168.104.82
+  - name: "lnmt1cuomjkns3"
+    ipa: 192.168.104.81
+
+
+# ----------------------------------
+# Jenkins server and agents
+# ----------------------------------
+nmis:
+  - name: "lnmt1cuomnmis8"
+    ipa: 192.168.104.88
+  - name: "lnmt1cuomnmis9"
+    ipa: 192.168.104.89
+
+
+# ----------------------------------
+# Nagios monitoring servers
+# ----------------------------------
+nagios:
+  - name: "lnmt1cuomnagios1"
+    ipa: 192.168.104.134
+  - name: "lnmt1cuomnagios2"
+    ipa: 192.168.104.135
+  - name: "lnmt1cuomnagios3"
+    ipa: 192.168.104.136
+  - name: "lnmt1cuomnagios4"
+    ipa: 192.168.104.131
+  - name: "lnmt1cuomnagios5"
+    ipa: 192.168.104.132
+  - name: "lnmt1cuomnagios6"
+    ipa: 192.168.104.142
+
+
+# ----------------------------------
+# Storage servers used by Kubernetes
+# ----------------------------------
+storage:
+  - name: "lnmt1cuomnfs1"
+    ipa: 192.168.104.170
+storage_nfs1:
+  name: "lnmt1cuomnfs1"
+  ipa: 192.168.104.170
+
+
+# ----------------------------------
+# Management Servers
+# ----------------------------------
+tool:
+  name: "lnmt1cuomtool11"
+  ipa: 192.168.104.60
+  interface: ens192
+
+
+solaris:
+  name: "lnmt1cuom2540"
+  ipa: 192.168.104.68
+
+jumpstart:
+  name: "lnmt1cuomjs1"
+  ipa: 192.168.104.71
+
+
+# ----------------------------------
+# Ansible tower
+# ----------------------------------
+tower:
+  name: "lnmt1cuomawx1"
+  ipa: 192.168.104.76
+
+
+# ----------------------------------
+# Worker nodes for the Longmont Cluster
+# ----------------------------------
+workers:
+  - name: "lnmt1cuomknode1"
+    ipa: 192.168.104.163
+  - name: "lnmt1cuomknode2"
+    ipa: 192.168.104.164
+  - name: "lnmt1cuomknode3"
+    ipa: 192.168.104.165
+
+
+# ----------------------------------
+# Worker nodes for the Longmont Cluster
+# ----------------------------------
+syslog:
+  name: "lnmt1cuomsyslog"
+  ipa: 192.168.104.50
+
+
+
+idm:
+  name: "lnmt1cuomifidm1"
+  ipa: 192.168.104.139
+
+
+ipam:
+  - name: "lnmt1cuomipam1"
+    ipa: 192.168.104.90
+  - name: "lnmt1cuomnetbox1"
+    ipa: 192.168.104.80
+
+
+katello:
+  name: "lnmt1cuomkat1"
+  ipa: 192.168.104.15
+
+mail:
+  name: "lnmt1cuommail1"
+  ipa: 192.168.104.140
+
+
+salt:
+  name: "lnmt1cuomsalt1"
+  ipa: 192.168.104.119
+
+sips:
+  name: "lnmt1cuomsips1"
+  ipa: 192.168.104.72
+
+
+terraform:
+  name: "lnmt1cuomtform1"
+  ipa: 192.168.104.133
+
+
+vault:
+  name: "lnmt1cuomvault1"
+  ipa: 192.168.104.118
+
+wiki:
+  name: "lnmt1cuomwiki1"
+  ipa: 192.168.104.103
+
+
+
+
+#
+ansible:
+  name: "lnmt1cuomans1"
+  ipa: 192.168.104.70
+
+
+# ----------------------------------
+# Database backend for the pods
+# ----------------------------------
+database:
+  - name: "lnmt1cuomysql1"
+    ipa: 192.168.104.85
+  - name: "lnmt1cuomcas1"
+    ipa: 192.168.104.69
+  - name: "lnmt1cuompgrs1"
+    ipa: 192.168.104.141
+  - name: "lnmt1cuommdb1"
+    ipa: 192.168.104.125
+
+
+# ----------------------------------
+# Grafana dashboard
+# ----------------------------------
+grafana:
+  name: "lnmt1cuomgraf1"
+  ipa: 192.168.104.101
+
+
