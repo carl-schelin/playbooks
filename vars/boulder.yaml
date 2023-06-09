@@ -130,6 +130,11 @@ loadbalancer_secondary:
   name: "bldr0cuomhap2"
   ipa: 192.168.101.62
 
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
+
 
 okd_lb_vip:
   name: "bldr0cuomvip2"
@@ -143,16 +148,13 @@ okd_lb_secondary:
   name: "bldr0cuomhap4"
   ipa: 192.168.101.64
 
-
 okd_cname:
   - api
   - api-int
   - console-openshift-console
   - oauth-openshift
-
-okd_apps:
-  - oauth-openshift
-  - console-openshift-console
+  - oauth-openshift.apps
+  - console-openshift-console.apps
 
 
 # ----------------------------------

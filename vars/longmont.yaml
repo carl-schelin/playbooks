@@ -129,6 +129,11 @@ loadbalancer_secondary:
   name: "lnmt1cuomhap2"
   ipa: 192.168.106.62
 
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
+
 
 # ----------------------------------
 # Add NFS Setup config details
