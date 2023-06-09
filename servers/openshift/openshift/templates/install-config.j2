@@ -12,13 +12,13 @@ metadata:
   name: {{ site.name }}
 networking:
   clusterNetwork:
-  - cidr: {{ ocp.cluster_network }}
+  - cidr: {{ k8s.pod_network }}
     hostPrefix: 23 
   machineNetwork:
-  - cidr: {{ ocp.machine_network }}
+  - cidr: {{ k8s.machine_network }}
   networkType: OpenShiftSDN
   serviceNetwork:
-  - {{ ocp.service_network }}
+  - {{ k8s.service_network }}
 
 platform:
   none: {}

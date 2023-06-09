@@ -1,4 +1,322 @@
-# site specific variables for all servers
+# common hostnames and IPs across all sites
+# followed by more unique site type hostnames
 ---
 
-Basically here you'll create entries for all your servers such as an admin server, dns servers, and so forth.
+# ----------------------------------
+# Control plane servers for the Boulder Kubernetes Cluster
+# ----------------------------------
+control:
+  - name: "bldr0cuomkube1"
+    ipa: 192.168.101.160
+    macaddr: 
+  - name: "bldr0cuomkube2"
+    ipa: 192.168.101.161
+    macaddr: 
+  - name: "bldr0cuomkube3"
+    ipa: 192.168.101.162
+    macaddr: 
+
+
+# ----------------------------------
+# DHCP server - on the tool server
+# ----------------------------------
+dhcp:
+  interface: "ens192"
+  router: "192.168.101.254"
+  broadcast_address: "192.168.101.255"
+  subnet_mask: "255.255.255.0"
+  subnet_ipid: "192.168.101.0"
+  netmaskid: "255.255.255.0"
+  poolstart: "192.168.101.225"
+  poolend: "192.168.101.253"
+
+
+# ----------------------------------
+# Add DNS Servers
+# ----------------------------------
+dns_primary:
+  name: "bldr0cuomdns1"
+  ipa: "192.168.101.153"
+
+dns_secondary:
+  name: "bldr0cuomdns2"
+  ipa: "192.168.101.154"
+
+dns_reverse:
+  network: "101.168.192"
+
+
+# ----------------------------------
+# Basic infrastructure and kubernetes information
+# ----------------------------------
+site:
+  name: "dev"
+  domain: "internal.pri"
+  environment: "bldr"
+  clusterdb: "101.168.192"
+  okdcidr: "10.100.77.0/24"
+  okdsvc: "10.100.78.0/24"
+
+
+# ----------------------------------
+# ELK Logging cluster
+# ----------------------------------
+edata:
+  - name: "bldr0cuomdat1"
+    ipa: 192.168.101.145
+  - name: "bldr0cuomdat2"
+    ipa: 192.168.101.146
+
+ecat:
+  name: "bldr0cuomkat1"
+  ipa: 192.168.101.147
+
+elog:
+  name: "bldr0cuomlog1"
+  ipa: 192.168.101.148
+
+emasters:
+  - name: "bldr0cuommas1"
+    ipa: 192.168.101.149
+  - name: "bldr0cuommas2"
+    ipa: 192.168.101.150
+  - name: "bldr0cuommas3"
+    ipa: 192.168.101.151
+
+
+# ----------------------------------
+# Gitlab Runner
+# ----------------------------------
+glrunner:
+  - name: bldr0cuomglrunr1
+    ipa: 192.168.101.54
+
+
+# ----------------------------------
+# List of all httpd httpd.conf document and virtual.conf entries
+# ----------------------------------
+
+httpd:
+  - name: inventory.dev
+    root: inventory
+    log: inventory
+  - name: status.dev
+    root: status
+    log: status
+
+
+# ----------------------------------
+# HAProxy server for the Kubernetes servers
+# Openshift cnames
+# CNAME: api, api-int, console-openshift-console, oauth-openshift
+# CNAME with apps.domain: console-openshift-console, oauth-openshift
+# ----------------------------------
+loadbalancer_vip:
+  name: "bldr0cuomvip1"
+  ipa: 192.168.101.100
+
+loadbalancer_primary:
+  name: "bldr0cuomhap1"
+  ipa: 192.168.101.61
+
+loadbalancer_secondary:
+  name: "bldr0cuomhap2"
+  ipa: 192.168.101.62
+
+
+okd_lb_vip:
+  name: "bldr0cuomvip2"
+  ipa: 192.168.101.200
+
+okd_lb_primary:
+  name: "bldr0cuomhap3"
+  ipa: 192.168.101.63
+
+okd_lb_secondary:
+  name: "bldr0cuomhap4"
+  ipa: 192.168.101.64
+
+
+okd_cname:
+  - api
+  - api-int
+  - console-openshift-console
+  - oauth-openshift
+
+okd_apps:
+  - oauth-openshift
+  - console-openshift-console
+
+
+# ----------------------------------
+# Add NFS Setup config details
+# ----------------------------------
+nfs:
+  subnet_range: "192.168.101.0/24"
+
+
+# ----------------------------------
+# SNMP settings for the Nagios monitoring system
+# ----------------------------------
+snmp:
+  ipa: 192.168.101.101
+
+
+# ----------------------------------
+# Storage servers used by Kubernetes and Openshift (OKD)
+# ----------------------------------
+storage:
+  - name: "bldr0cuomnfs1"
+    ipa: 192.168.101.170
+storage_nfs1:
+  name: "bldr0cuomnfs1"
+  ipa: 192.168.101.170
+storage_nfs2:
+  name: "bldr0cuomnfs2"
+  ipa: 192.168.101.171
+
+
+# ----------------------------------
+# Management servers
+# CNAME: inventory and status
+# ----------------------------------
+tool:
+  name: bldr0cuomtool11
+  ipa: 192.168.101.90
+  interface: "ens192"
+
+# aliases
+toolcname:
+  - name: inventory
+  - name: status
+
+# ----------------------------------
+# Worker nodes for the Boulder Cluster
+# ----------------------------------
+workers:
+  - name: "bldr0cuomknode1"
+    ipa: 192.168.101.163
+  - name: "bldr0cuomknode2"
+    ipa: 192.168.101.164
+  - name: "bldr0cuomknode3"
+    ipa: 192.168.101.165
+
+
+
+###############################
+# The following entries are site specific and unique to the site
+# They'll need unique checks in the DNS servers
+###############################
+
+# ----------------------------------
+# Amazon access server
+# ----------------------------------
+amazon:
+  name: "bldr0cuomaws1"
+  ipa: 192.168.101.74
+
+
+# ----------------------------------
+# Openshift Bootstrap Server
+# CNAME: bootstrap
+# ----------------------------------
+bootstrap:
+  name: bldr0cuombst1
+  ipa: 192.168.101.98
+  macaddr: "00-50-56-96-43-d5"
+
+
+# ----------------------------------
+# Openshift Container Platform (okd4) Build Server
+# this is the tool server now
+# ----------------------------------
+#build:
+#  name: bldr0cuomsvc1
+#  ipa: 192.168.101.100
+
+
+# ----------------------------------
+# Database servers
+# ----------------------------------
+database:
+  - name: "bldr0cuompgrs1"
+    ipa: 192.168.101.99
+  - name: "bldr0cuomssql1"
+    ipa: 192.168.101.120
+
+# ----------------------------------
+# Development Servers
+# ----------------------------------
+development:
+  - name: bldr0cuomdev1
+    ipa: 192.168.101.86
+  - name: bldr0cuomdev5
+    ipa: 192.168.101.91
+  - name: bldr0cuomgit1
+    ipa: 192.168.101.55
+  - name: bldr0cuomlar1
+    ipa: 192.168.101.60
+
+
+# ----------------------------------
+# Docker servers
+# ----------------------------------
+docker:
+  - name: bldr0cuomdock1
+    ipa: 192.168.101.142
+  - name: bldr0cuomrepo1
+    ipa: 192.168.101.69
+
+
+# ----------------------------------
+# Control plane servers for the Boulder OKD4 Cluster
+# CNAME: etcd-0, etcd-1, and etcd-2
+# ----------------------------------
+okd_control:
+  - name: "bldr0cuomctl01"
+    ipa: 192.168.101.101
+    macaddr: "00-50-56-96-45-07"
+  - name: "bldr0cuomctl02"
+    ipa: 192.168.101.102
+    macaddr: "00-50-56-96-21-51"
+  - name: "bldr0cuomctl03"
+    ipa: 192.168.101.103
+    macaddr: "00-50-56-96-bd-a6"
+
+okdcname:
+  - etcd-0
+  - etcd-1
+  - etcd-2
+
+
+# ----------------------------------
+# Worker nodes for the Boulder OKD4 Cluster
+# ----------------------------------
+okd_workers:
+  - name: "bldr0cuomwrk01"
+    ipa: 192.168.101.111
+    macaddr: "00-50-56-96-24-71"
+  - name: "bldr0cuomwrk02"
+    ipa: 192.168.101.112
+    macaddr: "00-50-56-96-6d-24"
+  - name: "bldr0cuomwrk03"
+    ipa: 192.168.101.113
+    macaddr: "00-50-56-96-cb-cb"
+  - name: "bldr0cuomwrk04"
+    ipa: 192.168.101.114
+    macaddr: "00-50-56-96-44-3b"
+  - name: "bldr0cuomwrk05"
+    ipa: 192.168.101.115
+    macaddr: "00-50-56-96-73-21"
+  - name: "bldr0cuomwrk06"
+    ipa: 192.168.101.116
+    macaddr: "00-50-56-96-28-cc"
+
+
+# ----------------------------------
+# Standalone Openshift Server
+# ----------------------------------
+openshift:
+  name: bldr0cuomshift
+  ipa: 192.168.101.80
+

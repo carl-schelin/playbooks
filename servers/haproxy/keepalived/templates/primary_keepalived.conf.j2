@@ -10,9 +10,17 @@ vrrp_instance VI_1 {
     priority 200
 
     virtual_router_id 33
+{% if 'hap3' in inventory_hostname %}
+    unicast_src_ip {{ okd_lb_primary.ipa }}
+{% else %}
     unicast_src_ip {{ loadbalancer_primary.ipa }}
+{% endif %}
     unicast_peer {
+{% if 'hap3' in inventory_hostname %}
+        {{ okd_lb_secondary.ipa }}
+{% else %}
         {{ loadbalancer_secondary.ipa }}
+{% endif %}
     }
 
     advert_int 1
@@ -22,7 +30,11 @@ vrrp_instance VI_1 {
     }
 
     virtual_ipaddress {
+{% if 'hap3' in inventory_hostname %}
+        {{ okd_lb_vip.ipa }}
+{% else %}
         {{ loadbalancer_vip.ipa }}
+{% endif %}
     }
 
     track_script {

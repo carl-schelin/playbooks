@@ -52,9 +52,15 @@ frontend kubernetes-api-server
 
 backend kubernetes-api-server
 	mode tcp
+{% if 'hap4' in inventory_hostname %}
+{% for c in okd_control %}
+        server {{ c.name }} {{ c.ipa }}:6443 check
+{% endfor %}
+{% else %}
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:6443 check
 {% endfor %}
+{% endif %}
 
 
 frontend machine-config-server
@@ -65,9 +71,15 @@ frontend machine-config-server
 
 backend machine-config-server
 	mode tcp
+{% if 'hap4' in inventory_hostname %}
+{% for c in okd_control %}
+        server {{ c.name }} {{ c.ipa }}:6443 check
+{% endfor %}
+{% else %}
 {% for c in control %}
 	server {{ c.name }} {{ c.ipa }}:22623 check
 {% endfor %}
+{% endif %}
 
 
 frontend ingress-http
@@ -79,9 +91,15 @@ frontend ingress-http
 backend ingress-http
 	balance source
 	mode tcp
+{% if 'hap4' in inventory_hostname %}
+{% for w in okd_workers %}
+	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:80 check
+{% endfor %}
+{% else %}
 {% for w in workers %}
 	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:80 check
 {% endfor %}
+{% endif %}
 
 
 frontend ingress-https
@@ -93,8 +111,14 @@ frontend ingress-https
 backend ingress-https
 	balance source
 	mode tcp
+{% if 'hap4' in inventory_hostname %}
+{% for w in okd_workers %}
+	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:443 check
+{% endfor %}
+{% else %}
 {% for w in workers %}
 	server {{ w.name }}-http-router{{ loop.index0 }} {{ w.ipa }}:443 check
 {% endfor %}
+{% endif %}
 
 #---------------------------------------------------------------------
