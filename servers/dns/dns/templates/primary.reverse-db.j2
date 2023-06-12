@@ -202,6 +202,11 @@ $TTL 86400
 {{ okd_lb_secondary.ipa.split('.')[3] }}		IN	PTR	{{ okd_lb_secondary.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
+; Create the bootstrap entry
+; *****************************************************************************
+{{ bootstrap.ipa.split('.')[3] }}		IN	PTR	{{ bootstrap.name }}.{{ site.name }}.{{ site.domain }}.
+;
+; *****************************************************************************
 ; The okd cnames point to the IP of your load balancer vip
 ; *****************************************************************************
 {% for vip in okd_cname %}
