@@ -84,6 +84,13 @@ emasters:
     ipa: 192.168.101.151
 
 
+# --------------------------------------------------------------------------- #
+# Add gateway IP
+# --------------------------------------------------------------------------- #
+gateway:
+  ipa: "192.168.101.254"
+
+
 # ----------------------------------
 # Gitlab Runner
 # ----------------------------------
@@ -123,6 +130,11 @@ loadbalancer_secondary:
   name: "bldr0cuomhap2"
   ipa: 192.168.101.62
 
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
+
 
 okd_lb_vip:
   name: "bldr0cuomvip2"
@@ -136,16 +148,13 @@ okd_lb_secondary:
   name: "bldr0cuomhap4"
   ipa: 192.168.101.64
 
-
 okd_cname:
-  - api
-  - api-int
-  - console-openshift-console
-  - oauth-openshift
-
-okd_apps:
-  - oauth-openshift
-  - console-openshift-console
+  - name: api
+  - name: api-int
+  - name: console-openshift-console
+  - name: oauth-openshift
+  - name: oauth-openshift.apps
+  - name: console-openshift-console.apps
 
 
 # ----------------------------------
@@ -186,9 +195,21 @@ tool:
   interface: "ens192"
 
 # aliases
-toolcname:
+tool_cname:
   - name: inventory
   - name: status
+
+
+# ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: bldr0cuomcentos7
+  ipa: 192.168.101.42
+
+template_cname:
+  name: bldr0cuomrocky8
+
 
 # ----------------------------------
 # Worker nodes for the Boulder Cluster
@@ -221,7 +242,7 @@ amazon:
 # CNAME: bootstrap
 # ----------------------------------
 bootstrap:
-  name: bldr0cuombst1
+  name: bldr0cuombst01
   ipa: 192.168.101.98
   macaddr: "00-50-56-96-43-d5"
 
@@ -284,9 +305,9 @@ okd_control:
     macaddr: "00-50-56-96-bd-a6"
 
 okdcname:
-  - etcd-0
-  - etcd-1
-  - etcd-2
+  - name: etcd-0
+  - name: etcd-1
+  - name: etcd-2
 
 
 # ----------------------------------

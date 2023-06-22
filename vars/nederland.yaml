@@ -119,6 +119,13 @@ dns_reverse:
   network: "105.168.192"
 
 
+# --------------------------------------------------------------------------- #
+# Add gateway IP
+# --------------------------------------------------------------------------- #
+gateway:
+  ipa: "192.168.105.254"
+
+
 # ----------------------------------
 # Gitlab Runner
 # ----------------------------------
@@ -296,7 +303,7 @@ tool:
   interface: ens192
 
 # home.internal.pri
-tooldevcname:
+tool_cname:
   - ainsley
   - cheatsheets
   - dga
@@ -345,6 +352,17 @@ toolschcname:
 # ainsley.home.internal.pri
 toolaincname:
   - wiki
+
+
+# ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: ndld1cuomcentos7
+  ipa: 192.168.105.42
+
+template_cname:
+  name: ndld1cuomrocky8
 
 
 # ----------------------------------

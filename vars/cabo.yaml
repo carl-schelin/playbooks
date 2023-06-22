@@ -26,6 +26,14 @@ site:
 
 
 # ----------------------------------
+# Database servers
+# ----------------------------------
+database:
+  - name: "cabo0cuompgrs1"
+    ipa: 192.168.102.99
+
+
+# ----------------------------------
 # DHCP server
 # ----------------------------------
 dhcp:
@@ -80,6 +88,13 @@ emasters:
     ipa: 192.168.102.151
 
 
+# --------------------------------------------------------------------------- #
+# Add gateway IP
+# --------------------------------------------------------------------------- #
+gateway:
+  ipa: "192.168.102.254"
+
+
 # ----------------------------------
 # Gitlab Runner
 # ----------------------------------
@@ -116,6 +131,11 @@ loadbalancer_secondary:
   name: "cabo0cuomhap2"
   ipa: 192.168.102.62
 
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
+
 
 # ----------------------------------
 # Add NFS Setup config details
@@ -151,12 +171,23 @@ tool:
   interface: ens192
 
 # aliases
-toolcname:
+tool_cname:
   - name: inventory
   - name: status
   - name: cthulhu
   - name: guardian
   - name: llamas
+
+
+# ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: cabo0cuomcentos7
+  ipa: 192.168.102.42
+
+template_cname:
+  name: cabo0cuomrocky8
 
 
 # ----------------------------------

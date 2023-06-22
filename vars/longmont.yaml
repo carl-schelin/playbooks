@@ -80,6 +80,13 @@ emasters:
     ipa: 192.168.104.151
 
 
+# --------------------------------------------------------------------------- #
+# Add gateway IP
+# --------------------------------------------------------------------------- #
+gateway:
+  ipa: "192.168.104.254"
+
+
 # ----------------------------------
 # Gitlab cluster, master and runners
 # ----------------------------------
@@ -121,6 +128,11 @@ loadbalancer_primary:
 loadbalancer_secondary:
   name: "lnmt1cuomhap2"
   ipa: 192.168.106.62
+
+vip_cnames:
+  - name: llamas
+  - name: llamas-blue
+  - name: llamas-green
 
 
 # ----------------------------------
@@ -189,6 +201,9 @@ tool:
   ipa: 192.168.104.60
   interface: ens192
 
+tool_cname:
+  - name: inventory
+  - name: status
 
 solaris:
   name: "lnmt1cuom2540"
@@ -197,6 +212,17 @@ solaris:
 jumpstart:
   name: "lnmt1cuomjs1"
   ipa: 192.168.104.71
+
+
+# ----------------------------------
+# templates
+# ----------------------------------
+template:
+  name: lnmt1cuomcentos7
+  ipa: 192.168.104.42
+
+template_cname:
+  name: lnmt1cuomrocky8
 
 
 # ----------------------------------
@@ -289,7 +315,7 @@ database:
   - name: "lnmt1cuomcas1"
     ipa: 192.168.104.69
   - name: "lnmt1cuompgrs1"
-    ipa: 192.168.104.141
+    ipa: 192.168.104.99
   - name: "lnmt1cuommdb1"
     ipa: 192.168.104.125
 
