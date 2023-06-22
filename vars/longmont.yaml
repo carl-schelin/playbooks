@@ -315,7 +315,7 @@ database:
   - name: "lnmt1cuomcas1"
     ipa: 192.168.104.69
   - name: "lnmt1cuompgrs1"
-    ipa: 192.168.104.141
+    ipa: 192.168.104.99
   - name: "lnmt1cuommdb1"
     ipa: 192.168.104.125
 
