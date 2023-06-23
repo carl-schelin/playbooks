@@ -4,9 +4,9 @@
     name: '@postgresql:15/server'
     state: present
 
-- name: Start the postgresql-server Service
+- name: Start the postgresql Service
   systemd:
-    name: postgresql-server
+    name: postgresql
     enabled: yes
     state: restarted
 
