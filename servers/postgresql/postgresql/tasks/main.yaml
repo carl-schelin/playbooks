@@ -1,14 +1,12 @@
 ---
-- name: Install Postgresql
+- name: Install Postgresql15
   dnf:
-    name: ['postgresql13', 'postgresql13-server']
+    name: '@postgresql:15/server'
     state: present
 
-
-
-- name: Start the postgresql13-server Service
+- name: Start the postgresql-server Service
   systemd:
-    name: postgresql13-server
+    name: postgresql-server
     enabled: yes
     state: restarted
 
