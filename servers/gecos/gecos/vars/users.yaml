@@ -1,0 +1,8 @@
+# Vars to ensure gecos is accurate
+---
+log_file: "/var/tmp/ansible.log"
+
+users:
+  - {uname: "cschelin",   gecos: "Carl Schelin,cschelin@internal.pri" }
+  - {uname: "jainsley",   gecos: "Jeanne Ainsley,jainsley@internal.pri" }
+
