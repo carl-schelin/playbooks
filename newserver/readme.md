@@ -27,6 +27,41 @@ For Solaris servers, the /etc/profile script is run which displays the /etc/motd
 For servers that are running Centrify, 
 
 
+
+### Vault
+
+
+
+'''
+---
+###
+# Reminder, this is a vault due to passwords. Make sure you encrypt this
+###
+# the "password" for accessing information via snmp
+snmppw:
+  read_only: "[read only string]"
+
+# remember, one user no dash, more than one use dashes
+users:
+  - name: "[service account name]"
+    home: "/home/[home dir]"
+    comment: "[comment]"
+    shell: "[default shell]"
+    groups: "[admin group like wheel]"
+    password: "[password]"
+
+# this is for the telegraf installation
+config:
+  - center: "[location]"
+    rack: '[rack number]'
+    url: '[IP of the grafana server]'
+    database: '[influxdb telegraf database name]'
+    username: '[influxdb telegraf user name]'
+    passwd: '[telegraf password]'
+'''
+
+
+
 ### Overview
 
 This playbook and roles are used to initialize all the two guests on a site.
