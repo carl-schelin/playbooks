@@ -1,0 +1,52 @@
+#!/bin/ksh
+
+#
+# This script just pulls the necessary data from the servers for a quick review
+
+CURRENT=$(date +"%H")
+
+R720="192.168.1.31 192.168.1.21 192.168.1.16"
+R710="192.168.1.11"
+R410="192.168.1.41"
+
+# Credentials
+USER={{ ipmitool.name }}
+PASSWORD={{ ipmitool.password }}
+
+if [[ -z $1 ]]
+then
+  echo "Pass last two digits of the server to check"
+  exit 1
+fi
+
+if [[ $1 -eq 11 ]]
+then
+  echo "Ambient Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.11 -U $USER -P $PASSWORD sensor reading "Ambient Temp" | awk '{print $NF}')"
+fi
+
+if [[ $1 -eq 21 ]]
+then
+  echo "Inlet Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.21 -U $USER -P $PASSWORD sensor reading "Inlet Temp" | awk '{print $NF}')"
+  echo "Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.21 -U $USER -P $PASSWORD sensor reading "Temp" | awk '{print $NF}')"
+  echo "Exhaust Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.21 -U $USER -P $PASSWORD sensor reading "Exhaust Temp" | awk '{print $NF}')"
+fi
+
+if [[ $1 -eq 16 ]]
+then
+  echo "Inlet Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.16 -U $USER -P $PASSWORD sensor reading "Inlet Temp" | awk '{print $NF}')"
+  echo "Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.16 -U $USER -P $PASSWORD sensor reading "Temp" | awk '{print $NF}')"
+  echo "Exhaust Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.16 -U $USER -P $PASSWORD sensor reading "Exhaust Temp" | awk '{print $NF}')"
+fi
+
+if [[ $1 -eq 31 ]]
+then
+  echo "Inlet Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.31 -U $USER -P $PASSWORD sensor reading "Inlet Temp" | awk '{print $NF}')"
+  echo "Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.31 -U $USER -P $PASSWORD sensor reading "Temp" | awk '{print $NF}')"
+  echo "Exhaust Temp: $(/bin/ipmitool -I lanplus -H 192.168.1.31 -U $USER -P $PASSWORD sensor reading "Exhaust Temp" | awk '{print $NF}')"
+fi
+
+if [[ $1 -eq 41 ]]
+then
+  echo "Ambient Temp: $(/bin/ipmitool -I lan -H 192.168.1.41 -U $USER -P $PASSWORD sensor | grep "Ambient Temp" | tail -1 | awk '{print $4}' | cut -f1 -d.)"
+fi
+
