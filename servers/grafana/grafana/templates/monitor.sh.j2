@@ -1,0 +1,222 @@
+#!/bin/ksh
+
+#
+# The purpose here is to monitor the temperatures of the servers and adjust the speeds appropriately.
+# The problem with the automated process is it's trying to keep the temperatures at 25C so the fans
+# adjust as required.
+#
+# For an office situation (where I'm sitting right here), I'd rather the fans stay on the quied side
+# and only increase or decrease if the temp reaches high or low borders.
+#
+# Error Range: 2C and 47C
+# Warning Range: 8C and 42C
+# Middle: 25C
+#
+# So let's set some values for each of the speeds and adjust as appropriate.
+#
+# 710 Fan speed settings
+#    Speed         Setting
+# 13.0k = 100% - 0110:0100 0x64
+# 11.7k =  90% - 0101:1010 0x5A
+# 10.4k =  80% - 0101:0000 0x50
+#  9.1k =  70% - 0100:0110 0x46
+#  7.8k =  60% - 0011:1100 0x3C It shouldn't get this high
+#  6.5k =  50% - 0011:0010 0x32 30C
+#  5.2k =  40% - 0010:1000 0x28 28C
+#  3.9k =  30% - 0001:1110 0x1e 25C
+#  2.6k =  20% - 0001:0100 0x14 22C
+#  1.3k =  10% - 0000:1010 0x0a 12C
+#    0k =   0% - 0000:0000 0x00 10C
+#
+# R410 and R720XD fan speeds
+#    Speed         Setting
+# 18,720 = 100% = 0110:0100 0x64 50C
+# 16,848 =  90% = 0101:1010 0x5A 45C
+#45:50:90:0x5a
+# 14,976 =  80% = 0101:0000 0x50 40C
+#40:45:80:0x50
+# 13,104 =  70% = 0100:0110 0x46 35C
+#35:40:70:0x46
+# 11,232 =  60% = 0011:1100 0x3C 30C
+#30:35:60:0x3c
+#  9,360 =  50% = 0011:0010 0x32 28C
+#25:30:50:0x32
+#  8,424 =  45% = 0010:1101 0x2c 22C
+#23:25:45:0x2c
+#  7,488 =  40% = 0010:1000 0x28 20C
+#20:23:40:0x28
+#  5,616 =  30% = 0001:1110 0x1E 15C
+#15:20:30:0x1e
+#  3,744 =  20% = 0001:0100 0x14 10C
+#10:15:20:0x10
+#  1,872 =  10% = 0000:1010 0x0A  5C
+#5:10:10:0x0a
+#     0k =   0% = 0000:0000 0x00  0C
+
+# R410 and R720XD fan speeds
+#    Speed         Setting
+# 18,720 = 100% = 0110:0100 0x64 50C
+# 16,848 =  90% = 0101:1010 0x5A 48C
+# 16,848 =  90% = 0101:1010 0x5A 46C
+# 14,976 =  80% = 0101:0000 0x50 44C
+# 14,976 =  80% = 0101:0000 0x50 42C
+# 14,976 =  80% = 0101:0000 0x50 40C
+# 13,104 =  70% = 0100:0110 0x46 38C
+# 13,104 =  70% = 0100:0110 0x46 36C
+# 13,104 =  70% = 0100:0110 0x46 34C
+# 13,104 =  70% = 0100:0110 0x46 32C
+# 11,232 =  60% = 0011:1100 0x3C 30C
+#  9,360 =  50% = 0011:0010 0x30 28C
+#  9,360 =  50% = 0011:0010 0x2e 26C
+#  9,360 =  50% = 0011:0010 0x2c 24C
+#  8,424 =  45% = 0011:0000 0x2a 22C
+#  7,488 =  40% = 0010:1000 0x28 20C
+#  7,488 =  40% = 0010:1000 0x28 18C
+#  7,488 =  40% = 0010:1000 0x28 16C
+#  5,616 =  30% = 0001:1110 0x1E 14C
+#  5,616 =  30% = 0001:1110 0x1E 12C
+#  3,744 =  20% = 0001:0100 0x14 10C
+#  3,744 =  20% = 0001:0100 0x14  8C
+#  1,872 =  10% = 0000:1010 0x0A  6C
+#  1,872 =  10% = 0000:1010 0x0A  4C
+#  1,872 =  10% = 0000:1010 0x0A  2C
+#     0k =   0% = 0000:0000 0x00  0C
+
+
+#
+# 20C and 30C
+
+# at 6am UTC; aka 11pm MST, disable manual management of the fans
+# at 11am UTC; aka 7am MST, enable manual management of the fans
+
+CURRENT=$(date +"%H:%M")
+
+echo "Date: $CURRENT"
+
+R410="192.168.1.41"
+R710="192.168.1.11"
+R720="192.168.1.16"
+R720="${R720} 192.168.1.21"
+R720="${R720} 192.168.1.31"
+
+AUTOMATIC="no"
+AUTOMATIC="yes"
+
+# Credentials
+USER={{ ipmitool.name }}
+PASSWORD={{ ipmitool.password }}
+
+# basically if the time is 7am UTC, start automation
+# if the time is 11am UTC, stop
+#if [[ $CURRENT = "06:00" ]]
+#then
+#  touch automatic
+#fi
+
+#if  [[ $CURRENT = "11:00" ]]
+#then
+#  rm automatic
+#fi
+
+if [[ -f automatic ]]
+then
+  echo "Current time is $(date), setting to automatic management of fans"
+  for i in $R710 $R720
+  do
+    /bin/ipmitool -I lanplus -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x01 0x01 > /dev/null
+  done
+
+#  for i in $R410
+#  do
+#    /bin/ipmitool -I lan -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x01 0x01 > /dev/null
+#  done
+
+else
+  echo "Current time is $(date), setting to manual management of fans"
+
+  for i in $R710 $R720
+  do
+# getting the temps from the different servers
+# for the R710's, it's Ambient Temp
+    if [[ ${i} = "192.168.1.11" ]]
+    then
+      LAN="lanplus"
+      SYSTEMP=$(/bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD sensor reading "Ambient Temp" | awk '{print $NF}')
+    fi
+# for the R720's, it's Temp
+    if [[ ${i} = "192.168.1.16" ]] || [[ ${i} = "192.168.1.21" ]] || [[ ${i} = "192.168.1.31" ]]
+    then
+      LAN="lanplus"
+      SYSTEMP=$(/bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD sensor reading "Temp" | awk '{print $NF}')
+      ACTUAL=${SYSTEMP}
+
+      if [[ ${i} = "192.168.1.16" ]]
+      then
+        SYSTEMP=$(( ${SYSTEMP} - 40 ))
+        echo "Actual Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+        SYSTEMP=20
+        echo "Updated Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+      fi
+# special testing for 21. Hard set to 50% and see what the system looks like
+      if [[ ${i} = "192.168.1.21" ]]
+      then
+        SYSTEMP=$(( ${SYSTEMP} - 40 ))
+        echo "Actual Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+        SYSTEMP=20
+        echo "Updated Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+      fi
+      if [[ ${i} = "192.168.1.31" ]]
+      then
+        SYSTEMP=$(( ${SYSTEMP} - 40 ))
+        echo "Actual Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+        SYSTEMP=20
+        echo "Updated Temperature is ${ACTUAL}, changing to ${SYSTEMP}"
+      fi
+# see if keeping it at 7k is okay.
+#      SYSTEMP=15
+
+    fi
+
+    if [[ ! -z ${SYSTEMP} ]]
+    then
+      echo "Checking server $i"
+      echo " Temperature is: $SYSTEMP"
+
+# take manual control
+      /bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x01 0x00 > /dev/null
+
+      if [[ ${SYSTEMP} -ge 50 ]]
+      then
+        echo " Temp too high, resetting to automatic."
+        /bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x01 0x01 > /dev/null
+      else
+# temp range; 45 to 50: Temp of 90C: Fan Setting 100% in this case
+        for j in 45:50:90:0x5a 40:45:80:0x50 35:40:70:0x46 30:35:60:0x3c 25:30:50:0x32 23:25:45:0x2c 20:23:40:0x28 15:20:30:0x1e 10:15:20:0x10 5:10:10:0x0a
+        do
+          LOW=$(echo $j | cut -f1 -d:)
+          HIGH=$(echo $j | cut -f2 -d:)
+          PERCENT=$(echo $j | cut -f3 -d:)
+          HEX=$(echo $j | cut -f4 -d:)
+
+          if [[ ${SYSTEMP} -ge ${LOW} ]] && [[ ${SYSTEMP} -lt ${HIGH} ]]
+          then
+            echo " Set fan speed to ${PERCENT}%"
+            /bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x02 0xff ${HEX} > /dev/null
+          fi
+        done
+      fi
+
+      if [[ ${SYSTEMP} -lt 5 ]]
+      then
+        echo " Set fan speed to 0%"
+        /bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x02 0xff 0x00 > /dev/null
+      fi
+    else
+      echo "ERROR: Unable to determine temperature for $i. Setting to automatic."
+      /bin/ipmitool -I ${LAN} -H $i -U $USER -P $PASSWORD raw 0x30 0x30 0x01 0x01 > /dev/null
+    fi
+
+  done
+
+fi
+

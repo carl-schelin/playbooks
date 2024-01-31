@@ -319,12 +319,3 @@ database:
   - name: "lnmt1cuommdb1"
     ipa: 192.168.104.125
 
-
-# ----------------------------------
-# Grafana dashboard
-# ----------------------------------
-grafana:
-  name: "lnmt1cuomgraf1"
-  ipa: 192.168.104.101
-
-

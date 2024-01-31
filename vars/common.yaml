@@ -78,6 +78,15 @@ k8s:
   machine_network: "10.72.0.0/16"
 
 
+# ----------------------------------
+# Grafana dashboard
+# ----------------------------------
+grafana:
+  name: "lnmt1cuomgraf1"
+  ipa: 192.168.104.101
+  port: 8086
+
+
 # --------------------------------------------------------------------------- #
 # Links to the necessary files to download from RedHat to PXE boot the avi_cluster
 # Verify that links are active when updating the version of the cluster.
