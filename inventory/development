@@ -1,0 +1,23 @@
+---
+# Inventory file for development environment
+all:
+  vars:
+    ansible_connection: local
+  children:
+    development:
+      vars:
+        environment: development
+      children:
+        haproxy_k8s:
+          vars:
+            deployment: kubernetes
+          hosts:
+            - bldr0cuomhap1
+            - bldr0cuomhap2
+        haproxy_ocp:
+          vars:
+            deployment: openshift
+          hosts:
+            - bldr0cuomhap3
+            - bldr0cuomhap4
+...
