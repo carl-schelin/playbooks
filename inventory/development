@@ -12,12 +12,12 @@ all:
           vars:
             deployment: kubernetes
           hosts:
-            - bldr0cuomhap1
-            - bldr0cuomhap2
+            bldr0cuomhap1:
+            bldr0cuomhap2:
         haproxy_ocp:
           vars:
             deployment: openshift
           hosts:
-            - bldr0cuomhap3
-            - bldr0cuomhap4
+            bldr0cuomhap3:
+            bldr0cuomhap4:
 ...
