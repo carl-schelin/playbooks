@@ -1,0 +1,878 @@
+control:
+  hosts:
+    bldr0cuomkube1:
+    bldr0cuomkube2:
+    bldr0cuomkube3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    lnmt1cuomkube3:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+
+docker:
+  hosts:
+    bldr0cuomdock1:
+    bldr0cuomrepo1:
+
+jumpstart:
+  hosts:
+    lnmt1cuomjs1:
+
+motd:
+  hosts:
+    bldr0cuomaws1:
+    bldr0cuomdev1:
+    bldr0cuomdev5:
+    bldr0cuomdns1:
+    bldr0cuomdns2:
+    bldr0cuomdock1:
+    bldr0cuomgit1:
+    bldr0cuomglrunr1:
+    bldr0cuomhap1:
+    bldr0cuomhap2:
+    bldr0cuomhap3:
+    bldr0cuomhap4:
+    bldr0cuomknode1:
+    bldr0cuomknode2:
+    bldr0cuomknode3:
+    bldr0cuomkube1:
+    bldr0cuomkube2:
+    bldr0cuomkube3:
+    bldr0cuomlar1:
+    bldr0cuomnfs1:
+    bldr0cuomnfs2:
+    bldr0cuompgrs1:
+    bldr0cuomrepo1:
+    bldr0cuomshift:
+    bldr0cuomssql1:
+    bldr0cuomtool11:
+    cabo0cuomdns1:
+    cabo0cuomdns2:
+    cabo0cuomglrunr1:
+    cabo0cuomhap1:
+    cabo0cuomhap2:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    cabo0cuomnfs1:
+    cabo0cuompgrs1:
+    cabo0cuomtool11:
+    lnmt1cuom2540:
+    lnmt1cuomawx1:
+    lnmt1cuomcas1:
+    lnmt1cuomdns1:
+    lnmt1cuomdns2:
+    lnmt1cuomgitlab:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    lnmt1cuomgraf1:
+    lnmt1cuomhap1:
+    lnmt1cuomhap2:
+    lnmt1cuomifidm1:
+    lnmt1cuomipam1:
+    lnmt1cuomjkns1:
+    lnmt1cuomjkns2:
+    lnmt1cuomjkns3:
+    lnmt1cuomjs1:
+    lnmt1cuomkat1:
+    lnmt1cuomknode1:
+    lnmt1cuomknode2:
+    lnmt1cuomknode3:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    lnmt1cuomkube3:
+    lnmt1cuommail1:
+    lnmt1cuommdb1:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuomnetbox1:
+    lnmt1cuomnfs1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuompgrs1:
+    lnmt1cuomsalt1:
+    lnmt1cuomsips1:
+    lnmt1cuomsyslog:
+    lnmt1cuomtform1:
+    lnmt1cuomtool11:
+    lnmt1cuomvault1:
+    lnmt1cuomwiki1:
+    lnmt1cuomysql1:
+    ndld1cuombackup1:
+    ndld1cuomdev1:
+    ndld1cuomdns1:
+    ndld1cuomdns2:
+    ndld1cuomgit1:
+    ndld1cuomglrunr1:
+    ndld1cuomglrunr2:
+    ndld1cuomovie1:
+    ndld1cuomphoto1:
+    ndld1cuomsamba1:
+    ndld1cuomtool11:
+    ndld1cuomtv1:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    tato0cuomglrunr1:
+    tato0cuomhap1:
+    tato0cuomhap2:
+    tato0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode3:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+    tato0cuomnfs1:
+    tato0cuomtool11:
+
+tool:
+  hosts:
+    bldr0cuomtool11:
+    cabo0cuomtool11:
+    lnmt1cuomtool11:
+    ndld1cuomtool11:
+    tato0cuomtool11:
+
+worker:
+  hosts:
+    bldr0cuomknode1:
+    bldr0cuomknode2:
+    bldr0cuomknode3:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    lnmt1cuomknode1:
+    lnmt1cuomknode2:
+    lnmt1cuomknode3:
+    tato0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode3:
+
+bldr0:
+  hosts:
+    bldr0cuomaws1:
+    bldr0cuomdev1:
+    bldr0cuomdev5:
+    bldr0cuomdns1:
+    bldr0cuomdns2:
+    bldr0cuomdock1:
+    bldr0cuomgit1:
+    bldr0cuomglrunr1:
+    bldr0cuomhap1:
+    bldr0cuomhap2:
+    bldr0cuomhap3:
+    bldr0cuomhap4:
+    bldr0cuomknode1:
+    bldr0cuomknode2:
+    bldr0cuomknode3:
+    bldr0cuomkube1:
+    bldr0cuomkube2:
+    bldr0cuomkube3:
+    bldr0cuomlar1:
+    bldr0cuomnfs1:
+    bldr0cuomnfs2:
+    bldr0cuompgrs1:
+    bldr0cuomrepo1:
+    bldr0cuomshift:
+    bldr0cuomssql1:
+    bldr0cuomtool11:
+
+boulder:
+  hosts:
+    bldr0cuomaws1:
+    bldr0cuomdev1:
+    bldr0cuomdev5:
+    bldr0cuomdns1:
+    bldr0cuomdns2:
+    bldr0cuomdock1:
+    bldr0cuomgit1:
+    bldr0cuomglrunr1:
+    bldr0cuomhap1:
+    bldr0cuomhap2:
+    bldr0cuomhap3:
+    bldr0cuomhap4:
+    bldr0cuomknode1:
+    bldr0cuomknode2:
+    bldr0cuomknode3:
+    bldr0cuomkube1:
+    bldr0cuomkube2:
+    bldr0cuomkube3:
+    bldr0cuomlar1:
+    bldr0cuomnfs1:
+    bldr0cuomnfs2:
+    bldr0cuompgrs1:
+    bldr0cuomrepo1:
+    bldr0cuomshift:
+    bldr0cuomssql1:
+    bldr0cuomtool11:
+
+cabo:
+  hosts:
+    cabo0cuomdns1:
+    cabo0cuomdns2:
+    cabo0cuomglrunr1:
+    cabo0cuomhap1:
+    cabo0cuomhap2:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    cabo0cuomnfs1:
+    cabo0cuompgrs1:
+    cabo0cuomtool11:
+
+cabo0:
+  hosts:
+    cabo0cuomdns1:
+    cabo0cuomdns2:
+    cabo0cuomglrunr1:
+    cabo0cuomhap1:
+    cabo0cuomhap2:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    cabo0cuomnfs1:
+    cabo0cuompgrs1:
+    cabo0cuomtool11:
+
+lnmt1:
+  hosts:
+    lnmt1cuom2540:
+    lnmt1cuomawx1:
+    lnmt1cuomcas1:
+    lnmt1cuomdns1:
+    lnmt1cuomdns2:
+    lnmt1cuomgitlab:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    lnmt1cuomgraf1:
+    lnmt1cuomhap1:
+    lnmt1cuomhap2:
+    lnmt1cuomifidm1:
+    lnmt1cuomipam1:
+    lnmt1cuomjkns1:
+    lnmt1cuomjkns2:
+    lnmt1cuomjkns3:
+    lnmt1cuomjs1:
+    lnmt1cuomkat1:
+    lnmt1cuomknode1:
+    lnmt1cuomknode2:
+    lnmt1cuomknode3:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    lnmt1cuomkube3:
+    lnmt1cuommail1:
+    lnmt1cuommdb1:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuomnetbox1:
+    lnmt1cuomnfs1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuompgrs1:
+    lnmt1cuomsalt1:
+    lnmt1cuomsips1:
+    lnmt1cuomsyslog:
+    lnmt1cuomtform1:
+    lnmt1cuomtool11:
+    lnmt1cuomvault1:
+    lnmt1cuomwiki1:
+    lnmt1cuomysql1:
+
+longmont:
+  hosts:
+    lnmt1cuom2540:
+    lnmt1cuomawx1:
+    lnmt1cuomcas1:
+    lnmt1cuomdns1:
+    lnmt1cuomdns2:
+    lnmt1cuomgitlab:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    lnmt1cuomgraf1:
+    lnmt1cuomhap1:
+    lnmt1cuomhap2:
+    lnmt1cuomifidm1:
+    lnmt1cuomipam1:
+    lnmt1cuomjkns1:
+    lnmt1cuomjkns2:
+    lnmt1cuomjkns3:
+    lnmt1cuomjs1:
+    lnmt1cuomkat1:
+    lnmt1cuomknode1:
+    lnmt1cuomknode2:
+    lnmt1cuomknode3:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    lnmt1cuomkube3:
+    lnmt1cuommail1:
+    lnmt1cuommdb1:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuomnetbox1:
+    lnmt1cuomnfs1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuompgrs1:
+    lnmt1cuomsalt1:
+    lnmt1cuomsips1:
+    lnmt1cuomsyslog:
+    lnmt1cuomtform1:
+    lnmt1cuomtool11:
+    lnmt1cuomvault1:
+    lnmt1cuomwiki1:
+    lnmt1cuomysql1:
+
+ndld1:
+  hosts:
+    ndld1cuombackup1:
+    ndld1cuomdev1:
+    ndld1cuomdns1:
+    ndld1cuomdns2:
+    ndld1cuomgit1:
+    ndld1cuomglrunr1:
+    ndld1cuomglrunr2:
+    ndld1cuomovie1:
+    ndld1cuomphoto1:
+    ndld1cuomsamba1:
+    ndld1cuomtool11:
+    ndld1cuomtv1:
+
+nederland:
+  hosts:
+    ndld1cuombackup1:
+    ndld1cuomdev1:
+    ndld1cuomdns1:
+    ndld1cuomdns2:
+    ndld1cuomgit1:
+    ndld1cuomglrunr1:
+    ndld1cuomglrunr2:
+    ndld1cuomovie1:
+    ndld1cuomphoto1:
+    ndld1cuomsamba1:
+    ndld1cuomtool11:
+    ndld1cuomtv1:
+
+tato0:
+  hosts:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    tato0cuomglrunr1:
+    tato0cuomhap1:
+    tato0cuomhap2:
+    tato0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode3:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+    tato0cuomnfs1:
+    tato0cuompgrs1:
+    tato0cuomtool11:
+
+tatooine:
+  hosts:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    tato0cuomglrunr1:
+    tato0cuomhap1:
+    tato0cuomhap2:
+    tato0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode3:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+    tato0cuomnfs1:
+    tato0cuompgrs1:
+    tato0cuomtool11:
+
+automation:
+  hosts:
+    bldr0cuomaws1:
+    bldr0cuomdns1:
+    bldr0cuomdns2:
+    bldr0cuomnfs1:
+    bldr0cuomnfs2:
+    cabo0cuomdns1:
+    cabo0cuomdns2:
+    cabo0cuomnfs1:
+    lnmt1cuom2540:
+    lnmt1cuomdns1:
+    lnmt1cuomdns2:
+    lnmt1cuomnfs1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuomsalt1:
+    lnmt1cuomsips1:
+    lnmt1cuomtform1:
+    lnmt1cuomvault1:
+    ndld1cuomdns1:
+    ndld1cuomdns2:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    tato0cuomnfs1:
+
+database:
+  hosts:
+    bldr0cuompgrs1:
+    cabo0cuompgrs1:
+    lnmt1cuomcas1:
+    lnmt1cuompgrs1:
+    lnmt1cuomysql1:
+    tato0cuompgrs1:
+
+dev:
+  hosts:
+    bldr0cuomdev1:
+    bldr0cuomdev5:
+    bldr0cuomdock1:
+    bldr0cuomgit1:
+    bldr0cuomglrunr1:
+    bldr0cuomlar1:
+    bldr0cuomssql1:
+    cabo0cuomglrunr1:
+    lnmt1cuomawx1:
+    lnmt1cuomgitlab:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    lnmt1cuomjkns1:
+    lnmt1cuomjkns2:
+    lnmt1cuomjkns3:
+    lnmt1cuomwiki1:
+    ndld1cuomdev1:
+    ndld1cuomgit1:
+    ndld1cuomglrunr1:
+    ndld1cuomglrunr2:
+    ndld1cuomphoto1:
+    tato0cuomglrunr1:
+
+elk:
+  hosts:
+    bldr0cuomrepo1:
+    lnmt1cuomipam1:
+
+infrastructure:
+  hosts:
+    bldr0cuomhap1:
+    bldr0cuomhap2:
+    bldr0cuomhap3:
+    bldr0cuomhap4:
+    bldr0cuomtool11:
+    cabo0cuomhap1:
+    cabo0cuomhap2:
+    cabo0cuomtool11:
+    lnmt1cuomhap1:
+    lnmt1cuomhap2:
+    lnmt1cuomifidm1:
+    lnmt1cuomjs1:
+    lnmt1cuomkat1:
+    lnmt1cuommail1:
+    lnmt1cuomnetbox1:
+    lnmt1cuomsyslog:
+    lnmt1cuomtool11:
+    ndld1cuomovie1:
+    ndld1cuomsamba1:
+    ndld1cuomtv1:
+    tato0cuomhap1:
+    tato0cuomhap2:
+    tato0cuomtool11:
+
+kubernetes:
+  hosts:
+    bldr0cuomknode1:
+    bldr0cuomknode2:
+    bldr0cuomknode3:
+    bldr0cuomkube1:
+    bldr0cuomkube2:
+    bldr0cuomkube3:
+    bldr0cuomshift:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    lnmt1cuomknode1:
+    lnmt1cuomknode2:
+    lnmt1cuomknode3:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    lnmt1cuomkube3:
+    tato0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode3:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+
+management:
+  hosts:
+    ndld1cuombackup1:
+    ndld1cuomtool11:
+
+monitoring:
+  hosts:
+    lnmt1cuomgraf1:
+    lnmt1cuommdb1:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+
+apache:
+  hosts:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuomwiki1:
+    ndld1cuomdev1:
+    bldr0cuomdev1:
+    ndld1cuomphoto1:
+    ndld1cuomtool11:
+    lnmt1cuomifidm1:
+    lnmt1cuomjs1:
+    tato0cuomtool11:
+    bldr0cuomtool11:
+    cabo0cuomtool11:
+    lnmt1cuomtool11:
+
+bind:
+  hosts:
+    ndld1cuomdns2:
+    ndld1cuomdns1:
+    lnmt1cuomdns1:
+    tato0cuomdns1:
+    cabo0cuomdns1:
+    tato0cuomdns2:
+    lnmt1cuomdns2:
+    bldr0cuomdns2:
+    cabo0cuomdns2:
+    bldr0cuomdns1:
+
+bullseye:
+  hosts:
+
+centos:
+  hosts:
+    lnmt1cuomkat1:
+    bldr0cuomssql1:
+    lnmt1cuommail1:
+    lnmt1cuomnetbox1:
+    lnmt1cuomtool11:
+    ndld1cuomdns2:
+    lnmt1cuomsips1:
+    ndld1cuomdns1:
+    lnmt1cuomdns1:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    lnmt1cuomdns2:
+    cabo0cuomdns2:
+    bldr0cuomgit1:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    ndld1cuomglrunr2:
+    ndld1cuomglrunr1:
+    cabo0cuomglrunr1:
+    tato0cuomglrunr1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuomsalt1:
+    lnmt1cuomtform1:
+    lnmt1cuomvault1:
+    bldr0cuomaws1:
+    ndld1cuomdns2:
+    lnmt1cuomsips1:
+    ndld1cuomdns1:
+    lnmt1cuomdns1:
+    tato0cuomdns1:
+    cabo0cuomdns1:
+    tato0cuomdns2:
+    lnmt1cuomdns2:
+    bldr0cuomdns2:
+    cabo0cuomdns2:
+    bldr0cuomdns1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuomsalt1:
+    lnmt1cuomtform1:
+    lnmt1cuomvault1:
+    lnmt1cuompgrs1:
+    bldr0cuompgrs1:
+    lnmt1cuomcas1:
+    lnmt1cuomysql1:
+    lnmt1cuomsalt1:
+    lnmt1cuomtform1:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios1:
+    lnmt1cuomvault1:
+    lnmt1cuomgraf1:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuommdb1:
+    lnmt1cuomifidm1:
+    lnmt1cuomjs1:
+    ndld1cuomovie1:
+    ndld1cuomsamba1:
+    lnmt1cuomsyslog:
+    ndld1cuomtv1:
+    tato0cuomtool11:
+    bldr0cuomtool11:
+    cabo0cuomtool11:
+    ndld1cuomtool11:
+    ndld1cuombackup1:
+    lnmt1cuomwiki1:
+    bldr0cuomlar1:
+    bldr0cuomdock1:
+    ndld1cuomdev1:
+    bldr0cuomdev1:
+    lnmt1cuomgitlab:
+    lnmt1cuomjkns1:
+    ndld1cuomphoto1:
+    lnmt1cuomawx1:
+    ndld1cuomgit1:
+    lnmt1cuomjkns2:
+    lnmt1cuomjkns3:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios1:
+    lnmt1cuomgraf1:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+    lnmt1cuommdb1:
+    bldr0cuomrepo1:
+    lnmt1cuomipam1:
+    bldr0cuomkube1:
+    lnmt1cuomknode3:
+    lnmt1cuomknode2:
+    lnmt1cuomknode1:
+    lnmt1cuomkube1:
+    bldr0cuomkube2:
+    lnmt1cuomkube2:
+    tato0cuomknode3:
+    bldr0cuomknode3:
+    bldr0cuomknode2:
+    bldr0cuomknode1:
+    tato0cuomknode2:
+    tato0cuomknode1:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    lnmt1cuomkube3:
+    bldr0cuomkube3:
+    bldr0cuomshift:
+    lnmt1cuomsalt1:
+    lnmt1cuomtform1:
+    lnmt1cuomvault1:
+    lnmt1cuomnmis8:
+    lnmt1cuomnmis9:
+    lnmt1cuomtool11:
+    ndld1cuomdns2:
+    lnmt1cuomsips1:
+    ndld1cuomdns1:
+    lnmt1cuomdns1:
+    tato0cuomdns1:
+    tato0cuomdns2:
+    lnmt1cuomdns2:
+    lnmt1cuomtool11:
+    cabo0cuomdns2:
+
+coreos:
+  hosts:
+
+debian:
+  hosts:
+
+dns:
+  hosts:
+    ndld1cuomdns2:
+    ndld1cuomdns1:
+    lnmt1cuomdns1:
+    tato0cuomdns1:
+    cabo0cuomdns1:
+    tato0cuomdns2:
+    lnmt1cuomdns2:
+    bldr0cuomdns2:
+    cabo0cuomdns2:
+    bldr0cuomdns1:
+
+elasticstack:
+  hosts:
+
+elk:
+  hosts:
+
+freebsd:
+  hosts:
+
+gitlab:
+  hosts:
+    lnmt1cuomgitlab:
+
+haproxy:
+  hosts:
+    bldr0cuomhap4:
+    cabo0cuomhap2:
+    bldr0cuomhap1:
+    lnmt1cuomhap1:
+    bldr0cuomhap2:
+    tato0cuomhap2:
+    cabo0cuomhap1:
+    tato0cuomhap1:
+    bldr0cuomhap3:
+    lnmt1cuomhap2:
+
+java:
+  hosts:
+    lnmt1cuomifidm1:
+    lnmt1cuomjkns1:
+
+kibana:
+  hosts:
+
+logstash:
+  hosts:
+
+mysql:
+  hosts:
+    lnmt1cuomysql1:
+    lnmt1cuomwiki1:
+    ndld1cuomdev1:
+    bldr0cuomdev1:
+    ndld1cuomphoto1:
+    lnmt1cuommail1:
+
+nagios:
+  hosts:
+    lnmt1cuomnagios3:
+    lnmt1cuomnagios2:
+    lnmt1cuomnagios1:
+    lnmt1cuomnagios4:
+    lnmt1cuomnagios5:
+    lnmt1cuomnagios6:
+
+nfs:
+  hosts:
+    lnmt1cuomnfs1:
+    bldr0cuomnfs1:
+    cabo0cuomnfs1:
+    tato0cuomnfs1:
+    bldr0cuomnfs2:
+
+openbsd:
+  hosts:
+
+postgresql:
+  hosts:
+    bldr0cuompgrs1:
+    lnmt1cuompgrs1:
+
+rocky:
+  hosts:
+    lnmt1cuomknode3:
+    lnmt1cuomknode2:
+    lnmt1cuomknode1:
+    lnmt1cuomkube1:
+    lnmt1cuomkube2:
+    tato0cuomknode3:
+    tato0cuomknode2:
+    tato0cuomknode1:
+    tato0cuomkube1:
+    tato0cuomkube2:
+    tato0cuomkube3:
+    cabo0cuomknode1:
+    cabo0cuomknode2:
+    cabo0cuomknode3:
+    cabo0cuomkube1:
+    cabo0cuomkube2:
+    cabo0cuomkube3:
+    lnmt1cuomkube3:
+    cabo0cuomhap2:
+    lnmt1cuomhap1:
+    tato0cuomhap2:
+    cabo0cuomhap1:
+    tato0cuomhap1:
+    lnmt1cuomhap2:
+    lnmt1cuomnfs1:
+    bldr0cuomnfs1:
+    cabo0cuomnfs1:
+    tato0cuomnfs1:
+    bldr0cuomnfs2:
+    bldr0cuomdev5:
+    bldr0cuomglrunr1:
+    bldr0cuomhap4:
+    cabo0cuomhap2:
+    bldr0cuomhap1:
+    lnmt1cuomhap1:
+    bldr0cuomhap2:
+    tato0cuomhap2:
+    cabo0cuomhap1:
+    tato0cuomhap1:
+    bldr0cuomhap3:
+    lnmt1cuomhap2:
+
+runner:
+  hosts:
+    lnmt1cuomglrunr1:
+    lnmt1cuomglrunr2:
+    ndld1cuomglrunr2:
+    ndld1cuomglrunr1:
+    bldr0cuomglrunr1:
+    cabo0cuomglrunr1:
+    tato0cuomglrunr1:
+
+samba:
+  hosts:
+    ndld1cuomovie1:
+    ndld1cuomsamba1:
+    ndld1cuomtv1:
+
+solaris:
+  hosts:
+    lnmt1cuom2540:
+
+storage:
+  hosts:
+    lnmt1cuomnfs1:
+    bldr0cuomnfs1:
+    cabo0cuomnfs1:
+    tato0cuomnfs1:
+    bldr0cuomnfs2:
+
