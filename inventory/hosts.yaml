@@ -1,3 +1,4 @@
+---
 control:
   hosts:
     bldr0cuomkube1:
@@ -875,4 +876,4 @@ storage:
     cabo0cuomnfs1:
     tato0cuomnfs1:
     bldr0cuomnfs2:
-
+...
