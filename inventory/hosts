@@ -58,7 +58,6 @@ cabo0cuomkube1
 cabo0cuomkube2
 cabo0cuomkube3
 cabo0cuomnfs1
-cabo0cuompgrs1
 cabo0cuomtool11
 lnmt1cuom2540
 lnmt1cuomawx1
@@ -221,7 +220,6 @@ cabo0cuomkube1
 cabo0cuomkube2
 cabo0cuomkube3
 cabo0cuomnfs1
-cabo0cuompgrs1
 cabo0cuomtool11
 
 [cabo0]
@@ -237,7 +235,6 @@ cabo0cuomkube1
 cabo0cuomkube2
 cabo0cuomkube3
 cabo0cuomnfs1
-cabo0cuompgrs1
 cabo0cuomtool11
 
 [lnmt1]
@@ -421,7 +418,6 @@ tato0cuomnfs1
 
 [database]
 bldr0cuompgrs1
-cabo0cuompgrs1
 lnmt1cuomcas1
 lnmt1cuompgrs1
 lnmt1cuomysql1
