@@ -250,9 +250,8 @@ bootstrap:
   name: bldr0cuombst01
   ipa: 192.168.101.98
   macaddr: "00-50-56-96-43-d5"
+  cname: bootstrap
 
-boot_cnames:
-  - name: bootstrap
 
 # ----------------------------------
 # Openshift Container Platform (okd4) Build Server
@@ -304,21 +303,15 @@ okd_control:
   - name: "bldr0cuomctl01"
     ipa: 192.168.101.101
     macaddr: "00-50-56-96-45-07"
+    cname: etcd-0
   - name: "bldr0cuomctl02"
     ipa: 192.168.101.102
     macaddr: "00-50-56-96-21-51"
+    cname: etcd-1
   - name: "bldr0cuomctl03"
     ipa: 192.168.101.103
     macaddr: "00-50-56-96-bd-a6"
-
-okd1_cname:
-  - name: etcd-0
-
-okd2_cname:
-  - name: etcd-1
-
-okd3_cname:
-  - name: etcd-2
+    cname: etcd-2
 
 
 # ----------------------------------
