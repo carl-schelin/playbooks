@@ -221,12 +221,14 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 ; Create the bootstrap entry
 ; *****************************************************************************
 {{ bootstrap.name }}		IN	A	{{ bootstrap.ipa }}
+{{ bootstrap.cname }}		IN	CNAME	{{ bootstrap.name}}.{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
 ; Create entries for the control plane
 ; *****************************************************************************
 {% for c in okd_control %}
 {{ c.name }}		IN	A	{{ c.ipa }}
+{{ c.cname }}		IN	CNAME	{{ c.name }}.{{ site.name }}.{{ site.domain}}.
 {% endfor %}
 ;
 ; *****************************************************************************
