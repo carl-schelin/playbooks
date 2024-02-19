@@ -66,25 +66,25 @@ dns_reverse:
 # ELK Logging cluster
 # ----------------------------------
 edata:
-  - name: "cabo0cuomdat1"
+  - name: "cabo0cuomed1"
     ipa: 192.168.102.145
-  - name: "cabo0cuomdat2"
+  - name: "cabo0cuomed2"
     ipa: 192.168.102.146
 
 ecat:
-  name: "cabo0cuomkat1"
+  name: "cabo0cuomek1"
   ipa: 192.168.102.147
 
 elog:
-  name: "cabo0cuomlog1"
+  name: "cabo0cuomel1"
   ipa: 192.168.102.148
 
 emasters:
-  - name: "cabo0cuommas1"
+  - name: "cabo0cuomem1"
     ipa: 192.168.102.149
-  - name: "cabo0cuommas2"
+  - name: "cabo0cuomem2"
     ipa: 192.168.102.150
-  - name: "cabo0cuommas3"
+  - name: "cabo0cuomem3"
     ipa: 192.168.102.151
 
 

@@ -131,9 +131,14 @@ loadbalancer_secondary:
   ipa: 192.168.101.62
 
 vip_cnames:
+  - name: argocd
+  - name: awx
+  - name: awx-llamas
+  - name: echoserver
   - name: llamas
   - name: llamas-blue
   - name: llamas-green
+  - name: my-ingress
 
 
 okd_lb_vip:
@@ -246,6 +251,8 @@ bootstrap:
   ipa: 192.168.101.98
   macaddr: "00-50-56-96-43-d5"
 
+boot_cnames:
+  - name: bootstrap
 
 # ----------------------------------
 # Openshift Container Platform (okd4) Build Server
@@ -304,9 +311,13 @@ okd_control:
     ipa: 192.168.101.103
     macaddr: "00-50-56-96-bd-a6"
 
-okdcname:
+okd1_cname:
   - name: etcd-0
+
+okd2_cname:
   - name: etcd-1
+
+okd3_cname:
   - name: etcd-2
 
 
