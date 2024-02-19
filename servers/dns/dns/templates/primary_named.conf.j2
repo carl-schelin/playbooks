@@ -38,6 +38,9 @@ options {
         */
         recursion yes;
 
+	dnssec-enable no;
+	dnssec-validation no;
+
         managed-keys-directory "/var/named/dynamic";
 
         pid-file "/run/named/named.pid";
@@ -63,6 +66,21 @@ logging {
 acl inside-networks {
         localhost;
         localnets;
+{% if site.environment != 'bldr' %}
+	192.168.101.0/24;
+{% endif %}
+{% if site.environment != 'cabo' %}
+	192.168.102.0/24;
+{% endif %}
+{% if site.environment != 'tato' %}
+	192.168.103.0/24;
+{% endif %}
+{% if site.environment != 'lnmt' %}
+	192.168.104.0/24;
+{% endif %}
+{% if site.environment != 'ndld' %}
+	192.168.105.0/24;
+{% endif %}
 };
 
 statistics-channels {
