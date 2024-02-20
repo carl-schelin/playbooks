@@ -68,6 +68,7 @@ logging {
 acl inside-networks {
         localhost;
         localnets;
+	192.168.1.0/24;
 {% if site.environment != 'bldr' %}
 	192.168.101.0/24;
 {% endif %}
