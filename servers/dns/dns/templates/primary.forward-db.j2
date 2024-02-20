@@ -25,6 +25,7 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endif %}
 {% if ansible is defined %}
 {{ ansible.name }}		IN	A	{{ ansible.ipa }}
+{{ ansible.cname }}		IN	CNAME	{{ ansible.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
 {% if database is defined %}
@@ -78,6 +79,7 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endif %}
 {% if jumpstart is defined %}
 {{ jumpstart.name }}		IN	A	{{ jumpstart.ipa }}
+{{ jumpstart.cname }}		IN	CNAME	{{ jumpstart.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
 {% if katello is defined %}
@@ -86,6 +88,7 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endif %}
 {% if mail is defined %}
 {{ mail.name }}		IN	A	{{ mail.ipa }}
+{{ mail.cname }}		IN	CNAME	{{ mail.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
 {% if media is defined %}
@@ -108,6 +111,7 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endif %}
 {% if salt is defined %}
 {{ salt.name }}		IN	A	{{ salt.ipa }}
+{{ salt.cname }}		IN	CNAME	{{ salt.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
 {% if sips is defined %}
@@ -151,6 +155,7 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {% endif %}
 {% if wiki is defined %}
 {{ wiki.name }}		IN	A	{{ wiki.ipa }}
+{{ wiki.cname }}		IN	CNAME	{{ wiki.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
 {% if windows is defined %}
