@@ -62,25 +62,25 @@ site:
 # ELK Logging cluster
 # ----------------------------------
 edata:
-  - name: "bldr0cuomdat1"
+  - name: "bldr0cuomed1"
     ipa: 192.168.101.145
-  - name: "bldr0cuomdat2"
+  - name: "bldr0cuomed2"
     ipa: 192.168.101.146
 
 ecat:
-  name: "bldr0cuomkat1"
+  name: "bldr0cuomek1"
   ipa: 192.168.101.147
 
 elog:
-  name: "bldr0cuomlog1"
+  name: "bldr0cuomel1"
   ipa: 192.168.101.148
 
 emasters:
-  - name: "bldr0cuommas1"
+  - name: "bldr0cuomem1"
     ipa: 192.168.101.149
-  - name: "bldr0cuommas2"
+  - name: "bldr0cuomem2"
     ipa: 192.168.101.150
-  - name: "bldr0cuommas3"
+  - name: "bldr0cuomem3"
     ipa: 192.168.101.151
 
 
@@ -182,6 +182,9 @@ snmp:
 storage:
   - name: "bldr0cuomnfs1"
     ipa: 192.168.101.170
+  - name: "bldr0cuomnfs2"
+    ipa: 192.168.101.171
+
 storage_nfs1:
   name: "bldr0cuomnfs1"
   ipa: 192.168.101.170
