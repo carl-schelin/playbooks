@@ -39,6 +39,30 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ dv.name }} 		IN	A	{{ dv.ipa }}
 {% endfor %}
 ;
+{% if dev_cname is defined %}
+{% for dv in dev_cname %}
+{{ dv.name }} 		IN	CNAME	ndld1cuomdev1.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if dev_sha_cname is defined %}
+{% for dv in dev_sha_cname %}
+{{ dv.name }}.shadowrun 		IN	CNaME	ndld1cuomdev1.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if dev_sch_cname is defined %}
+{% for dv in dev_sch_cname %}
+{{ dv.name }}.schelin 		IN	CNaME	ndld1cuomdev1.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if dev_ain_cname is defined %}
+{% for dv in dev_ain_cname %}
+{{ dv.name }}.ainsley 		IN	CNaME	ndld1cuomdev1.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
 {% endif %}
 {{ dns_primary.name }}		IN	A	{{ dns_primary.ipa }}
 {{ dns_secondary.name }}		IN	A	{{ dns_secondary.ipa }}
@@ -114,6 +138,10 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ salt.cname }}		IN	CNAME	{{ salt.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
+{% if openshift is defined %}
+{{ openshift.name }}		IN	A	{{ openshift.ipa }}
+;
+{% endif %}
 {% if sips is defined %}
 {{ sips.name }}		IN	A	{{ sips.ipa }}
 ;
@@ -145,6 +173,24 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ tl.name }}		IN	CNAME	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
 {% endfor %}
 ;
+{% if tool_sha_cname is defined %}
+{% for dv in tool_sha_cname %}
+{{ dv.name }}.shadowrun 		IN	CNaME	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if tool_sch_cname is defined %}
+{% for dv in tool_sch_cname %}
+{{ dv.name }}.schelin 		IN	CNaME	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
+{% if tool_ain_cname is defined %}
+{% for dv in tool_ain_cname %}
+{{ dv.name }}.ainsley 		IN	CNaME	{{ tool.name }}.{{ site.name }}.{{ site.domain }}.
+{% endfor %}
+;
+{% endif %}
 {% if tower is defined %}
 {{ tower.name }}		IN	A	{{ tower.ipa }}
 ;
