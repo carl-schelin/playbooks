@@ -8,11 +8,11 @@
     mode: 0644
 
 - name: Set DNS information
-  command: "nmcli dev mod 'ens192' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
+  command: "nmcli dev mod '{{ ansible_default_ipv4.interface }}' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
 
 - name: Set DNS information
-  command: "nmcli dev mod  'ens192' ipv4.dns-search '{{ site.name }}.{{ site.domain }} schelin.org'"
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'prod.internal.pri dev.internal.pri qa.internal.pri stage.internal.pri home.internal.pri schelin.org'"
 
 - name: Reload nmcli configuration
-  command: "nmcli dev reapply ens192"
+  command: "nmcli dev reapply {{ ansible_default_ipv4.interface }}"
 
