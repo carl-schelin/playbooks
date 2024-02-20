@@ -157,6 +157,7 @@ snmp:
 storage:
   - name: "cabo0cuomnfs1"
     ipa: 192.168.102.170
+
 storage_nfs1:
   name: "cabo0cuomnfs1"
   ipa: 192.168.102.170

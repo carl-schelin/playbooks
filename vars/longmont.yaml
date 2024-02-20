@@ -58,25 +58,25 @@ dns_reverse:
 # ELK Logging cluster
 # ----------------------------------
 edata:
-  - name: "lnmt1cuomdat1"
+  - name: "lnmt1cuomed1"
     ipa: 192.168.104.145
-  - name: "lnmt1cuomdat2"
+  - name: "lnmt1cuomed2"
     ipa: 192.168.104.146
 
 ecat:
-  name: "lnmt1cuomkib1"
+  name: "lnmt1cuomek1"
   ipa: 192.168.104.147
 
 elog:
-  name: "lnmt1cuomlog1"
+  name: "lnmt1cuomel1"
   ipa: 192.168.104.148
 
 emasters:
-  - name: "lnmt1cuommas1"
+  - name: "lnmt1cuomem1"
     ipa: 192.168.104.149
-  - name: "lnmt1cuommas2"
+  - name: "lnmt1cuomem2"
     ipa: 192.168.104.150
-  - name: "lnmt1cuommas3"
+  - name: "lnmt1cuomem3"
     ipa: 192.168.104.151
 
 
@@ -212,6 +212,7 @@ solaris:
 jumpstart:
   name: "lnmt1cuomjs1"
   ipa: 192.168.104.71
+  cname: incojs01
 
 
 # ----------------------------------
@@ -252,19 +253,15 @@ syslog:
   name: "lnmt1cuomsyslog"
   ipa: 192.168.104.50
 
-
-
 idm:
   name: "lnmt1cuomifidm1"
   ipa: 192.168.104.139
-
 
 ipam:
   - name: "lnmt1cuomipam1"
     ipa: 192.168.104.90
   - name: "lnmt1cuomnetbox1"
     ipa: 192.168.104.80
-
 
 katello:
   name: "lnmt1cuomkat1"
@@ -273,11 +270,13 @@ katello:
 mail:
   name: "lnmt1cuommail1"
   ipa: 192.168.104.140
+  cname: mail
 
 
 salt:
   name: "lnmt1cuomsalt1"
   ipa: 192.168.104.119
+  cname: salt
 
 sips:
   name: "lnmt1cuomsips1"
@@ -288,7 +287,6 @@ terraform:
   name: "lnmt1cuomtform1"
   ipa: 192.168.104.133
 
-
 vault:
   name: "lnmt1cuomvault1"
   ipa: 192.168.104.118
@@ -296,14 +294,13 @@ vault:
 wiki:
   name: "lnmt1cuomwiki1"
   ipa: 192.168.104.103
-
-
-
+  cname: wiki
 
 #
 ansible:
   name: "lnmt1cuomans1"
   ipa: 192.168.104.70
+  cname: tower
 
 
 # ----------------------------------

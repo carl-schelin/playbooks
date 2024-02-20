@@ -27,7 +27,7 @@ development:
     ipa: 192.168.105.90
 
 # home.internal.pri
-devcname:
+dev_cname:
   - ainsley
   - cheatsheets
   - dga
@@ -45,7 +45,7 @@ devcname:
   - bgg
 
 # shadowrun.home.internal.pri
-shacname:
+dev_sha_cname:
   - allflesh
   - chicago
   - cthulhu
@@ -70,11 +70,11 @@ shacname:
   - wiki
 
 # schelin.home.internal.pri
-schcname:
+dev_sch_cname:
   - wiki
 
 # ainsley.home.internal.pri
-aincname:
+dev_ain_cname:
   - wiki
 
 
@@ -320,7 +320,7 @@ tool_cname:
   - youreadumbass
 
 # shadowrun.home.internal.pri
-toolshacname:
+tool_sha_cname:
   - allflesh
   - chicago
   - cthulhu
@@ -346,11 +346,11 @@ toolshacname:
   - wiki
 
 # schelin.home.internal.pri
-toolschcname:
+tool_sch_cname:
   - wiki
 
 # ainsley.home.internal.pri
-toolaincname:
+tool_ain_cname:
   - wiki
 
 
