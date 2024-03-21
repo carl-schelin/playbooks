@@ -9,7 +9,7 @@ $TTL 86400
 {{ site.name }}.{{ site.domain }}.		IN	NS	ns1.{{ site.name }}.{{ site.domain }}.
 {{ site.name }}.{{ site.domain }}.		IN	NS	ns2.{{ site.name }}.{{ site.domain }}.
 ;
-{{ site.name }}.{{ site.domain }}.		IN	TXT	"v=spf1 a mx ptr ip4:{{ mail.ipa }} mx:{{ site.name }}.{{ site.domain }} -all"
+{{ site.name }}.{{ site.domain }}.		IN	TXT	"v=spf1 a mx ptr ip4:{{ dns_mail.ipa }} mx:{{ site.name }}.{{ site.domain }} -all"
 {{ site.name }}.{{ site.domain }}.		IN	MX 10	{{ site.name }}.{{ site.domain }}.
 ;
 ; *****************************************************************************
