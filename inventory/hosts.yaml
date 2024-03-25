@@ -387,7 +387,6 @@ tato0:
     tato0cuomkube2:
     tato0cuomkube3:
     tato0cuomnfs1:
-    tato0cuompgrs1:
     tato0cuomtool11:
 
 tatooine:
@@ -404,7 +403,6 @@ tatooine:
     tato0cuomkube2:
     tato0cuomkube3:
     tato0cuomnfs1:
-    tato0cuompgrs1:
     tato0cuomtool11:
 
 automation:
@@ -439,7 +437,6 @@ database:
     lnmt1cuomcas1:
     lnmt1cuompgrs1:
     lnmt1cuomysql1:
-    tato0cuompgrs1:
 
 dev:
   hosts:
