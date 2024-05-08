@@ -85,7 +85,7 @@ acl inside-networks {
 };
 
 statistics-channels {
-        inet {{ dns_primary.ipa }} port 9000 allow {any;};
+        inet * port 9000 allow {any;};
 };
 
 zone "." IN {
