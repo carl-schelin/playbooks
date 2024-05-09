@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# pingcheck runs a ping against a defined target
+# if it fails the first time, it creates a /var/tmp/pingcheck.1 file
+# if it fails a second time, it creates a /var/tmp/pingcheck.2 file
+# if it fails a third time, it creates a /var/tmp/pingcheck.3 file and shuts down the VM
+
+PINGCHECK="65.111.168.21"
+
+# this just means the VM was shut down and is coming back up
+# clean up and get ready for more checks.
+if [[ -f /var/tmp/pingcheck.3 ]]
+then
+  if [[ -f /var/tmp/pingcheck.1 ]]
+  then
+    rm /var/tmp/pingcheck.1
+  fi
+  if [[ -f /var/tmp/pingcheck.2 ]]
+  then
+    rm /var/tmp/pingcheck.2
+  fi
+  rm /var/tmp/pingcheck.3
+  exit 0
+fi
+
+PING=$(which ping)
+
+if [[ -z ${PING} ]]
+then
+  echo "Ping not found"
+  exit 1
+fi
+
+${PING} ${PINGCHECK} -c 2
+if [[ $? -gt 0 ]]
+then
+# it's failed!
+  if [[ -f /var/tmp/pingcheck.2 ]]
+  then
+    touch /var/tmp/pingcheck.3
+    shutdown -t 0 now -h
+  fi
+
+  if [[ -f /var/tmp/pingcheck.1 ]]
+  then
+    touch /var/tmp/pingcheck.2
+  fi
+
+  touch /var/tmp/pingcheck.1
+else
+  if [[ -f /var/tmp/pingcheck.1 ]]
+  then
+    rm /var/tmp/pingcheck.1
+  fi
+
+  if [[ -f /var/tmp/pingcheck.2 ]]
+  then
+    rm /var/tmp/pingcheck.2
+  fi
+
+  echo "Ping returned success"
+fi
+
