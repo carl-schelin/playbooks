@@ -127,7 +127,7 @@ loadbalancer_primary:
 
 loadbalancer_secondary:
   name: "lnmt1cuomhap2"
-  ipa: 192.168.106.62
+  ipa: 192.168.104.62
 
 vip_cnames:
   - name: llamas
