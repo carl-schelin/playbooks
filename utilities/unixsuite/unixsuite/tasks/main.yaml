@@ -94,6 +94,7 @@
     - mysql.backup
     - nessus
     - password
+    - pingcheck
     - profile
     - resethp
     - review
@@ -128,6 +129,14 @@
     - { src: update.gecos,   dest: update.gecos }
     - { src: update.groups,  dest: update.groups }
     - { src: update.motd,    dest: update.motd }
+
+- name: Link standard scripts
+  ansible.builtin.file:
+    src: '/opt/unixsuite/bin/{{ item.src }}'
+    dest: '/opt/unixsuite/run.d/always/{{ item.dest }}'
+    state: hard
+  with_items:
+    - { src: pingcheck,      dest: pingcheck }
 
 - name: Check .config status
   stat:
