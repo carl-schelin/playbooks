@@ -1,0 +1,21 @@
+---
+- name: Add the http service
+  firewalld:
+    immediate: yes
+    permanent: yes
+    service: http
+    state: enabled
+    zone: public
+  notify:
+  - Start the firewalld Service
+
+- name: Remove the unnecessary dhcpv6-client service
+  firewalld:
+    immediate: yes
+    permanent: yes
+    service: dhcpv6-client
+    state: disabled
+    zone: public
+  notify:
+  - Start the firewalld Service
+
