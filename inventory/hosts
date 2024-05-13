@@ -59,7 +59,6 @@ cabo0cuomkube2
 cabo0cuomkube3
 cabo0cuomnfs1
 cabo0cuomtool11
-lnmt1cuom2540
 lnmt1cuomawx1
 lnmt1cuomcas1
 lnmt1cuomdns1
@@ -95,7 +94,6 @@ lnmt1cuomnetbox1
 lnmt1cuomnfs1
 lnmt1cuomnmis8
 lnmt1cuomnmis9
-lnmt1cuompgrs1
 lnmt1cuomsalt1
 lnmt1cuomsips1
 lnmt1cuomsyslog
@@ -238,7 +236,6 @@ cabo0cuomnfs1
 cabo0cuomtool11
 
 [lnmt1]
-lnmt1cuom2540
 lnmt1cuomawx1
 lnmt1cuomcas1
 lnmt1cuomdns1
@@ -274,7 +271,6 @@ lnmt1cuomnetbox1
 lnmt1cuomnfs1
 lnmt1cuomnmis8
 lnmt1cuomnmis9
-lnmt1cuompgrs1
 lnmt1cuomsalt1
 lnmt1cuomsips1
 lnmt1cuomsyslog
@@ -285,7 +281,6 @@ lnmt1cuomwiki1
 lnmt1cuomysql1
 
 [longmont]
-lnmt1cuom2540
 lnmt1cuomawx1
 lnmt1cuomcas1
 lnmt1cuomdns1
@@ -321,7 +316,6 @@ lnmt1cuomnetbox1
 lnmt1cuomnfs1
 lnmt1cuomnmis8
 lnmt1cuomnmis9
-lnmt1cuompgrs1
 lnmt1cuomsalt1
 lnmt1cuomsips1
 lnmt1cuomsyslog
@@ -398,7 +392,6 @@ bldr0cuomnfs2
 cabo0cuomdns1
 cabo0cuomdns2
 cabo0cuomnfs1
-lnmt1cuom2540
 lnmt1cuomdns1
 lnmt1cuomdns2
 lnmt1cuomnfs1
@@ -417,7 +410,6 @@ tato0cuomnfs1
 [database]
 bldr0cuompgrs1
 lnmt1cuomcas1
-lnmt1cuompgrs1
 lnmt1cuomysql1
 
 [dev]
@@ -590,7 +582,6 @@ lnmt1cuomnmis9
 lnmt1cuomsalt1
 lnmt1cuomtform1
 lnmt1cuomvault1
-lnmt1cuompgrs1
 bldr0cuompgrs1
 lnmt1cuomcas1
 lnmt1cuomysql1
@@ -751,7 +742,6 @@ bldr0cuomnfs2
 
 [postgresql]
 bldr0cuompgrs1
-lnmt1cuompgrs1
 
 [rocky]
 lnmt1cuomknode3
@@ -811,7 +801,6 @@ ndld1cuomsamba1
 ndld1cuomtv1
 
 [solaris]
-lnmt1cuom2540
 
 [storage]
 lnmt1cuomnfs1
