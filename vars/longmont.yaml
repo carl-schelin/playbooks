@@ -130,6 +130,7 @@ loadbalancer_secondary:
   ipa: 192.168.104.62
 
 vip_cnames:
+  - name: awx
   - name: llamas
   - name: llamas-blue
   - name: llamas-green
