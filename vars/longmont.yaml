@@ -254,6 +254,10 @@ syslog:
   name: "lnmt1cuomsyslog"
   ipa: 192.168.104.50
 
+grafana:
+  name: "lnmt1cuomgraf1"
+  ipa: 192.168.104.101
+
 idm:
   name: "lnmt1cuomifidm1"
   ipa: 192.168.104.139
@@ -296,13 +300,6 @@ wiki:
   name: "lnmt1cuomwiki1"
   ipa: 192.168.104.103
   cname: wiki
-
-#
-ansible:
-  name: "lnmt1cuomans1"
-  ipa: 192.168.104.70
-  cname: tower
-
 
 # ----------------------------------
 # Database backend for the pods
