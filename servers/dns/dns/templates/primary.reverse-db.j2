@@ -23,10 +23,6 @@ $TTL 86400
 {{ amazon.ipa.split('.')[3] }}		IN	PTR	{{ amazon.name }}.{{ site.name }}.{{ site.domain }}.
 ;
 {% endif %}
-{% if ansible is defined %}
-{{ ansible.ipa.split('.')[3] }}		IN	PTR	{{ ansible.name }}.{{ site.name }}.{{ site.domain }}.
-;
-{% endif %}
 {% if database is defined %}
 {% for db in database %}
 {{ db.ipa.split('.')[3] }}		IN	PTR	{{ db.name }}.{{ site.name }}.{{ site.domain }}.

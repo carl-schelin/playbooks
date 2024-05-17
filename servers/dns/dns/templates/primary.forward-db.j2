@@ -26,11 +26,6 @@ ns2     IN     A     {{ dns_secondary.ipa }}
 {{ amazon.name }}		IN	A	{{ amazon.ipa }}
 ;
 {% endif %}
-{% if ansible is defined %}
-{{ ansible.name }}		IN	A	{{ ansible.ipa }}
-{{ ansible.cname }}		IN	CNAME	{{ ansible.name }}.{{ site.name }}.{{ site.domain }}.
-;
-{% endif %}
 {% if database is defined %}
 {% for db in database %}
 {{ db.name }}		IN	A	{{ db.ipa }}
