@@ -1,21 +1,21 @@
 # Ansible: Managed by ansible. Do not modify
-{% if site.environment = 'ndld' %}
+{% if site.environment == 'ndld' %}
 search home.internal.pri prod.internal.pri qa.internal.pri stage.internal.pri dev.internal.pri schelin.org
 domain home.internal.pri prod.internal.pri qa.internal.pri stage.internal.pri dev.internal.pri schelin.org
 {% endif %}
-{% if site.environment = 'lnmt' %}
+{% if site.environment == 'lnmt' %}
 search prod.internal.pri home.internal.pri qa.internal.pri stage.internal.pri dev.internal.pri schelin.org
 domain prod.internal.pri home.internal.pri qa.internal.pri stage.internal.pri dev.internal.pri schelin.org
 {% endif %}
-{% if site.environment = 'tato' %}
+{% if site.environment == 'tato' %}
 search stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org
 domain stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org
 {% endif %}
-{% if site.environment = 'cabo' %}
+{% if site.environment == 'cabo' %}
 search qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org
 domain qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org
 {% endif %}
-{% if site.environment = 'bldr' %}
+{% if site.environment == 'bldr' %}
 search dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org
 domain dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org
 {% endif %}
