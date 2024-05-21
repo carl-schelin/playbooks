@@ -57,42 +57,6 @@
     state: present
   when: "'ndld1' in inventory_hostname"
 
-
-- name: Add DOMAIN
-  lineinfile:
-    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
-    line: "DOMAIN=dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org"
-    state: present
-  when: "'bldr0' in inventory_hostname"
-
-- name: Add DOMAIN
-  lineinfile:
-    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
-    line: "DOMAIN=qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
-    state: present
-  when: "'cabo0' in inventory_hostname"
-
-- name: Add DOMAIN
-  lineinfile:
-    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
-    line: "DOMAIN=stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
-    state: present
-  when: "'tato0' in inventory_hostname"
-
-- name: Add DOMAIN
-  lineinfile:
-    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
-    line: "DOMAIN=prod.internal.pri home.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
-    state: present
-  when: "'lnmt1' in inventory_hostname"
-
-- name: Add DOMAIN
-  lineinfile:
-    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
-    line: "DOMAIN=home.internal.pri prod.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
-    state: present
-  when: "'ndld1' in inventory_hostname"
-
 - name: Reload nmcli configuration
   command: "nmcli dev reapply {{ ansible_default_ipv4.interface }}"
 
