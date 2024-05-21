@@ -1,7 +1,7 @@
 ---
 - name: Copy the resolv.conf file
   template:
-    src: templates/resolv.conf
+    src: templates/resolv.conf.j2
     dest: /etc/resolv.conf
     owner: root
     group: root
@@ -10,24 +10,87 @@
 - name: Set DNS IPs
   command: "nmcli dev mod '{{ ansible_default_ipv4.interface }}' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
 
-- name: Set DNS search
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org'"
+- name: Remove SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    regexp: "^SEARCH"
+    state: absent
+
+- name: Remove DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    regexp: "^DOMAIN"
+    state: absent
+
+- name: Add SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "SEARCH=dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org"
+    state: present
   when: "'bldr0' in inventory_hostname"
 
-- name: Set DNS search
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org'"
+- name: Add SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "SEARCH=qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
+    state: present
   when: "'cabo0' in inventory_hostname"
 
-- name: Set DNS search
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org'"
+- name: Add SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "SEARCH=stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
+    state: present
   when: "'tato0' in inventory_hostname"
 
-- name: Set DNS search
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'prod.internal.pri home.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org'"
+- name: Add SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "SEARCH=prod.internal.pri home.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
+    state: present
   when: "'lnmt1' in inventory_hostname"
 
-- name: Set DNS search
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'home.internal.pri prod.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org'"
+- name: Add SEARCH
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "SEARCH=home.internal.pri prod.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
+    state: present
+  when: "'ndld1' in inventory_hostname"
+
+
+- name: Add DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "DOMAIN=dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org"
+    state: present
+  when: "'bldr0' in inventory_hostname"
+
+- name: Add DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "DOMAIN=qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
+    state: present
+  when: "'cabo0' in inventory_hostname"
+
+- name: Add DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "DOMAIN=stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org"
+    state: present
+  when: "'tato0' in inventory_hostname"
+
+- name: Add DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "DOMAIN=prod.internal.pri home.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
+    state: present
+  when: "'lnmt1' in inventory_hostname"
+
+- name: Add DOMAIN
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}"
+    line: "DOMAIN=home.internal.pri prod.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org"
+    state: present
   when: "'ndld1' in inventory_hostname"
 
 - name: Reload nmcli configuration
