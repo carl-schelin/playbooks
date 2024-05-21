@@ -7,11 +7,28 @@
     group: root
     mode: 0644
 
-- name: Set DNS information
+- name: Set DNS IPs
   command: "nmcli dev mod '{{ ansible_default_ipv4.interface }}' ipv4.dns '{{ dns_primary.ipa }} {{ dns_secondary.ipa}}'"
 
-- name: Set DNS information
-  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'prod.internal.pri dev.internal.pri qa.internal.pri stage.internal.pri home.internal.pri schelin.org'"
+- name: Set DNS search
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'dev.internal.pri qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri schelin.org'"
+  when: "'bldr0' in inventory_hostname"
+
+- name: Set DNS search
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'qa.internal.pri stage.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org'"
+  when: "'cabo0' in inventory_hostname"
+
+- name: Set DNS search
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'stage.internal.pri qa.internal.pri prod.internal.pri home.internal.pri dev.internal.pri schelin.org'"
+  when: "'tato0' in inventory_hostname"
+
+- name: Set DNS search
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'prod.internal.pri home.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org'"
+  when: "'lnmt1' in inventory_hostname"
+
+- name: Set DNS search
+  command: "nmcli dev mod  '{{ ansible_default_ipv4.interface }}' ipv4.dns-search 'home.internal.pri prod.internal.pri stage.internal.pri qa.internal.pri dev.internal.pri schelin.org'"
+  when: "'ndld1' in inventory_hostname"
 
 - name: Reload nmcli configuration
   command: "nmcli dev reapply {{ ansible_default_ipv4.interface }}"
