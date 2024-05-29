@@ -8,16 +8,251 @@ all:
       vars:
         environment: development
       children:
-        haproxy_k8s:
+        control:
+          vars:
+            deployment: control
+          hosts:
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomkube3
+        docker:
+          vars:
+            deployment: docker
+          hosts:
+            bldr0cuomdock1
+            bldr0cuomrepo1
+        motd:
+          vars:
+            deployment: motd
+          hosts:
+            bldr0cuomaws1
+            bldr0cuomdev1
+            bldr0cuomdev5
+            bldr0cuomdns1
+            bldr0cuomdns2
+            bldr0cuomdock1
+            bldr0cuomgit1
+            bldr0cuomglrunr1
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+            bldr0cuomhap4
+            bldr0cuomknode1
+            bldr0cuomknode2
+            bldr0cuomknode3
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomkube3
+            bldr0cuomlar1
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+            bldr0cuompgrs1
+            bldr0cuomrepo1
+            bldr0cuomshift
+            bldr0cuomssql1
+            bldr0cuomtool11
+        tool:
+          vars:
+            deployment: tool
+          hosts:
+            bldr0cuomtool11
+        worker:
+          vars:
+            deployment: worker
+          hosts:
+            bldr0cuomknode1
+            bldr0cuomknode2
+            bldr0cuomknode3
+        bldr0:
+          vars:
+            deployment: bldr0
+          hosts:
+            bldr0cuomaws1
+            bldr0cuomdev1
+            bldr0cuomdev5
+            bldr0cuomdns1
+            bldr0cuomdns2
+            bldr0cuomdock1
+            bldr0cuomgit1
+            bldr0cuomglrunr1
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+            bldr0cuomhap4
+            bldr0cuomknode1
+            bldr0cuomknode2
+            bldr0cuomknode3
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomkube3
+            bldr0cuomlar1
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+            bldr0cuompgrs1
+            bldr0cuomrepo1
+            bldr0cuomshift
+            bldr0cuomssql1
+            bldr0cuomtool11
+        boulder:
+          vars:
+            deployment: boulder
+          hosts:
+            bldr0cuomaws1
+            bldr0cuomdev1
+            bldr0cuomdev5
+            bldr0cuomdns1
+            bldr0cuomdns2
+            bldr0cuomdock1
+            bldr0cuomgit1
+            bldr0cuomglrunr1
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+            bldr0cuomhap4
+            bldr0cuomknode1
+            bldr0cuomknode2
+            bldr0cuomknode3
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomkube3
+            bldr0cuomlar1
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+            bldr0cuompgrs1
+            bldr0cuomrepo1
+            bldr0cuomshift
+            bldr0cuomssql1
+            bldr0cuomtool11
+        automation:
+          vars:
+            deployment: automation
+          hosts:
+            bldr0cuomaws1
+            bldr0cuomdns1
+            bldr0cuomdns2
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+        database:
+          vars:
+            deployment: database
+          hosts:
+            bldr0cuompgrs1
+        dev:
+          vars:
+            deployment: dev
+          hosts:
+            bldr0cuomdev1
+            bldr0cuomdev5
+            bldr0cuomdock1
+            bldr0cuomgit1
+            bldr0cuomglrunr1
+            bldr0cuomlar1
+            bldr0cuomssql1
+        infrastructure:
+          vars:
+            deployment: infrastructure
+          hosts:
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+            bldr0cuomhap4
+            bldr0cuomtool11
+        kubernetes:
           vars:
             deployment: kubernetes
           hosts:
-            bldr0cuomhap1:
-            bldr0cuomhap2:
-        haproxy_ocp:
+            bldr0cuomknode1
+            bldr0cuomknode2
+            bldr0cuomknode3
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomkube3
+            bldr0cuomshift
+        apache:
           vars:
-            deployment: openshift
+            deployment: apache
           hosts:
-            bldr0cuomhap3:
-            bldr0cuomhap4:
-...
+            bldr0cuomdev1
+            bldr0cuomtool11
+        bind:
+          vars:
+            deployment: bind
+          hosts:
+            bldr0cuomdns2
+            bldr0cuomdns1
+        centos:
+          vars:
+            deployment: centos
+          hosts:
+            bldr0cuomssql1
+            bldr0cuomgit1
+            bldr0cuomaws1
+            bldr0cuomdns2
+            bldr0cuomdns1
+            bldr0cuompgrs1
+            bldr0cuomtool11
+            bldr0cuomlar1
+            bldr0cuomdock1
+            bldr0cuomdev1
+            bldr0cuomrepo1
+            bldr0cuomkube1
+            bldr0cuomkube2
+            bldr0cuomknode3
+            bldr0cuomknode2
+            bldr0cuomknode1
+            bldr0cuomkube3
+            bldr0cuomshift
+        dns:
+          vars:
+            deployment: dns
+          hosts:
+            bldr0cuomdns2
+            bldr0cuomdns1
+        haproxy:
+          vars:
+            deployment: haproxy
+          hosts:
+            bldr0cuomhap4
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+        mysql:
+          vars:
+            deployment: mysql
+          hosts:
+            bldr0cuomdev1
+        nfs:
+          vars:
+            deployment: nfs
+          hosts:
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+        postgresql:
+          vars:
+            deployment: postgresql
+          hosts:
+            bldr0cuompgrs1
+        rocky:
+          vars:
+            deployment: rocky
+          hosts:
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+            bldr0cuomdev5
+            bldr0cuomglrunr1
+            bldr0cuomhap4
+            bldr0cuomhap1
+            bldr0cuomhap2
+            bldr0cuomhap3
+        runner:
+          vars:
+            deployment: runner
+          hosts:
+            bldr0cuomglrunr1
+        storage:
+          vars:
+            deployment: storage
+          hosts:
+            bldr0cuomnfs1
+            bldr0cuomnfs2
+
